@@ -76,7 +76,6 @@ internal static class CheatState
     public static bool WellFedBuff;        // 饱饱 buff(CT: WellFed.Update NOP)
     public static bool FreezingBuff;       // 温度加成(CT: FreezingBuffActive=true)
     public static bool FatigueBuff;        // 疲劳加成(CT: StatusBar fatigue buff=1)
-    public static bool CureFrostbite;      // 治愈永久冻伤
     public static bool ClearDeathPenalty;  // 清除死亡惩罚
     public static bool QuickFishing;       // 钓鱼 100%
     // v2.7.86 新增功能
@@ -156,7 +155,6 @@ internal static class CheatState
     public static bool QoL_BuryCorpses;
     public static bool QoL_SleepAnywhere;
     public static bool QoL_AutoSurvey;
-    public static bool QoL_ImprovedFlasks;
 
 
     // ═══════════════════════════════════════════════════════════════
@@ -209,6 +207,13 @@ internal static class CheatState
     public static bool TT_PauseOnRadial;
     public static bool TT_RespawnPlants;
     public static bool TT_ShowTraderTrust;
+
+    // v6.7.1 ClearAllAfflictions 防三方 mod "并发症 Postfix" 反补 buff
+    //   现象:整合包里有 Cold/Sickness mod 把 vanilla XxxEnd 当作 Postfix 钩子触发"治愈后并发症"
+    //   一键清除负面会一口气调 N 次 vanilla End → 触发 N 次"并发症 roll" → 反而加上"感冒"
+    //   解决:在清除窗口内吞掉新增的 affliction(由 OnUpdate 二次扫描兜底)
+    public static bool AfflictionClearInProgress;
+    public static int AfflictionClearReSweepFramesLeft;  // 大于 0 时每帧扫一次
 }
 
 // 工具函数:刷物品/清 affliction/天气/时间/耐久恢复
@@ -275,7 +280,6 @@ internal static class Cheats
             s.WellFedBuff = false;
             s.FreezingBuff = false;
             s.FatigueBuff = false;
-            s.CureFrostbite = false;
             s.ClearDeathPenalty = false;
             s.QuickFishing = false;
             s.FireAnywhere = false;
@@ -434,7 +438,6 @@ internal static class Cheats
         CheatState.WellFedBuff = s.WellFedBuff;
         CheatState.FreezingBuff = s.FreezingBuff;
         CheatState.FatigueBuff = s.FatigueBuff;
-        CheatState.CureFrostbite = s.CureFrostbite;
         CheatState.ClearDeathPenalty = s.ClearDeathPenalty;
         CheatState.QuickFishing = s.QuickFishing;
         CheatState.FireAnywhere = s.FireAnywhere;
@@ -488,7 +491,6 @@ internal static class Cheats
         CheatState.QoL_BuryCorpses = s.QoL_BuryCorpses;
         CheatState.QoL_SleepAnywhere = s.QoL_SleepAnywhere;
         CheatState.QoL_AutoSurvey = s.QoL_AutoSurvey;
-        CheatState.QoL_ImprovedFlasks = s.QoL_ImprovedFlasks;
         // ═══ Crafting & Fire ═══
         CheatState.Craft_Anywhere = s.Craft_Anywhere;
         CheatState.Craft_MoreCookingSlots = s.Craft_MoreCookingSlots;
@@ -578,20 +580,44 @@ internal static class Cheats
 
     public static void ClearAllAfflictions()
     {
+        // v6.7.1 修:整合包里有第三方 Cold/Sickness mod 把 vanilla End 方法当 Postfix 触发"并发症 roll"
+        //   一口气清完 → 触发 N 次"治愈后并发症"判定 → 反被加上"感冒/Influenza"
+        // 防御:全程设旗 + 排队 5s 内每帧再扫一次 → 第三方 mod 加上的也会被立即清掉
+        CheatState.AfflictionClearInProgress = true;
+        try
+        {
+            ClearAllAfflictionsInternal();
+        }
+        finally
+        {
+            CheatState.AfflictionClearInProgress = false;
+            // 让 OnUpdate 接下来 ~5 秒(60fps × 5 = 300 帧)持续二次扫
+            // 三方 Postfix 通常会在 vanilla End 返回后立刻 / 隔几 tick 内补 affliction —— 这个窗口足够大
+            CheatState.AfflictionClearReSweepFramesLeft = 300;
+        }
+    }
+
+    // v6.7.1 抽出本体,供 OnUpdate 二次清扫复用(共用同一套 component-by-component 逻辑)
+    public static void ClearAllAfflictionsInternal()
+    {
         int cleared = 0;
         var log = new System.Text.StringBuilder();
         // v2.7.11:放弃依赖 End() —— 许多 End 方法要求"满足治愈条件"才真正清除。
         // 直接用 wrapper 类型 setter 强置内部状态为 default,外加 End() 走一遍音效/UI 刷新。
 
         // —— Hypothermia ——
+        // v6.9.2: HypothermiaEnd 仅在 had=true 时调,避免 ReSweep 5s 窗口内反复 trigger 第三方 Postfix
+        // (CatchColdMod 等 mod 在 HypothermiaEnd Postfix 里 schedule ApplyCold() → ColdPhase++ → ≥3 升级肺炎)
         try { var c = GameManager.GetHypothermiaComponent(); if (c != null) {
             bool had = c.HasHypothermia();
             try { c.m_Active = false; } catch { }
             try { c.m_ElapsedHours = 0f; } catch { }
             try { c.m_ElapsedWarmTime = 0f; } catch { }
             try { c.m_StartHasBeenCalled = false; } catch { }
-            try { c.m_SuppressHypothermia = true; c.HypothermiaEnd(true); c.m_SuppressHypothermia = false; } catch { }
-            if (had) { cleared++; log.Append(I18n.T("低温; ", "Hypothermia; ")); }
+            if (had) {
+                try { c.m_SuppressHypothermia = true; c.HypothermiaEnd(true); c.m_SuppressHypothermia = false; } catch { }
+                cleared++; log.Append(I18n.T("低温; ", "Hypothermia; "));
+            }
         }} catch (Exception ex) { log.Append(I18n.T($"低温-err:{ex.Message}; ", $"Hypothermia-err:{ex.Message}; ")); }
 
         // —— Frostbite ——
@@ -695,11 +721,90 @@ internal static class Cheats
             if (had) { cleared++; log.Append(I18n.T("肠寄生虫; ", "Intestinal Parasites; ")); }
         }} catch (Exception ex) { log.Append(I18n.T($"肠寄生虫-err:{ex.Message}; ", $"Parasites-err:{ex.Message}; ")); }
 
-        string summary = cleared > 0
-            ? (I18n.IsEnglish ? $"Cleared {cleared} afflictions: {log}" : $"已清 {cleared} 项: {log}")
-            : (I18n.IsEnglish ? $"No active affliction; tried: {log}" : $"未检测到活跃负面; 尝试过: {log}");
-        ModMain.Log?.Msg($"[Cheats] {summary}");
-        CheatState.LastActionLog = summary;
+        // —— Scurvy (坏血病) —— v3.0.7 新增,Cure() 同时清 affliction + risk
+        try { var c = GameManager.GetScurvyComponent(); if (c != null) {
+            bool had = false;
+            try { had = c.HasAffliction() || c.HasRisk(); } catch { }
+            try { c.Cure(); } catch { }
+            if (had) { cleared++; log.Append(I18n.T("坏血病; ", "Scurvy; ")); }
+        }} catch (Exception ex) { log.Append(I18n.T($"坏血病-err:{ex.Message}; ", $"Scurvy-err:{ex.Message}; ")); }
+
+        // —— 第三方 mod 通过 AfflictionComponent 框架追加的 CustomAffliction —— v6.9.1 新增
+        // 用户报告:OxygenLevels(高原反应)、Minor Miseries、TLDev(肺炎)等用 AfflictionComponent 框架挂在
+        // AfflictionManager.m_Afflictions[],vanilla End()/Cure() 路径碰不到 → 清完仍残留
+        // 修法:全反射动态找 AfflictionManager(用户没装 AfflictionComponent 框架自动跳过,zero coupling)
+        try
+        {
+            Type afmType = null;
+            foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                afmType = asm.GetType("AfflictionComponent.Components.AfflictionManager")
+                        ?? asm.GetType("AfflictionComponent.AfflictionManager")
+                        ?? asm.GetType("AfflictionManager");
+                if (afmType != null) break;
+            }
+            if (afmType != null)
+            {
+                var getInstance = afmType.GetMethod("GetAfflictionManagerInstance", BindingFlags.Public | BindingFlags.Static);
+                var afm = getInstance?.Invoke(null, null);
+                if (afm != null)
+                {
+                    var listField = afm.GetType().GetField("m_Afflictions");
+                    if (listField != null)
+                    {
+                        var list = listField.GetValue(afm);
+                        if (list != null)
+                        {
+                            var listType = list.GetType();
+                            var countProp = listType.GetProperty("Count");
+                            var indexer = listType.GetProperty("Item");
+                            if (countProp != null && indexer != null)
+                            {
+                                int n = (int)countProp.GetValue(list);
+                                // 倒序避免 Cure 时集合修改导致索引偏移
+                                for (int i = n - 1; i >= 0; i--)
+                                {
+                                    try
+                                    {
+                                        var ca = indexer.GetValue(list, new object[] { i });
+                                        if (ca == null) continue;
+                                        string typeName = ca.GetType().Name;
+                                        var cureMethod = ca.GetType().GetMethod("Cure", new[] { typeof(bool) });
+                                        if (cureMethod != null)
+                                        {
+                                            cureMethod.Invoke(ca, new object[] { true });
+                                            cleared++;
+                                            log.Append($"{typeName}; ");
+                                        }
+                                    }
+                                    catch (Exception exItem) { log.Append(I18n.T($"模组负面项-err:{exItem.Message}; ", $"ModItem-err:{exItem.Message}; ")); }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex) { log.Append(I18n.T($"模组负面扫-err:{ex.Message}; ", $"ModAfflictionScan-err:{ex.Message}; ")); }
+
+        // v6.7.1: 二次扫(AfflictionClearInProgress=false 时调用)只在真清掉东西时输出,避免覆盖首次 summary
+        if (CheatState.AfflictionClearInProgress)
+        {
+            string summary = cleared > 0
+                ? (I18n.IsEnglish ? $"Cleared {cleared} afflictions: {log}" : $"已清 {cleared} 项: {log}")
+                : (I18n.IsEnglish ? $"No active affliction; tried: {log}" : $"未检测到活跃负面; 尝试过: {log}");
+            ModMain.Log?.Msg($"[Cheats] {summary}");
+            CheatState.LastActionLog = summary;
+        }
+        else if (cleared > 0)
+        {
+            // 二次扫真的捞到了 → 说明三方 mod 反补了 buff,记一行
+            string extra = I18n.IsEnglish
+                ? $"[ReSweep] Caught {cleared} re-added: {log}"
+                : $"[二次扫] 抓到 {cleared} 个反补: {log}";
+            ModMain.Log?.Msg($"[Cheats] {extra}");
+            CheatState.LastActionLog = extra;
+        }
     }
 
     // 真正切天气:WeatherTransition.ActivateWeatherSetImmediate(WeatherStage)
@@ -791,9 +896,9 @@ internal static class Cheats
     {
         try
         {
-            var gears = UnityEngine.Object.FindObjectsOfType<GearItem>();
-            if (gears == null) return;
-            foreach (var g in gears) RestoreDurability(g);
+            // v2.7.93 改用注册表,避免每 5s FindObjectsOfType<GearItem> 大地图 spike
+            var gears = GearItemRegistry.Known;
+            foreach (var g in gears) { if (g != null) RestoreDurability(g); }
         }
         catch { }
     }

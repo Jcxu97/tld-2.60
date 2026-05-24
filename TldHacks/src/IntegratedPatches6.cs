@@ -16,16 +16,31 @@ namespace TldHacks;
 // ═══════════════════════════════════════════════════════════════════
 
 // ─── 哈气可见性 (DynamicPatch — 默认开启时不需要 patch) ───
+// v3.x: 改为 patch Breath.Update,每帧同步 m_SuppressEffects 并在切换瞬间
+//       主动 StopBreathEffectImmediate(),否则正在飘的粒子要等下一次
+//       PlayBreathEffect 才会清,toggle 看起来"无效"。
+//       Update 每帧只 1 个 Breath 实例(玩家),开销可忽略。
 internal static class Patch_UT_BreathVisibility
 {
+    // patch 挂载本身就代表 toggle 已关 → 每个 Breath 实例只在第一次进 Postfix 时
+    // 主动 stop 一次正在飘的粒子;之后只刷字段,避免每帧调 stop。
+    private static readonly System.Collections.Generic.HashSet<int> _stoppedIds = new();
     public static void Postfix(Breath __instance)
     {
         try
         {
+            if (__instance == null) return;
             __instance.m_SuppressEffects = true;
+            int id = __instance.GetInstanceID();
+            if (_stoppedIds.Add(id))
+            {
+                try { __instance.StopBreathEffectImmediate(); } catch { }
+            }
         }
         catch { }
     }
+    // toggle 重新开启再关闭时,允许再次 stop
+    public static void Reset() { _stoppedIds.Clear(); }
 }
 
 // ─── 自定义模式徽章 ───

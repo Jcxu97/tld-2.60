@@ -89,8 +89,8 @@ internal static class TrackerPatches
         else if (subType == 1) kind = AnimalKind.Wolf;
         else if (subType == 3 && name.Contains("_Doe")) kind = AnimalKind.Doe;
         else if (subType == 3) kind = AnimalKind.Stag;
-        else if (subType == 4) kind = AnimalKind.Rabbit;
         else if ((int)ai.m_SnowImprintType == 8) kind = AnimalKind.Ptarmigan;
+        else if (subType == 4) kind = AnimalKind.Rabbit;
         else return;
 
         Tracker.Register(id, go.transform, EntityCategory.Animal, kind);

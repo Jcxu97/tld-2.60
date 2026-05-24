@@ -246,7 +246,7 @@ internal static class DynamicPatch
         Spec(typeof(InputManager), "CanStartFireIndoors", typeof(Patch_FireAnywhere),
             "Prefix", null, () => CheatState.FireAnywhere),
         Spec(typeof(PlayerMovement), "AddSprintStamina", typeof(Patch_AddSprintStamina),
-            null, "Postfix", () => CheatState.InfiniteStamina),
+            null, "Postfix", () => Patch_AddSprintStamina.ShouldPatch()),
         Spec(typeof(PlayerManager), "ConsumeUnitFromInventory", typeof(Patch_ConsumeUnit),
             "Prefix", null, () => CheatState.FreeFireFuel || CheatState.FreeRepair),
         Spec(typeof(Encumber), "Update", typeof(Patch_TechBackpack),
@@ -268,11 +268,10 @@ internal static class DynamicPatch
         Spec(typeof(PlayerManager), "FatigueBuffActive", typeof(Patch_PlayerManager_FatigueBuffActive),
             null, "Postfix", () => CheatState.FatigueBuff),
 
-        // 整合 SonicMode:速度倍率 + 体力恢复(仅 SpeedTweaks 开启时挂载)
+        // 整合 SonicMode:速度倍率(仅 SpeedTweaks 开启时挂载)
         Spec(typeof(vp_FPSController), "GetSlopeMultiplier", typeof(Patch_SpeedMultiplier),
             null, "Postfix", () => ModMain.Settings != null && ModMain.Settings.SpeedTweaksEnabled),
-        Spec(typeof(PlayerMovement), "Update", typeof(Patch_StaminaTweaks),
-            null, "Postfix", () => ModMain.Settings != null && ModMain.Settings.SpeedTweaksEnabled),
+        // v2.7.88 体力恢复改为 ModMain.OnUpdate 主动 ApplyTick (Harmony hook 在此类不可靠),不再注册 Spec
 
         // 整合 TorchTweaker:火把 condition(两个面板都 patch,覆盖所有交互入口)
         Spec(typeof(Panel_FeedFire), "Enable", typeof(Patch_TorchCondition),
@@ -558,23 +557,9 @@ internal static class DynamicPatch
         Spec(typeof(GameManager), "ResetLists", typeof(Patch_Speedy_ResetDict),
             null, "Postfix", () => ModMain.Settings.TT_InteractionSpeedMult != 1f || CheatState.QuickSearch),
 
-        // ImprovedFlasks
-        Spec(typeof(GearItem), "Awake", typeof(Patch_ImprovedFlasks_Awake),
-            null, "Postfix", () => CheatState.QoL_ImprovedFlasks),
-        Spec(typeof(ItemDescriptionPage), "UpdateButtons", typeof(Patch_ImprovedFlasks_Buttons),
-            null, "Postfix", () => CheatState.QoL_ImprovedFlasks, null, new[] { typeof(GearItem) }),
-        Spec(typeof(ItemDescriptionPage), "OnEquip", typeof(Patch_ImprovedFlasks_OnEquip),
-            "Prefix", null, () => CheatState.QoL_ImprovedFlasks),
-        Spec(typeof(Panel_ActionsRadial), "GetDrinkItemsInInventory", typeof(Patch_ImprovedFlasks_Radial),
-            "Prefix", "Postfix", () => CheatState.QoL_ImprovedFlasks),
-        Spec(typeof(Panel_ActionsRadial), "UseItem", typeof(Patch_ImprovedFlasks_UseItem),
-            "Prefix", "Postfix", () => CheatState.QoL_ImprovedFlasks, null, new[] { typeof(GearItem) }),
-        Spec(typeof(RadialMenuArm), "SetRadialInfoGear", typeof(Patch_ImprovedFlasks_RadialName),
-            null, "Postfix", () => CheatState.QoL_ImprovedFlasks),
-        Spec(typeof(ItemDescriptionPage), "UpdateInsulatedFlaskIndicators", typeof(Patch_ImprovedFlasks_Indicators),
-            null, "Postfix", () => CheatState.QoL_ImprovedFlasks, null, new[] { typeof(InsulatedFlask) }),
-        Spec(typeof(Panel_InsulatedFlask), "RefreshTables", typeof(Patch_ImprovedFlasks_RefreshTables),
-            null, "Postfix", () => CheatState.QoL_ImprovedFlasks),
+        // ImprovedFlasks 整合已移除(v6.8.3) —— 原 mod ImprovedFlasks 1.2.3 假设保温瓶里装 GearItem,
+        // TLD 2.55 改为液体容器(AddLiquid/RemoveLiquid),GetAllItems 永远返回空,饮用代码全瘫。
+        // 删除整合,vanilla Panel_InsulatedFlask UI 仍可用。
 
         // RespawnablePlants
         Spec(typeof(Harvestable), "Awake", typeof(Patch_RespawnPlants_Awake),
@@ -622,7 +607,10 @@ internal static class DynamicPatch
         Spec(typeof(PlayerManager), "DoPositionCheck", typeof(Patch_PlaceFromInv_PositionCheck),
             null, "Postfix", () => ModMain.Settings != null && ModMain.Settings.PlaceFromInv_AllowClose),
         // 呼吸可见性:默认开启(true)时不需要 patch;用户关闭时才挂载抑制
-        Spec(typeof(Breath), "PlayBreathEffect", typeof(Patch_UT_BreathVisibility),
+        // v3.x: patch Update 而不是 PlayBreathEffect — 后者间隔触发,toggle 切换后
+        //       已飘的粒子要很久才会清,看起来 toggle 无效。Update 每帧同步并
+        //       在切换瞬间 StopBreathEffectImmediate。
+        Spec(typeof(Breath), "Update", typeof(Patch_UT_BreathVisibility),
             null, "Postfix", () => ModMain.Settings != null && !ModMain.Settings.UT_BreathVisibility),
 
     };

@@ -439,8 +439,8 @@ internal static class Menu
 
         GUI.Box(R(0f, 0f, W, H), "", _windowStyle);
         GUI.Label(R(16f, 8f, W - 200f, 24f), I18n.T(
-            "TldHacks v6.6  本软件完全免费|作者:AKUL|最新版本&交流群:563092033",
-            "TldHacks v6.6  Free software | Author: AKUL | Latest & QQ Group: 563092033"), _titleStyle);
+            "TldHacks v6.9.2  本软件完全免费|作者:AKUL|最新版本&交流群:563092033",
+            "TldHacks v6.9.2  Free software | Author: AKUL | Latest & QQ Group: 563092033"), _titleStyle);
         GUI.Label(R(16f, 30f, 500f, 18f), "Cursor Ink UI / IL2CPP IMGUI", _mutedLabelStyle);
 
         // 标题栏右侧:scale - / x1.0 / + / Close (v2.7.83 统一间距 4px)
@@ -638,31 +638,30 @@ internal static class Menu
         bool fzbuf  = GUI.Toggle(R(c1,            y1, TOG_W, ROW_H), s.FreezingBuff,    I18n.T(" 加热", " Warming Buff"));
         bool ftbuf  = GUI.Toggle(R(c1 + TOG2_OFF, y1, TOG_W, ROW_H), s.FatigueBuff,     I18n.T(" 疲劳减缓", " Less Fatigue"));
         y1 += ROW_ADV;
-        bool cfb    = GUI.Toggle(R(c1,            y1, TOG_W, ROW_H), s.CureFrostbite,   I18n.T(" 治愈永久冻伤", " Cure Frostbite"));
-        y1 += ROW_ADV;
         // 坏血病状态显示(只读信息)
         // v6.6 GC: 仅在 VitaminC/Status 变化时重建格式化字符串
+        // 注:ScurvyManager.GetVitaminCNormalized() 返回 0..1 比例,Threshold 也是 1f,直接显示百分比更直观
         ScurvyViewer.Poll();
         if (ScurvyViewer.VitaminC != _cachedVitC || ScurvyViewer.Status != _cachedScurvyStatus)
         {
             _cachedVitC = ScurvyViewer.VitaminC;
             _cachedScurvyStatus = ScurvyViewer.Status;
+            float pct = Mathf.Clamp01(ScurvyViewer.VitaminC) * 100f;
             _cachedScurvyLabel = I18n.IsEnglish
-                ? $"  Scurvy: {ScurvyViewer.Status}  VitC={ScurvyViewer.VitaminC:F1}/{ScurvyViewer.Threshold:F1}"
-                : $"  坏血病: {ScurvyViewer.Status}  维C={ScurvyViewer.VitaminC:F1}/{ScurvyViewer.Threshold:F1}";
+                ? $"  Scurvy: {ScurvyViewer.Status}  VitC={pct:F0}%"
+                : $"  坏血病: {ScurvyViewer.Status}  维C={pct:F0}%";
         }
         CLabel(c1, y1, TOG_WIDE, ROW_H, _cachedScurvyLabel, true);
         y1 += ROW_ADV + SECTION_END_ADV;
         if (nfrost != s.NoFrostbiteRisk || wfbuf != s.WellFedBuff
-            || fzbuf != s.FreezingBuff || ftbuf != s.FatigueBuff || cfb != s.CureFrostbite)
+            || fzbuf != s.FreezingBuff || ftbuf != s.FatigueBuff)
         {
             if (s.WellFedBuff && !wfbuf) Cheats.ClearWellFedBuff();
             if (s.FatigueBuff && !ftbuf) Cheats.ClearFatigueBuff();
             s.NoFrostbiteRisk = nfrost; s.WellFedBuff = wfbuf;
-            s.FreezingBuff = fzbuf; s.FatigueBuff = ftbuf; s.CureFrostbite = cfb;
+            s.FreezingBuff = fzbuf; s.FatigueBuff = ftbuf;
             CheatState.NoFrostbiteRisk = nfrost; CheatState.WellFedBuff = wfbuf;
             CheatState.FreezingBuff = fzbuf; CheatState.FatigueBuff = ftbuf;
-            CheatState.CureFrostbite = cfb;
             s.Save();
         }
 

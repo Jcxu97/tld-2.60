@@ -323,14 +323,11 @@ internal static partial class MenuTweaks
         y3 += ROW_ADV;
         GUI.Label(R(c3, y3, COL_W3, ROW_H), I18n.T("   允许在任何天气下自动测绘", "   allow survey in any weather"), MutedLabel ?? GUI.skin.label);
         y3 += ROW_ADV;
-        y3 += SECTION_END_ADV;
-
-        // ImprovedFlasks toggle
-        bool flasks = GUI.Toggle(R(c3, y3, COL_TOG_W3, ROW_H), s.QoL_ImprovedFlasks,
-            I18n.T(" 保温瓶增强", " Improved Flasks"), ToggleStyle ?? GUI.skin.toggle);
-        if (flasks != s.QoL_ImprovedFlasks) { s.QoL_ImprovedFlasks = flasks; CheatState.QoL_ImprovedFlasks = flasks; changed = true; }
+        bool aom = GUI.Toggle(R(c3, y3, COL_TOG_W3, ROW_H), s.QoL_AutoOpenMapOnExit,
+            I18n.T(" 出门自动开小地图(MotionTrackerLite)", " Auto-Open Minimap (MotionTrackerLite)"), ToggleStyle ?? GUI.skin.toggle);
+        if (aom != s.QoL_AutoOpenMapOnExit) { s.QoL_AutoOpenMapOnExit = aom; changed = true; }
         y3 += ROW_ADV;
-        GUI.Label(R(c3, y3, COL_W3, ROW_H), I18n.T("   快捷轮盘喝水/背包分类/温度优化", "   radial drink/sort/temp display"), MutedLabel ?? GUI.skin.label);
+        GUI.Label(R(c3, y3, COL_W3, ROW_H), I18n.T("   室内→室外切换后自动开雷达(需装 MTL)", "   auto-enable radar on indoor→outdoor (needs MTL)"), MutedLabel ?? GUI.skin.label);
         y3 += ROW_ADV;
         y3 += SECTION_END_ADV;
 
@@ -884,6 +881,44 @@ internal static partial class MenuTweaks
         if (v != s.TT_ReadingSpeedMult) { s.TT_ReadingSpeedMult = v; changed = true; }
         y3 += ROW_ADV;
         GUI.Label(R(c3, y3, COL_W3, ROW_H), I18n.T("  修理/制作/烹饪/净水/雪屋/采药/凿冰等", "  repair/craft/cook/purify/shelter/harvest"), MutedLabel ?? GUI.skin.label);
+        y3 += ROW_ADV + SECTION_END_ADV;
+
+        // —— 空格代点击(按 Space = 鼠标左键点对应面板的主操作按钮) ——
+        y3 = SectionCol(R, c3, y3, COL_W3, I18n.T("空格代点击 (=左键)", "Space = LMB Click"));
+        b = GUI.Toggle(R(c3, y3, COL_TOG_W3, ROW_H), s.SpaceFinish_BreakDown,
+            I18n.T(" 拆解", " Break Down"), ToggleStyle ?? GUI.skin.toggle);
+        if (b != s.SpaceFinish_BreakDown) { s.SpaceFinish_BreakDown = b; changed = true; }
+        y3 += ROW_ADV;
+        b = GUI.Toggle(R(c3, y3, COL_TOG_W3, ROW_H), s.SpaceFinish_Harvest,
+            I18n.T(" 采集", " Harvest"), ToggleStyle ?? GUI.skin.toggle);
+        if (b != s.SpaceFinish_Harvest) { s.SpaceFinish_Harvest = b; changed = true; }
+        y3 += ROW_ADV;
+        b = GUI.Toggle(R(c3, y3, COL_TOG_W3, ROW_H), s.SpaceFinish_Craft,
+            I18n.T(" 制作", " Craft"), ToggleStyle ?? GUI.skin.toggle);
+        if (b != s.SpaceFinish_Craft) { s.SpaceFinish_Craft = b; changed = true; }
+        y3 += ROW_ADV;
+        b = GUI.Toggle(R(c3, y3, COL_TOG_W3, ROW_H), s.SpaceFinish_Repair,
+            I18n.T(" 修理", " Repair"), ToggleStyle ?? GUI.skin.toggle);
+        if (b != s.SpaceFinish_Repair) { s.SpaceFinish_Repair = b; changed = true; }
+        y3 += ROW_ADV + SECTION_END_ADV;
+
+        // —— QoL 快捷键(背包/搜刮面板内的丢弃/批量/返回) ——
+        y3 = SectionCol(R, c3, y3, COL_W3, I18n.T("QoL 快捷键 (背包/搜刮内)", "QoL Hotkeys (in panels)"));
+        b = GUI.Toggle(R(c3, y3, COL_TOG_W3, ROW_H), s.QoL_HotkeysEnabled,
+            I18n.T(" 启用", " Enabled"), ToggleStyle ?? GUI.skin.toggle);
+        if (b != s.QoL_HotkeysEnabled) { s.QoL_HotkeysEnabled = b; changed = true; }
+        y3 += ROW_ADV;
+        GUI.Label(R(c3, y3, COL_W3, ROW_H),
+            I18n.T($"   丢弃=[{s.QoL_DropKey}] (ModSettings 改键)", $"   Drop=[{s.QoL_DropKey}] (rebind in ModSettings)"),
+            MutedLabel ?? GUI.skin.label);
+        y3 += ROW_ADV;
+        GUI.Label(R(c3, y3, COL_W3, ROW_H),
+            I18n.T($"   批量修饰=[{s.QoL_BulkKey}] (按住+丢弃=丢整堆)", $"   Bulk=[{s.QoL_BulkKey}] (hold + drop = entire stack)"),
+            MutedLabel ?? GUI.skin.label);
+        y3 += ROW_ADV;
+        GUI.Label(R(c3, y3, COL_W3, ROW_H),
+            I18n.T($"   返回=[{s.QoL_BackKey}] (面板内关闭面板)", $"   Back=[{s.QoL_BackKey}] (close panel)"),
+            MutedLabel ?? GUI.skin.label);
         y3 += ROW_ADV + SECTION_END_ADV;
 
         if (changed) s.Save();

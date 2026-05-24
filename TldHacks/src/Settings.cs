@@ -195,6 +195,40 @@ internal class TldHacksSettings : JsonModSettings
     [Name("秒打碎(Panel_BreakDown)")]
     public bool QuickBreakDown = false;
 
+    // —— v2.7.88 空格秒完成 (面板打开时按 Space 立即完成) ——
+    [Name("空格秒完成-拆解")]
+    [Description("Panel_BreakDown 打开时按空格立即完成,跳过按住进度")]
+    public bool SpaceFinish_BreakDown = false;
+
+    [Name("空格秒完成-采集")]
+    [Description("Panel_BodyHarvest 打开时按空格立即完成 (剥皮/取肉)")]
+    public bool SpaceFinish_Harvest = false;
+
+    [Name("空格秒完成-制作")]
+    [Description("Panel_Crafting 打开时按空格立即完成 (制作)")]
+    public bool SpaceFinish_Craft = false;
+
+    [Name("空格秒完成-修理")]
+    [Description("Panel_Repair 打开时按空格立即完成 (修理)")]
+    public bool SpaceFinish_Repair = false;
+
+    // —— v3.0.7 整合 QoL mod 的 hotkey 部分(原 QoL.dll 已被 disable_integrated_mods.bat 禁用) ——
+    [Name("QoL 快捷键-总开关")]
+    [Description("启用 QoL 风格热键(背包/搜刮/制作面板内的键盘操作)")]
+    public bool QoL_HotkeysEnabled = true;
+
+    [Name("QoL-丢弃键")]
+    [Description("背包内按此键丢弃 hover 的物品 1 个;配合批量键丢整堆")]
+    public KeyCode QoL_DropKey = KeyCode.Q;
+
+    [Name("QoL-批量修饰键")]
+    [Description("按住此键 + 丢弃键 = 丢整堆;按住此键 + 拾取/转移键 = 批量操作")]
+    public KeyCode QoL_BulkKey = KeyCode.LeftShift;
+
+    [Name("QoL-返回键")]
+    [Description("在面板内按此键 = 关闭面板返回(等同 Esc)")]
+    public KeyCode QoL_BackKey = KeyCode.Mouse3;
+
     [Name("解锁保险箱/上锁门/柜子")]
     public bool UnlockSafes = false;
 
@@ -242,9 +276,6 @@ internal class TldHacksSettings : JsonModSettings
     [Name("疲劳加成 buff")]
     [Description("强制疲劳 buff 激活(CT: StatusBar fatigue buff=1)")]
     public bool FatigueBuff = false;
-
-    [Name("治愈永久冻伤")]
-    public bool CureFrostbite = false;
 
     [Name("清除死亡惩罚")]
     public bool ClearDeathPenalty = false;
@@ -886,9 +917,9 @@ internal class TldHacksSettings : JsonModSettings
     [Name("解除天气限制")]
     public bool QoL_AutoSurveyUnlock = false;
 
-    [Name("保温瓶增强")]
-    [Description("快捷轮盘喝水/背包分类显示/温度指示优化")]
-    public bool QoL_ImprovedFlasks = true;
+    [Name("出门自动开小地图(MotionTrackerLite)")]
+    [Description("室内→室外场景切换后自动打开 MotionTrackerLite 小地图(需装 MotionTrackerLite mod)")]
+    public bool QoL_AutoOpenMapOnExit = false;
 
     // ═══════════════════════════════════════════════════════════════════════════
     // v2.8.0  Tab 8: Crafting & Fire (CraftAnywhereRedux + MoreCookingSlots)

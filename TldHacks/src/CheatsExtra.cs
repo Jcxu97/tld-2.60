@@ -36,11 +36,11 @@ internal static class Teleport
         new Waypoint("废弃机场(控制塔)",       "AirfieldRegion",            81.90f, 160.30f, -455.30f, "Forsaken Airfield (Tower)"),
         new Waypoint("废弃机场·应急舱",         "AirfieldRegion",          1209.80f, 304.71f, -726.11f, "Forsaken Airfield · Pod"),
         // A —— AshCanyonRegion(灰烬峡谷)
-        new Waypoint("灰烬峡谷地堡",            "AshCanyonRegion",          -42.12f, 172.95f, -796.68f, "Ash Canyon Bunker"),
+        new Waypoint("灰烬峡谷·地堡",           "AshCanyonRegion",          -42.12f, 172.95f, -796.68f, "Ash Canyon · Bunker"),
         // B —— BlackrockRegion(黑岩监狱)
-        new Waypoint("黑岩监狱地堡",            "BlackrockRegion",          705.04f, 373.98f,  816.38f, "Blackrock Bunker"),
+        new Waypoint("黑岩监狱·地堡",           "BlackrockRegion",          705.04f, 373.98f,  816.38f, "Blackrock · Bunker"),
         // C —— CanneryRegion(荒凉水湾)
-        new Waypoint("荒凉水湾地堡",            "CanneryRegion",            328.37f, 344.50f,  833.16f, "Bleak Inlet Bunker"),
+        new Waypoint("荒凉水湾·地堡",           "CanneryRegion",            328.37f, 344.50f,  833.16f, "Bleak Inlet · Bunker"),
         new Waypoint("荒凉水湾·应急舱",         "CanneryRegion",            -39.50f, 103.38f,  501.57f, "Bleak Inlet · Pod"),
         // C —— CoastalRegion(沿海公路)
         new Waypoint("沿海公路·加油站",         "CoastalRegion",            760.51f,  24.00f,  645.93f, "Coastal Hwy · Gas Station"),
@@ -49,8 +49,8 @@ internal static class Teleport
         new Waypoint("林狼雪岭(机舱)",         "CrashMountainRegion",      934.50f, 470.10f, 1174.40f, "Timberwolf Mtn (Plane)"),
         new Waypoint("林狼雪岭·地堡",           "CrashMountainRegion",     1675.41f, 207.32f,  968.21f, "Timberwolf Mtn · Bunker"),
         // L —— LakeRegion(神秘湖)
-        new Waypoint("神秘湖·营地办公室",       "LakeRegion",              1015.87f,  25.91f,  450.86f, "Mystery Lake · Camp Office"),
-        new Waypoint("神秘湖地堡",              "LakeRegion",              1029.06f,  91.99f,  -52.52f, "Mystery Lake Bunker"),
+        new Waypoint("神秘湖(营地办公室)",     "LakeRegion",              1015.87f,  25.91f,  450.86f, "Mystery Lake (Camp Office)"),
+        new Waypoint("神秘湖·地堡",             "LakeRegion",              1029.06f,  91.99f,  -52.52f, "Mystery Lake · Bunker"),
         // M —— MarshRegion(孤寂沼地)
         new Waypoint("孤寂沼地",                "MarshRegion",             1116.10f,-130.60f,  969.10f, "Forlorn Muskeg"),
         new Waypoint("孤寂沼地·地堡",           "MarshRegion",              593.07f, -83.38f, -104.89f, "Forlorn Muskeg · Bunker"),
@@ -59,7 +59,7 @@ internal static class Teleport
         // M —— MountainPassRegion(破碎山道)
         new Waypoint("破碎山道(气象站)",       "MountainPassRegion",       532.10f, 592.10f, -601.20f, "Mountain Pass (Weather)"),
         // M —— MountainTownRegion(山间小镇)
-        new Waypoint("山间小镇地堡",            "MountainTownRegion",      1828.20f, 444.39f, 1771.27f, "Milton Bunker"),
+        new Waypoint("山间小镇·地堡",           "MountainTownRegion",      1828.20f, 444.39f, 1771.27f, "Milton · Bunker"),
         // R —— RiverValleyRegion(寂静河谷)
         new Waypoint("寂静河谷·地堡",           "RiverValleyRegion",        363.44f, 238.61f,  375.49f, "Hushed River Valley · Bunker"),
         new Waypoint("寂静河谷·应急舱",         "RiverValleyRegion",        171.97f, 126.65f,  731.10f, "Hushed River Valley · Pod"),

@@ -51,9 +51,58 @@ public class ModMain : MelonMod
             // v2.7.64 加载 scene transition 历史记录
             TransitionRecorder.Init();
             try { GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency; } catch { }
-            Log.Msg($"TldHacks v6.6 loaded — menu hotkey = {Settings.MenuHotkey}, items = {ItemDatabase.All.Count}+{ItemDatabaseMod.All.Count} mod, transitions = {TransitionRecorder.Count}");
+
+            // v6.9.2 拦截 CatchColdMod 在清除窗口期内反复加感冒/肺炎(只在 ClearInProgress 或 ReSweep 时拦)
+            try { TryPatchCatchColdMod(); } catch (Exception ex) { Log.Warning($"[CatchColdGuard] init: {ex.Message}"); }
+
+            Log.Msg($"TldHacks v6.9.2 loaded — menu hotkey = {Settings.MenuHotkey}, items = {ItemDatabase.All.Count}+{ItemDatabaseMod.All.Count} mod, transitions = {TransitionRecorder.Count}");
         }
         catch (Exception ex) { Log.Error($"[Init] {ex}"); }
+    }
+
+    // v6.9.2 反射 patch CatchColdMod.ColdUtils.{ApplyCold,ApplyPneumonia}:
+    // 一键清除负面期间 + 5s ReSweep 窗口内拦截这两个方法,避免 HypothermiaEnd Postfix 触发的反复加感冒
+    // → ColdPhase 飙升 → 升级肺炎 race
+    // 没装 CatchColdMod 静默跳过,zero coupling
+    private void TryPatchCatchColdMod()
+    {
+        Type coldUtilsType = null;
+        foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            try
+            {
+                if (asm.GetName().Name != "CatchColdMod") continue;
+                coldUtilsType = asm.GetType("CatchColdMod.ColdUtils");
+                if (coldUtilsType != null) break;
+            }
+            catch { }
+        }
+        if (coldUtilsType == null) return; // 用户没装 CatchColdMod
+
+        var prefixMI = typeof(ModMain).GetMethod(nameof(CatchColdGuardPrefix),
+            BindingFlags.NonPublic | BindingFlags.Static);
+        var prefix = new HarmonyLib.HarmonyMethod(prefixMI);
+        int patched = 0;
+        foreach (var name in new[] { "ApplyCold", "ApplyPneumonia" })
+        {
+            try
+            {
+                var mi = coldUtilsType.GetMethod(name, BindingFlags.Public | BindingFlags.Static);
+                if (mi != null) { HarmonyInstance.Patch(mi, prefix: prefix); patched++; }
+            }
+            catch (Exception ex) { Log.Warning($"[CatchColdGuard] patch {name}: {ex.Message}"); }
+        }
+        Log.Msg($"[CatchColdGuard] Patched CatchColdMod.ColdUtils ({patched} methods) — clear-affliction window blocks reinfection.");
+    }
+
+    // 拦截器:清除窗口内 return false 跳过 ApplyCold/ApplyPneumonia
+    private static bool CatchColdGuardPrefix()
+    {
+        if (CheatState.AfflictionClearInProgress || CheatState.AfflictionClearReSweepFramesLeft > 0)
+        {
+            return false; // skip original
+        }
+        return true;
     }
 
     // v3.0.6 跨版本配置兼容: 老 JSON + 新字段时不再整个 Load 失败,
@@ -278,7 +327,6 @@ public class ModMain : MelonMod
         CheatState.WellFedBuff = Settings.WellFedBuff;
         CheatState.FreezingBuff = Settings.FreezingBuff;
         CheatState.FatigueBuff = Settings.FatigueBuff;
-        CheatState.CureFrostbite = Settings.CureFrostbite;
         CheatState.ClearDeathPenalty = Settings.ClearDeathPenalty;
         CheatState.QuickFishing = Settings.QuickFishing;
         // v2.7.86 新增功能
@@ -494,6 +542,15 @@ public class ModMain : MelonMod
                 Patch_GearDegrade.InvalidateCache();
             }
 
+            // v2.7.88: 体力恢复直接每帧写字段 (跳过 Harmony hook,确保滑条立即生效)
+            try { Patch_StaminaTweaks.ApplyTick(); } catch { }
+            // v2.7.88: 哈气特效兜底,每帧主动写字段
+            try { BreathHandlerTick.Tick(); } catch { }
+            // v2.7.88r3: 出门自动开地图
+            try { AutoOpenMapHandler.Tick(); } catch { }
+            // v2.7.88: 空格秒完成 (拆解/采集/制作/修理 面板按空格立刻完成)
+            try { SpaceFinishHandler.Tick(); } catch { }
+
             // v2.7.75 稳定节奏:动态 patch 只在固定低频点 reconcile。
             if ((_frame % 300) == 25) DynamicPatch.Reconcile();
             // v6.0.7 FlaskAnyItem 原生 NOP patch
@@ -540,6 +597,21 @@ public class ModMain : MelonMod
 
             // v2.8.2 NoFallDamage reactive tick — 检测+清除扭伤/衣物破损
             if (CheatState.NoFallDamage && (_frame % 30) == 7) CheatsTick.TickNoFallDamage();
+
+            // v6.7.1 ClearAllAfflictions 二次扫窗口:用户点了一键清除负面之后 ~5s 内分多个 tick 扫
+            //   防御目标:整合包里第三方 Cold/Sickness mod 把 vanilla XxxEnd 当 Postfix 钩子反补"感冒"
+            //   仅在窗口期内生效,不开窗口=零开销;只在关键 tick 扫(覆盖 next-frame / 同 tick / 隔几帧 几种 Postfix 时序)
+            if (CheatState.AfflictionClearReSweepFramesLeft > 0)
+            {
+                int left = CheatState.AfflictionClearReSweepFramesLeft;
+                CheatState.AfflictionClearReSweepFramesLeft--;
+                // 在 left=300/299/295/270/240/180/120/60/1 这几个点各扫一次(共 9 次,FPS 无感)
+                if (left == 300 || left == 299 || left == 295 || left == 270
+                    || left == 240 || left == 180 || left == 120 || left == 60 || left == 1)
+                {
+                    try { Cheats.ClearAllAfflictionsInternal(); } catch { }
+                }
+            }
 
             // 摄像机 / 武器 aim:v2.7.83 从 120 帧降到 30 帧(0.5s),更灵敏
             if ((_frame % 30) == 20) CheatsTick.TickCamera();
@@ -630,6 +702,11 @@ public class ModMain : MelonMod
         TransitionRecorder.OnSceneInitialized(sceneName);
         // v2.7.29 关键修:跨场景时清 BaseAi HashSet,避免 stale wrapper 残留 → AccessViolation
         try { BaseAiRegistry.Known.Clear(); } catch { }
+        // v2.7.93 同理:4 个新注册表也跨场景清
+        try { GearItemRegistry.Known.Clear(); } catch { }
+        try { GunItemRegistry.Known.Clear(); } catch { }
+        try { LockRegistry.Known.Clear(); } catch { }
+        try { PlayerClimbRopeRegistry.Known.Clear(); } catch { }
         // v2.7.64 清 HeatSource snapshot dict,防 long session 累积旧场景的 stale IntPtr
         try { Patch_HeatSource_Update.Snapshots.Clear(); } catch { }
         // v2.7.80 快速采集/割肉 snapshot 闭环 —— 实例随场景 GC,字段污染自然消失
