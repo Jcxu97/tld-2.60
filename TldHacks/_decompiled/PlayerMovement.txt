@@ -1,0 +1,1255 @@
+using System;
+using System.Runtime.CompilerServices;
+using Il2CppInterop.Common.Attributes;
+using Il2CppInterop.Runtime;
+using Il2CppInterop.Runtime.InteropTypes;
+using Il2CppInterop.Runtime.Runtime;
+using UnityEngine;
+
+namespace Il2Cpp;
+
+public class PlayerMovement : MonoBehaviour
+{
+	[OriginalName("Assembly-CSharp.dll", "", "ForcedMovement")]
+	public enum ForcedMovement
+	{
+		None,
+		ForceCrouch,
+		ForceWalk,
+		ForceLimp,
+		ForceLimpSlow
+	}
+
+	private static readonly IntPtr NativeFieldInfoPtr_m_UnlimitedSprint;
+
+	private static readonly IntPtr NativeFieldInfoPtr_m_ForcedMobilityReduction;
+
+	private static readonly IntPtr NativeFieldInfoPtr_m_MaxSlopeOutdoors;
+
+	private static readonly IntPtr NativeFieldInfoPtr_m_MaxSlopeIndoors;
+
+	private static readonly IntPtr NativeFieldInfoPtr_m_IndoorMovementSpeedMultiplier;
+
+	private static readonly IntPtr NativeFieldInfoPtr_m_RoadMovementSpeedMultiplier;
+
+	private static readonly IntPtr NativeFieldInfoPtr_m_WindMovementSpeedMultiplierMin;
+
+	private static readonly IntPtr NativeFieldInfoPtr_m_WindMovementSpeedMultiplierMax;
+
+	private static readonly IntPtr NativeFieldInfoPtr_m_MinWindSpeedToAffectMovement;
+
+	private static readonly IntPtr NativeFieldInfoPtr_m_ShallowSnowSpeedMultiplier;
+
+	private static readonly IntPtr NativeFieldInfoPtr_m_DeepSnowSpeedMultiplierMin;
+
+	private static readonly IntPtr NativeFieldInfoPtr_m_DeepSnowSpeedMultiplierMax;
+
+	private static readonly IntPtr NativeFieldInfoPtr_m_SlowLimpSpeedMultiplier;
+
+	private static readonly IntPtr NativeFieldInfoPtr_m_DetectionRangeScaleWhenCrouched;
+
+	private static readonly IntPtr NativeFieldInfoPtr_m_FootStepRangeScaleWhenCrouched;
+
+	private static readonly IntPtr NativeFieldInfoPtr_m_FootStepRangeScaleWhenWalking;
+
+	private static readonly IntPtr NativeFieldInfoPtr_m_CrouchToStandPerceptionDelaySeconds;
+
+	private static readonly IntPtr NativeFieldInfoPtr_m_SprintStaminaRecoverPerHour;
+
+	private static readonly IntPtr NativeFieldInfoPtr_m_SprintStaminaUsagePerSecond;
+
+	private static readonly IntPtr NativeFieldInfoPtr_m_SecondsNotSprintingBeforeRecovery;
+
+	private static readonly IntPtr NativeFieldInfoPtr_m_MinFatigueToScaleStaminaRecovery;
+
+	private static readonly IntPtr NativeFieldInfoPtr_m_SprintStaminaRecoveryFatigueScale;
+
+	private static readonly IntPtr NativeFieldInfoPtr_m_SprintDisableWhenForwardInputBelow;
+
+	private static readonly IntPtr NativeFieldInfoPtr_m_SprintDisableWhenStrafeInputAbove;
+
+	private static readonly IntPtr NativeFieldInfoPtr_m_ShouldStartAutoWalkingOnForwards;
+
+	private static readonly IntPtr NativeFieldInfoPtr_m_MaxSprintStamina;
+
+	private static readonly IntPtr NativeFieldInfoPtr_m_SprintStamina;
+
+	private static readonly IntPtr NativeFieldInfoPtr_m_LastCrouchedTime;
+
+	private static readonly IntPtr NativeFieldInfoPtr_m_SecondsSprinting;
+
+	private static readonly IntPtr NativeFieldInfoPtr_m_SecondsNotSprinting;
+
+	private static readonly IntPtr NativeFieldInfoPtr_m_DistanceAccumulator;
+
+	private static readonly IntPtr NativeFieldInfoPtr_m_FootstepTrail;
+
+	private static readonly IntPtr NativeFieldInfoPtr_m_StartHasBeenCalled;
+
+	private static readonly IntPtr NativeFieldInfoPtr_m_StaminaRechargeDisabled;
+
+	private static readonly IntPtr NativeFieldInfoPtr_m_ForcedMovement;
+
+	private static readonly IntPtr NativeFieldInfoPtr_m_ForceNoRandomSprain;
+
+	private static readonly IntPtr NativeFieldInfoPtr_m_IsCrouching;
+
+	private static readonly IntPtr NativeFieldInfoPtr_m_AccumulatedDistance;
+
+	private static readonly IntPtr NativeFieldInfoPtr_m_PlayerMovementSaveDataProxy;
+
+	private static readonly IntPtr NativeMethodInfoPtr_get_CurrentStamina_Public_get_Single_0;
+
+	private static readonly IntPtr NativeMethodInfoPtr_get_DefaultMaxStamina_Public_get_Single_0;
+
+	private static readonly IntPtr NativeMethodInfoPtr_get_CurrentMaxStamina_Public_get_Single_0;
+
+	private static readonly IntPtr NativeMethodInfoPtr_Start_Private_Void_0;
+
+	private static readonly IntPtr NativeMethodInfoPtr_Update_Private_Void_0;
+
+	private static readonly IntPtr NativeMethodInfoPtr_Serialize_Public_String_0;
+
+	private static readonly IntPtr NativeMethodInfoPtr_Deserialize_Public_Void_String_0;
+
+	private static readonly IntPtr NativeMethodInfoPtr_SetForceCrouch_Public_Void_Boolean_0;
+
+	private static readonly IntPtr NativeMethodInfoPtr_IsCrouchForced_Public_Boolean_0;
+
+	private static readonly IntPtr NativeMethodInfoPtr_SetForceWalk_Public_Void_Boolean_0;
+
+	private static readonly IntPtr NativeMethodInfoPtr_IsWalkForced_Public_Boolean_0;
+
+	private static readonly IntPtr NativeMethodInfoPtr_IsCrouchOrLimpOrWalkForced_Public_Boolean_0;
+
+	private static readonly IntPtr NativeMethodInfoPtr_SetForceLimp_Public_Void_Boolean_0;
+
+	private static readonly IntPtr NativeMethodInfoPtr_IsLimpForced_Public_Boolean_0;
+
+	private static readonly IntPtr NativeMethodInfoPtr_SetForceLimpSlow_Public_Void_Boolean_0;
+
+	private static readonly IntPtr NativeMethodInfoPtr_IsLimpSlowForced_Public_Boolean_0;
+
+	private static readonly IntPtr NativeMethodInfoPtr_IsNoRandomSprainForced_Public_Boolean_0;
+
+	private static readonly IntPtr NativeMethodInfoPtr_SetForceNoRandomSprain_Public_Void_Boolean_0;
+
+	private static readonly IntPtr NativeMethodInfoPtr_GetMaxSprintStaminaModifier_Public_Single_0;
+
+	private static readonly IntPtr NativeMethodInfoPtr_GetSecondsSprinting_Public_Single_0;
+
+	private static readonly IntPtr NativeMethodInfoPtr_GetSecondsNotSprinting_Public_Single_0;
+
+	private static readonly IntPtr NativeMethodInfoPtr_GetIndoorMovementSlowdownMultiplier_Public_Single_0;
+
+	private static readonly IntPtr NativeMethodInfoPtr_GetMaterialMovementMultiplier_Public_Single_0;
+
+	private static readonly IntPtr NativeMethodInfoPtr_GetLimpMovementMultiplier_Public_Single_0;
+
+	private static readonly IntPtr NativeMethodInfoPtr_GetBodyCarryMovementMultiplier_Public_Single_0;
+
+	private static readonly IntPtr NativeMethodInfoPtr_GetCelestialNavigatorMultiplier_Public_Single_0;
+
+	private static readonly IntPtr NativeMethodInfoPtr_GetSnowDepthMovementMultiplier_Public_Single_0;
+
+	private static readonly IntPtr NativeMethodInfoPtr_GetWindMovementMultiplier_Public_Single_0;
+
+	private static readonly IntPtr NativeMethodInfoPtr_GetSprintMovementMultiplier_Public_Single_0;
+
+	private static readonly IntPtr NativeMethodInfoPtr_MovedDistance_Public_Void_Vector3_Boolean_0;
+
+	private static readonly IntPtr NativeMethodInfoPtr_UpdateDistanceTraveled_Public_Void_Single_0;
+
+	private static readonly IntPtr NativeMethodInfoPtr_GetVelocity_Public_Vector3_0;
+
+	private static readonly IntPtr NativeMethodInfoPtr_GetDetectionRangeScale_Public_Single_0;
+
+	private static readonly IntPtr NativeMethodInfoPtr_GetFootStepsRangeScale_Public_Single_0;
+
+	private static readonly IntPtr NativeMethodInfoPtr_AddSprintStamina_Public_Void_Single_0;
+
+	private static readonly IntPtr NativeMethodInfoPtr_DisableStaminaRecharge_Public_Void_Boolean_0;
+
+	private static readonly IntPtr NativeMethodInfoPtr_IsStaminaRechargeDisabled_Public_Boolean_0;
+
+	private static readonly IntPtr NativeMethodInfoPtr_StaminaUsedForClimbing_Public_Boolean_0;
+
+	private static readonly IntPtr NativeMethodInfoPtr_AllowStaminaToRecover_Private_Boolean_0;
+
+	private static readonly IntPtr NativeMethodInfoPtr__ctor_Public_Void_0;
+
+	public unsafe static bool m_UnlimitedSprint
+	{
+		get
+		{
+			Unsafe.SkipInit(out bool result);
+			IL2CPP.il2cpp_field_static_get_value(NativeFieldInfoPtr_m_UnlimitedSprint, (void*)(&result));
+			return result;
+		}
+		set
+		{
+			IL2CPP.il2cpp_field_static_set_value(NativeFieldInfoPtr_m_UnlimitedSprint, (void*)(&value));
+		}
+	}
+
+	public unsafe static float m_ForcedMobilityReduction
+	{
+		get
+		{
+			Unsafe.SkipInit(out float result);
+			IL2CPP.il2cpp_field_static_get_value(NativeFieldInfoPtr_m_ForcedMobilityReduction, (void*)(&result));
+			return result;
+		}
+		set
+		{
+			IL2CPP.il2cpp_field_static_set_value(NativeFieldInfoPtr_m_ForcedMobilityReduction, (void*)(&value));
+		}
+	}
+
+	public unsafe float m_MaxSlopeOutdoors
+	{
+		get
+		{
+			nint num = (nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_MaxSlopeOutdoors);
+			return *(float*)num;
+		}
+		set
+		{
+			*(float*)((nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_MaxSlopeOutdoors)) = value;
+		}
+	}
+
+	public unsafe float m_MaxSlopeIndoors
+	{
+		get
+		{
+			nint num = (nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_MaxSlopeIndoors);
+			return *(float*)num;
+		}
+		set
+		{
+			*(float*)((nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_MaxSlopeIndoors)) = value;
+		}
+	}
+
+	public unsafe float m_IndoorMovementSpeedMultiplier
+	{
+		get
+		{
+			nint num = (nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_IndoorMovementSpeedMultiplier);
+			return *(float*)num;
+		}
+		set
+		{
+			*(float*)((nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_IndoorMovementSpeedMultiplier)) = value;
+		}
+	}
+
+	public unsafe float m_RoadMovementSpeedMultiplier
+	{
+		get
+		{
+			nint num = (nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_RoadMovementSpeedMultiplier);
+			return *(float*)num;
+		}
+		set
+		{
+			*(float*)((nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_RoadMovementSpeedMultiplier)) = value;
+		}
+	}
+
+	public unsafe float m_WindMovementSpeedMultiplierMin
+	{
+		get
+		{
+			nint num = (nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_WindMovementSpeedMultiplierMin);
+			return *(float*)num;
+		}
+		set
+		{
+			*(float*)((nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_WindMovementSpeedMultiplierMin)) = value;
+		}
+	}
+
+	public unsafe float m_WindMovementSpeedMultiplierMax
+	{
+		get
+		{
+			nint num = (nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_WindMovementSpeedMultiplierMax);
+			return *(float*)num;
+		}
+		set
+		{
+			*(float*)((nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_WindMovementSpeedMultiplierMax)) = value;
+		}
+	}
+
+	public unsafe float m_MinWindSpeedToAffectMovement
+	{
+		get
+		{
+			nint num = (nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_MinWindSpeedToAffectMovement);
+			return *(float*)num;
+		}
+		set
+		{
+			*(float*)((nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_MinWindSpeedToAffectMovement)) = value;
+		}
+	}
+
+	public unsafe float m_ShallowSnowSpeedMultiplier
+	{
+		get
+		{
+			nint num = (nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_ShallowSnowSpeedMultiplier);
+			return *(float*)num;
+		}
+		set
+		{
+			*(float*)((nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_ShallowSnowSpeedMultiplier)) = value;
+		}
+	}
+
+	public unsafe float m_DeepSnowSpeedMultiplierMin
+	{
+		get
+		{
+			nint num = (nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_DeepSnowSpeedMultiplierMin);
+			return *(float*)num;
+		}
+		set
+		{
+			*(float*)((nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_DeepSnowSpeedMultiplierMin)) = value;
+		}
+	}
+
+	public unsafe float m_DeepSnowSpeedMultiplierMax
+	{
+		get
+		{
+			nint num = (nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_DeepSnowSpeedMultiplierMax);
+			return *(float*)num;
+		}
+		set
+		{
+			*(float*)((nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_DeepSnowSpeedMultiplierMax)) = value;
+		}
+	}
+
+	public unsafe float m_SlowLimpSpeedMultiplier
+	{
+		get
+		{
+			nint num = (nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_SlowLimpSpeedMultiplier);
+			return *(float*)num;
+		}
+		set
+		{
+			*(float*)((nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_SlowLimpSpeedMultiplier)) = value;
+		}
+	}
+
+	public unsafe float m_DetectionRangeScaleWhenCrouched
+	{
+		get
+		{
+			nint num = (nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_DetectionRangeScaleWhenCrouched);
+			return *(float*)num;
+		}
+		set
+		{
+			*(float*)((nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_DetectionRangeScaleWhenCrouched)) = value;
+		}
+	}
+
+	public unsafe float m_FootStepRangeScaleWhenCrouched
+	{
+		get
+		{
+			nint num = (nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_FootStepRangeScaleWhenCrouched);
+			return *(float*)num;
+		}
+		set
+		{
+			*(float*)((nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_FootStepRangeScaleWhenCrouched)) = value;
+		}
+	}
+
+	public unsafe float m_FootStepRangeScaleWhenWalking
+	{
+		get
+		{
+			nint num = (nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_FootStepRangeScaleWhenWalking);
+			return *(float*)num;
+		}
+		set
+		{
+			*(float*)((nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_FootStepRangeScaleWhenWalking)) = value;
+		}
+	}
+
+	public unsafe float m_CrouchToStandPerceptionDelaySeconds
+	{
+		get
+		{
+			nint num = (nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_CrouchToStandPerceptionDelaySeconds);
+			return *(float*)num;
+		}
+		set
+		{
+			*(float*)((nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_CrouchToStandPerceptionDelaySeconds)) = value;
+		}
+	}
+
+	public unsafe float m_SprintStaminaRecoverPerHour
+	{
+		get
+		{
+			nint num = (nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_SprintStaminaRecoverPerHour);
+			return *(float*)num;
+		}
+		set
+		{
+			*(float*)((nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_SprintStaminaRecoverPerHour)) = value;
+		}
+	}
+
+	public unsafe float m_SprintStaminaUsagePerSecond
+	{
+		get
+		{
+			nint num = (nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_SprintStaminaUsagePerSecond);
+			return *(float*)num;
+		}
+		set
+		{
+			*(float*)((nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_SprintStaminaUsagePerSecond)) = value;
+		}
+	}
+
+	public unsafe float m_SecondsNotSprintingBeforeRecovery
+	{
+		get
+		{
+			nint num = (nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_SecondsNotSprintingBeforeRecovery);
+			return *(float*)num;
+		}
+		set
+		{
+			*(float*)((nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_SecondsNotSprintingBeforeRecovery)) = value;
+		}
+	}
+
+	public unsafe float m_MinFatigueToScaleStaminaRecovery
+	{
+		get
+		{
+			nint num = (nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_MinFatigueToScaleStaminaRecovery);
+			return *(float*)num;
+		}
+		set
+		{
+			*(float*)((nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_MinFatigueToScaleStaminaRecovery)) = value;
+		}
+	}
+
+	public unsafe float m_SprintStaminaRecoveryFatigueScale
+	{
+		get
+		{
+			nint num = (nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_SprintStaminaRecoveryFatigueScale);
+			return *(float*)num;
+		}
+		set
+		{
+			*(float*)((nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_SprintStaminaRecoveryFatigueScale)) = value;
+		}
+	}
+
+	public unsafe float m_SprintDisableWhenForwardInputBelow
+	{
+		get
+		{
+			nint num = (nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_SprintDisableWhenForwardInputBelow);
+			return *(float*)num;
+		}
+		set
+		{
+			*(float*)((nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_SprintDisableWhenForwardInputBelow)) = value;
+		}
+	}
+
+	public unsafe float m_SprintDisableWhenStrafeInputAbove
+	{
+		get
+		{
+			nint num = (nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_SprintDisableWhenStrafeInputAbove);
+			return *(float*)num;
+		}
+		set
+		{
+			*(float*)((nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_SprintDisableWhenStrafeInputAbove)) = value;
+		}
+	}
+
+	public unsafe bool m_ShouldStartAutoWalkingOnForwards
+	{
+		get
+		{
+			nint num = (nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_ShouldStartAutoWalkingOnForwards);
+			return *(bool*)num;
+		}
+		set
+		{
+			*(bool*)((nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_ShouldStartAutoWalkingOnForwards)) = value;
+		}
+	}
+
+	public unsafe float m_MaxSprintStamina
+	{
+		get
+		{
+			nint num = (nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_MaxSprintStamina);
+			return *(float*)num;
+		}
+		set
+		{
+			*(float*)((nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_MaxSprintStamina)) = value;
+		}
+	}
+
+	public unsafe float m_SprintStamina
+	{
+		get
+		{
+			nint num = (nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_SprintStamina);
+			return *(float*)num;
+		}
+		set
+		{
+			*(float*)((nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_SprintStamina)) = value;
+		}
+	}
+
+	public unsafe float m_LastCrouchedTime
+	{
+		get
+		{
+			nint num = (nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_LastCrouchedTime);
+			return *(float*)num;
+		}
+		set
+		{
+			*(float*)((nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_LastCrouchedTime)) = value;
+		}
+	}
+
+	public unsafe float m_SecondsSprinting
+	{
+		get
+		{
+			nint num = (nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_SecondsSprinting);
+			return *(float*)num;
+		}
+		set
+		{
+			*(float*)((nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_SecondsSprinting)) = value;
+		}
+	}
+
+	public unsafe float m_SecondsNotSprinting
+	{
+		get
+		{
+			nint num = (nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_SecondsNotSprinting);
+			return *(float*)num;
+		}
+		set
+		{
+			*(float*)((nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_SecondsNotSprinting)) = value;
+		}
+	}
+
+	public unsafe float m_DistanceAccumulator
+	{
+		get
+		{
+			nint num = (nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_DistanceAccumulator);
+			return *(float*)num;
+		}
+		set
+		{
+			*(float*)((nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_DistanceAccumulator)) = value;
+		}
+	}
+
+	public unsafe FootstepTrail m_FootstepTrail
+	{
+		get
+		{
+			nint num = (nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_FootstepTrail);
+			IntPtr intPtr = *(IntPtr*)num;
+			return (intPtr != (IntPtr)0) ? Il2CppObjectPool.Get<FootstepTrail>(intPtr) : null;
+		}
+		set
+		{
+			IntPtr num = IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this);
+			IL2CPP.il2cpp_gc_wbarrier_set_field(num, (IntPtr)((nint)num + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_FootstepTrail)), IL2CPP.Il2CppObjectBaseToPtr((Il2CppObjectBase)(object)value));
+		}
+	}
+
+	public unsafe bool m_StartHasBeenCalled
+	{
+		get
+		{
+			nint num = (nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_StartHasBeenCalled);
+			return *(bool*)num;
+		}
+		set
+		{
+			*(bool*)((nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_StartHasBeenCalled)) = value;
+		}
+	}
+
+	public unsafe bool m_StaminaRechargeDisabled
+	{
+		get
+		{
+			nint num = (nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_StaminaRechargeDisabled);
+			return *(bool*)num;
+		}
+		set
+		{
+			*(bool*)((nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_StaminaRechargeDisabled)) = value;
+		}
+	}
+
+	public unsafe ForcedMovement m_ForcedMovement
+	{
+		get
+		{
+			nint num = (nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_ForcedMovement);
+			return *(ForcedMovement*)num;
+		}
+		set
+		{
+			*(ForcedMovement*)((nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_ForcedMovement)) = value;
+		}
+	}
+
+	public unsafe bool m_ForceNoRandomSprain
+	{
+		get
+		{
+			nint num = (nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_ForceNoRandomSprain);
+			return *(bool*)num;
+		}
+		set
+		{
+			*(bool*)((nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_ForceNoRandomSprain)) = value;
+		}
+	}
+
+	public unsafe bool m_IsCrouching
+	{
+		get
+		{
+			nint num = (nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_IsCrouching);
+			return *(bool*)num;
+		}
+		set
+		{
+			*(bool*)((nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_IsCrouching)) = value;
+		}
+	}
+
+	public unsafe float m_AccumulatedDistance
+	{
+		get
+		{
+			nint num = (nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_AccumulatedDistance);
+			return *(float*)num;
+		}
+		set
+		{
+			*(float*)((nint)IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this) + (int)IL2CPP.il2cpp_field_get_offset(NativeFieldInfoPtr_m_AccumulatedDistance)) = value;
+		}
+	}
+
+	public unsafe static PlayerMovementSaveDataProxy m_PlayerMovementSaveDataProxy
+	{
+		get
+		{
+			Unsafe.SkipInit(out IntPtr intPtr);
+			IL2CPP.il2cpp_field_static_get_value(NativeFieldInfoPtr_m_PlayerMovementSaveDataProxy, (void*)(&intPtr));
+			IntPtr intPtr2 = intPtr;
+			return (intPtr2 != (IntPtr)0) ? Il2CppObjectPool.Get<PlayerMovementSaveDataProxy>(intPtr2) : null;
+		}
+		set
+		{
+			IL2CPP.il2cpp_field_static_set_value(NativeFieldInfoPtr_m_PlayerMovementSaveDataProxy, (void*)IL2CPP.Il2CppObjectBaseToPtr((Il2CppObjectBase)(object)value));
+		}
+	}
+
+	public unsafe float CurrentStamina
+	{
+		[CallerCount(0)]
+		get
+		{
+			IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this);
+			IntPtr* ptr = null;
+			Unsafe.SkipInit(out IntPtr intPtr);
+			IntPtr intPtr2 = IL2CPP.il2cpp_runtime_invoke(NativeMethodInfoPtr_get_CurrentStamina_Public_get_Single_0, IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this), (void**)ptr, ref intPtr);
+			Il2CppException.RaiseExceptionIfNecessary(intPtr);
+			return *(float*)IL2CPP.il2cpp_object_unbox(intPtr2);
+		}
+	}
+
+	public unsafe float DefaultMaxStamina
+	{
+		[CallerCount(0)]
+		get
+		{
+			IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this);
+			IntPtr* ptr = null;
+			Unsafe.SkipInit(out IntPtr intPtr);
+			IntPtr intPtr2 = IL2CPP.il2cpp_runtime_invoke(NativeMethodInfoPtr_get_DefaultMaxStamina_Public_get_Single_0, IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this), (void**)ptr, ref intPtr);
+			Il2CppException.RaiseExceptionIfNecessary(intPtr);
+			return *(float*)IL2CPP.il2cpp_object_unbox(intPtr2);
+		}
+	}
+
+	public unsafe float CurrentMaxStamina
+	{
+		[CallerCount(0)]
+		[CachedScanResults(RefRangeStart = 0, RefRangeEnd = 0, XrefRangeStart = 410118, XrefRangeEnd = 410119, MetadataInitTokenRva = 0L, MetadataInitFlagRva = 0L)]
+		get
+		{
+			IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this);
+			IntPtr* ptr = null;
+			Unsafe.SkipInit(out IntPtr intPtr);
+			IntPtr intPtr2 = IL2CPP.il2cpp_runtime_invoke(NativeMethodInfoPtr_get_CurrentMaxStamina_Public_get_Single_0, IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this), (void**)ptr, ref intPtr);
+			Il2CppException.RaiseExceptionIfNecessary(intPtr);
+			return *(float*)IL2CPP.il2cpp_object_unbox(intPtr2);
+		}
+	}
+
+	static PlayerMovement()
+	{
+		Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr = IL2CPP.GetIl2CppClass("Assembly-CSharp.dll", "", "PlayerMovement");
+		IL2CPP.il2cpp_runtime_class_init(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr);
+		NativeFieldInfoPtr_m_UnlimitedSprint = IL2CPP.GetIl2CppField(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, "m_UnlimitedSprint");
+		NativeFieldInfoPtr_m_ForcedMobilityReduction = IL2CPP.GetIl2CppField(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, "m_ForcedMobilityReduction");
+		NativeFieldInfoPtr_m_MaxSlopeOutdoors = IL2CPP.GetIl2CppField(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, "m_MaxSlopeOutdoors");
+		NativeFieldInfoPtr_m_MaxSlopeIndoors = IL2CPP.GetIl2CppField(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, "m_MaxSlopeIndoors");
+		NativeFieldInfoPtr_m_IndoorMovementSpeedMultiplier = IL2CPP.GetIl2CppField(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, "m_IndoorMovementSpeedMultiplier");
+		NativeFieldInfoPtr_m_RoadMovementSpeedMultiplier = IL2CPP.GetIl2CppField(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, "m_RoadMovementSpeedMultiplier");
+		NativeFieldInfoPtr_m_WindMovementSpeedMultiplierMin = IL2CPP.GetIl2CppField(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, "m_WindMovementSpeedMultiplierMin");
+		NativeFieldInfoPtr_m_WindMovementSpeedMultiplierMax = IL2CPP.GetIl2CppField(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, "m_WindMovementSpeedMultiplierMax");
+		NativeFieldInfoPtr_m_MinWindSpeedToAffectMovement = IL2CPP.GetIl2CppField(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, "m_MinWindSpeedToAffectMovement");
+		NativeFieldInfoPtr_m_ShallowSnowSpeedMultiplier = IL2CPP.GetIl2CppField(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, "m_ShallowSnowSpeedMultiplier");
+		NativeFieldInfoPtr_m_DeepSnowSpeedMultiplierMin = IL2CPP.GetIl2CppField(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, "m_DeepSnowSpeedMultiplierMin");
+		NativeFieldInfoPtr_m_DeepSnowSpeedMultiplierMax = IL2CPP.GetIl2CppField(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, "m_DeepSnowSpeedMultiplierMax");
+		NativeFieldInfoPtr_m_SlowLimpSpeedMultiplier = IL2CPP.GetIl2CppField(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, "m_SlowLimpSpeedMultiplier");
+		NativeFieldInfoPtr_m_DetectionRangeScaleWhenCrouched = IL2CPP.GetIl2CppField(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, "m_DetectionRangeScaleWhenCrouched");
+		NativeFieldInfoPtr_m_FootStepRangeScaleWhenCrouched = IL2CPP.GetIl2CppField(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, "m_FootStepRangeScaleWhenCrouched");
+		NativeFieldInfoPtr_m_FootStepRangeScaleWhenWalking = IL2CPP.GetIl2CppField(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, "m_FootStepRangeScaleWhenWalking");
+		NativeFieldInfoPtr_m_CrouchToStandPerceptionDelaySeconds = IL2CPP.GetIl2CppField(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, "m_CrouchToStandPerceptionDelaySeconds");
+		NativeFieldInfoPtr_m_SprintStaminaRecoverPerHour = IL2CPP.GetIl2CppField(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, "m_SprintStaminaRecoverPerHour");
+		NativeFieldInfoPtr_m_SprintStaminaUsagePerSecond = IL2CPP.GetIl2CppField(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, "m_SprintStaminaUsagePerSecond");
+		NativeFieldInfoPtr_m_SecondsNotSprintingBeforeRecovery = IL2CPP.GetIl2CppField(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, "m_SecondsNotSprintingBeforeRecovery");
+		NativeFieldInfoPtr_m_MinFatigueToScaleStaminaRecovery = IL2CPP.GetIl2CppField(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, "m_MinFatigueToScaleStaminaRecovery");
+		NativeFieldInfoPtr_m_SprintStaminaRecoveryFatigueScale = IL2CPP.GetIl2CppField(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, "m_SprintStaminaRecoveryFatigueScale");
+		NativeFieldInfoPtr_m_SprintDisableWhenForwardInputBelow = IL2CPP.GetIl2CppField(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, "m_SprintDisableWhenForwardInputBelow");
+		NativeFieldInfoPtr_m_SprintDisableWhenStrafeInputAbove = IL2CPP.GetIl2CppField(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, "m_SprintDisableWhenStrafeInputAbove");
+		NativeFieldInfoPtr_m_ShouldStartAutoWalkingOnForwards = IL2CPP.GetIl2CppField(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, "m_ShouldStartAutoWalkingOnForwards");
+		NativeFieldInfoPtr_m_MaxSprintStamina = IL2CPP.GetIl2CppField(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, "m_MaxSprintStamina");
+		NativeFieldInfoPtr_m_SprintStamina = IL2CPP.GetIl2CppField(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, "m_SprintStamina");
+		NativeFieldInfoPtr_m_LastCrouchedTime = IL2CPP.GetIl2CppField(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, "m_LastCrouchedTime");
+		NativeFieldInfoPtr_m_SecondsSprinting = IL2CPP.GetIl2CppField(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, "m_SecondsSprinting");
+		NativeFieldInfoPtr_m_SecondsNotSprinting = IL2CPP.GetIl2CppField(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, "m_SecondsNotSprinting");
+		NativeFieldInfoPtr_m_DistanceAccumulator = IL2CPP.GetIl2CppField(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, "m_DistanceAccumulator");
+		NativeFieldInfoPtr_m_FootstepTrail = IL2CPP.GetIl2CppField(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, "m_FootstepTrail");
+		NativeFieldInfoPtr_m_StartHasBeenCalled = IL2CPP.GetIl2CppField(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, "m_StartHasBeenCalled");
+		NativeFieldInfoPtr_m_StaminaRechargeDisabled = IL2CPP.GetIl2CppField(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, "m_StaminaRechargeDisabled");
+		NativeFieldInfoPtr_m_ForcedMovement = IL2CPP.GetIl2CppField(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, "m_ForcedMovement");
+		NativeFieldInfoPtr_m_ForceNoRandomSprain = IL2CPP.GetIl2CppField(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, "m_ForceNoRandomSprain");
+		NativeFieldInfoPtr_m_IsCrouching = IL2CPP.GetIl2CppField(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, "m_IsCrouching");
+		NativeFieldInfoPtr_m_AccumulatedDistance = IL2CPP.GetIl2CppField(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, "m_AccumulatedDistance");
+		NativeFieldInfoPtr_m_PlayerMovementSaveDataProxy = IL2CPP.GetIl2CppField(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, "m_PlayerMovementSaveDataProxy");
+		NativeMethodInfoPtr_get_CurrentStamina_Public_get_Single_0 = IL2CPP.GetIl2CppMethodByToken(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, 100683847);
+		NativeMethodInfoPtr_get_DefaultMaxStamina_Public_get_Single_0 = IL2CPP.GetIl2CppMethodByToken(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, 100683848);
+		NativeMethodInfoPtr_get_CurrentMaxStamina_Public_get_Single_0 = IL2CPP.GetIl2CppMethodByToken(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, 100683849);
+		NativeMethodInfoPtr_Start_Private_Void_0 = IL2CPP.GetIl2CppMethodByToken(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, 100683850);
+		NativeMethodInfoPtr_Update_Private_Void_0 = IL2CPP.GetIl2CppMethodByToken(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, 100683851);
+		NativeMethodInfoPtr_Serialize_Public_String_0 = IL2CPP.GetIl2CppMethodByToken(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, 100683852);
+		NativeMethodInfoPtr_Deserialize_Public_Void_String_0 = IL2CPP.GetIl2CppMethodByToken(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, 100683853);
+		NativeMethodInfoPtr_SetForceCrouch_Public_Void_Boolean_0 = IL2CPP.GetIl2CppMethodByToken(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, 100683854);
+		NativeMethodInfoPtr_IsCrouchForced_Public_Boolean_0 = IL2CPP.GetIl2CppMethodByToken(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, 100683855);
+		NativeMethodInfoPtr_SetForceWalk_Public_Void_Boolean_0 = IL2CPP.GetIl2CppMethodByToken(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, 100683856);
+		NativeMethodInfoPtr_IsWalkForced_Public_Boolean_0 = IL2CPP.GetIl2CppMethodByToken(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, 100683857);
+		NativeMethodInfoPtr_IsCrouchOrLimpOrWalkForced_Public_Boolean_0 = IL2CPP.GetIl2CppMethodByToken(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, 100683858);
+		NativeMethodInfoPtr_SetForceLimp_Public_Void_Boolean_0 = IL2CPP.GetIl2CppMethodByToken(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, 100683859);
+		NativeMethodInfoPtr_IsLimpForced_Public_Boolean_0 = IL2CPP.GetIl2CppMethodByToken(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, 100683860);
+		NativeMethodInfoPtr_SetForceLimpSlow_Public_Void_Boolean_0 = IL2CPP.GetIl2CppMethodByToken(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, 100683861);
+		NativeMethodInfoPtr_IsLimpSlowForced_Public_Boolean_0 = IL2CPP.GetIl2CppMethodByToken(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, 100683862);
+		NativeMethodInfoPtr_IsNoRandomSprainForced_Public_Boolean_0 = IL2CPP.GetIl2CppMethodByToken(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, 100683863);
+		NativeMethodInfoPtr_SetForceNoRandomSprain_Public_Void_Boolean_0 = IL2CPP.GetIl2CppMethodByToken(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, 100683864);
+		NativeMethodInfoPtr_GetMaxSprintStaminaModifier_Public_Single_0 = IL2CPP.GetIl2CppMethodByToken(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, 100683865);
+		NativeMethodInfoPtr_GetSecondsSprinting_Public_Single_0 = IL2CPP.GetIl2CppMethodByToken(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, 100683866);
+		NativeMethodInfoPtr_GetSecondsNotSprinting_Public_Single_0 = IL2CPP.GetIl2CppMethodByToken(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, 100683867);
+		NativeMethodInfoPtr_GetIndoorMovementSlowdownMultiplier_Public_Single_0 = IL2CPP.GetIl2CppMethodByToken(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, 100683868);
+		NativeMethodInfoPtr_GetMaterialMovementMultiplier_Public_Single_0 = IL2CPP.GetIl2CppMethodByToken(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, 100683869);
+		NativeMethodInfoPtr_GetLimpMovementMultiplier_Public_Single_0 = IL2CPP.GetIl2CppMethodByToken(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, 100683870);
+		NativeMethodInfoPtr_GetBodyCarryMovementMultiplier_Public_Single_0 = IL2CPP.GetIl2CppMethodByToken(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, 100683871);
+		NativeMethodInfoPtr_GetCelestialNavigatorMultiplier_Public_Single_0 = IL2CPP.GetIl2CppMethodByToken(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, 100683872);
+		NativeMethodInfoPtr_GetSnowDepthMovementMultiplier_Public_Single_0 = IL2CPP.GetIl2CppMethodByToken(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, 100683873);
+		NativeMethodInfoPtr_GetWindMovementMultiplier_Public_Single_0 = IL2CPP.GetIl2CppMethodByToken(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, 100683874);
+		NativeMethodInfoPtr_GetSprintMovementMultiplier_Public_Single_0 = IL2CPP.GetIl2CppMethodByToken(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, 100683875);
+		NativeMethodInfoPtr_MovedDistance_Public_Void_Vector3_Boolean_0 = IL2CPP.GetIl2CppMethodByToken(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, 100683876);
+		NativeMethodInfoPtr_UpdateDistanceTraveled_Public_Void_Single_0 = IL2CPP.GetIl2CppMethodByToken(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, 100683877);
+		NativeMethodInfoPtr_GetVelocity_Public_Vector3_0 = IL2CPP.GetIl2CppMethodByToken(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, 100683878);
+		NativeMethodInfoPtr_GetDetectionRangeScale_Public_Single_0 = IL2CPP.GetIl2CppMethodByToken(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, 100683879);
+		NativeMethodInfoPtr_GetFootStepsRangeScale_Public_Single_0 = IL2CPP.GetIl2CppMethodByToken(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, 100683880);
+		NativeMethodInfoPtr_AddSprintStamina_Public_Void_Single_0 = IL2CPP.GetIl2CppMethodByToken(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, 100683881);
+		NativeMethodInfoPtr_DisableStaminaRecharge_Public_Void_Boolean_0 = IL2CPP.GetIl2CppMethodByToken(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, 100683882);
+		NativeMethodInfoPtr_IsStaminaRechargeDisabled_Public_Boolean_0 = IL2CPP.GetIl2CppMethodByToken(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, 100683883);
+		NativeMethodInfoPtr_StaminaUsedForClimbing_Public_Boolean_0 = IL2CPP.GetIl2CppMethodByToken(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, 100683884);
+		NativeMethodInfoPtr_AllowStaminaToRecover_Private_Boolean_0 = IL2CPP.GetIl2CppMethodByToken(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, 100683885);
+		NativeMethodInfoPtr__ctor_Public_Void_0 = IL2CPP.GetIl2CppMethodByToken(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr, 100683886);
+	}
+
+	[CallerCount(2)]
+	[CachedScanResults(RefRangeStart = 410140, RefRangeEnd = 410142, XrefRangeStart = 410119, XrefRangeEnd = 410140, MetadataInitTokenRva = 0L, MetadataInitFlagRva = 0L)]
+	public unsafe void Start()
+	{
+		IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this);
+		IntPtr* ptr = null;
+		Unsafe.SkipInit(out IntPtr intPtr);
+		IntPtr intPtr2 = IL2CPP.il2cpp_runtime_invoke(NativeMethodInfoPtr_Start_Private_Void_0, IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this), (void**)ptr, ref intPtr);
+		Il2CppException.RaiseExceptionIfNecessary(intPtr);
+	}
+
+	[CallerCount(0)]
+	[CachedScanResults(RefRangeStart = 0, RefRangeEnd = 0, XrefRangeStart = 410142, XrefRangeEnd = 410235, MetadataInitTokenRva = 0L, MetadataInitFlagRva = 0L)]
+	public unsafe void Update()
+	{
+		IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this);
+		IntPtr* ptr = null;
+		Unsafe.SkipInit(out IntPtr intPtr);
+		IntPtr intPtr2 = IL2CPP.il2cpp_runtime_invoke(NativeMethodInfoPtr_Update_Private_Void_0, IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this), (void**)ptr, ref intPtr);
+		Il2CppException.RaiseExceptionIfNecessary(intPtr);
+	}
+
+	[CallerCount(0)]
+	[CachedScanResults(RefRangeStart = 0, RefRangeEnd = 0, XrefRangeStart = 410235, XrefRangeEnd = 410251, MetadataInitTokenRva = 0L, MetadataInitFlagRva = 0L)]
+	public unsafe string Serialize()
+	{
+		IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this);
+		IntPtr* ptr = null;
+		Unsafe.SkipInit(out IntPtr intPtr);
+		IntPtr intPtr2 = IL2CPP.il2cpp_runtime_invoke(NativeMethodInfoPtr_Serialize_Public_String_0, IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this), (void**)ptr, ref intPtr);
+		Il2CppException.RaiseExceptionIfNecessary(intPtr);
+		return IL2CPP.Il2CppStringToManaged(intPtr2);
+	}
+
+	[CallerCount(0)]
+	[CachedScanResults(RefRangeStart = 0, RefRangeEnd = 0, XrefRangeStart = 410251, XrefRangeEnd = 410265, MetadataInitTokenRva = 0L, MetadataInitFlagRva = 0L)]
+	public unsafe void Deserialize(string text)
+	{
+		IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this);
+		IntPtr* ptr = stackalloc IntPtr[1];
+		*ptr = IL2CPP.ManagedStringToIl2Cpp(text);
+		Unsafe.SkipInit(out IntPtr intPtr);
+		IntPtr intPtr2 = IL2CPP.il2cpp_runtime_invoke(NativeMethodInfoPtr_Deserialize_Public_Void_String_0, IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this), (void**)ptr, ref intPtr);
+		Il2CppException.RaiseExceptionIfNecessary(intPtr);
+	}
+
+	[CallerCount(0)]
+	[CachedScanResults(RefRangeStart = 0, RefRangeEnd = 0, XrefRangeStart = 410265, XrefRangeEnd = 410270, MetadataInitTokenRva = 0L, MetadataInitFlagRva = 0L)]
+	public unsafe void SetForceCrouch(bool enabled)
+	{
+		IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this);
+		IntPtr* ptr = stackalloc IntPtr[1];
+		*ptr = (nint)(&enabled);
+		Unsafe.SkipInit(out IntPtr intPtr);
+		IntPtr intPtr2 = IL2CPP.il2cpp_runtime_invoke(NativeMethodInfoPtr_SetForceCrouch_Public_Void_Boolean_0, IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this), (void**)ptr, ref intPtr);
+		Il2CppException.RaiseExceptionIfNecessary(intPtr);
+	}
+
+	[CallerCount(0)]
+	public unsafe bool IsCrouchForced()
+	{
+		IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this);
+		IntPtr* ptr = null;
+		Unsafe.SkipInit(out IntPtr intPtr);
+		IntPtr intPtr2 = IL2CPP.il2cpp_runtime_invoke(NativeMethodInfoPtr_IsCrouchForced_Public_Boolean_0, IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this), (void**)ptr, ref intPtr);
+		Il2CppException.RaiseExceptionIfNecessary(intPtr);
+		return *(bool*)IL2CPP.il2cpp_object_unbox(intPtr2);
+	}
+
+	[CallerCount(0)]
+	public unsafe void SetForceWalk(bool enabled)
+	{
+		IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this);
+		IntPtr* ptr = stackalloc IntPtr[1];
+		*ptr = (nint)(&enabled);
+		Unsafe.SkipInit(out IntPtr intPtr);
+		IntPtr intPtr2 = IL2CPP.il2cpp_runtime_invoke(NativeMethodInfoPtr_SetForceWalk_Public_Void_Boolean_0, IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this), (void**)ptr, ref intPtr);
+		Il2CppException.RaiseExceptionIfNecessary(intPtr);
+	}
+
+	[CallerCount(0)]
+	public unsafe bool IsWalkForced()
+	{
+		IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this);
+		IntPtr* ptr = null;
+		Unsafe.SkipInit(out IntPtr intPtr);
+		IntPtr intPtr2 = IL2CPP.il2cpp_runtime_invoke(NativeMethodInfoPtr_IsWalkForced_Public_Boolean_0, IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this), (void**)ptr, ref intPtr);
+		Il2CppException.RaiseExceptionIfNecessary(intPtr);
+		return *(bool*)IL2CPP.il2cpp_object_unbox(intPtr2);
+	}
+
+	[CallerCount(0)]
+	public unsafe bool IsCrouchOrLimpOrWalkForced()
+	{
+		IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this);
+		IntPtr* ptr = null;
+		Unsafe.SkipInit(out IntPtr intPtr);
+		IntPtr intPtr2 = IL2CPP.il2cpp_runtime_invoke(NativeMethodInfoPtr_IsCrouchOrLimpOrWalkForced_Public_Boolean_0, IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this), (void**)ptr, ref intPtr);
+		Il2CppException.RaiseExceptionIfNecessary(intPtr);
+		return *(bool*)IL2CPP.il2cpp_object_unbox(intPtr2);
+	}
+
+	[CallerCount(0)]
+	public unsafe void SetForceLimp(bool enabled)
+	{
+		IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this);
+		IntPtr* ptr = stackalloc IntPtr[1];
+		*ptr = (nint)(&enabled);
+		Unsafe.SkipInit(out IntPtr intPtr);
+		IntPtr intPtr2 = IL2CPP.il2cpp_runtime_invoke(NativeMethodInfoPtr_SetForceLimp_Public_Void_Boolean_0, IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this), (void**)ptr, ref intPtr);
+		Il2CppException.RaiseExceptionIfNecessary(intPtr);
+	}
+
+	[CallerCount(0)]
+	public unsafe bool IsLimpForced()
+	{
+		IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this);
+		IntPtr* ptr = null;
+		Unsafe.SkipInit(out IntPtr intPtr);
+		IntPtr intPtr2 = IL2CPP.il2cpp_runtime_invoke(NativeMethodInfoPtr_IsLimpForced_Public_Boolean_0, IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this), (void**)ptr, ref intPtr);
+		Il2CppException.RaiseExceptionIfNecessary(intPtr);
+		return *(bool*)IL2CPP.il2cpp_object_unbox(intPtr2);
+	}
+
+	[CallerCount(0)]
+	public unsafe void SetForceLimpSlow(bool enabled)
+	{
+		IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this);
+		IntPtr* ptr = stackalloc IntPtr[1];
+		*ptr = (nint)(&enabled);
+		Unsafe.SkipInit(out IntPtr intPtr);
+		IntPtr intPtr2 = IL2CPP.il2cpp_runtime_invoke(NativeMethodInfoPtr_SetForceLimpSlow_Public_Void_Boolean_0, IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this), (void**)ptr, ref intPtr);
+		Il2CppException.RaiseExceptionIfNecessary(intPtr);
+	}
+
+	[CallerCount(0)]
+	public unsafe bool IsLimpSlowForced()
+	{
+		IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this);
+		IntPtr* ptr = null;
+		Unsafe.SkipInit(out IntPtr intPtr);
+		IntPtr intPtr2 = IL2CPP.il2cpp_runtime_invoke(NativeMethodInfoPtr_IsLimpSlowForced_Public_Boolean_0, IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this), (void**)ptr, ref intPtr);
+		Il2CppException.RaiseExceptionIfNecessary(intPtr);
+		return *(bool*)IL2CPP.il2cpp_object_unbox(intPtr2);
+	}
+
+	[CallerCount(0)]
+	public unsafe bool IsNoRandomSprainForced()
+	{
+		IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this);
+		IntPtr* ptr = null;
+		Unsafe.SkipInit(out IntPtr intPtr);
+		IntPtr intPtr2 = IL2CPP.il2cpp_runtime_invoke(NativeMethodInfoPtr_IsNoRandomSprainForced_Public_Boolean_0, IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this), (void**)ptr, ref intPtr);
+		Il2CppException.RaiseExceptionIfNecessary(intPtr);
+		return *(bool*)IL2CPP.il2cpp_object_unbox(intPtr2);
+	}
+
+	[CallerCount(0)]
+	public unsafe void SetForceNoRandomSprain(bool isNoRandomSprainForced)
+	{
+		IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this);
+		IntPtr* ptr = stackalloc IntPtr[1];
+		*ptr = (nint)(&isNoRandomSprainForced);
+		Unsafe.SkipInit(out IntPtr intPtr);
+		IntPtr intPtr2 = IL2CPP.il2cpp_runtime_invoke(NativeMethodInfoPtr_SetForceNoRandomSprain_Public_Void_Boolean_0, IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this), (void**)ptr, ref intPtr);
+		Il2CppException.RaiseExceptionIfNecessary(intPtr);
+	}
+
+	[CallerCount(14)]
+	[CachedScanResults(RefRangeStart = 410335, RefRangeEnd = 410349, XrefRangeStart = 410270, XrefRangeEnd = 410335, MetadataInitTokenRva = 0L, MetadataInitFlagRva = 0L)]
+	public unsafe float GetMaxSprintStaminaModifier()
+	{
+		IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this);
+		IntPtr* ptr = null;
+		Unsafe.SkipInit(out IntPtr intPtr);
+		IntPtr intPtr2 = IL2CPP.il2cpp_runtime_invoke(NativeMethodInfoPtr_GetMaxSprintStaminaModifier_Public_Single_0, IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this), (void**)ptr, ref intPtr);
+		Il2CppException.RaiseExceptionIfNecessary(intPtr);
+		return *(float*)IL2CPP.il2cpp_object_unbox(intPtr2);
+	}
+
+	[CallerCount(0)]
+	public unsafe float GetSecondsSprinting()
+	{
+		IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this);
+		IntPtr* ptr = null;
+		Unsafe.SkipInit(out IntPtr intPtr);
+		IntPtr intPtr2 = IL2CPP.il2cpp_runtime_invoke(NativeMethodInfoPtr_GetSecondsSprinting_Public_Single_0, IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this), (void**)ptr, ref intPtr);
+		Il2CppException.RaiseExceptionIfNecessary(intPtr);
+		return *(float*)IL2CPP.il2cpp_object_unbox(intPtr2);
+	}
+
+	[CallerCount(0)]
+	public unsafe float GetSecondsNotSprinting()
+	{
+		IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this);
+		IntPtr* ptr = null;
+		Unsafe.SkipInit(out IntPtr intPtr);
+		IntPtr intPtr2 = IL2CPP.il2cpp_runtime_invoke(NativeMethodInfoPtr_GetSecondsNotSprinting_Public_Single_0, IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this), (void**)ptr, ref intPtr);
+		Il2CppException.RaiseExceptionIfNecessary(intPtr);
+		return *(float*)IL2CPP.il2cpp_object_unbox(intPtr2);
+	}
+
+	[CallerCount(0)]
+	[CachedScanResults(RefRangeStart = 0, RefRangeEnd = 0, XrefRangeStart = 410349, XrefRangeEnd = 410354, MetadataInitTokenRva = 0L, MetadataInitFlagRva = 0L)]
+	public unsafe float GetIndoorMovementSlowdownMultiplier()
+	{
+		IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this);
+		IntPtr* ptr = null;
+		Unsafe.SkipInit(out IntPtr intPtr);
+		IntPtr intPtr2 = IL2CPP.il2cpp_runtime_invoke(NativeMethodInfoPtr_GetIndoorMovementSlowdownMultiplier_Public_Single_0, IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this), (void**)ptr, ref intPtr);
+		Il2CppException.RaiseExceptionIfNecessary(intPtr);
+		return *(float*)IL2CPP.il2cpp_object_unbox(intPtr2);
+	}
+
+	[CallerCount(0)]
+	[CachedScanResults(RefRangeStart = 0, RefRangeEnd = 0, XrefRangeStart = 410354, XrefRangeEnd = 410367, MetadataInitTokenRva = 0L, MetadataInitFlagRva = 0L)]
+	public unsafe float GetMaterialMovementMultiplier()
+	{
+		IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this);
+		IntPtr* ptr = null;
+		Unsafe.SkipInit(out IntPtr intPtr);
+		IntPtr intPtr2 = IL2CPP.il2cpp_runtime_invoke(NativeMethodInfoPtr_GetMaterialMovementMultiplier_Public_Single_0, IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this), (void**)ptr, ref intPtr);
+		Il2CppException.RaiseExceptionIfNecessary(intPtr);
+		return *(float*)IL2CPP.il2cpp_object_unbox(intPtr2);
+	}
+
+	[CallerCount(0)]
+	public unsafe float GetLimpMovementMultiplier()
+	{
+		IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this);
+		IntPtr* ptr = null;
+		Unsafe.SkipInit(out IntPtr intPtr);
+		IntPtr intPtr2 = IL2CPP.il2cpp_runtime_invoke(NativeMethodInfoPtr_GetLimpMovementMultiplier_Public_Single_0, IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this), (void**)ptr, ref intPtr);
+		Il2CppException.RaiseExceptionIfNecessary(intPtr);
+		return *(float*)IL2CPP.il2cpp_object_unbox(intPtr2);
+	}
+
+	[CallerCount(2)]
+	[CachedScanResults(RefRangeStart = 410391, RefRangeEnd = 410393, XrefRangeStart = 410367, XrefRangeEnd = 410391, MetadataInitTokenRva = 0L, MetadataInitFlagRva = 0L)]
+	public unsafe float GetBodyCarryMovementMultiplier()
+	{
+		IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this);
+		IntPtr* ptr = null;
+		Unsafe.SkipInit(out IntPtr intPtr);
+		IntPtr intPtr2 = IL2CPP.il2cpp_runtime_invoke(NativeMethodInfoPtr_GetBodyCarryMovementMultiplier_Public_Single_0, IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this), (void**)ptr, ref intPtr);
+		Il2CppException.RaiseExceptionIfNecessary(intPtr);
+		return *(float*)IL2CPP.il2cpp_object_unbox(intPtr2);
+	}
+
+	[CallerCount(0)]
+	[CachedScanResults(RefRangeStart = 0, RefRangeEnd = 0, XrefRangeStart = 410393, XrefRangeEnd = 410409, MetadataInitTokenRva = 0L, MetadataInitFlagRva = 0L)]
+	public unsafe float GetCelestialNavigatorMultiplier()
+	{
+		IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this);
+		IntPtr* ptr = null;
+		Unsafe.SkipInit(out IntPtr intPtr);
+		IntPtr intPtr2 = IL2CPP.il2cpp_runtime_invoke(NativeMethodInfoPtr_GetCelestialNavigatorMultiplier_Public_Single_0, IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this), (void**)ptr, ref intPtr);
+		Il2CppException.RaiseExceptionIfNecessary(intPtr);
+		return *(float*)IL2CPP.il2cpp_object_unbox(intPtr2);
+	}
+
+	[CallerCount(1)]
+	[CachedScanResults(RefRangeStart = 410420, RefRangeEnd = 410421, XrefRangeStart = 410409, XrefRangeEnd = 410420, MetadataInitTokenRva = 0L, MetadataInitFlagRva = 0L)]
+	public unsafe float GetSnowDepthMovementMultiplier()
+	{
+		IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this);
+		IntPtr* ptr = null;
+		Unsafe.SkipInit(out IntPtr intPtr);
+		IntPtr intPtr2 = IL2CPP.il2cpp_runtime_invoke(NativeMethodInfoPtr_GetSnowDepthMovementMultiplier_Public_Single_0, IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this), (void**)ptr, ref intPtr);
+		Il2CppException.RaiseExceptionIfNecessary(intPtr);
+		return *(float*)IL2CPP.il2cpp_object_unbox(intPtr2);
+	}
+
+	[CallerCount(1)]
+	[CachedScanResults(RefRangeStart = 410459, RefRangeEnd = 410460, XrefRangeStart = 410421, XrefRangeEnd = 410459, MetadataInitTokenRva = 0L, MetadataInitFlagRva = 0L)]
+	public unsafe float GetWindMovementMultiplier()
+	{
+		IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this);
+		IntPtr* ptr = null;
+		Unsafe.SkipInit(out IntPtr intPtr);
+		IntPtr intPtr2 = IL2CPP.il2cpp_runtime_invoke(NativeMethodInfoPtr_GetWindMovementMultiplier_Public_Single_0, IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this), (void**)ptr, ref intPtr);
+		Il2CppException.RaiseExceptionIfNecessary(intPtr);
+		return *(float*)IL2CPP.il2cpp_object_unbox(intPtr2);
+	}
+
+	[CallerCount(0)]
+	[CachedScanResults(RefRangeStart = 0, RefRangeEnd = 0, XrefRangeStart = 410460, XrefRangeEnd = 410471, MetadataInitTokenRva = 0L, MetadataInitFlagRva = 0L)]
+	public unsafe float GetSprintMovementMultiplier()
+	{
+		IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this);
+		IntPtr* ptr = null;
+		Unsafe.SkipInit(out IntPtr intPtr);
+		IntPtr intPtr2 = IL2CPP.il2cpp_runtime_invoke(NativeMethodInfoPtr_GetSprintMovementMultiplier_Public_Single_0, IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this), (void**)ptr, ref intPtr);
+		Il2CppException.RaiseExceptionIfNecessary(intPtr);
+		return *(float*)IL2CPP.il2cpp_object_unbox(intPtr2);
+	}
+
+	[CallerCount(1)]
+	[CachedScanResults(RefRangeStart = 410569, RefRangeEnd = 410570, XrefRangeStart = 410471, XrefRangeEnd = 410569, MetadataInitTokenRva = 0L, MetadataInitFlagRva = 0L)]
+	public unsafe void MovedDistance(Vector3 delta, bool wasStopped)
+	{
+		IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this);
+		IntPtr* ptr = stackalloc IntPtr[2];
+		*ptr = (nint)(&delta);
+		*(bool**)((byte*)ptr + checked((nuint)1u * unchecked((nuint)sizeof(IntPtr)))) = &wasStopped;
+		Unsafe.SkipInit(out IntPtr intPtr);
+		IntPtr intPtr2 = IL2CPP.il2cpp_runtime_invoke(NativeMethodInfoPtr_MovedDistance_Public_Void_Vector3_Boolean_0, IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this), (void**)ptr, ref intPtr);
+		Il2CppException.RaiseExceptionIfNecessary(intPtr);
+	}
+
+	[CallerCount(0)]
+	[CachedScanResults(RefRangeStart = 0, RefRangeEnd = 0, XrefRangeStart = 410570, XrefRangeEnd = 410577, MetadataInitTokenRva = 0L, MetadataInitFlagRva = 0L)]
+	public unsafe void UpdateDistanceTraveled(float dist)
+	{
+		IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this);
+		IntPtr* ptr = stackalloc IntPtr[1];
+		*ptr = (nint)(&dist);
+		Unsafe.SkipInit(out IntPtr intPtr);
+		IntPtr intPtr2 = IL2CPP.il2cpp_runtime_invoke(NativeMethodInfoPtr_UpdateDistanceTraveled_Public_Void_Single_0, IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this), (void**)ptr, ref intPtr);
+		Il2CppException.RaiseExceptionIfNecessary(intPtr);
+	}
+
+	[CallerCount(0)]
+	[CachedScanResults(RefRangeStart = 0, RefRangeEnd = 0, XrefRangeStart = 410577, XrefRangeEnd = 410581, MetadataInitTokenRva = 0L, MetadataInitFlagRva = 0L)]
+	public unsafe Vector3 GetVelocity()
+	{
+		IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this);
+		IntPtr* ptr = null;
+		Unsafe.SkipInit(out IntPtr intPtr);
+		IntPtr intPtr2 = IL2CPP.il2cpp_runtime_invoke(NativeMethodInfoPtr_GetVelocity_Public_Vector3_0, IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this), (void**)ptr, ref intPtr);
+		Il2CppException.RaiseExceptionIfNecessary(intPtr);
+		return *(Vector3*)IL2CPP.il2cpp_object_unbox(intPtr2);
+	}
+
+	[CallerCount(0)]
+	[CachedScanResults(RefRangeStart = 0, RefRangeEnd = 0, XrefRangeStart = 410581, XrefRangeEnd = 410588, MetadataInitTokenRva = 0L, MetadataInitFlagRva = 0L)]
+	public unsafe float GetDetectionRangeScale()
+	{
+		IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this);
+		IntPtr* ptr = null;
+		Unsafe.SkipInit(out IntPtr intPtr);
+		IntPtr intPtr2 = IL2CPP.il2cpp_runtime_invoke(NativeMethodInfoPtr_GetDetectionRangeScale_Public_Single_0, IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this), (void**)ptr, ref intPtr);
+		Il2CppException.RaiseExceptionIfNecessary(intPtr);
+		return *(float*)IL2CPP.il2cpp_object_unbox(intPtr2);
+	}
+
+	[CallerCount(0)]
+	[CachedScanResults(RefRangeStart = 0, RefRangeEnd = 0, XrefRangeStart = 410588, XrefRangeEnd = 410597, MetadataInitTokenRva = 0L, MetadataInitFlagRva = 0L)]
+	public unsafe float GetFootStepsRangeScale()
+	{
+		IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this);
+		IntPtr* ptr = null;
+		Unsafe.SkipInit(out IntPtr intPtr);
+		IntPtr intPtr2 = IL2CPP.il2cpp_runtime_invoke(NativeMethodInfoPtr_GetFootStepsRangeScale_Public_Single_0, IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this), (void**)ptr, ref intPtr);
+		Il2CppException.RaiseExceptionIfNecessary(intPtr);
+		return *(float*)IL2CPP.il2cpp_object_unbox(intPtr2);
+	}
+
+	[CallerCount(15)]
+	[CachedScanResults(RefRangeStart = 410601, RefRangeEnd = 410616, XrefRangeStart = 410597, XrefRangeEnd = 410601, MetadataInitTokenRva = 0L, MetadataInitFlagRva = 0L)]
+	public unsafe void AddSprintStamina(float stamina)
+	{
+		IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this);
+		IntPtr* ptr = stackalloc IntPtr[1];
+		*ptr = (nint)(&stamina);
+		Unsafe.SkipInit(out IntPtr intPtr);
+		IntPtr intPtr2 = IL2CPP.il2cpp_runtime_invoke(NativeMethodInfoPtr_AddSprintStamina_Public_Void_Single_0, IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this), (void**)ptr, ref intPtr);
+		Il2CppException.RaiseExceptionIfNecessary(intPtr);
+	}
+
+	[CallerCount(0)]
+	public unsafe void DisableStaminaRecharge(bool disabled)
+	{
+		IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this);
+		IntPtr* ptr = stackalloc IntPtr[1];
+		*ptr = (nint)(&disabled);
+		Unsafe.SkipInit(out IntPtr intPtr);
+		IntPtr intPtr2 = IL2CPP.il2cpp_runtime_invoke(NativeMethodInfoPtr_DisableStaminaRecharge_Public_Void_Boolean_0, IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this), (void**)ptr, ref intPtr);
+		Il2CppException.RaiseExceptionIfNecessary(intPtr);
+	}
+
+	[CallerCount(0)]
+	public unsafe bool IsStaminaRechargeDisabled()
+	{
+		IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this);
+		IntPtr* ptr = null;
+		Unsafe.SkipInit(out IntPtr intPtr);
+		IntPtr intPtr2 = IL2CPP.il2cpp_runtime_invoke(NativeMethodInfoPtr_IsStaminaRechargeDisabled_Public_Boolean_0, IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this), (void**)ptr, ref intPtr);
+		Il2CppException.RaiseExceptionIfNecessary(intPtr);
+		return *(bool*)IL2CPP.il2cpp_object_unbox(intPtr2);
+	}
+
+	[CallerCount(2)]
+	[CachedScanResults(RefRangeStart = 410627, RefRangeEnd = 410629, XrefRangeStart = 410616, XrefRangeEnd = 410627, MetadataInitTokenRva = 0L, MetadataInitFlagRva = 0L)]
+	public unsafe bool StaminaUsedForClimbing()
+	{
+		IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this);
+		IntPtr* ptr = null;
+		Unsafe.SkipInit(out IntPtr intPtr);
+		IntPtr intPtr2 = IL2CPP.il2cpp_runtime_invoke(NativeMethodInfoPtr_StaminaUsedForClimbing_Public_Boolean_0, IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this), (void**)ptr, ref intPtr);
+		Il2CppException.RaiseExceptionIfNecessary(intPtr);
+		return *(bool*)IL2CPP.il2cpp_object_unbox(intPtr2);
+	}
+
+	[CallerCount(0)]
+	[CachedScanResults(RefRangeStart = 0, RefRangeEnd = 0, XrefRangeStart = 410629, XrefRangeEnd = 410642, MetadataInitTokenRva = 0L, MetadataInitFlagRva = 0L)]
+	public unsafe bool AllowStaminaToRecover()
+	{
+		IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this);
+		IntPtr* ptr = null;
+		Unsafe.SkipInit(out IntPtr intPtr);
+		IntPtr intPtr2 = IL2CPP.il2cpp_runtime_invoke(NativeMethodInfoPtr_AllowStaminaToRecover_Private_Boolean_0, IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this), (void**)ptr, ref intPtr);
+		Il2CppException.RaiseExceptionIfNecessary(intPtr);
+		return *(bool*)IL2CPP.il2cpp_object_unbox(intPtr2);
+	}
+
+	[CallerCount(0)]
+	[CachedScanResults(RefRangeStart = 0, RefRangeEnd = 0, XrefRangeStart = 410642, XrefRangeEnd = 410645, MetadataInitTokenRva = 0L, MetadataInitFlagRva = 0L)]
+	public unsafe PlayerMovement()
+		: this(IL2CPP.il2cpp_object_new(Il2CppClassPointerStore<PlayerMovement>.NativeClassPtr))
+	{
+		IntPtr* ptr = null;
+		Unsafe.SkipInit(out IntPtr intPtr);
+		IntPtr intPtr2 = IL2CPP.il2cpp_runtime_invoke(NativeMethodInfoPtr__ctor_Public_Void_0, IL2CPP.Il2CppObjectBaseToPtrNotNull((Il2CppObjectBase)(object)this), (void**)ptr, ref intPtr);
+		Il2CppException.RaiseExceptionIfNecessary(intPtr);
+	}
+
+	public PlayerMovement(IntPtr pointer)
+		: base(pointer)
+	{
+	}
+}
+You are not using the latest version of the tool, please update.
+Latest version is '10.0.1.8346' (yours is '8.2.0.7535-95108c96')

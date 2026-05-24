@@ -1,0 +1,478 @@
+using Cpp2ILInjected;
+using UnityEngine;
+
+[Token(Token = "0x20008BE")]
+public class PlayerMovement : MonoBehaviour
+{
+	[Token(Token = "0x20008BF")]
+	public enum ForcedMovement
+	{
+		[Token(Token = "0x4005B52")]
+		None,
+		[Token(Token = "0x4005B53")]
+		ForceCrouch,
+		[Token(Token = "0x4005B54")]
+		ForceWalk,
+		[Token(Token = "0x4005B55")]
+		ForceLimp,
+		[Token(Token = "0x4005B56")]
+		ForceLimpSlow
+	}
+
+	[Token(Token = "0x4005B2A")]
+	public static bool m_UnlimitedSprint;
+
+	[Token(Token = "0x4005B2B")]
+	public static float m_ForcedMobilityReduction;
+
+	[Range(0f, 90f)]
+	[Token(Token = "0x4005B2C")]
+	[FieldOffset(Offset = "0x20")]
+	public float m_MaxSlopeOutdoors;
+
+	[Range(0f, 90f)]
+	[Token(Token = "0x4005B2D")]
+	[FieldOffset(Offset = "0x24")]
+	public float m_MaxSlopeIndoors;
+
+	[Header("Speed")]
+	[Range(0f, 1f)]
+	[Token(Token = "0x4005B2E")]
+	[FieldOffset(Offset = "0x28")]
+	public float m_IndoorMovementSpeedMultiplier;
+
+	[Range(0f, 2f)]
+	[Token(Token = "0x4005B2F")]
+	[FieldOffset(Offset = "0x2C")]
+	public float m_RoadMovementSpeedMultiplier;
+
+	[Range(0f, 1f)]
+	[Token(Token = "0x4005B30")]
+	[FieldOffset(Offset = "0x30")]
+	public float m_WindMovementSpeedMultiplierMin;
+
+	[Range(1f, 2f)]
+	[Token(Token = "0x4005B31")]
+	[FieldOffset(Offset = "0x34")]
+	public float m_WindMovementSpeedMultiplierMax;
+
+	[Range(0f, 60f)]
+	[Token(Token = "0x4005B32")]
+	[FieldOffset(Offset = "0x38")]
+	public float m_MinWindSpeedToAffectMovement;
+
+	[Range(0f, 2f)]
+	[Token(Token = "0x4005B33")]
+	[FieldOffset(Offset = "0x3C")]
+	public float m_ShallowSnowSpeedMultiplier;
+
+	[Range(0f, 2f)]
+	[Token(Token = "0x4005B34")]
+	[FieldOffset(Offset = "0x40")]
+	public float m_DeepSnowSpeedMultiplierMin;
+
+	[Range(0f, 2f)]
+	[Token(Token = "0x4005B35")]
+	[FieldOffset(Offset = "0x44")]
+	public float m_DeepSnowSpeedMultiplierMax;
+
+	[Range(0f, 1f)]
+	[Token(Token = "0x4005B36")]
+	[FieldOffset(Offset = "0x48")]
+	public float m_SlowLimpSpeedMultiplier;
+
+	[Header("Detection")]
+	[Range(0f, 1f)]
+	[Token(Token = "0x4005B37")]
+	[FieldOffset(Offset = "0x4C")]
+	public float m_DetectionRangeScaleWhenCrouched;
+
+	[Range(0f, 1f)]
+	[Token(Token = "0x4005B38")]
+	[FieldOffset(Offset = "0x50")]
+	public float m_FootStepRangeScaleWhenCrouched;
+
+	[Range(0f, 1f)]
+	[Token(Token = "0x4005B39")]
+	[FieldOffset(Offset = "0x54")]
+	public float m_FootStepRangeScaleWhenWalking;
+
+	[Range(0f, 5f)]
+	[Token(Token = "0x4005B3A")]
+	[FieldOffset(Offset = "0x58")]
+	public float m_CrouchToStandPerceptionDelaySeconds;
+
+	[Header("Sprinting")]
+	[Range(0f, 1000f)]
+	[Token(Token = "0x4005B3B")]
+	[FieldOffset(Offset = "0x5C")]
+	public float m_SprintStaminaRecoverPerHour;
+
+	[Range(0f, 10f)]
+	[Token(Token = "0x4005B3C")]
+	[FieldOffset(Offset = "0x60")]
+	public float m_SprintStaminaUsagePerSecond;
+
+	[Range(0f, 10f)]
+	[Token(Token = "0x4005B3D")]
+	[FieldOffset(Offset = "0x64")]
+	public float m_SecondsNotSprintingBeforeRecovery;
+
+	[Range(0f, 100f)]
+	[Token(Token = "0x4005B3E")]
+	[FieldOffset(Offset = "0x68")]
+	public float m_MinFatigueToScaleStaminaRecovery;
+
+	[Range(0f, 100f)]
+	[Token(Token = "0x4005B3F")]
+	[FieldOffset(Offset = "0x6C")]
+	public float m_SprintStaminaRecoveryFatigueScale;
+
+	[Range(0f, 1f)]
+	[Token(Token = "0x4005B40")]
+	[FieldOffset(Offset = "0x70")]
+	public float m_SprintDisableWhenForwardInputBelow;
+
+	[Range(0f, 1f)]
+	[Token(Token = "0x4005B41")]
+	[FieldOffset(Offset = "0x74")]
+	public float m_SprintDisableWhenStrafeInputAbove;
+
+	[Token(Token = "0x4005B42")]
+	[FieldOffset(Offset = "0x78")]
+	public bool m_ShouldStartAutoWalkingOnForwards;
+
+	[Token(Token = "0x4005B43")]
+	[FieldOffset(Offset = "0x7C")]
+	private float m_MaxSprintStamina;
+
+	[Token(Token = "0x4005B44")]
+	[FieldOffset(Offset = "0x80")]
+	private float m_SprintStamina;
+
+	[Token(Token = "0x4005B45")]
+	[FieldOffset(Offset = "0x84")]
+	private float m_LastCrouchedTime;
+
+	[Token(Token = "0x4005B46")]
+	[FieldOffset(Offset = "0x88")]
+	private float m_SecondsSprinting;
+
+	[Token(Token = "0x4005B47")]
+	[FieldOffset(Offset = "0x8C")]
+	private float m_SecondsNotSprinting;
+
+	[Token(Token = "0x4005B48")]
+	[FieldOffset(Offset = "0x90")]
+	private float m_DistanceAccumulator;
+
+	[Token(Token = "0x4005B49")]
+	[FieldOffset(Offset = "0x98")]
+	private FootstepTrail m_FootstepTrail;
+
+	[Token(Token = "0x4005B4A")]
+	[FieldOffset(Offset = "0xA0")]
+	private bool m_StartHasBeenCalled;
+
+	[Token(Token = "0x4005B4B")]
+	[FieldOffset(Offset = "0xA1")]
+	private bool m_StaminaRechargeDisabled;
+
+	[Token(Token = "0x4005B4C")]
+	[FieldOffset(Offset = "0xA4")]
+	private ForcedMovement m_ForcedMovement;
+
+	[Token(Token = "0x4005B4D")]
+	[FieldOffset(Offset = "0xA8")]
+	private bool m_ForceNoRandomSprain;
+
+	[Token(Token = "0x4005B4E")]
+	[FieldOffset(Offset = "0xA9")]
+	private bool m_IsCrouching;
+
+	[Token(Token = "0x4005B4F")]
+	[FieldOffset(Offset = "0xAC")]
+	private float m_AccumulatedDistance;
+
+	[Token(Token = "0x4005B50")]
+	private static PlayerMovementSaveDataProxy m_PlayerMovementSaveDataProxy;
+
+	[Token(Token = "0x17000368")]
+	public float CurrentStamina
+	{
+		[Token(Token = "0x6005047")]
+		[Address(RVA = "0xCB4000", Offset = "0xCB2E00", Length = "0x9")]
+		get
+		{
+			return 0f;
+		}
+	}
+
+	[Token(Token = "0x17000369")]
+	public float DefaultMaxStamina
+	{
+		[Token(Token = "0x6005048")]
+		[Address(RVA = "0x502720", Offset = "0x501520", Length = "0x6")]
+		get
+		{
+			return 0f;
+		}
+	}
+
+	[Token(Token = "0x1700036A")]
+	public float CurrentMaxStamina
+	{
+		[Token(Token = "0x6005049")]
+		[Address(RVA = "0xE03CD0", Offset = "0xE02AD0", Length = "0x23")]
+		get
+		{
+			return 0f;
+		}
+	}
+
+	[Token(Token = "0x600504A")]
+	[Address(RVA = "0xE03D00", Offset = "0xE02B00", Length = "0x19E")]
+	private void Start()
+	{
+	}
+
+	[Token(Token = "0x600504B")]
+	[Address(RVA = "0xE03EA0", Offset = "0xE02CA0", Length = "0x6FF")]
+	private void Update()
+	{
+	}
+
+	[Token(Token = "0x600504C")]
+	[Address(RVA = "0xE045A0", Offset = "0xE033A0", Length = "0x152")]
+	public string Serialize()
+	{
+		return null;
+	}
+
+	[Token(Token = "0x600504D")]
+	[Address(RVA = "0xE04700", Offset = "0xE03500", Length = "0x133")]
+	public void Deserialize(string text)
+	{
+	}
+
+	[Token(Token = "0x600504E")]
+	[Address(RVA = "0xE04840", Offset = "0xE03640", Length = "0x8B")]
+	public void SetForceCrouch(bool enabled)
+	{
+	}
+
+	[Token(Token = "0x600504F")]
+	[Address(RVA = "0x830AF0", Offset = "0x82F8F0", Length = "0xB")]
+	public bool IsCrouchForced()
+	{
+		return false;
+	}
+
+	[Token(Token = "0x6005050")]
+	[Address(RVA = "0xE048D0", Offset = "0xE036D0", Length = "0x2B")]
+	public void SetForceWalk(bool enabled)
+	{
+	}
+
+	[Token(Token = "0x6005051")]
+	[Address(RVA = "0x830B00", Offset = "0x82F900", Length = "0xB")]
+	public bool IsWalkForced()
+	{
+		return false;
+	}
+
+	[Token(Token = "0x6005052")]
+	[Address(RVA = "0xE04900", Offset = "0xE03700", Length = "0x18")]
+	public bool IsCrouchOrLimpOrWalkForced()
+	{
+		return false;
+	}
+
+	[Token(Token = "0x6005053")]
+	[Address(RVA = "0xE04920", Offset = "0xE03720", Length = "0x2D")]
+	public void SetForceLimp(bool enabled)
+	{
+	}
+
+	[Token(Token = "0x6005054")]
+	[Address(RVA = "0xE04950", Offset = "0xE03750", Length = "0xB")]
+	public bool IsLimpForced()
+	{
+		return false;
+	}
+
+	[Token(Token = "0x6005055")]
+	[Address(RVA = "0xE04960", Offset = "0xE03760", Length = "0x2C")]
+	public void SetForceLimpSlow(bool enabled)
+	{
+	}
+
+	[Token(Token = "0x6005056")]
+	[Address(RVA = "0x830B20", Offset = "0x82F920", Length = "0xB")]
+	public bool IsLimpSlowForced()
+	{
+		return false;
+	}
+
+	[Token(Token = "0x6005057")]
+	[Address(RVA = "0x835870", Offset = "0x834670", Length = "0x8")]
+	public bool IsNoRandomSprainForced()
+	{
+		return false;
+	}
+
+	[Token(Token = "0x6005058")]
+	[Address(RVA = "0x99BB70", Offset = "0x99A970", Length = "0x7")]
+	public void SetForceNoRandomSprain(bool isNoRandomSprainForced)
+	{
+	}
+
+	[Token(Token = "0x6005059")]
+	[Address(RVA = "0xE04990", Offset = "0xE03790", Length = "0x5C7")]
+	public float GetMaxSprintStaminaModifier()
+	{
+		return 0f;
+	}
+
+	[Token(Token = "0x600505A")]
+	[Address(RVA = "0x760E30", Offset = "0x75FC30", Length = "0x9")]
+	public float GetSecondsSprinting()
+	{
+		return 0f;
+	}
+
+	[Token(Token = "0x600505B")]
+	[Address(RVA = "0x502360", Offset = "0x501160", Length = "0x9")]
+	public float GetSecondsNotSprinting()
+	{
+		return 0f;
+	}
+
+	[Token(Token = "0x600505C")]
+	[Address(RVA = "0xE04F60", Offset = "0xE03D60", Length = "0x75")]
+	public float GetIndoorMovementSlowdownMultiplier()
+	{
+		return 0f;
+	}
+
+	[Token(Token = "0x600505D")]
+	[Address(RVA = "0xE04FE0", Offset = "0xE03DE0", Length = "0x12A")]
+	public float GetMaterialMovementMultiplier()
+	{
+		return 0f;
+	}
+
+	[Token(Token = "0x600505E")]
+	[Address(RVA = "0xE05110", Offset = "0xE03F10", Length = "0x18")]
+	public float GetLimpMovementMultiplier()
+	{
+		return 0f;
+	}
+
+	[Token(Token = "0x600505F")]
+	[Address(RVA = "0xE05130", Offset = "0xE03F30", Length = "0x1C7")]
+	public float GetBodyCarryMovementMultiplier()
+	{
+		return 0f;
+	}
+
+	[Token(Token = "0x6005060")]
+	[Address(RVA = "0xE05300", Offset = "0xE04100", Length = "0x154")]
+	public float GetCelestialNavigatorMultiplier()
+	{
+		return 0f;
+	}
+
+	[Token(Token = "0x6005061")]
+	[Address(RVA = "0xE05460", Offset = "0xE04260", Length = "0x1CD")]
+	public float GetSnowDepthMovementMultiplier()
+	{
+		return 0f;
+	}
+
+	[Token(Token = "0x6005062")]
+	[Address(RVA = "0xE05630", Offset = "0xE04430", Length = "0x3CC")]
+	public float GetWindMovementMultiplier()
+	{
+		return 0f;
+	}
+
+	[Token(Token = "0x6005063")]
+	[Address(RVA = "0xE05A00", Offset = "0xE04800", Length = "0xBA")]
+	public float GetSprintMovementMultiplier()
+	{
+		return 0f;
+	}
+
+	[Token(Token = "0x6005064")]
+	[Address(RVA = "0xE05AC0", Offset = "0xE048C0", Length = "0x95A")]
+	public void MovedDistance(Vector3 delta, bool wasStopped)
+	{
+	}
+
+	[Token(Token = "0x6005065")]
+	[Address(RVA = "0xE06420", Offset = "0xE05220", Length = "0x10E")]
+	public void UpdateDistanceTraveled(float dist)
+	{
+	}
+
+	[Token(Token = "0x6005066")]
+	[Address(RVA = "0xE06530", Offset = "0xE05330", Length = "0x75")]
+	public Vector3 GetVelocity()
+	{
+		return default(Vector3);
+	}
+
+	[Token(Token = "0x6005067")]
+	[Address(RVA = "0xE065B0", Offset = "0xE053B0", Length = "0x106")]
+	public float GetDetectionRangeScale()
+	{
+		return 0f;
+	}
+
+	[Token(Token = "0x6005068")]
+	[Address(RVA = "0xE066C0", Offset = "0xE054C0", Length = "0xAD")]
+	public float GetFootStepsRangeScale()
+	{
+		return 0f;
+	}
+
+	[Token(Token = "0x6005069")]
+	[Address(RVA = "0xE06770", Offset = "0xE05570", Length = "0x95")]
+	public void AddSprintStamina(float stamina)
+	{
+	}
+
+	[Token(Token = "0x600506A")]
+	[Address(RVA = "0xE06810", Offset = "0xE05610", Length = "0x7")]
+	public void DisableStaminaRecharge(bool disabled)
+	{
+	}
+
+	[Token(Token = "0x600506B")]
+	[Address(RVA = "0xE06820", Offset = "0xE05620", Length = "0x8")]
+	public bool IsStaminaRechargeDisabled()
+	{
+		return false;
+	}
+
+	[Token(Token = "0x600506C")]
+	[Address(RVA = "0xE06830", Offset = "0xE05630", Length = "0xC0")]
+	public bool StaminaUsedForClimbing()
+	{
+		return false;
+	}
+
+	[Token(Token = "0x600506D")]
+	[Address(RVA = "0xE06900", Offset = "0xE05700", Length = "0xD3")]
+	private bool AllowStaminaToRecover()
+	{
+		return false;
+	}
+
+	[Token(Token = "0x600506E")]
+	[Address(RVA = "0xE069E0", Offset = "0xE057E0", Length = "0x4E")]
+	public PlayerMovement()
+	{
+	}
+}
