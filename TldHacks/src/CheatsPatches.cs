@@ -587,15 +587,23 @@ internal static class Patch_Repair_SkipToolDegrade
 //   消耗量按 100h 比例放大(rate × hoursThisTick),实测堆叠材料制作时把整堆吞光。
 //   只需缩 m_RealTimeDuration 让真实秒走完;TOD 已被 CraftingStart→SetTODLocked(true) 锁住,
 //   不依赖 m_HoursToSpendCrafting 拉时钟。
-internal static class Patch_CraftingOp_Update
+// v6.8.4 BUG FIX —— 从 Update Prefix 改成 StartCrafting Postfix(单次写入而非每帧重写)
+//   根因:Update Prefix 每帧把 m_RealTimeDuration=0.2f。开制作后用户切 toggle 到 OFF →
+//   DynamicPatch.Reconcile 立即 Unpatch → 但运行中的 CraftingOperation 已经在前一次 Prefix
+//   把 m_RealTimeDuration 写成 0.2f,字段没有 restore。vanilla Update 继续用 0.2 算
+//   progress 跳变,单帧 hoursThisTick = m_HoursToSpendCrafting × dt/0.2 异常放大,
+//   ConsumeMaterials 一次吞光堆叠材料(用户报"东西直接耗尽")。
+//   改成 StartCrafting Postfix:开始时一次性缩短 duration,vanilla Update 自然完成;
+//   toggle OFF 中途切也不会留下残余 mutation。同时 FPS 收益更大(每帧 bridge → 每次 craft 1 次)。
+internal static class Patch_CraftingOp_StartCrafting
 {
-    internal static void Prefix(CraftingOperation __instance)
+    internal static void Postfix(CraftingOperation __instance)
     {
         if (!CheatState.QuickCraft) return;
         try
         {
             __instance.m_RealTimeDuration = 0.2f;
-            FadeSuppressionWindow.Arm(1f);  // v2.7.44 craft 期间吃 fade
+            FadeSuppressionWindow.Arm(3f);  // 一次性 arm 3 秒,覆盖整个 0.2s craft + 收尾
         }
         catch (Exception ex) { ModMain.Log?.Warning($"[QuickCraft] {ex.Message}"); }
     }
@@ -850,6 +858,17 @@ internal static class Patch_FireMgr_Success
     }
 }
 
+// ——— 钓鱼 100% 成功:缩短咬钩时间到极小值,保证每次必出鱼 ———
+internal static class Patch_IceFishing_GuaranteedCatch
+{
+    internal static void Prefix(IceFishingHole __instance)
+    {
+        if (!CheatState.QuickFishing) return;
+        __instance.m_MinGameMinutesCatchFish = 0.5f;
+        __instance.m_MaxGameMinutesCatchFish = 1.0f;
+    }
+}
+
 // ——— 快速开容器 ——
 // v2.7.13:原 Patch_Container_Enable Postfix 覆盖字段不够 —— 改 EnableAfterDelay Prefix 拦源头
 internal static class Patch_Container_EnableAfterDelay
@@ -928,6 +947,9 @@ internal static class Patch_FPSWeapon_PlayFireAnimation
 
     internal static void Postfix(vp_FPSWeapon __instance)
     {
+        // 魔法子弹:开枪后直接对准星前方目标施加伤害(必须在 _gun==null 早退之前,
+        // 否则只在后坐力抑制同时开启时才生效)
+        try { MagicBulletSystem.OnFired(); } catch { }
         if (_gun == null) return;
         try
         {
@@ -1569,6 +1591,8 @@ internal static class Patch_GearDegrade
                 h *= DecayState.GeneralDecay;
                 // v6.0.x: OnUseDecay 对所有"使用时衰减"物品再乘一次(枪/弓/工具/磨刀石等都触发)
                 if (__instance.m_DegradeOnUse != null) h *= DecayState.OnUseDecay;
+                // FoodDecay("食物总倍率")对所有食物再乘一次,与 GeneralDecay 同级的食物伞
+                if (__instance.m_FoodItem != null) h *= DecayState.FoodDecay;
                 if (!__instance.m_BeenInspected && !__instance.m_BeenInPlayerInventory)
                     h *= DecayState.DecayBeforePickup;
                 hp = h;
@@ -1646,6 +1670,8 @@ internal static class Patch_GearDegrade
             mult *= DecayState.GeneralDecay;
             // v6.0.x: OnUseDecay 对所有"使用时衰减"物品再乘一次(枪/弓/工具/磨刀石等都触发)
             if (__instance.m_DegradeOnUse != null) mult *= DecayState.OnUseDecay;
+            // FoodDecay("食物总倍率")对所有食物再乘一次,与 GeneralDecay 同级的食物伞
+            if (__instance.m_FoodItem != null) mult *= DecayState.FoodDecay;
 
             if (!__instance.m_BeenInspected && !__instance.m_BeenInPlayerInventory)
                 mult *= DecayState.DecayBeforePickup;
@@ -1732,6 +1758,18 @@ internal static class EncumberVanilla
     }
 }
 
+// —— 火把燃烧时间:TorchItem.Update Prefix 同步 settings 到实例 ——
+// SetTorchPrefab 只改模板,已存在的火把实例不受影响;此 patch 保证所有活跃火把都用用户设定的 BurnLifetimeMinutes
+internal static class Patch_TorchBurnTime
+{
+    internal static void Prefix(TorchItem __instance)
+    {
+        var s = ModMain.Settings;
+        if (s == null) return;
+        __instance.m_BurnLifetimeMinutes = s.TorchBurnMinutes;
+    }
+}
+
 // —— 火把满值:TorchItem.Update 重置燃烧时间 + HP ——
 internal static class Patch_TorchFullValue
 {
@@ -1743,6 +1781,12 @@ internal static class Patch_TorchFullValue
         var gi = __instance.m_GearItem;
         if (gi != null) gi.m_CurrentHP = 100f;
     }
+}
+
+// —— 天气锁定:阻止 WeatherTransition 自动切换 ——
+internal static class Patch_WeatherLock
+{
+    internal static bool Prefix() => !CheatState.WeatherLocked;
 }
 
 // ——————————— Tick-based 补丁 ———————————
@@ -2457,7 +2501,10 @@ internal static class CheatsTick
     // v2.8.2 NoFallDamage tick — 反应式:既然 IL2CPP prefix return false 不可靠,
     // 每几帧检查+清除坠落产生的扭伤/衣物破损
     private static bool _fallGuardWristSet;
-    private static float[] _clothingHpSnapshot;
+    // v6.9.6 衣物 HP 快照 —— 按 gear 指针 key(不能用列表位置 index:m_Items 会增删/重排,
+    //   旧版用 _clothingHpSnapshot[i] 导致把 A 衣物的高 HP 误还原到换位后的 B 小件衣物 → 超过其 MaxHP → 显示 >100%)
+    private static readonly System.Collections.Generic.Dictionary<System.IntPtr, float> _clothingHpSnapshot
+        = new System.Collections.Generic.Dictionary<System.IntPtr, float>();
     private static int _clothingSnapshotFrame;
 
     public static void TickNoFallDamage()
@@ -2510,44 +2557,118 @@ internal static class CheatsTick
                 if (items != null)
                 {
                     int count = items.Count;
-                    if (_clothingHpSnapshot == null || _clothingHpSnapshot.Length < count)
-                        _clothingHpSnapshot = new float[count + 8];
-
                     int frame = UnityEngine.Time.frameCount;
-                    if (frame - _clothingSnapshotFrame <= 30)
-                    {
-                        for (int i = 0; i < count; i++)
-                        {
-                            try
-                            {
-                                var obj = items[i];
-                                if (obj == null) continue;
-                                var gi = obj.m_GearItem;
-                                if (gi == null || gi.m_ClothingItem == null) continue;
-                                float cur = gi.m_CurrentHP;
-                                float prev = _clothingHpSnapshot[i];
-                                if (prev > 0f && cur < prev - 1f)
-                                    gi.m_CurrentHP = prev;
-                            }
-                            catch { }
-                        }
-                    }
+                    bool withinWindow = (frame - _clothingSnapshotFrame) <= 30;
 
-                    // 更新快照
+                    // 一遍扫:窗口内还原突降 HP(按指针取上次快照),同时刷新本帧快照
                     for (int i = 0; i < count; i++)
                     {
                         try
                         {
                             var obj = items[i];
-                            var gi = obj?.m_GearItem;
-                            _clothingHpSnapshot[i] = (gi != null && gi.m_ClothingItem != null) ? gi.m_CurrentHP : 0f;
+                            if (obj == null) continue;
+                            var gi = obj.m_GearItem;
+                            if (gi == null || gi.m_ClothingItem == null) continue;
+
+                            System.IntPtr key = gi.Pointer;
+                            float cur = gi.m_CurrentHP;
+
+                            if (withinWindow && _clothingHpSnapshot.TryGetValue(key, out float prev)
+                                && prev > 0f && cur < prev - 1f)
+                            {
+                                // 还原到坠落前 HP,但绝不超过该衣物自身 MaxHP(防 >100%)
+                                float maxHp = 100f;
+                                try { var d = gi.GearItemData; if (d != null) maxHp = d.MaxHP; } catch { }
+                                float restore = (prev > maxHp) ? maxHp : prev;
+                                gi.m_CurrentHP = restore;
+                                cur = restore;
+                            }
+
+                            _clothingHpSnapshot[key] = cur;
                         }
-                        catch { _clothingHpSnapshot[i] = 0f; }
+                        catch { }
                     }
                     _clothingSnapshotFrame = frame;
+
+                    // 防字典无界增长:背包件数远小于快照数(物品被卖/丢/转移)时整体重建
+                    if (_clothingHpSnapshot.Count > count + 32)
+                        _clothingHpSnapshot.Clear();
                 }
             }
             catch { }
+        }
+        catch { }
+    }
+
+    // v6.9.1 AfflictionGuard reactive tick — 和 NoFallDamage 同理:
+    // IL2CPP 下 Prefix return false 不可靠,Postfix 也可能在特殊时序下漏网
+    // 每 60 帧(~1s)检查一次:当前 toggle 说不应有的 affliction 如果存在就清掉
+    // 防止游戏内部状态因"半启动"的 affliction 而损坏(导致后续所有 affliction auto-resolve 的连锁 bug)
+    public static void TickAfflictionGuard()
+    {
+        bool guardBlood = CheatState.GodMode || CheatState.ImmuneAnimalDamage;
+        bool guardGeneral = CheatState.GodMode;
+        if (!guardBlood && !guardGeneral) return;
+
+        try
+        {
+            if (guardBlood)
+            {
+                var bl = GameManager.GetBloodLossComponent();
+                if (bl != null && bl.HasBloodLoss())
+                {
+                    for (int i = 0; i < 6; i++)
+                        try { bl.BloodLossEnd(i, (AfflictionOptions)0); } catch { }
+                    ModMain.Log?.Msg("[AfflictionGuard] Tick cleared lingering BloodLoss");
+                }
+            }
+            if (guardGeneral)
+            {
+                try
+                {
+                    var hypo = GameManager.GetHypothermiaComponent();
+                    if (hypo != null && hypo.HasHypothermia())
+                    {
+                        hypo.HypothermiaEnd();
+                        ModMain.Log?.Msg("[AfflictionGuard] Tick cleared lingering Hypothermia");
+                    }
+                }
+                catch { }
+
+                try
+                {
+                    var inf = GameManager.GetInfectionComponent();
+                    if (inf != null && inf.HasInfection())
+                    {
+                        for (int i = 0; i < 6; i++)
+                            try { inf.InfectionEnd(i); } catch { }
+                        ModMain.Log?.Msg("[AfflictionGuard] Tick cleared lingering Infection");
+                    }
+                }
+                catch { }
+
+                try
+                {
+                    var fp = GameManager.GetFoodPoisoningComponent();
+                    if (fp != null && fp.HasFoodPoisoning())
+                    {
+                        fp.FoodPoisoningEnd(true);
+                        ModMain.Log?.Msg("[AfflictionGuard] Tick cleared lingering FoodPoisoning");
+                    }
+                }
+                catch { }
+
+                try
+                {
+                    var dy = GameManager.GetDysenteryComponent();
+                    if (dy != null && dy.HasDysentery())
+                    {
+                        dy.DysenteryEnd(true);
+                        ModMain.Log?.Msg("[AfflictionGuard] Tick cleared lingering Dysentery");
+                    }
+                }
+                catch { }
+            }
         }
         catch { }
     }
@@ -3478,10 +3599,21 @@ internal static class Patch_TraderManager_IsTraderAvailable
 {
     internal static void Postfix(ref bool __result)
     {
+        // v6.9.6 只升不降:原版已判定商人可用(剧情/任务进度)→ 绝不覆盖为 false。
+        //   旧版无条件 __result = (hoursPlayed >= days*24) 会在第 N 天前把原版的 true 也压成 false
+        //   → 挡掉正常游戏进度(玩家反馈的"商人修改导致进度卡住")。现在本 patch 只能让商人"更早可用",
+        //   永远不会让它"更晚"。
+        if (__result) return;
         if (CheatState.TraderAlwaysAvailable) { __result = true; return; }
-        float days = ModMain.Settings.TraderArrivalDays;
-        float hoursPlayed = GameManager.GetTimeOfDayComponent().GetHoursPlayedNotPaused();
-        __result = hoursPlayed >= days * 24f;
+        try
+        {
+            var tod = GameManager.GetTimeOfDayComponent();
+            if (tod == null) return; // 加载/主菜单期 tod 可能为 null,旧版无防护会抛 NPE
+            float days = ModMain.Settings != null ? ModMain.Settings.TraderArrivalDays : 25f;
+            if (tod.GetHoursPlayedNotPaused() >= days * 24f)
+                __result = true;
+        }
+        catch { }
     }
 }
 

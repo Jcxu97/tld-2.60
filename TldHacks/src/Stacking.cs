@@ -26,7 +26,7 @@ internal static class Stacking
         if (++_lateFrame % 3 != 0) return;
         try
         {
-            if (StackState.Counts.Count == 0) return;
+            if (StackState.TotalCount == 0) return;
             if (StackState.SeenItems.Count == 0) return;
 
             // v2.7.75 关键性能:panel 都关着时 SeenItems 是 stale(RefreshTable Clear 但 Close 不 Clear),
@@ -39,9 +39,7 @@ internal static class Stacking
             if (!active) { try { if (con != null && con.isActiveAndEnabled) active = true; } catch { } }
             if (!active)
             {
-                StackState.Counts.Clear();
-                StackState.CountsByGi.Clear();
-                StackState.SeenItems.Clear();
+                StackState.ClearAll();
                 return;
             }
 
@@ -54,7 +52,7 @@ internal static class Stacking
                 { _staleList.Add(kv.Key); continue; }
 
                 // 快速过滤：count ≤ 1 的不需要显示堆叠标签,跳过 IL2Cpp 访问
-                if (!StackState.Counts.TryGetValue(cachedDi.Pointer, out int cachedCount) || cachedCount <= 1)
+                if (!StackState.TryGetCount(cachedDi.Pointer, out int cachedCount) || cachedCount <= 1)
                     continue;
 
                 Il2Cpp.GearItem curGi = null;
@@ -68,7 +66,7 @@ internal static class Stacking
                 }
                 else
                 {
-                    if (StackState.CountsByGi.TryGetValue(curGi.Pointer, out int c) && c > 1)
+                    if (StackState.TryGetCountByGi(curGi.Pointer, out int c) && c > 1)
                     {
                         var label = item.m_StackLabel;
                         if (label != null) label.text = CountStr.Get(c);
@@ -97,13 +95,32 @@ internal static class CountStr
 
 internal static class StackState
 {
+    // v6.9.4 根因修复:count 拆成 Inv(背包侧)/Con(容器侧)两套。
+    // 容器面板同时显示两个列表、各自 populate(UpdateFilteredInventoryList /
+    // UpdateFilteredContainerList),共用一套字典会被对方 clear 清空。
+    // 拆开后各 Postfix 只 clear+重填自己这一侧。di.Pointer/gi.Pointer 在两侧不碰撞(不同实例),
+    // 所以读点合并查两套即可。
+
     // Key = representative InventoryGridDataItem.Pointer, Value = count in that group
-    // 用 dataItem 指针而不是 GearItem,避免跨 panel 冲突(容器/保温瓶共用 InventoryGridItem)
-    public static Dictionary<System.IntPtr, int> Counts = new();
+    public static Dictionary<System.IntPtr, int> CountsInv = new();
+    public static Dictionary<System.IntPtr, int> CountsCon = new();
 
     // 镜像 map:gi.Pointer → count。click/toggle 回调没有 dataItem 参数时用这个
-    // 一次只一个 panel active 的前提下,gi.Pointer 跨 panel 不碰撞
-    public static Dictionary<System.IntPtr, int> CountsByGi = new();
+    public static Dictionary<System.IntPtr, int> CountsByGiInv = new();
+    public static Dictionary<System.IntPtr, int> CountsByGiCon = new();
+
+    // 合并查 helper(读点统一走这俩,不直接碰底层字典)
+    public static bool TryGetCount(System.IntPtr diPtr, out int count)
+        => CountsInv.TryGetValue(diPtr, out count) || CountsCon.TryGetValue(diPtr, out count);
+    public static bool TryGetCountByGi(System.IntPtr giPtr, out int count)
+        => CountsByGiInv.TryGetValue(giPtr, out count) || CountsByGiCon.TryGetValue(giPtr, out count);
+    public static int TotalCount => CountsInv.Count + CountsCon.Count;
+    public static void ClearAll()
+    {
+        CountsInv.Clear(); CountsCon.Clear();
+        CountsByGiInv.Clear(); CountsByGiCon.Clear();
+        SeenItems.Clear();
+    }
 
     // OnUpdate tick 用来知道要扫哪个 panel 的 m_TableItems
     public static Panel_Inventory LastInventoryPanel;
@@ -134,7 +151,12 @@ internal static class Dedupe
 {
     private static readonly Dictionary<string, (System.IntPtr di, System.IntPtr gi)> _firstOfGroup = new(64);
 
-    public static void Process(Il2CppSystem.Collections.Generic.List<InventoryGridDataItem> list)
+    // v6.9.4:counts/countsByGi 由调用方传入(Inv 侧或 Con 侧),不再写死全局。
+    // 调用方在调本方法前已 Clear 这两个字典。
+    public static void Process(
+        Il2CppSystem.Collections.Generic.List<InventoryGridDataItem> list,
+        Dictionary<System.IntPtr, int> counts,
+        Dictionary<System.IntPtr, int> countsByGi)
     {
         if (list == null || list.Count <= 1) return;
         if (ModMain.Settings != null && !ModMain.Settings.StackingEnabled) return;
@@ -178,14 +200,14 @@ internal static class Dedupe
             string key = MakeKey(gi, prefab);
             if (firstOfGroup.TryGetValue(key, out var rep))
             {
-                StackState.Counts[rep.di] = StackState.Counts[rep.di] + 1;
-                StackState.CountsByGi[rep.gi] = StackState.CountsByGi[rep.gi] + 1;
+                counts[rep.di] = counts[rep.di] + 1;
+                countsByGi[rep.gi] = countsByGi[rep.gi] + 1;
             }
             else
             {
                 firstOfGroup[key] = (di.Pointer, gi.Pointer);
-                StackState.Counts[di.Pointer] = 1;
-                StackState.CountsByGi[gi.Pointer] = 1;
+                counts[di.Pointer] = 1;
+                countsByGi[gi.Pointer] = 1;
                 keep.Add(di);
             }
         }
@@ -204,45 +226,86 @@ internal static class Dedupe
     }
 }
 
-[HarmonyPatch(typeof(Panel_Inventory), nameof(Panel_Inventory.RefreshTable))]
-internal static class Patch_Inventory_RefreshTable
+// v6.9.4 根因修复 ——————————————————————————————————————————————
+// 旧版只在 RefreshTable/RefreshTables 的 Prefix 跑 Dedupe。但"把物品移到另一个容器"
+// 走的是 OnInventoryToContainer/OnContainerToInventory → 直接调私有 UpdateFiltered*List
+// 重填列表 + 渲染,绕过 RefreshTables → Dedupe 没跑 → 列表是完整 N 项 → 渲染成 N 个独立格子,
+// 每格 count≤1 → label 代码正确地不显示 xN(所以旧调试 bad=0)。视觉散开、数据还在。
+//
+// 修法:把 Dedupe 下沉到 UpdateFiltered*List(填充 m_Filtered*List 的最内层方法)的 Postfix。
+// 所有刷新路径(开箱/筛选/排序/移动/取出)都必经此处 → 免疫路径绕过。
+// 在 Postfix 里:先 Clear 本侧字典,再 Dedupe(去重 + 重填 count),最后 Clear SeenItems
+// (di 指针已变,旧缓存全 stale;RefreshDataItem.Postfix 会随渲染重新登记)。
+//
+// 注:Panel_Inventory.UpdateFilteredInventoryList 是 public,Panel_Container 的两个是 private
+// (Harmony 按字符串名 patch private 在本库有先例)。
+
+// 独立背包面板(按 I 打开,在 TLD 2.55 实际是 Panel_Inventory)
+[HarmonyPatch(typeof(Panel_Inventory), "UpdateFilteredInventoryList")]
+internal static class Patch_Inventory_UpdateFilteredList
 {
-    private static void Prefix(Panel_Inventory __instance)
+    private static void Postfix(Panel_Inventory __instance)
     {
         try
         {
-            StackState.Counts.Clear();
-            StackState.CountsByGi.Clear();
-            StackState.SeenItems.Clear();
+            if (ModMain.Settings != null && !ModMain.Settings.StackingEnabled) return;
             StackState.LastInventoryPanel = __instance;
             StackState.LastContainerPanel = null;
-            Dedupe.Process(__instance.m_FilteredInventoryList);
+            StackState.CountsInv.Clear();
+            StackState.CountsByGiInv.Clear();
+            StackState.SeenItems.Clear();
+            Dedupe.Process(__instance.m_FilteredInventoryList, StackState.CountsInv, StackState.CountsByGiInv);
         }
         catch (System.Exception ex)
         {
-            ModMain.Log.Error($"[Inventory.RefreshTable.Prefix] {ex}");
+            ModMain.Log.Error($"[Inventory.UpdateFilteredList.Postfix] {ex}");
         }
     }
 }
 
-[HarmonyPatch(typeof(Panel_Container), nameof(Panel_Container.RefreshTables))]
-internal static class Patch_Container_RefreshTables
+// 容器面板的背包侧列表
+[HarmonyPatch(typeof(Panel_Container), "UpdateFilteredInventoryList")]
+internal static class Patch_Container_UpdateFilteredInventoryList
 {
-    private static void Prefix(Panel_Container __instance)
+    private static void Postfix(Panel_Container __instance)
     {
         try
         {
-            StackState.Counts.Clear();
-            StackState.CountsByGi.Clear();
-            StackState.SeenItems.Clear();
+            if (ModMain.Settings != null && !ModMain.Settings.StackingEnabled) return;
             StackState.LastContainerPanel = __instance;
             StackState.LastInventoryPanel = null;
-            Dedupe.Process(__instance.m_FilteredInventoryList);  // 玩家背包栏
-            Dedupe.Process(__instance.m_FilteredContainerList);  // 容器栏
+            StackState.CountsInv.Clear();
+            StackState.CountsByGiInv.Clear();
+            // SeenItems 是两侧共用的;只在背包侧清,容器侧 Postfix 紧随其后会重填自己的 cell。
+            // 两侧 populate 在同一刷新里先后调用,清一次足够;清早了容器侧 cell 也会被 RefreshDataItem 重登记。
+            StackState.SeenItems.Clear();
+            Dedupe.Process(__instance.m_FilteredInventoryList, StackState.CountsInv, StackState.CountsByGiInv);
         }
         catch (System.Exception ex)
         {
-            ModMain.Log.Error($"[Container.RefreshTables.Prefix] {ex}");
+            ModMain.Log.Error($"[Container.UpdateFilteredInventoryList.Postfix] {ex}");
+        }
+    }
+}
+
+// 容器面板的容器侧列表
+[HarmonyPatch(typeof(Panel_Container), "UpdateFilteredContainerList")]
+internal static class Patch_Container_UpdateFilteredContainerList
+{
+    private static void Postfix(Panel_Container __instance)
+    {
+        try
+        {
+            if (ModMain.Settings != null && !ModMain.Settings.StackingEnabled) return;
+            StackState.LastContainerPanel = __instance;
+            StackState.LastInventoryPanel = null;
+            StackState.CountsCon.Clear();
+            StackState.CountsByGiCon.Clear();
+            Dedupe.Process(__instance.m_FilteredContainerList, StackState.CountsCon, StackState.CountsByGiCon);
+        }
+        catch (System.Exception ex)
+        {
+            ModMain.Log.Error($"[Container.UpdateFilteredContainerList.Postfix] {ex}");
         }
     }
 }
@@ -254,7 +317,7 @@ internal static class LabelFix
         try
         {
             if (item == null || di == null) return;
-            if (!StackState.Counts.TryGetValue(di.Pointer, out int count)) return;
+            if (!StackState.TryGetCount(di.Pointer, out int count)) return;
             if (count <= 1) return;
             var label = item.m_StackLabel;
             if (label == null) return;
@@ -271,7 +334,7 @@ internal static class LabelFix
         try
         {
             if (item == null || di == null) return;
-            if (!StackState.Counts.TryGetValue(di.Pointer, out int count)) return;
+            if (!StackState.TryGetCount(di.Pointer, out int count)) return;
             if (count <= 1) return;
 
             // v2.7.35 t1 修:UnitLabel/UnitSprite 是"stackable m_Units 显示" ——
@@ -426,7 +489,7 @@ internal static class Patch_InventoryGridItem_Refresh
         try
         {
             if (__instance == null || gi == null) return;
-            if (!StackState.CountsByGi.TryGetValue(gi.Pointer, out int count) || count <= 1) return;
+            if (!StackState.TryGetCountByGi(gi.Pointer, out int count) || count <= 1) return;
 
             var label = __instance.m_StackLabel;
             if (label != null)

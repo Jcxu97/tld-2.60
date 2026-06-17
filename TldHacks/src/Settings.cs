@@ -345,6 +345,10 @@ internal class TldHacksSettings : JsonModSettings
     [Name("后坐力强度 (0=无 1=原版)")]
     public float RecoilScaleESP = 1f;
 
+    [Name("魔法子弹 (开枪自动命中目标)")]
+    [Description("开枪即对准星前方最近动物直接施加伤害,无视弹道与落点;配合「一击必杀」一枪毙命")]
+    public bool MagicBullet = false;
+
     // ——— Integrated: SonicMode (细分速度) ———
     [Section("Movement Detail / 细分速度")]
     [Name("启用细分速度(关=全部原版)")]
@@ -655,7 +659,8 @@ internal class TldHacksSettings : JsonModSettings
     [Section("Light Sources / 光源")]
     [Slider(1f, 2880f, 100)]
     [Name("火把燃烧时间(分钟)")]
-    public float TorchBurnMinutes = 1440f;
+    [Description("默认90=原版(实测GEAR_Torch原版值)。拖高=火把烧更久;90=完全原版,不挂载补丁")]
+    public float TorchBurnMinutes = 90f;
 
     [Slider(0f, 1f, 10)]
     [Name("火把最低品质")]
@@ -764,8 +769,8 @@ internal class TldHacksSettings : JsonModSettings
 
     [Slider(1f, 3f, 21)]
     [Name("交互距离(m)")]
-    [Description("可操作开关的最大距离")]
-    public float HL_InteractDistance = 1f;
+    [Description("可操作开关的最大距离。默认2m(原版1m太近,有些人贴墙也够不到开关)")]
+    public float HL_InteractDistance = 2f;
 
     // ——— Integrated Batch 2: QoL & Startup ———
     [Section("QoL / 生活品质")]
@@ -849,13 +854,13 @@ internal class TldHacksSettings : JsonModSettings
     public bool QoL_NoSaveOnSprainFalls = false;
     [Name("睡眠中可醒来")]
     [Description("暂停菜单里可以选择醒来")]
-    public bool QoL_WakeUpCall = false;
+    public bool QoL_WakeUpCall = true;       // v7.0 便利性默认开:睡眠可随时醒(纯QoL,不影响进度)
     [Name("极光感应(睡眠时极光自动醒)")]
     public bool QoL_AuroraSense = true;
     [Name("睡眠时显示时间")]
-    public bool QoL_ShowTimeSleep = false;
+    public bool QoL_ShowTimeSleep = true;    // v7.0 便利性默认开:睡眠显示当前时间(纯信息)
     [Name("睡眠不全黑")]
-    public bool QoL_NoPitchBlack = false;
+    public bool QoL_NoPitchBlack = true;     // v7.0 便利性默认开:睡眠不全黑屏(纯视觉)
     [Choice("黑字白描边", "黑字棕描边", "白字黑描边", "浅字黑描边")]
     [Name("地图文字样式")]
     public int QoL_MapTextOutline = 0;
@@ -1255,8 +1260,8 @@ internal class TldHacksSettings : JsonModSettings
     public bool TT_ShowTraderTrust = false;
 
     [Name("商人到来天数")]
-    [Description("游戏内经过该天数后商人可用。原版约25-30天，这里可以提前")]
+    [Description("游戏内经过该天数后商人可用。原版约25-30天。设为30及以上=完全跟随原版进度(默认),拖低=提前到货")]
     [Slider(1f, 40f, 40)]
-    public float TraderArrivalDays = 10f;
+    public float TraderArrivalDays = 30f;
 
 }

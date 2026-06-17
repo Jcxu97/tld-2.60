@@ -155,8 +155,10 @@ internal static class DynamicPatch
         Spec(typeof(Il2CppTLD.Gear.InsulatedFlask), "IsItemCompatibleWithFlask", typeof(Patch_Flask_ForceTrue),
             null, "Postfix", () => CheatState.FlaskAnyItem, null, OneGearItem),
 
-        Spec(typeof(CraftingOperation), "Update", typeof(Patch_CraftingOp_Update),
-            "Prefix", null, () => CheatState.QuickCraft),
+        // v6.8.4 改 StartCrafting Postfix(原 Update Prefix 在 toggle OFF 中途切时
+        // m_RealTimeDuration 残留 0.2f,导致 vanilla 单帧吞光材料 — 见 Patch_CraftingOp_StartCrafting 注释)
+        Spec(typeof(CraftingOperation), "StartCrafting", typeof(Patch_CraftingOp_StartCrafting),
+            null, "Postfix", () => CheatState.QuickCraft),
         Spec(typeof(CookingPotItem), "UpdateCookingTimeAndState", typeof(Patch_CookingPot_Update),
             "Prefix", null, () => CheatState.QuickCook || CheatState.NoBurn, null, TwoCookingFloats),
         Spec(typeof(Panel_Crafting), "CraftingEnd", typeof(Patch_Craft_End_ForceBright),
@@ -211,6 +213,8 @@ internal static class DynamicPatch
             "Prefix", null, () => CheatState.ThinIceNoBreak),
         Spec(typeof(FireManager), "CalculateFireStartSuccess", typeof(Patch_FireMgr_Success),
             null, "Postfix", () => CheatState.QuickFire),
+        Spec(typeof(IceFishingHole), "RollNextCatch", typeof(Patch_IceFishing_GuaranteedCatch),
+            "Prefix", null, () => CheatState.QuickFishing),
         Spec(typeof(Panel_Container), "EnableAfterDelay", typeof(Patch_Container_EnableAfterDelay),
             "Prefix", null, () => CheatState.QuickOpenContainer, null, OneFloat),
         Spec(typeof(Panel_Container), "Enable", typeof(Patch_Container_Enable),
@@ -219,9 +223,12 @@ internal static class DynamicPatch
         Spec(typeof(Il2CppTLD.Trader.TraderManager), "GetAvailableTradeExchanges",
             typeof(Patch_TraderManager_GetAvailableTradeExchanges),
             "Prefix", null, () => CheatState.TraderUnlimitedList || CheatState.TraderMaxTrust),
+        // v6.9.6 改为按需挂载(原 () => true):默认 days>=30(≈原版) → 不挂载 → 商人到货完全走原版进度。
+        //   玩家把"到来天数"拖到 <30 或开"商人常驻"才挂,且 Postfix 只升不降(见 Patch 内注释)。
         Spec(typeof(Il2CppTLD.Trader.TraderManager), "IsTraderAvailable",
             typeof(Patch_TraderManager_IsTraderAvailable),
-            null, "Postfix", () => true),
+            null, "Postfix", () => CheatState.TraderAlwaysAvailable
+                || (ModMain.Settings != null && ModMain.Settings.TraderArrivalDays < 30f)),
         Spec(typeof(Il2CppTLD.Trader.TraderRadio), "CanContactTrader",
             typeof(Patch_TraderRadio_CanContactTrader),
             null, "Postfix", () => CheatState.TraderAlwaysAvailable),
@@ -231,7 +238,7 @@ internal static class DynamicPatch
 
         // v2.7.89 无后坐力:零化 GunItem 后坐参数(Prefix 归零 + Postfix 恢复)
         Spec(typeof(vp_FPSWeapon), "PlayFireAnimation", typeof(Patch_FPSWeapon_PlayFireAnimation),
-            "Prefix", "Postfix", () => CheatState.NoRecoil || CheatState.SuperAccuracy || CheatStateESP.RecoilScale < 0.99f),
+            "Prefix", "Postfix", () => CheatState.NoRecoil || CheatState.SuperAccuracy || CheatStateESP.RecoilScale < 0.99f || CheatStateESP.MagicBullet),
         // Phase 2 NativeDetour pending — keep Harmony for now
         Spec(typeof(vp_FPSCamera), "Update", typeof(Patch_FPSCamera_ClearRecoil),
             "Prefix", "Postfix", () => CheatState.NoRecoil || CheatState.SuperAccuracy || CheatStateESP.RecoilScale < 0.99f || CheatState.NoAimSway),
@@ -251,8 +258,14 @@ internal static class DynamicPatch
             "Prefix", null, () => CheatState.FreeFireFuel || CheatState.FreeRepair),
         Spec(typeof(Encumber), "Update", typeof(Patch_TechBackpack),
             null, "Postfix", () => CheatState.TechBackpack),
+        // v6.9.6 原 sentinel=10f 是错的:实测原版 GEAR_Torch m_BurnLifetimeMinutes=90。
+        //   90=原版 → 不挂载补丁(火把完全原版行为)。仅当玩家拖高才挂载。
+        Spec(typeof(TorchItem), "Update", typeof(Patch_TorchBurnTime),
+            "Prefix", null, () => ModMain.Settings != null && Mathf.Abs(ModMain.Settings.TorchBurnMinutes - 90f) > 0.1f),
         Spec(typeof(TorchItem), "Update", typeof(Patch_TorchFullValue),
             "Prefix", null, () => CheatState.TorchFullValue),
+        Spec(typeof(WeatherTransition), "ChooseNextWeatherSet", typeof(Patch_WeatherLock),
+            "Prefix", null, () => CheatState.WeatherLocked),
 
         // CT 复刻:无冻伤/饱饱/温度/疲劳
         Spec(typeof(Frostbite), "DealFrostbiteDamageToLocation", typeof(Patch_Frostbite_DealDamage),
@@ -633,6 +646,34 @@ internal static class DynamicPatch
         catch (Exception ex) { ModMain.Log?.Error($"[DynPatch.AutoPickup] {ex.Message}"); }
     }
 
+    // v7.0 可维护性自检:启动时一次性解析每个 Spec 的目标方法(不挂载,只解析),
+    //   把"游戏更新后某方法被改名/删除 → 该功能静默失效"提前暴露在启动日志,
+    //   而不是等玩家某天打开那个开关才发现不生效。运行时零开销(只在 OnInitializeMelon 跑一次)。
+    //   配合静态 [HarmonyPatch] 的 PatchAll 失败已由 MelonLoader 直接 ERROR 出来,两者合起来
+    //   覆盖本版修过的两类"功能不生效"根因(参数名绑定失败 / 整类漏移植或方法不存在)。
+    public static void SelfCheck()
+    {
+        try
+        {
+            int total = Specs.Length, missing = 0;
+            var sb = new System.Text.StringBuilder();
+            for (int i = 0; i < total; i++)
+            {
+                if (!Specs[i].TargetResolves())
+                {
+                    missing++;
+                    if (sb.Length > 0) sb.Append(", ");
+                    sb.Append(Specs[i].Key);
+                }
+            }
+            if (missing == 0)
+                ModMain.Log?.Msg($"[DynPatch.SelfCheck] OK — 全部 {total} 个动态补丁目标方法均可解析。");
+            else
+                ModMain.Log?.Error($"[DynPatch.SelfCheck] {missing}/{total} 个补丁目标方法解析失败(对应功能将无法生效,疑似游戏更新改了签名): {sb}");
+        }
+        catch (Exception ex) { ModMain.Log?.Warning($"[DynPatch.SelfCheck] 自检异常(已忽略): {ex.Message}"); }
+    }
+
     public static string ActiveSummary()
     {
         try
@@ -684,6 +725,13 @@ internal static class DynamicPatch
             Key = target.FullName + "." + method + (paramTypes != null ? "(" + paramTypes.Length + ")" : "");
             _prefix = prefixName != null ? new HarmonyMethod(AccessTools.Method(patchHolder, prefixName)) : null;
             _postfix = postfixName != null ? new HarmonyMethod(AccessTools.Method(patchHolder, postfixName)) : null;
+        }
+
+        // v7.0 自检用:只解析目标方法,不挂载、不改 _failed 状态(保持懒解析语义)。
+        public bool TargetResolves()
+        {
+            try { return Original != null; }
+            catch { return false; }
         }
 
         public void Sync()

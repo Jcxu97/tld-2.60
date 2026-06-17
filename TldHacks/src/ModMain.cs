@@ -5,7 +5,7 @@ using Il2Cpp;
 using MelonLoader;
 using UnityEngine;
 
-[assembly: MelonInfo(typeof(TldHacks.ModMain), "TldHacks", "6.5.0", "user")]
+[assembly: MelonInfo(typeof(TldHacks.ModMain), "TldHacks", "7.0.0", "user")]
 [assembly: MelonGame("Hinterland", "TheLongDark")]
 [assembly: MelonAdditionalDependencies("ModSettings")]
 [assembly: MelonOptionalDependencies("ModData")]
@@ -20,6 +20,9 @@ public class ModMain : MelonMod
     private int _posTick = 0;
     private int _frame = 0;
     private static bool _tsActive1, _tsActive2;
+    // v6.9.6 崩溃哨兵延后清除:确认稳定进入游戏后才清,使"加载存档即崩"能被下次启动的安全模式接住
+    private bool _sentinelCleared = false;
+    private int _stableFrames = 0;
 
     public override void OnInitializeMelon()
     {
@@ -46,6 +49,7 @@ public class ModMain : MelonMod
                 // 写崩溃哨兵:如果 patch 导致加载存档崩溃,下次启动自动重置
                 try { System.IO.File.WriteAllText(SentinelPath, DateTime.Now.ToString("o")); } catch { }
                 DynamicPatch.Reconcile();
+                DynamicPatch.SelfCheck();   // v7.0 可维护性:启动即暴露解析失败的补丁(游戏更新破坏检测)
             }
 
             // v2.7.64 加载 scene transition 历史记录
@@ -55,7 +59,7 @@ public class ModMain : MelonMod
             // v6.9.2 拦截 CatchColdMod 在清除窗口期内反复加感冒/肺炎(只在 ClearInProgress 或 ReSweep 时拦)
             try { TryPatchCatchColdMod(); } catch (Exception ex) { Log.Warning($"[CatchColdGuard] init: {ex.Message}"); }
 
-            Log.Msg($"TldHacks v6.9.2 loaded — menu hotkey = {Settings.MenuHotkey}, items = {ItemDatabase.All.Count}+{ItemDatabaseMod.All.Count} mod, transitions = {TransitionRecorder.Count}");
+            Log.Msg($"TldHacks v7.0.0 loaded — menu hotkey = {Settings.MenuHotkey}, items = {ItemDatabase.All.Count}+{ItemDatabaseMod.All.Count} mod, transitions = {TransitionRecorder.Count}");
         }
         catch (Exception ex) { Log.Error($"[Init] {ex}"); }
     }
@@ -116,10 +120,94 @@ public class ModMain : MelonMod
         try { if (System.IO.File.Exists(SentinelPath)) System.IO.File.Delete(SentinelPath); } catch { }
     }
 
+    // 库 (JsonModSettings) 用 MelonEnvironment.ModsDirectory 解析成绝对路径;我们必须用同一路径,
+    //   否则净化的是错文件(部分玩家进程 cwd != 游戏根 → 相对 "Mods/..." 指向别处 → 净化无效)。
+    private static string JsonConfigPath()
+    {
+        try { return System.IO.Path.Combine(MelonLoader.Utils.MelonEnvironment.ModsDirectory, "TldHacks.json"); }
+        catch { return System.IO.Path.Combine("Mods", "TldHacks.json"); }
+    }
+
+    // v7.0 关键修复(存档进不去的根因):在 `new TldHacksSettings()` 之前先把磁盘 JSON 净化成
+    //   100% 兼容当前字段的版本。根因 = JsonModSettings 基类构造函数会立即 Load+Populate,
+    //   任何旧字段类型不兼容会在构造当场抛异常 → Settings 永远 null → SyncStateFromSettings 与
+    //   运行时上百处 ModMain.Settings.X 全部 NPE → 加载存档崩 → 玩家被迫手删 TldHacks.json。
+    //   旧 SafeLoad 跑在构造之后(太晚)且用相对路径(可能指错文件),所以对部分玩家无效。
+    //   pre-flight 跑在构造之前 + 用库的绝对路径,从根上消除。只保留可转换的已知字段、
+    //   slider 越界钳到边界,丢弃不兼容字段与孤儿字段;有变更先备份再写回。
+    private static void PreflightSanitizeJson(string path)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(path) || !System.IO.File.Exists(path)) return;
+
+            string raw = System.IO.File.ReadAllText(path);
+            Newtonsoft.Json.Linq.JObject jobj;
+            try { jobj = Newtonsoft.Json.Linq.JObject.Parse(raw); }
+            catch
+            {
+                // JSON 语法损坏 → 备份 + 删除 → 库会写一份全新默认(等价玩家手删,但自动完成)
+                try { System.IO.File.Copy(path, path + ".corrupt-" + DateTime.Now.ToString("yyyyMMdd-HHmmss"), true); } catch { }
+                try { System.IO.File.Delete(path); } catch { }
+                Log?.Warning("[Settings] pre-flight: JSON 损坏,已备份并重置为默认。");
+                return;
+            }
+
+            var fields = typeof(TldHacksSettings).GetFields(BindingFlags.Public | BindingFlags.Instance);
+            var validNames = new System.Collections.Generic.HashSet<string>();
+            var clean = new Newtonsoft.Json.Linq.JObject();
+            int kept = 0, dropped = 0, clamped = 0;
+
+            foreach (var f in fields)
+            {
+                if (f.IsStatic || f.IsInitOnly) continue;
+                validNames.Add(f.Name);
+                var token = jobj[f.Name];
+                if (token == null) continue;   // 老 JSON 没这字段 → 留给库用类初始化默认值(新增字段走新默认)
+                try
+                {
+                    object val = token.ToObject(f.FieldType);
+                    if (val == null) { dropped++; continue; }
+                    var sa = f.GetCustomAttribute<ModSettings.SliderAttribute>();
+                    if (sa != null)
+                    {
+                        if (f.FieldType == typeof(float))
+                        {
+                            float fv = (float)val, fc = Mathf.Clamp(fv, sa.From, sa.To);
+                            if (fc != fv) { val = fc; clamped++; }
+                        }
+                        else if (f.FieldType == typeof(int))
+                        {
+                            int iv = (int)val, ic = Mathf.Clamp(iv, (int)sa.From, (int)sa.To);
+                            if (ic != iv) { val = ic; clamped++; }
+                        }
+                    }
+                    clean[f.Name] = Newtonsoft.Json.Linq.JToken.FromObject(val);
+                    kept++;
+                }
+                catch { dropped++; }   // 类型不兼容(老版本字段类型变了)→ 丢弃 → 库用默认
+            }
+
+            int orphans = 0;
+            foreach (var prop in jobj.Properties())
+                if (!validNames.Contains(prop.Name)) orphans++;
+
+            if (dropped > 0 || orphans > 0 || clamped > 0)
+            {
+                try { System.IO.File.Copy(path, path + ".broken-" + DateTime.Now.ToString("yyyyMMdd-HHmmss"), true); } catch { }
+                System.IO.File.WriteAllText(path, clean.ToString(Newtonsoft.Json.Formatting.Indented));
+                Log?.Warning($"[Settings] pre-flight 净化: 保留 {kept}, 丢弃 {dropped} 不兼容, 删除 {orphans} 孤儿, 钳制 {clamped} 越界。库现在可正常加载,存档不再被卡。");
+            }
+        }
+        catch (Exception ex) { Log?.Warning($"[Settings] pre-flight 异常(已忽略,退回旧路径): {ex.Message}"); }
+    }
+
     private static void RegisterSettings()
     {
+        var path = JsonConfigPath();
+        PreflightSanitizeJson(path);   // v7.0:必须在构造之前净化,否则库构造函数直接抛 → 存档进不去
+
         Settings = new TldHacksSettings();
-        var path = System.IO.Path.Combine("Mods", "TldHacks.json");
 
         // 崩溃哨兵:上次启动挂了 patch 后没成功进场景
         // → 照常加载 JSON(保留 slider/hotkey/菜单位置), 但把所有 bool toggle 关掉
@@ -221,19 +309,29 @@ public class ModMain : MelonMod
         // 崩溃恢复:保留 slider/hotkey/菜单位置,但把所有 bool 开关关回默认
         if (crashRecovery)
         {
-            var defaults = new TldHacksSettings();
-            var fields = typeof(TldHacksSettings).GetFields(BindingFlags.Public | BindingFlags.Instance);
-            int resetCount = 0;
-            foreach (var f in fields)
+            // v6.9.6 整体 try 兜底 + 逐字段 try:任何反射异常都不能炸穿 RegisterSettings,
+            //   否则下面的 AddToModSettings 永不执行 → 库加载失败 → 存档进不去(正是要修的根因之一)。
+            try
             {
-                if (f.IsStatic || f.IsInitOnly) continue;
-                if (f.FieldType != typeof(bool)) continue;
-                object defVal = f.GetValue(defaults);
-                object curVal = f.GetValue(Settings);
-                if (!Equals(curVal, defVal)) { f.SetValue(Settings, defVal); resetCount++; }
+                var defaults = new TldHacksSettings();
+                var fields = typeof(TldHacksSettings).GetFields(BindingFlags.Public | BindingFlags.Instance);
+                int resetCount = 0;
+                foreach (var f in fields)
+                {
+                    try
+                    {
+                        if (f.IsStatic || f.IsInitOnly) continue;
+                        if (f.FieldType != typeof(bool)) continue;
+                        object defVal = f.GetValue(defaults);
+                        object curVal = f.GetValue(Settings);
+                        if (!Equals(curVal, defVal)) { f.SetValue(Settings, defVal); resetCount++; }
+                    }
+                    catch { }
+                }
+                Log?.Warning($"[Settings] 安全模式: 重置 {resetCount} 个 bool 开关为默认值, 保留所有数值/热键设置");
             }
+            catch (Exception ex) { Log?.Warning($"[Settings] 安全模式重置异常(已忽略): {ex.Message}"); }
             needRewrite = true;
-            Log?.Warning($"[Settings] 安全模式: 重置 {resetCount} 个 bool 开关为默认值, 保留所有数值/热键设置");
         }
 
         // 净化文件:把 hydrate 后的 settings 序列化回去,确保库 Load 不会撞旧字段
@@ -370,6 +468,7 @@ public class ModMain : MelonMod
         CheatState.RememberBreakdownTool = Settings.RememberBreakdownTool;
         CheatState.VehicleFreeLook = Settings.VehicleFreeLook;
         CheatStateESP.RecoilScale = Settings.RecoilScaleESP;
+        CheatStateESP.MagicBullet = Settings.MagicBullet;
         // v2.8.0 批量整合 — Tab 6: Universal Tweaks
         // v2.8.0 批量整合 — Tab 7: QoL
         CheatState.QoL_Enabled = Settings.QoL_Enabled;
@@ -480,6 +579,21 @@ public class ModMain : MelonMod
             if (Settings == null) return;
             if (Settings.DiagPauseRuntime) return;  // v2.7.75 诊断开关
             if (Settings.DiagUnpatchAll) return;    // v2.7.79 UnpatchAll 模式下也停掉 tick / Reconcile
+
+            // v6.9.6 崩溃哨兵延后清除:在真正可玩的游戏场景中稳定运行 ~3s(180 帧)后才清。
+            //   "更新后存档进不去"的崩溃多发生在存档数据加载/应用阶段(场景 init 之后),
+            //   若像旧版那样在场景 init 时立即清,这类崩溃就逃过了下次启动的安全模式 → 玩家只能删 JSON。
+            //   延后到稳定运行后清,可让"加载即崩"被下次启动接住(安全模式关所有 bool 开关)。
+            if (!_sentinelCleared)
+            {
+                bool inGameplay = false;
+                try { inGameplay = !Il2Cpp.GameManager.IsMainMenuActive() && !Il2Cpp.GameManager.IsEmptySceneActive(); } catch { }
+                if (inGameplay)
+                {
+                    if (++_stableFrames >= 180) { ClearSentinel(); _sentinelCleared = true; }
+                }
+                else _stableFrames = 0;
+            }
 
             // Menu toggle
             if (Settings.MenuHotkey != KeyCode.None && Input.GetKeyDown(Settings.MenuHotkey))
@@ -598,6 +712,10 @@ public class ModMain : MelonMod
             // v2.8.2 NoFallDamage reactive tick — 检测+清除扭伤/衣物破损
             if (CheatState.NoFallDamage && (_frame % 30) == 7) CheatsTick.TickNoFallDamage();
 
+            // v6.9.1 AfflictionGuard reactive tick — 防止 IL2CPP prefix 漏网导致 affliction 半启动→游戏状态损坏
+            if ((CheatState.GodMode || CheatState.ImmuneAnimalDamage) && (_frame % 60) == 37)
+                CheatsTick.TickAfflictionGuard();
+
             // v6.7.1 ClearAllAfflictions 二次扫窗口:用户点了一键清除负面之后 ~5s 内分多个 tick 扫
             //   防御目标:整合包里第三方 Cold/Sickness mod 把 vanilla XxxEnd 当 Postfix 钩子反补"感冒"
             //   仅在窗口期内生效,不开窗口=零开销;只在关键 tick 扫(覆盖 next-frame / 同 tick / 隔几帧 几种 Postfix 时序)
@@ -658,6 +776,9 @@ public class ModMain : MelonMod
             WakeUpCallHelper.OnUpdateTick();
             AutoSurveyHelper.OnUpdateTick();
 
+            // 魔法子弹:预览目标降频更新(内部 0.25s 节流,关闭时立即清空,零开销)
+            if (CheatStateESP.MagicBullet) MagicBulletSystem.UpdatePreview();
+
             if (!NLBFontFixHelper.Exhausted)
             {
                 int nlbPeriod = NLBFontFixHelper.Fixed ? 3600 : 300;
@@ -690,13 +811,15 @@ public class ModMain : MelonMod
         if (Settings != null && (Settings.DiagPauseRuntime || Settings.DiagUnpatchAll)) return;
         Menu.Draw();
         ShowTraderTrustHelper.DrawGUI();
+        MagicBulletOverlay.OnGUI();
     }
 
     public override void OnSceneWasInitialized(int buildIndex, string sceneName)
     {
-        // 成功进入游戏场景 → 清除崩溃哨兵(MainMenu 不算,要真正加载存档才证明 patch 没崩)
-        if (sceneName != "MainMenu" && sceneName != "Boot")
-            ClearSentinel();
+        // v6.9.6 进入游戏场景后不再"立即"清哨兵 —— "更新后存档进不去"的崩溃发生在
+        //   场景 init 之后的存档数据加载/应用阶段。立即清会让那种崩溃逃过下次启动的安全模式。
+        //   改为:每次场景切换都重置稳定计时,由 OnUpdate 跑满 180 帧无崩才清(见 OnUpdate)。
+        if (!_sentinelCleared) _stableFrames = 0;
         Teleport.OnSceneLoaded(sceneName);
         // v2.7.64 学习 scene transition 字段到 JSON,解决 DLC Tale 跨区物品丢失
         TransitionRecorder.OnSceneInitialized(sceneName);

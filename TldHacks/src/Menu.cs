@@ -439,8 +439,8 @@ internal static class Menu
 
         GUI.Box(R(0f, 0f, W, H), "", _windowStyle);
         GUI.Label(R(16f, 8f, W - 200f, 24f), I18n.T(
-            "TldHacks v6.9.2  本软件完全免费|作者:AKUL|最新版本&交流群:563092033",
-            "TldHacks v6.9.2  Free software | Author: AKUL | Latest & QQ Group: 563092033"), _titleStyle);
+            "TldHacks v7.0  本软件完全免费|作者:AKUL|最新版本&交流群:563092033",
+            "TldHacks v7.0  Free software | Author: AKUL | Latest & QQ Group: 563092033"), _titleStyle);
         GUI.Label(R(16f, 30f, 500f, 18f), "Cursor Ink UI / IL2CPP IMGUI", _mutedLabelStyle);
 
         // 标题栏右侧:scale - / x1.0 / + / Close (v2.7.83 统一间距 4px)
@@ -937,14 +937,16 @@ internal static class Menu
         bool nstam= GUI.Toggle(R(c3 + TOG2_OFF, y3, TOG_W, ROW_H), s.NoAimStamina,   I18n.T(" 瞄准不耗体力", " No Aim Stamina"));
         y3 += ROW_ADV;
         bool sway = GUI.Toggle(R(c3,            y3, TOG_W, ROW_H), s.NoAimSway,      I18n.T(" 稳定瞄准", " Steady Aim"));
+        bool magic= GUI.Toggle(R(c3 + TOG2_OFF, y3, TOG_W, ROW_H), s.MagicBullet,    I18n.T(" 魔法子弹", " Magic Bullet"));
         y3 += ROW_ADV + SECTION_END_ADV;
         if (amm != s.InfiniteAmmo || jam != s.NoJam || rec != s.NoRecoil
-            || sway != s.NoAimSway || nstam != s.NoAimStamina)
+            || sway != s.NoAimSway || nstam != s.NoAimStamina || magic != s.MagicBullet)
         {
             s.InfiniteAmmo = amm; s.NoJam = jam; s.NoRecoil = rec;
-            s.NoAimSway = sway; s.NoAimStamina = nstam;
+            s.NoAimSway = sway; s.NoAimStamina = nstam; s.MagicBullet = magic;
             CheatState.InfiniteAmmo = amm; CheatState.NoJam = jam; CheatState.NoRecoil = rec;
             CheatState.NoAimSway = sway; CheatState.NoAimStamina = nstam;
+            CheatStateESP.MagicBullet = magic;
             s.Save();
         }
 
@@ -958,6 +960,11 @@ internal static class Menu
         y3 += ROW_ADV;
         if (GUI.Button(R(c3,             y3, TOG_W, ROW_H), I18n.T("修复手持", "Repair Held")))            Cheats.RepairItemInHands();
         if (GUI.Button(R(c3 + TOG2_OFF,  y3, TOG_W, ROW_H), I18n.T("★ 全关并同步", "★ Disable All")))     Cheats.DisableAllCheats();
+        y3 += ROW_ADV;
+        // v6.9.5 诊断开关
+        bool diagAff = GUI.Toggle(R(c3, y3, TOG_W * 2, ROW_H), CheatState.DiagAfflictionLog,
+            I18n.T(" 诊断:Affliction日志", " Diag: Affliction Log"));
+        if (diagAff != CheatState.DiagAfflictionLog) CheatState.DiagAfflictionLog = diagAff;
         y3 += ROW_ADV + SECTION_END_ADV;
 
         return Mathf.Max(y1, Mathf.Max(y2, y3));

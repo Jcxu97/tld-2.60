@@ -115,7 +115,7 @@ internal static class CheatState
     public static float HL_Intensity = 2f;
     public static float HL_RangeMultiplier = 1.4f;
     public static float HL_CullDistance = 50f;
-    public static float HL_InteractDistance = 1f;
+    public static float HL_InteractDistance = 2f;
     // v2.7.96 整合 Batch 2
     public static bool PauseInJournal;
     public static bool SkipIntro;
@@ -214,6 +214,10 @@ internal static class CheatState
     //   解决:在清除窗口内吞掉新增的 affliction(由 OnUpdate 二次扫描兜底)
     public static bool AfflictionClearInProgress;
     public static int AfflictionClearReSweepFramesLeft;  // 大于 0 时每帧扫一次
+
+    // v6.9.5 诊断:affliction auto-cure bug 排查 — 在 Menu 里勾 "诊断:Affliction日志" 后
+    // 每次 BloodLossEnd/InfectionEnd/HypothermiaEnd 被调时记录调用栈到 MelonLoader log
+    public static bool DiagAfflictionLog;
 }
 
 // 工具函数:刷物品/清 affliction/天气/时间/耐久恢复
@@ -807,42 +811,26 @@ internal static class Cheats
         }
     }
 
-    // 真正切天气:WeatherTransition.ActivateWeatherSetImmediate(WeatherStage)
-    // 这是 public 方法,不走 uConsole(release build 下 no-op)。
-    // 从场景里找 WeatherTransition 实例 —— 反射调 GameManager 或 FindObjectOfType 兜底
+    // 真正切天气:直接调 GameManager.GetWeatherTransitionComponent()
     public static void SetWeatherStage(int stage)
     {
         try
         {
-            WeatherTransition wt = null;
-
-            // 尝试 GameManager.GetWeatherTransitionComponent()(如果存在)
-            try
-            {
-                var m = typeof(GameManager).GetMethod("GetWeatherTransitionComponent", BindingFlags.Static | BindingFlags.Public);
-                if (m != null) wt = m.Invoke(null, null) as WeatherTransition;
-            }
-            catch { }
-
-            // 兜底:场景里找
+            var wt = GameManager.GetWeatherTransitionComponent();
             if (wt == null)
             {
-                try { wt = UnityEngine.Object.FindObjectOfType<WeatherTransition>(); } catch { }
-            }
-
-            if (wt == null)
-            {
-                ModMain.Log?.Warning("[Weather] WeatherTransition not found in scene");
+                ModMain.Log?.Warning("[Weather] WeatherTransition not found");
                 CheatState.LastActionLog = I18n.IsEnglish
                     ? "[Weather] No WeatherTransition found"
                     : "[Weather] 没找到 WeatherTransition";
                 return;
             }
 
-            // WeatherStage 是 enum,int 可以直接转
             WeatherStage stageEnum = (WeatherStage)stage;
+            // 暴风雪:清除 suppress 标志,否则某些难度下会被静默拦截
+            if (stageEnum == WeatherStage.Blizzard)
+                WeatherTransition.m_SuppressBlizzards = false;
             wt.ActivateWeatherSetImmediate(stageEnum);
-            // 锁定天气:记录 stage,tick 里持续刷新防止自动切换
             CheatState.WeatherLocked = true;
             CheatState.WeatherLockedStage = stage;
             ModMain.Log?.Msg($"[Weather] ActivateWeatherSetImmediate({stageEnum}) + locked");
@@ -856,18 +844,14 @@ internal static class Cheats
     {
         try
         {
-            WeatherTransition wt = null;
-            try
-            {
-                var m = typeof(GameManager).GetMethod("GetWeatherTransitionComponent", BindingFlags.Static | BindingFlags.Public);
-                if (m != null) wt = m.Invoke(null, null) as WeatherTransition;
-            }
-            catch { }
-            if (wt == null) try { wt = UnityEngine.Object.FindObjectOfType<WeatherTransition>(); } catch { }
+            var wt = GameManager.GetWeatherTransitionComponent();
             if (wt == null) return;
-            wt.ActivateWeatherSetImmediate((WeatherStage)stage);
+            WeatherStage stageEnum = (WeatherStage)stage;
+            if (stageEnum == WeatherStage.Blizzard)
+                WeatherTransition.m_SuppressBlizzards = false;
+            wt.ActivateWeatherSetImmediate(stageEnum);
         }
-        catch (Exception ex) { ModMain.Log?.Error($"[Weather] {ex.Message}"); }
+        catch { }
     }
 
     public static void SetTimeOfDay(float hour)
@@ -952,8 +936,15 @@ internal static class Cheats
             return true;
         }
         catch { }
-        // fallback 直接字段
-        try { gear.m_CurrentHP = 100f; return true; } catch { }
+        // fallback 直接字段 —— 钳到该物品自身 MaxHP(衣物 MaxHP 常<100,直接写 100f 会显示 >100%)
+        try
+        {
+            float maxHp = 100f;
+            try { var d = gear.GearItemData; if (d != null) maxHp = d.MaxHP; } catch { }
+            gear.m_CurrentHP = maxHp;
+            return true;
+        }
+        catch { }
         return false;
     }
 
@@ -1103,6 +1094,21 @@ internal static class Patch_PM_FlushDamage
 internal static class Patch_Hypothermia_Start
 {
     private static bool Prefix() => !CheatState.GodMode;
+
+    // v6.9.1 IL2CPP double-insurance
+    private static void Postfix(Hypothermia __instance)
+    {
+        if (!CheatState.GodMode) return;
+        try
+        {
+            if (__instance.HasHypothermia())
+            {
+                __instance.HypothermiaEnd();
+                ModMain.Log?.Msg("[AfflictionGuard] Hypothermia started despite Prefix block — cleared via Postfix");
+            }
+        }
+        catch { }
+    }
 }
 
 [HarmonyPatch(typeof(SprainedWrist), "SprainedWristStart")]
@@ -1121,18 +1127,125 @@ internal static class Patch_SprainedAnkle_Start
 internal static class Patch_BloodLoss_Start
 {
     private static bool Prefix() => !(CheatState.GodMode || CheatState.ImmuneAnimalDamage);
+
+    // v6.9.1 IL2CPP double-insurance: Prefix return false is unreliable on IL2CPP (same pattern as sprains)
+    // If blood loss started despite the Prefix block, immediately end it to prevent game state corruption
+    private static void Postfix(BloodLoss __instance)
+    {
+        if (!(CheatState.GodMode || CheatState.ImmuneAnimalDamage)) return;
+        try
+        {
+            if (__instance.HasBloodLoss())
+            {
+                for (int i = 0; i < 6; i++)
+                    try { __instance.BloodLossEnd(i, (AfflictionOptions)0); } catch { }
+                ModMain.Log?.Msg("[AfflictionGuard] BloodLoss started despite Prefix block — cleared via Postfix");
+            }
+        }
+        catch { }
+    }
 }
 
 [HarmonyPatch(typeof(BloodLoss), "BloodLossStartOverrideArea")]
 internal static class Patch_BloodLoss_StartOverride
 {
     private static bool Prefix() => !(CheatState.GodMode || CheatState.ImmuneAnimalDamage);
+
+    private static void Postfix(BloodLoss __instance)
+    {
+        if (!(CheatState.GodMode || CheatState.ImmuneAnimalDamage)) return;
+        try
+        {
+            if (__instance.HasBloodLoss())
+            {
+                for (int i = 0; i < 6; i++)
+                    try { __instance.BloodLossEnd(i, (AfflictionOptions)0); } catch { }
+                ModMain.Log?.Msg("[AfflictionGuard] BloodLoss(Override) started despite Prefix block — cleared via Postfix");
+            }
+        }
+        catch { }
+    }
 }
 
 [HarmonyPatch(typeof(Infection), "InfectionStart")]
 internal static class Patch_Infection_Start
 {
     private static bool Prefix() => !CheatState.GodMode;
+
+    private static void Postfix(Infection __instance)
+    {
+        if (!CheatState.GodMode) return;
+        try
+        {
+            if (__instance.HasInfection())
+            {
+                for (int i = 0; i < 6; i++)
+                    try { __instance.InfectionEnd(i); } catch { }
+                ModMain.Log?.Msg("[AfflictionGuard] Infection started despite Prefix block — cleared via Postfix");
+            }
+        }
+        catch { }
+    }
+}
+
+// v6.9.5 诊断:记录谁调了 affliction End — 用于定位 "auto-cure bug" 的真正来源
+// 开启方法:菜单里勾 "诊断:Affliction日志",然后触发 bug 后看 MelonLoader/Latest.log
+[HarmonyPatch(typeof(BloodLoss), "BloodLossEnd")]
+internal static class Patch_BloodLossEnd_Diag
+{
+    // v6.9.6 修:原参数名 localIndex 不存在(真实签名 BloodLossEnd(int index,...)),
+    //   Harmony 按名注入失败 → IL Compile Error → patch 每次启动报错且永不生效。
+    //   改用位置参数 __0,绕过 IL2Cpp 名称匹配。
+    private static void Prefix(int __0)
+    {
+        if (!CheatState.DiagAfflictionLog) return;
+        var st = new System.Diagnostics.StackTrace(2, false);
+        ModMain.Log?.Warning($"[AfflictionDiag] BloodLossEnd(loc={__0}) called! Stack:\n{st}");
+    }
+}
+
+[HarmonyPatch(typeof(Hypothermia), "HypothermiaEnd")]
+internal static class Patch_HypothermiaEnd_Diag
+{
+    private static void Prefix()
+    {
+        if (!CheatState.DiagAfflictionLog) return;
+        var st = new System.Diagnostics.StackTrace(2, false);
+        ModMain.Log?.Warning($"[AfflictionDiag] HypothermiaEnd called! Stack:\n{st}");
+    }
+}
+
+[HarmonyPatch(typeof(Infection), "InfectionEnd")]
+internal static class Patch_InfectionEnd_Diag
+{
+    private static void Prefix()
+    {
+        if (!CheatState.DiagAfflictionLog) return;
+        var st = new System.Diagnostics.StackTrace(2, false);
+        ModMain.Log?.Warning($"[AfflictionDiag] InfectionEnd called! Stack:\n{st}");
+    }
+}
+
+[HarmonyPatch(typeof(FoodPoisoning), "FoodPoisoningEnd")]
+internal static class Patch_FoodPoisoningEnd_Diag
+{
+    private static void Prefix()
+    {
+        if (!CheatState.DiagAfflictionLog) return;
+        var st = new System.Diagnostics.StackTrace(2, false);
+        ModMain.Log?.Warning($"[AfflictionDiag] FoodPoisoningEnd called! Stack:\n{st}");
+    }
+}
+
+[HarmonyPatch(typeof(Dysentery), "DysenteryEnd")]
+internal static class Patch_DysenteryEnd_Diag
+{
+    private static void Prefix()
+    {
+        if (!CheatState.DiagAfflictionLog) return;
+        var st = new System.Diagnostics.StackTrace(2, false);
+        ModMain.Log?.Warning($"[AfflictionDiag] DysenteryEnd called! Stack:\n{st}");
+    }
 }
 
 // v2.7.15:ManualUpdate Postfix 强制 100 太粗暴 —— 用户要的是"不衰减",不是"自动满"

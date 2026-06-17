@@ -12,3 +12,5 @@ ModSettingsQuickNav/src/obj/
 analysis/il/
 GfxBoost/src/bin/
 GfxBoost/src/obj/
+*.bak-*
+tools/_*_old.cs

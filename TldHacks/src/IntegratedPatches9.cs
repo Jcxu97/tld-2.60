@@ -151,7 +151,9 @@ internal static class HouseLightsState
                 if (mesh.GetComponent<Collider>() == null)
                 {
                     var col = mesh.AddComponent<BoxCollider>();
-                    col.size = new Vector3(0.1f, 0.1f, 0.1f);
+                    // v6.9.6 原版 0.1³(10cm)碰撞体太小 → 准星极难对准 → "有些人交互不了开关"。
+                    //   放大到 0.3³(30cm)纯命中检测体,不影响外观/FPS,大幅提高交互可靠性。
+                    col.size = new Vector3(0.3f, 0.3f, 0.3f);
                 }
             }
         }
