@@ -1,6 +1,6 @@
 # HANDOFF — tld--2.55
 
-> Last updated: 2026-10-01 02:40
+> Last updated: 2026-10-01 03:10
 
 ## 当前目标
 
@@ -20,8 +20,8 @@ TraderMoving v1.0(跨场景搬无线电和交易箱,搬过去功能完整)已部
 
 ## 下一步
 
-- 用户按测试清单在游戏里测,回报 F9 诊断段和 Latest.log 里 `[TraderMoving]` 行
-- 测通以后再决定要不要放进完整版包(现在完整版带的是 ImprovedTrader,两个别同时装)
+- 用户 02:37 到 02:52 实测:摆放、跨场景、读档复制、交易送到搬过的箱子都通了
+- 已单独出包 `Desktop\TLD\TraderMoving-v1.0_搬运商人无线电和交易箱_解压到游戏根目录.zip`(DLL 5f1649fd + ModSettings + ModData + 使用说明);完整版包暂不动,用户多玩几天再决定换掉 ImprovedTrader
 - 剧情模式第 5 章方案还在等用户点头
 
 ## 未决问题
