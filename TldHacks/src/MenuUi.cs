@@ -311,7 +311,7 @@ internal static class Ui
         ["SpaceFinish_Craft"] = new[] { "制作时按空格立即完成。", "Press Space to finish crafting at once." },
         ["SpaceFinish_Repair"] = new[] { "修理时按空格立即完成。", "Press Space to finish a repair at once." },
         ["TraderUnlimitedList"] = new[] { "一次交易最多能选的商品数提高到 64 样。", "You can select up to 64 exchanges in one trade." },
-        ["TraderMaxTrust"] = new[] { "商人信任值直接加满。对应的商品和对话照原版解锁。", "Sets the trader trust to the maximum. The trades and conversations for that trust unlock as in the base game." },
+        ["TraderMaxTrust"] = new[] { "商人信任值直接加满。对应的商品和对话照原版解锁。开着时信任条拖不动。", "Sets the trader trust to the maximum. The trades and conversations for that trust unlock as in the base game. You cannot move the trust slider while this is on." },
         ["TraderInstantExchange"] = new[] { "商人要的东西不用交,关上交换箱就直接完成交易,不用再联系商人,也不用等商人回来。", "The items that the trader asks for count as delivered. The trade completes when you close the exchange box. You do not have to call the trader again or wait for the trader to come back." },
         ["TraderAlwaysAvailable"] = new[] { "随时都能用无线电联系商人,交易完成后也不用等商人回来。联系太频繁照样扣信任,这条照原版。", "You can call the trader on the radio at any time. You do not have to wait for the trader to come back after a trade. Too many calls still remove trust, as in the base game." },
         ["CougarInstantActivate"] = new[] { "新存档一开始就激活美洲狮。", "Activates the cougar at the start of a new save." },

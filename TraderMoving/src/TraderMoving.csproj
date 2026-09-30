@@ -1,0 +1,108 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <AssemblyName>TraderMoving</AssemblyName>
+    <RootNamespace>TraderMoving</RootNamespace>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <Version>1.0.0</Version>
+
+    <TldRoot>D:\Steam\steamapps\common\TheLongDark</TldRoot>
+    <TldMlNet6>$(TldRoot)\MelonLoader\net6</TldMlNet6>
+    <TldInterop>$(TldRoot)\MelonLoader\Il2CppAssemblies</TldInterop>
+    <TldModsDir>$(TldRoot)\Mods</TldModsDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="MelonLoader">
+      <HintPath>$(TldMlNet6)\MelonLoader.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>$(TldMlNet6)\0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Il2CppInterop.Runtime">
+      <HintPath>$(TldMlNet6)\Il2CppInterop.Runtime.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Il2CppInterop.Common">
+      <HintPath>$(TldMlNet6)\Il2CppInterop.Common.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Il2Cppmscorlib">
+      <HintPath>$(TldInterop)\Il2Cppmscorlib.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Il2CppSystem">
+      <HintPath>$(TldInterop)\Il2CppSystem.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>$(TldInterop)\Assembly-CSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(TldInterop)\UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>$(TldInterop)\UnityEngine.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>$(TldInterop)\UnityEngine.InputLegacyModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.PhysicsModule">
+      <HintPath>$(TldInterop)\UnityEngine.PhysicsModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.AnimationModule">
+      <HintPath>$(TldInterop)\UnityEngine.AnimationModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- 交易系统(TraderRadio / ExchangeBox / TraderManager)在 Assembly-CSharp 里,
+         命名空间是 Il2CppTLD.Trader,没有独立程序集。已实测:Il2CppTLD.Trader.dll 不存在。 -->
+    <!-- ItemWeight(负重计算走 ItemWeight.ToQuantity) -->
+    <Reference Include="Il2CppTLD.IntBackedUnit">
+      <HintPath>$(TldInterop)\Il2CppTLD.IntBackedUnit.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- GameAudioManager.PlaySound 的 EVENTS.* 常量是 AK.Wwise.Event 类型 -->
+    <Reference Include="Il2CppAK.Wwise.Unity.API.WwiseTypes">
+      <HintPath>$(TldInterop)\Il2CppAK.Wwise.Unity.API.WwiseTypes.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Il2CppTLD.Addressables">
+      <HintPath>$(TldInterop)\Il2CppTLD.Addressables.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Unity.ResourceManager">
+      <HintPath>$(TldInterop)\Unity.ResourceManager.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Unity.Addressables">
+      <HintPath>$(TldInterop)\Unity.Addressables.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="ModSettings">
+      <HintPath>$(TldModsDir)\ModSettings.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="ModData">
+      <HintPath>$(TldModsDir)\ModData.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!-- 用 -p:NoDeploy=true 只编译不部署(验证阶段别动游戏 Mods 目录) -->
+  <Target Name="CopyToMods" AfterTargets="Build" Condition="'$(NoDeploy)' != 'true'">
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(TldModsDir)" SkipUnchangedFiles="false" />
+    <Message Importance="high" Text="==> Deployed $(TargetFileName) to $(TldModsDir)" />
+  </Target>
+
+</Project>

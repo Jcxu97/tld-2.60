@@ -576,12 +576,23 @@ internal static partial class MenuTweaks
             {
                 curTrust = tm2.m_CurrentState.m_CurrentTrust;
                 trustMin = tm2.m_MinTrustLevel; trustMax = tm2.m_MaxTrustLevel;
+                // 信任满值一打开就拉满,不等下次打开交易清单,滑条也立刻跟着变
+                if (tmt && curTrust < tm2.m_MaxTrustLevel)
+                {
+                    TraderTrust.HealOnce(tm2);
+                    TraderTrust.Set(tm2, tm2.m_MaxTrustLevel);
+                    curTrust = tm2.m_CurrentState.m_CurrentTrust;
+                }
             }
         }
         catch { }
 #endif
+        // 信任满值开着时滑条拖不动,不然拖下去下次打开交易清单又被拉回满值
+        bool guiWas = GUI.enabled;
+        if (tmt) GUI.enabled = false;
         float trustSlider = DrawSliderCol3(R, c3, y3, I18n.T("信任值", "Trust"), curTrust, trustMin, trustMax, "F0");
-        if ((int)trustSlider != curTrust)
+        GUI.enabled = guiWas;
+        if (!tmt && (int)trustSlider != curTrust)
         {
             // 历史最高只升不降、升上去时补对应的解锁,都照原版(见 TraderTrust)
 #if !STORY_EDITION

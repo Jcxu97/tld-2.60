@@ -18,3 +18,5 @@ tools/_*_old.cs
 TldHacksStory/bin/
 TldHacksStory/obj/
 tools/__pycache__/
+TraderMoving/src/bin/
+TraderMoving/src/obj/

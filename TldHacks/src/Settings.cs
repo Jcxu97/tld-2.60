@@ -588,6 +588,8 @@ internal class TldHacksSettings : JsonModSettings
 
     // ——— Integrated: TimeScaleHotkey ———
     // 以前借来放说明的一行,不是开关。现在不在面板上显示(见 HideRetiredFields),说明挪到热键1
+    // ModSettings 要求每个公开字段都带 [Name],隐藏的也不能省,省了整个设置类构造就抛异常
+    [Name("使用说明")]
     public bool TimeScaleInfo = true;
 
     [Section("Time Scale / 时间加速")]
