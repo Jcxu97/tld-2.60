@@ -1,6 +1,6 @@
 # HANDOFF — tld--2.55
 
-> Last updated: 2026-10-01 03:10
+> Last updated: 2026-10-01 03:25
 
 ## 当前目标
 
@@ -22,7 +22,7 @@ TraderMoving v1.0(跨场景搬无线电和交易箱,搬过去功能完整)已部
 
 - 用户 02:37 到 02:52 实测:摆放、跨场景、读档复制、交易送到搬过的箱子都通了
 - 已单独出包 `Desktop\TLD\TraderMoving-v1.0_搬运商人无线电和交易箱_解压到游戏根目录.zip`(DLL 5f1649fd + ModSettings + ModData + 使用说明);完整版包暂不动,用户多玩几天再决定换掉 ImprovedTrader
-- 剧情模式第 5 章方案还在等用户点头
+- 第 5 章版 TldHacksEp5 V1.0(工程 `TldHacksEp5/`,编译用 episode5 的 2.54 文件)已部署到 `tld_dlc\episode5\Mods` 并打包到 `Desktop\TLD\The Long dark 故事剧情模式_可能有bug没测试\剧情模式第五章\`,用户不测,没进过游戏
 
 ## 未决问题
 
