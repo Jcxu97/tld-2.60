@@ -1,10 +1,12 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using Il2Cpp;
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
+#if !STORY_EDITION   // 2.24 无此命名空间(2.24 之后才加入游戏)
 using Il2CppTLD.ModularElectrolizer;
+#endif
 using MelonLoader;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -17,29 +19,193 @@ namespace TldHacks;
 // 室内灯光开关 — 非极光时也能亮灯,通过墙上 switch 交互 toggle
 // ═══════════════════════════════════════════════════════════════════════════
 
-internal sealed class HLElectrolizerConfig
+// 每个灯源记住上次被设成的状态(关 / 开 / 交给极光),状态和设置都没变就什么都不做。
+//   旧版每 5 帧给每个灯源重写每盏灯的范围、颜色、阴影,再调游戏的四个更新函数,灯关着也照跑。
+//   原版在 AuroraManager.Update 里先调 UpdateForceAurora、后更新电灯;没有极光时原版不碰这些灯
+//   (否则旧版的灯会 5 帧暗 4 帧),所以只在状态变了、设置变了、或者亮度字段被别处改掉时重设。
+internal abstract class HLSource
 {
-    public AuroraModularElectrolizer electrolizer;
+    internal const int Off = 0, On = 1, Aurora = 2;
+
     public float[] ranges;
-    public Color[] colors;
+    public Color[] colors, whites;
+    public LightShadows[] shadows;
+    public Vector3 pos;
     public bool skipWhenOn;
+    private int _applied = -1, _ver = -1;
+    private float _output;
+
+    public abstract bool Alive { get; }
+    protected abstract float Output { get; }
+    protected abstract void SetProps(bool restore);
+    protected abstract void SetState(int want);
+
+    protected void Setup(int n, string goName, Vector3 p)
+    {
+        ranges = new float[n];
+        colors = new Color[n];
+        whites = new Color[n];
+        shadows = new LightShadows[n];
+        pos = p;
+        skipWhenOn = goName.Contains("Alarm") || goName.Contains("Headlight") ||
+            goName.Contains("Taillight") || goName.Contains("Television") ||
+            goName.Contains("Computer") || goName.Contains("Machine") ||
+            goName.Contains("ControlBox") || goName.Contains("Interiorlight");
+    }
+
+    protected void Record(int i, Light l)
+    {
+        ranges[i] = l.range;
+        colors[i] = l.color;
+        shadows[i] = l.shadows;
+        Color.RGBToHSV(colors[i], out float h, out float s, out float v);
+        whites[i] = Color.HSVToRGB(h, s * 0.15f, v);
+    }
+
+    protected void SetLight(int i, Light l, bool restore)
+    {
+        if (l == null || i >= ranges.Length) return;
+        if (restore) { l.range = ranges[i]; l.color = colors[i]; l.shadows = shadows[i]; return; }
+        l.range = Math.Min(ranges[i] * CheatState.HL_RangeMultiplier, 20f);
+        l.color = CheatState.HL_WhiteLights ? whites[i] : colors[i];
+        l.shadows = CheatState.HL_CastShadows ? LightShadows.Soft : shadows[i];
+    }
+
+    public void Update(int want, int ver, bool flicker)
+    {
+        if (ver == _ver && want == _applied)
+        {
+            if (want == Aurora) return;
+            // 开着闪烁时旧版靠每 5 帧重设来刷新,这种情况照旧
+            if (_output == Output && !(want == On && flicker)) return;
+        }
+        SetProps(false);
+        _ver = ver;
+        _applied = want;
+        if (want == Aurora) return;
+        SetState(want);
+        _output = Output;
+    }
+
+    public void Restore(bool aurora)
+    {
+        SetProps(true);
+        if (!aurora) SetState(Off);
+        _applied = -1;
+        _ver = -1;
+    }
 }
 
-internal sealed class HLElectroLightConfig
+#if !STORY_EDITION
+// 2.24 无 Il2CppTLD.ModularElectrolizer.AuroraModularElectrolizer(极光电解器是后加的)。
+// 屋内灯光的另一条路径 AuroraLightingSimple/HLElectroLightConfig 在 2.24 存在,保留。
+internal sealed class HLElectrolizerConfig : HLSource
 {
-    public AuroraLightingSimple electrolizer;
-    public float[] ranges;
-    public Color[] colors;
-    public bool skipWhenOn;
+    public readonly AuroraModularElectrolizer electrolizer;
+    private readonly bool _flickerOrig;
+
+    public HLElectrolizerConfig(AuroraModularElectrolizer e)
+    {
+        electrolizer = e;
+        _flickerOrig = e.m_HasFlickerSet;
+        var lights = e.m_LocalLights;
+        int n = lights._size;
+        Setup(n, e.gameObject.name, e.transform.position);
+        for (int i = 0; i < n; i++) Record(i, lights[i]);
+    }
+
+    public override bool Alive => electrolizer != null;
+    protected override float Output => electrolizer.m_OutputIntensity;
+
+    protected override void SetProps(bool restore)
+    {
+        var lights = electrolizer.m_LocalLights;
+        if (lights != null)
+        {
+            int n = Math.Min(lights._size, ranges.Length);
+            for (int i = 0; i < n; i++) SetLight(i, lights[i], restore);
+        }
+        electrolizer.m_HasFlickerSet = restore ? _flickerOrig : !CheatState.HL_NoFlicker;
+    }
+
+    protected override void SetState(int want)
+    {
+        var e = electrolizer;
+        if (want == On)
+        {
+            e.UpdateIntensity(1f, CheatState.HL_Intensity);
+            e.UpdateLight(false);
+            e.UpdateEmissiveObjects(false);
+            if (CheatState.HL_LightAudio) e.UpdateAudio();
+            else e.StopAudio();
+        }
+        else
+        {
+            e.UpdateIntensity(1f, 0f);
+            e.UpdateLight(true);
+            e.UpdateEmissiveObjects(true);
+            e.UpdateAudio();
+        }
+    }
+}
+#endif
+
+internal sealed class HLElectroLightConfig : HLSource
+{
+    public readonly AuroraLightingSimple electrolizer;
+
+    public HLElectroLightConfig(AuroraLightingSimple e)
+    {
+        electrolizer = e;
+        var lights = (Il2CppArrayBase<Light>)(object)e.m_LocalLights;
+        int n = lights.Length;
+        Setup(n, e.gameObject.name, e.transform.position);
+        for (int i = 0; i < n; i++) Record(i, lights[i]);
+    }
+
+    public override bool Alive => electrolizer != null;
+    protected override float Output => electrolizer.m_CurIntensity;
+
+    protected override void SetProps(bool restore)
+    {
+        var arr = electrolizer.m_LocalLights;
+        if (arr == null) return;
+        var lights = (Il2CppArrayBase<Light>)(object)arr;
+        int n = Math.Min(lights.Length, ranges.Length);
+        for (int i = 0; i < n; i++) SetLight(i, lights[i], restore);
+    }
+
+    protected override void SetState(int want)
+    {
+        var e = electrolizer;
+        if (want == On)
+        {
+            e.m_CurIntensity = CheatState.HL_Intensity;
+            e.UpdateLight(false);
+            e.UpdateEmissiveObjects(false);
+            if (CheatState.HL_LightAudio) e.UpdateAudio();
+            else e.StopAudio();
+        }
+        else
+        {
+            e.m_CurIntensity = 0f;
+            e.UpdateLight(true);
+            e.UpdateEmissiveObjects(true);
+            e.UpdateAudio();
+        }
+    }
 }
 
 internal static class HouseLightsState
 {
     internal static AssetBundle HLBundle;
     internal static bool LightsOn;
+#if !STORY_EDITION
     internal static List<HLElectrolizerConfig> ElectroSources = new();
+#endif
     internal static List<HLElectroLightConfig> ElectroLightSources = new();
     internal static List<GameObject> LightSwitches = new();
+    private static readonly HashSet<IntPtr> _switchPtrs = new();
 
     internal static readonly List<string> NotReallyOutdoors = new() { "DamTransitionZone" };
 
@@ -71,205 +237,149 @@ internal static class HouseLightsState
 
     internal static void Init()
     {
+#if !STORY_EDITION
         ElectroSources.Clear();
+#endif
         ElectroLightSources.Clear();
         LightSwitches.Clear();
+        _switchPtrs.Clear();
         LightsOn = false;
     }
 
+#if !STORY_EDITION
     internal static void AddElectrolizer(AuroraModularElectrolizer light)
     {
-        var cfg = new HLElectrolizerConfig();
-        cfg.electrolizer = light;
-        cfg.ranges = new float[light.m_LocalLights._size];
-        cfg.colors = new Color[light.m_LocalLights._size];
-        for (int i = 0; i < light.m_LocalLights._size; i++)
-        {
-            cfg.ranges[i] = light.m_LocalLights[i].range;
-            cfg.colors[i] = light.m_LocalLights[i].color;
-        }
-        string goName = light.gameObject.name;
-        cfg.skipWhenOn = goName.Contains("Alarm") || goName.Contains("Headlight") ||
-            goName.Contains("Taillight") || goName.Contains("Television") ||
-            goName.Contains("Computer") || goName.Contains("Machine") ||
-            goName.Contains("ControlBox") || goName.Contains("Interiorlight");
-        ElectroSources.Add(cfg);
+        if (light.m_LocalLights == null) return;
+        ElectroSources.Add(new HLElectrolizerConfig(light));
     }
+#endif
 
     internal static void AddElectrolizerLight(AuroraLightingSimple light)
     {
-        var cfg = new HLElectroLightConfig();
-        cfg.electrolizer = light;
-        int len = ((Il2CppArrayBase<Light>)(object)light.m_LocalLights).Length;
-        cfg.ranges = new float[len];
-        cfg.colors = new Color[len];
-        string goName = light.gameObject.name;
-        cfg.skipWhenOn = goName.Contains("Alarm") || goName.Contains("Headlight") ||
-            goName.Contains("Taillight") || goName.Contains("Television") ||
-            goName.Contains("Computer") || goName.Contains("Machine") ||
-            goName.Contains("ControlBox") || goName.Contains("Interiorlight");
-        for (int i = 0; i < len; i++)
-        {
-            cfg.ranges[i] = ((Il2CppArrayBase<Light>)(object)light.m_LocalLights)[i].range;
-            cfg.colors[i] = ((Il2CppArrayBase<Light>)(object)light.m_LocalLights)[i].color;
-        }
-        ElectroLightSources.Add(cfg);
+        if (light.m_LocalLights == null) return;
+        ElectroLightSources.Add(new HLElectroLightConfig(light));
     }
+
+    internal static bool IsSwitch(GameObject obj) => _switchPtrs.Contains(obj.Pointer);
+
+    private static readonly string[] SwitchNames =
+    {
+        "houselightswitch", "lightswitcha", "lightswitchblack", "switch_a_black",
+        "switch_a_white", "switch_a_purple", "switch_b_white",
+    };
 
     internal static void GetSwitches()
     {
-        var rootObjects = GetRootObjects();
-        var orgObj = new List<GameObject>();
+        var found = new List<GameObject>();
+        foreach (var root in GetRootObjects()) FindSwitches(root.transform, found);
 
-        foreach (var item in rootObjects)
+        foreach (var obj in found)
         {
-            orgObj.Clear();
-            GetChildrenWithName(item, "houselightswitch", orgObj);
-            GetChildrenWithName(item, "lightswitcha", orgObj);
-            GetChildrenWithName(item, "lightswitchblack", orgObj);
-            GetChildrenWithName(item, "switch_a_black", orgObj);
-            GetChildrenWithName(item, "switch_a_white", orgObj);
-            GetChildrenWithName(item, "switch_a_purple", orgObj);
-            GetChildrenWithName(item, "switch_b_white", orgObj);
-
-            foreach (var obj in orgObj)
+            if (!obj.active) continue;
+            string switchName = obj.name;
+            int variant = (switchName.IndexOf("houselightswitch", System.StringComparison.OrdinalIgnoreCase) >= 0
+                || switchName.IndexOf("lightswitcha", System.StringComparison.OrdinalIgnoreCase) >= 0) ? 1 : 2;
+            obj.active = false;
+            Vector3 pos = obj.transform.position;
+            Quaternion rot = obj.transform.rotation;
+            var sw = InstantiateSwitch(pos, rot.eulerAngles, variant);
+            if (sw == null) continue;
+            var mesh = sw.transform.FindChild("SM_LightSwitchBlack")?.gameObject;
+            if (mesh == null) continue;
+            mesh.layer = 19;
+            LightSwitches.Add(mesh);
+            _switchPtrs.Add(mesh.Pointer);
+            mesh.name = "MOD_HouseLightSwitch";
+            if (mesh.GetComponent<Collider>() == null)
             {
-                if (!obj.active) continue;
-                string switchName = obj.name;
-                int variant = (switchName.IndexOf("houselightswitch", System.StringComparison.OrdinalIgnoreCase) >= 0
-                    || switchName.IndexOf("lightswitcha", System.StringComparison.OrdinalIgnoreCase) >= 0) ? 1 : 2;
-                obj.active = false;
-                Vector3 pos = obj.transform.position;
-                Quaternion rot = obj.transform.rotation;
-                var sw = InstantiateSwitch(pos, rot.eulerAngles, variant);
-                if (sw == null) continue;
-                var mesh = sw.transform.FindChild("SM_LightSwitchBlack")?.gameObject;
-                if (mesh == null) continue;
-                mesh.layer = 19;
-                LightSwitches.Add(mesh);
-                mesh.name = "MOD_HouseLightSwitch";
-                if (mesh.GetComponent<Collider>() == null)
-                {
-                    var col = mesh.AddComponent<BoxCollider>();
-                    // v6.9.6 原版 0.1³(10cm)碰撞体太小 → 准星极难对准 → "有些人交互不了开关"。
-                    //   放大到 0.3³(30cm)纯命中检测体,不影响外观/FPS,大幅提高交互可靠性。
-                    col.size = new Vector3(0.3f, 0.3f, 0.3f);
-                }
+                var col = mesh.AddComponent<BoxCollider>();
+                // v6.9.6 原版 0.1³(10cm)碰撞体太小 → 准星极难对准 → "有些人交互不了开关"。
+                //   放大到 0.3³(30cm)纯命中检测体,不影响外观/FPS,大幅提高交互可靠性。
+                col.size = new Vector3(0.3f, 0.3f, 0.3f);
             }
         }
+    }
+
+    // 一次遍历同时比七个名字:旧版每个名字各遍历一遍整棵场景树,进场景时每个节点的名字要读七次
+    private static void FindSwitches(Transform t, List<GameObject> result)
+    {
+        int n = t.childCount;
+        for (int i = 0; i < n; i++)
+        {
+            var child = t.GetChild(i);
+            string name = child.name;
+            for (int k = 0; k < SwitchNames.Length; k++)
+            {
+                if (name.IndexOf(SwitchNames[k], System.StringComparison.OrdinalIgnoreCase) < 0) continue;
+                result.Add(child.gameObject);
+                break;
+            }
+            FindSwitches(child, result);
+        }
+    }
+
+    private static float _kRange = float.NaN, _kIntensity = float.NaN;
+    private static int _kFlags = -1, _ver;
+
+    // 影响灯光属性和开灯效果的设置一变就换版本号,所有灯源下一次都会重设
+    private static int SettingsVersion()
+    {
+        int flags = (CheatState.HL_WhiteLights ? 1 : 0) | (CheatState.HL_CastShadows ? 2 : 0)
+            | (CheatState.HL_NoFlicker ? 4 : 0) | (CheatState.HL_LightAudio ? 8 : 0);
+        if (flags != _kFlags || CheatState.HL_RangeMultiplier != _kRange || CheatState.HL_Intensity != _kIntensity)
+        {
+            _kFlags = flags;
+            _kRange = CheatState.HL_RangeMultiplier;
+            _kIntensity = CheatState.HL_Intensity;
+            _ver++;
+        }
+        return _ver;
     }
 
     internal static void UpdateElectroLights(AuroraManager mngr)
     {
         var player = GameManager.GetVpFPSPlayer();
         if (player == null) return;
-        Vector3 playerPos = player.gameObject.transform.position;
-        float cullDist = CheatState.HL_CullDistance;
-        float rangeMult = CheatState.HL_RangeMultiplier;
-        bool whiteLights = CheatState.HL_WhiteLights;
-        bool shadows = CheatState.HL_CastShadows;
-        bool noFlicker = CheatState.HL_NoFlicker;
-        float intensity = CheatState.HL_Intensity;
-        bool audio = CheatState.HL_LightAudio;
+        Vector3 p = player.transform.position;
+        bool aurora = mngr.AuroraIsActive();
+        float cull = CheatState.HL_CullDistance;
+        int ver = SettingsVersion();
+        bool flicker = !CheatState.HL_NoFlicker;
+#if !STORY_EDITION
+        UpdateAll(ElectroSources, p, aurora, cull * cull, ver, flicker);
+#endif
+        UpdateAll(ElectroLightSources, p, aurora, cull * cull, ver, flicker);
+    }
 
-        for (int i = 0; i < ElectroSources.Count; i++)
+    private static void UpdateAll<T>(List<T> list, Vector3 p, bool aurora, float cull2, int ver, bool flicker)
+        where T : HLSource
+    {
+        for (int i = 0; i < list.Count; i++)
         {
-            var src = ElectroSources[i];
-            if (src.electrolizer == null || src.electrolizer.m_LocalLights == null) continue;
-
-            float dist = Mathf.Abs(Vector3.Distance(
-                src.electrolizer.gameObject.transform.position, playerPos));
-
-            if (dist > cullDist && !mngr.AuroraIsActive())
+            var src = list[i];
+            try
             {
-                src.electrolizer.UpdateIntensity(1f, 0f);
-                src.electrolizer.UpdateLight(true);
-                src.electrolizer.UpdateEmissiveObjects(true);
-                src.electrolizer.UpdateAudio();
-                continue;
+                if (!src.Alive) continue;
+                int want = aurora ? HLSource.Aurora
+                    : (src.pos - p).sqrMagnitude > cull2 ? HLSource.Off
+                    : LightsOn && !src.skipWhenOn ? HLSource.On : HLSource.Off;
+                src.Update(want, ver, flicker);
             }
-
-            for (int j = 0; j < src.electrolizer.m_LocalLights._size; j++)
-            {
-                float r = Math.Min(src.ranges[j] * rangeMult, 20f);
-                src.electrolizer.m_LocalLights[j].range = r;
-                src.electrolizer.m_HasFlickerSet = !noFlicker;
-                Color c = src.colors[j];
-                if (whiteLights) { Color.RGBToHSV(c, out float h, out float ss, out float vv); c = Color.HSVToRGB(h, ss * 0.15f, vv); }
-                src.electrolizer.m_LocalLights[j].color = c;
-                if (shadows) src.electrolizer.m_LocalLights[j].shadows = (LightShadows)2;
-            }
-
-            if (LightsOn && !mngr.AuroraIsActive())
-            {
-                if (src.skipWhenOn) continue;
-                src.electrolizer.UpdateIntensity(1f, intensity);
-                src.electrolizer.UpdateLight(false);
-                src.electrolizer.UpdateEmissiveObjects(false);
-                if (audio) src.electrolizer.UpdateAudio();
-                else src.electrolizer.StopAudio();
-            }
-            else if (!mngr.AuroraIsActive())
-            {
-                src.electrolizer.UpdateIntensity(1f, 0f);
-                src.electrolizer.UpdateLight(true);
-                src.electrolizer.UpdateEmissiveObjects(true);
-                src.electrolizer.UpdateAudio();
-            }
-            else
-            {
-                src.electrolizer.UpdateIntensity(Time.deltaTime, mngr.m_NormalizedActive);
-            }
+            catch { }
         }
+    }
 
-        for (int k = 0; k < ElectroLightSources.Count; k++)
-        {
-            var src = ElectroLightSources[k];
-            if (src.electrolizer == null || src.electrolizer.m_LocalLights == null) continue;
-
-            float dist = Mathf.Abs(Vector3.Distance(
-                src.electrolizer.gameObject.transform.position, playerPos));
-
-            if (dist > cullDist && !mngr.AuroraIsActive())
-            {
-                src.electrolizer.m_CurIntensity = 0f;
-                src.electrolizer.UpdateLight(true);
-                src.electrolizer.UpdateEmissiveObjects(true);
-                src.electrolizer.UpdateAudio();
-                continue;
-            }
-
-            for (int l = 0; l < ((Il2CppArrayBase<Light>)(object)src.electrolizer.m_LocalLights).Length; l++)
-            {
-                float r = Math.Min(src.ranges[l] * rangeMult, 20f);
-                ((Il2CppArrayBase<Light>)(object)src.electrolizer.m_LocalLights)[l].range = r;
-                Color c = src.colors[l];
-                if (whiteLights) { Color.RGBToHSV(c, out float h, out float s, out float vv); c = Color.HSVToRGB(h, s * 0.15f, vv); }
-                ((Il2CppArrayBase<Light>)(object)src.electrolizer.m_LocalLights)[l].color = c;
-                if (shadows) ((Il2CppArrayBase<Light>)(object)src.electrolizer.m_LocalLights)[l].shadows = (LightShadows)2;
-            }
-
-            if (LightsOn && !mngr.AuroraIsActive())
-            {
-                if (src.skipWhenOn) continue;
-                src.electrolizer.m_CurIntensity = intensity;
-                src.electrolizer.UpdateLight(false);
-                src.electrolizer.UpdateEmissiveObjects(false);
-                if (audio) src.electrolizer.UpdateAudio();
-                else src.electrolizer.StopAudio();
-            }
-            else if (!mngr.AuroraIsActive())
-            {
-                src.electrolizer.m_CurIntensity = 0f;
-                src.electrolizer.UpdateLight(true);
-                src.electrolizer.UpdateEmissiveObjects(true);
-                src.electrolizer.UpdateAudio();
-            }
-            else
-            {
-                src.electrolizer.UpdateIntensity(Time.deltaTime);
-            }
-        }
+    // HouseLights 关掉时:灯光属性写回原版;没有极光就把灯关掉,之后由原版接管
+    internal static bool RestoreAll()
+    {
+        LightsOn = false;
+        bool aurora = false;
+        try { var am = GameManager.GetAuroraManager(); aurora = am != null && am.AuroraIsActive(); } catch { }
+#if !STORY_EDITION
+        foreach (var src in ElectroSources) { try { if (src.Alive) src.Restore(aurora); } catch { } }
+#endif
+        foreach (var src in ElectroLightSources) { try { if (src.Alive) src.Restore(aurora); } catch { } }
+        return true;
     }
 
     internal static void InstantiateCustomSwitches(string sceneName)
@@ -371,17 +481,6 @@ internal static class HouseLightsState
         return list;
     }
 
-    internal static void GetChildrenWithName(GameObject obj, string name, List<GameObject> result)
-    {
-        if (obj.transform.childCount <= 0) return;
-        for (int i = 0; i < obj.transform.childCount; i++)
-        {
-            var child = obj.transform.GetChild(i).gameObject;
-            if (child.name.IndexOf(name, System.StringComparison.OrdinalIgnoreCase) >= 0) result.Add(child);
-            GetChildrenWithName(child, name, result);
-        }
-    }
-
     internal static GameObject InstantiateSwitch(Vector3 pos, Vector3 rot, int variant)
     {
         if (HLBundle == null) return null;
@@ -398,7 +497,8 @@ internal static class HouseLightsState
         var renderers = go.GetComponentsInChildren<MeshRenderer>();
         foreach (var mr in renderers)
         {
-            Texture tex = mr.material.mainTexture;
+            var shared = mr.sharedMaterial;   // 读 .material 会先复制一份材质,马上又被下面换掉
+            Texture tex = shared != null ? shared.mainTexture : null;
             Material mat = new Material(VanillaShader);
             mat.mainTexture = tex;
             mr.material = mat;
@@ -410,20 +510,21 @@ internal static class HouseLightsState
         return go;
     }
 
-    internal static bool IsMenu()
+    private static bool _sceneMenu, _sceneOutdoor, _sceneNotReally;
+
+    // 场景名每读一次都要分配一个新字符串:进场景时读一次记下来,每帧的判断只用记下的结果
+    internal static void CacheScene()
     {
-        return GameManager.m_ActiveScene != null &&
-            (GameManager.m_ActiveScene.Contains("MainMenu") || InterfaceManager.IsMainMenuEnabled());
+        string scene = GameManager.m_ActiveScene;
+        _sceneMenu = scene != null && scene.Contains("MainMenu");
+        _sceneOutdoor = scene != null && GameManager.IsOutDoorsScene(scene);
+        _sceneNotReally = scene != null && NotReallyOutdoors.Contains(scene);
     }
 
-    internal static bool ShouldRun()
-    {
-        if (IsMenu() || InterfaceManager.IsMainMenuEnabled()) return false;
-        bool isOutdoor = GameManager.IsOutDoorsScene(GameManager.m_ActiveScene);
-        if (isOutdoor && !CheatState.HL_EnableOutside && !NotReallyOutdoors.Contains(GameManager.m_ActiveScene))
-            return false;
-        return true;
-    }
+    internal static bool IsMenu() => _sceneMenu || InterfaceManager.IsMainMenuEnabled();
+
+    internal static bool ShouldRun() =>
+        !IsMenu() && (!_sceneOutdoor || CheatState.HL_EnableOutside || _sceneNotReally);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -434,14 +535,18 @@ internal static class Patch_HL_GameManager_InstantiatePlayer
 {
     internal static void Prefix()
     {
+        // 先清掉上个场景的灯源和开关:去室外时下面 ShouldRun 为 false,不会重新登记,
+        //   列表里只剩已销毁的对象。HUD / 交互补丁靠开关列表是否为空来跳过射线检测
+        HouseLightsState.CacheScene();
+        HouseLightsState.Init();
         if (!HouseLightsState.ShouldRun()) return;
         HouseLightsState.LoadBundle();
         HouseLightsState.InstantiateCustomSwitches(GameManager.m_ActiveScene);
-        HouseLightsState.Init();
         HouseLightsState.GetSwitches();
     }
 }
 
+#if !STORY_EDITION
 internal static class Patch_HL_Electrolizer_Initialize
 {
     internal static void Postfix(AuroraModularElectrolizer __instance)
@@ -454,6 +559,7 @@ internal static class Patch_HL_Electrolizer_Initialize
         __instance.m_HasFlickerSet = !CheatState.HL_NoFlicker;
     }
 }
+#endif
 
 internal static class Patch_HL_AuroraManager_RegisterLightSimple
 {
@@ -472,7 +578,11 @@ internal static class Patch_HL_AuroraManager_UpdateForceAurora
         if (++_skip < 5) return;
         _skip = 0;
         if (!HouseLightsState.ShouldRun()) return;
+#if STORY_EDITION
+        if (HouseLightsState.ElectroLightSources.Count > 0)
+#else
         if (HouseLightsState.ElectroSources.Count > 0 || HouseLightsState.ElectroLightSources.Count > 0)
+#endif
             HouseLightsState.UpdateElectroLights(__instance);
     }
 }
@@ -481,12 +591,23 @@ internal static class Patch_HL_PlayerManager_UpdateHUDText
 {
     private static string _textOn, _textOff;
 
+    // 2.24 PlayerManager.UpdateHUDText 是无参的(2.55 才把 Panel_HUD 作参数传进来),
+    // 所以剧情版从 InterfaceManager.m_Panel_HUD 自己取,函数体其余部分共用。
+#if STORY_EDITION
+    internal static void Postfix(PlayerManager __instance)
+    {
+        var hud = InterfaceManager.m_Panel_HUD;
+        if (hud == null) return;
+#else
     internal static void Postfix(PlayerManager __instance, Panel_HUD hud)
     {
+#endif
+        // 本场景没登记开关就不可能对准开关,别每帧做射线检测
+        if (HouseLightsState.LightSwitches.Count == 0) return;
         if (HouseLightsState.IsMenu()) return;
         if (GameManager.GetMainCamera() == null) return;
         var obj = __instance.GetInteractiveObjectUnderCrosshairs(CheatState.HL_InteractDistance);
-        if (obj != null && obj.name == "MOD_HouseLightSwitch")
+        if (obj != null && HouseLightsState.IsSwitch(obj))
         {
             _textOn ??= I18n.T("关灯", "Turn Lights Off");
             _textOff ??= I18n.T("开灯", "Turn Lights On");
@@ -499,9 +620,10 @@ internal static class Patch_HL_PlayerManager_ProcessInteraction
 {
     internal static void Postfix(PlayerManager __instance, ref bool __result)
     {
+        if (HouseLightsState.LightSwitches.Count == 0) return;
         if (HouseLightsState.IsMenu()) return;
         var obj = __instance.GetInteractiveObjectUnderCrosshairs(CheatState.HL_InteractDistance);
-        if (obj == null || obj.name != "MOD_HouseLightSwitch") return;
+        if (obj == null || !HouseLightsState.IsSwitch(obj)) return;
         HouseLightsState.LightsOn = !HouseLightsState.LightsOn;
         GameAudioManager.PlaySound("Stop_RadioAurora", __instance.gameObject);
         float x = obj.transform.localScale.x;
@@ -516,9 +638,8 @@ internal static class Patch_HL_Weather_IsTooDarkForAction
 {
     internal static void Postfix(Weather __instance, ref bool __result)
     {
-        if (!HouseLightsState.IsMenu() && __result &&
-            GameManager.GetWeatherComponent().IsIndoorScene() &&
-            HouseLightsState.LightsOn)
+        if (__result && HouseLightsState.LightsOn && !HouseLightsState.IsMenu() &&
+            __instance != null && __instance.IsIndoorScene())
         {
             __result = false;
         }

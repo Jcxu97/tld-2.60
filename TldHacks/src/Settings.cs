@@ -7,16 +7,73 @@ namespace TldHacks;
 // KeyCode 字段会被 ModSettings 2.2.x 自动识别为可重绑按钮;bool → toggle;带 [Slider] 的 float → 滑块。
 internal class TldHacksSettings : JsonModSettings
 {
-    // v2.7.75 诊断应急开关 —— 开了 OnUpdate/OnLateUpdate/OnGUI 全 skip,保留 Harmony patch
-    [Section("Diagnostic / 诊断")]
-    [Name("Emergency: Pause Runtime(暂停所有 tick/update)")]
-    [Description("诊断用。开了 ModMain 不再跑任何 per-frame tick / Stacking OnLateUpdate / Menu UI。Harmony patch 仍挂着(静态挂载不受此开关影响)。若开了仍卡 → 卡在 patch 本身")]
-    public bool DiagPauseRuntime = false;
+    // v7.7 延迟落盘 —— 修 "拖滑条掉到 10-25fps" 的根因。
+    //   IMGUI 每帧跑 Layout+Repaint 两个 pass,拖滑条时每 pass 都判定 changed=true,
+    //   原先在 DrawContents 尾部直接 Save() → 每秒 60-120 次「反射遍历 328 字段 + 同步 File.WriteAllText
+    //   + 一条 Debug.Log」,单帧吃 2-10ms(预算 16.7ms),还每秒往磁盘写 1MB 级。
+    //   改成绘制路径只置脏标记,由 ModMain 的 tick 路径每 0.5s 真正落盘(见 FlushPendingSave)。
+    //   语义完全等价:值本身仍是即时写入内存的(游戏效果不延迟),只有磁盘持久化延后 ≤0.5s;
+    //   菜单关闭 / 游戏退出时强制 flush,不会丢设置。
+    private static bool _saveDirty;
 
-    // v2.7.79 终极诊断:启动时把所有 Harmony patch 全卸载(静态 + DynamicPatch)
-    [Name("Emergency: Unpatch All Harmony(卸载所有 patch)")]
-    [Description("启动时立即 UnpatchAll + skip Reconcile,TldHacks 的所有 [HarmonyPatch] 零挂载。需重启游戏生效。开了仍卡 = 100% 不是 TldHacks;开了不卡 = 是 patch 总数问题,下一步全迁 DynamicPatch")]
-    public bool DiagUnpatchAll = false;
+    // v8.1 动态 patch 脏标记 —— 修 "在游戏里改完开关要等几秒才生效"。
+    //   DynamicPatch 读的那 34 个字段只在 Reconcile() 里被应用,而 Reconcile 原先只挂在
+    //   每 300 帧的低频点上(60fps 约 5 秒,帧率低时更久),玩家改完立刻去试就是"没反应"。
+    //   改成:改过值就置脏,由 ModMain 已有的 0.5s tick 顺手消费一次(见 ConsumePatchDirty)。
+    private static bool _patchDirty;
+
+    // 绘制路径调这个,不做 I/O。
+    public void RequestSave()
+    {
+        _saveDirty = true;
+        _patchDirty = true;
+    }
+
+    // tick / 菜单关闭 / 退出 路径调这个。有脏标记才真写盘。
+    public void FlushPendingSave()
+    {
+        if (!_saveDirty) return;
+        try { Save(); _saveDirty = false; _saveWarned = false; }
+        catch (System.Exception ex)
+        {
+            if (!_saveWarned) ModMain.Log?.Warning($"[Settings] save failed, retry next tick: {ex.Message}");
+            _saveWarned = true;
+        }
+    }
+    private static bool _saveWarned;
+
+    // ModMain 的 0.5s tick 消费。没改过值时只是一次 bool 判定;
+    // Reconcile 对没变化的 patch 自己早退,所以拖滑条时也不会反复挂卸 patch。
+    internal static void MarkPatchDirty() => _patchDirty = true;
+
+    internal static bool ConsumePatchDirty()
+    {
+        if (!_patchDirty) return false;
+        _patchDirty = false;
+        return true;
+    }
+
+    // v2.7.75 / v2.7.79 诊断应急开关 —— v8.1 起从界面摘掉(玩家误开只会以为 mod 坏了)。
+    //   字段保留成 internal:手工把 Mods/TldHacks.json 里对应项改成 true 仍然生效,排查卡顿用。
+    //   ModSettingsBase 只枚举 public 字段来建界面,而 TinyJSON 的 Encoder 带 NonPublic,
+    //   所以 internal 的效果正好是"界面上没有、JSON 里照旧"。
+    internal bool DiagPauseRuntime = false;   // 开了 OnUpdate/OnLateUpdate/OnGUI 全 skip,保留 Harmony patch
+    internal bool DiagUnpatchAll = false;     // 启动时 UnpatchAll + skip Reconcile,需重启游戏生效
+
+    // 已弃用、只是说明用的三项不在 Mod Settings 里露面(游戏内菜单也没有)。字段留着,老 JSON 照旧能读
+    internal void HideRetiredFields()
+    {
+        foreach (var n in new[] { nameof(SuperAccuracy), nameof(TimeScaleInfo), nameof(LampBurnMultiplier) })
+            try { SetFieldVisible(n, false); } catch { }
+    }
+
+    protected override void OnConfirm()
+    {
+        base.OnConfirm();             // JsonModSettings 在这里写 JSON
+        _patchDirty = true;           // 让动态 patch 在 0.5s 内跟上
+
+        try { RefreshGUI(); } catch { }
+    }
 
     // ——— Menu ———
     [Section("Menu")]
@@ -37,7 +94,16 @@ internal class TldHacksSettings : JsonModSettings
     [Name("Menu UI Scale(菜单缩放,4K 可设 2-3)")]
     public float MenuScale = 1f;
 
-    [Slider(600f, 2400f, 36)]
+    // v8.0 首次运行按屏幕高度自动定缩放(1080p→1.0 / 1440p→1.3 / 4K→2.0)。
+    //   之前所有人都从 1.0 起步,4K 玩家开出来的菜单只占屏幕 1/3、字小到看不清,
+    //   得自己找到标题栏那对 +/- 才能救 —— 而那对按钮本身也是小的。
+    //   置位后就再不自动改,玩家用 +/- 调过的值永远优先。
+    [Name("Menu auto-scaled once(已按屏幕自动定过缩放)")]
+    public bool MenuAutoScaled = false;
+
+    // v8.0 下限 600 → 1040,和 Menu.W_MIN 对齐。滑条能拖到 600 但 Menu 会夹回 1040,
+    //   等于最左边一段全是死区(拖了没反应)。屏幕小就调上面的缩放,不是压这个宽度。
+    [Slider(1040f, 2400f, 35)]
     [Name("Menu Width(菜单宽度,拖拽右边缘调整)")]
     public float MenuWidth = 1280f;
 
@@ -54,7 +120,7 @@ internal class TldHacksSettings : JsonModSettings
 
     // ——— Stacking ———
     [Section("Stacking")]
-    [Name("Enable UI stacking")]
+    [Name("UI 堆叠")]
     public bool StackingEnabled = true;
 
     // ——— Life ———
@@ -90,13 +156,15 @@ internal class TldHacksSettings : JsonModSettings
     [Name("Instant Kill(一击必杀)")]
     public bool InstantKillAnimals = false;
 
-    [Name("Freeze Animals(动物不能动)")]
+    [Name("冻结动物")]
+    [Description("动物不能动")]
     public bool FreezeAnimals = false;
 
-    [Name("Stealth(动物自动逃跑)")]
+    [Name("动物逃离")]
+    [Description("动物见到你就跑")]
     public bool Stealth = false;
 
-    [Name("True Invisible(真·隐身,动物检测不到)")]
+    [Name("完全隐形")]
     [Description("动物像看不见你一样,正常闲逛/觅食/睡觉,不扑也不逃")]
     public bool TrueInvisible = false;
 
@@ -108,15 +176,17 @@ internal class TldHacksSettings : JsonModSettings
     [Name("Ignore Locks(忽略上锁)")]
     public bool IgnoreLock = false;
 
-    [Name("Quick Open Container(快速打开容器)")]
+    [Name("秒开容器")]
     public bool QuickOpenContainer = false;
 
     // ——— Items / Fire ———
     [Section("Items / 物品")]
-    [Name("Infinite Durability(物品不损耗)")]
+    [Name("无限耐久")]
+    [Description("物品不损耗")]
     public bool InfiniteDurability = false;
 
-    [Name("No Wet Clothes(衣物不潮湿)")]
+    [Name("衣物防潮")]
+    [Description("衣物不会变潮")]
     public bool NoWetClothes = false;
 
     // ——— Crafting ———
@@ -160,7 +230,8 @@ internal class TldHacksSettings : JsonModSettings
     [Name("No Sprain Risk(免扭伤风险)")]
     public bool NoSprainRisk = false;
 
-    [Name("Immune Animal Damage(免疫狼/熊/美洲狮伤害)")]
+    [Name("免动物伤害")]
+    [Description("狼、熊、美洲狮都伤不到你")]
     public bool ImmuneAnimalDamage = false;
 
     [Name("No Suffocating(不会窒息)")]
@@ -168,31 +239,56 @@ internal class TldHacksSettings : JsonModSettings
 
     // ——— Shortcuts / 快速操作 ———
     [Section("Shortcuts / 快捷")]
-    [Name("Quick Fire Start(生火 100% 成功)")]
+    [Name("生火必成功")]
     public bool QuickFire = false;
 
-    [Name("Quick Rope Climb(爬绳速度 ×5)")]
+    [Name("快速爬绳")]
+    [Description("爬绳速度 ×5")]
     public bool QuickClimb = false;
 
-    [Name("Quick Action(采集/修理/拆解 时间自动加速)")]
-    [Description("采集尸骸 / 修理工具 / 拆解物品 时游戏内置有加速按钮,这个 toggle 自动帮你按")]
+    [Name("操作加速")]
+    [Description("采集尸骸、修理工具、拆解物品时直接完成,不用按住按钮。修理必定成功。")]
     public bool QuickAction = false;
+
+    // —— v7.7 一键搜刮 / Grab All ——
+    [Name("一键搜刮-快捷键 / Grab All key")]
+    [Description("按此键把玩家半径内地上/场景里的全部物品直接收进背包(搜刮距离见下方滑块)。默认鼠标侧键(拇指位的键,驱动里一般标 mouse4),游戏本身没占用它,装好不用改就能按。想用键盘键在这里改,设 None 关闭热键。自己主动丢在地上的东西默认不会被搜走,见下面「跳过自己丢的物品」。")]
+    // v8.2 默认 G → 鼠标侧键。拇指按一下就搜,比腾出手指按 G 顺手,新装的人也不用先进设置改键。
+    //   写 KeyCode.Mouse4 而不是 Mouse3:Unity 的鼠标键从 Mouse0 开始数(左/右/中 = 0/1/2),
+    //   两个侧键是 Mouse3/Mouse4。这里用的是实测在用的那一个,别顺手"修正"成 Mouse3。
+    public KeyCode GrabAllKey = KeyCode.Mouse4;
+
+    [Slider(1f, 50f, 50)]   // 格点数含两端:1 到 50 取整数要 50 格,49 格时每格约 1.02,默认值落不到格点上
+    [Name("一键搜刮-半径(米) / Grab All radius")]
+    [Description("一键搜刮的作用半径,默认 15 米。半径越大单次扫描越久。")]
+    public float GrabAllRadius = 15f;
+
+    [Name("一键搜刮-逐件确认 / Grab All confirm each")]
+    [Description("默认关,按一下就把半径内的东西全收进背包,不弹任何东西,只在菜单底栏汇总。开着的话每件都弹出和自己捡东西一样的物品特写,点「拿走」才进背包,放回就留在原地,中途按 Esc 放弃剩下的,再按一次搜刮键也是放弃。树枝和石块不弹也不收,留在原地。附近东西多的时候开着会连着弹很多次。")]
+    // v8.3 这个开关原来叫「弹拾取提示」,实际做的是自己发 HUD 右上角那种 toast,
+    //   而用户要的是自己捡东西时那块要点确认的特写。语义换成逐件确认,字段名留着不动(JSON 兼容)。
+    public bool GrabAllNotify = false;
 
     // ——— CT 复刻 v2.7.45+ ———
     [Section("CT 复刻 / 参照 Cheat Engine 表")]
-    [Name("秒烤肉(CookingPot 瞬完成,自带防烤焦)")]
+    [Name("快速烹饪")]
+    [Description("锅里的东西马上做好,自带防止烤焦")]
     public bool QuickCook = false;
 
-    [Name("防烤焦(只锁 Ready,不秒熟)")]
+    [Name("防止烤焦")]
+    [Description("做好的食物不会烤焦,但不会马上做好")]
     public bool NoBurn = false;
 
-    [Name("秒搜索(容器/尸体搜刮 NOP TimedHold)")]
+    [Name("快速搜刮")]
+    [Description("搜容器和尸体不用等进度条")]
     public bool QuickSearch = false;
 
-    [Name("秒割肉(Panel_BodyHarvest)")]
+    [Name("快速割肉")]
+    [Description("割肉界面直接完成")]
     public bool QuickHarvest = false;
 
-    [Name("秒打碎(Panel_BreakDown)")]
+    [Name("快速拆解")]
+    [Description("拆解界面直接完成")]
     public bool QuickBreakDown = false;
 
     // —— v2.7.88 空格秒完成 (面板打开时按 Space 立即完成) ——
@@ -217,70 +313,74 @@ internal class TldHacksSettings : JsonModSettings
     [Description("启用 QoL 风格热键(背包/搜刮/制作面板内的键盘操作)")]
     public bool QoL_HotkeysEnabled = true;
 
-    [Name("QoL-丢弃键")]
+    [Name("丢弃键")]
     [Description("背包内按此键丢弃 hover 的物品 1 个;配合批量键丢整堆")]
     public KeyCode QoL_DropKey = KeyCode.Q;
 
-    [Name("QoL-批量修饰键")]
+    [Name("整堆键(按住再丢弃 = 整堆)")]
     [Description("按住此键 + 丢弃键 = 丢整堆;按住此键 + 拾取/转移键 = 批量操作")]
     public KeyCode QoL_BulkKey = KeyCode.LeftShift;
 
-    [Name("QoL-返回键")]
+    [Name("关闭面板键")]
     [Description("在面板内按此键 = 关闭面板返回(等同 Esc)")]
     public KeyCode QoL_BackKey = KeyCode.Mouse3;
 
-    [Name("解锁保险箱/上锁门/柜子")]
+    [Name("解锁保箱")]
+    [Description("保险箱、上锁的门和柜子直接能开")]
     public bool UnlockSafes = false;
 
-    [Name("防风油灯油量不减")]
+    [Name("油灯不耗")]
+    [Description("防风油灯的油量不减")]
     public bool LampFuelNoDrain = false;
 
-    [Name("保温杯永不失温")]
+    [Name("保温杯不降温")]
     public bool FlaskNoHeatLoss = false;
 
-    [Name("保温杯存放无限容量")]
+    [Name("保温杯不耗量")]
+    [Description("保温杯里的量不会减少")]
     public bool FlaskInfiniteVol = false;
 
-    [Name("保温瓶装所有茶(任意液体)")]
+    [Name("保温杯装任意液体")]
     public bool FlaskAnyItem = false;
 
-    [Name("加工秒完成(风干/腌制)")]
+    [Name("快速风干")]
+    [Description("风干、腌制马上完成")]
     public bool QuickEvolve = false;
 
     [Name("容器无限容量")]
     public bool InfiniteContainer = false;
 
-    [Name("篝火温度 300℃")]
+    [Name("篝火 300℃")]
     public bool FireTemp300 = false;
 
     [Name("篝火永不熄灭")]
     public bool FireNeverDie = false;
 
-    [Name("篝火燃烧上限(小时)")]
+    [Name("篝火燃烧上限(h)")]
     [Description("原版上限12小时,提高后可无限加燃料")]
     [Slider(12f, 9999f, 100)]
     public float FireMaxBurnHours = 12f;
 
-    [Name("无冻伤风险")]
+    [Name("免疫冻伤")]
     [Description("完全阻止冻伤伤害(CT: DealFrostbiteDamageToLocation=0)")]
     public bool NoFrostbiteRisk = false;
 
-    [Name("饱饱 buff(Well Fed 常驻)")]
+    [Name("吃得饱饱")]
     [Description("强制 Well Fed 状态激活。CT: WellFed.Update NOP")]
     public bool WellFedBuff = false;
 
-    [Name("温度加成 buff")]
+    [Name("加热")]
     [Description("强制温度 buff 激活(CT: FreezingBuffActive=true)")]
     public bool FreezingBuff = false;
 
-    [Name("疲劳加成 buff")]
+    [Name("疲劳减缓")]
     [Description("强制疲劳 buff 激活(CT: StatusBar fatigue buff=1)")]
     public bool FatigueBuff = false;
 
-    [Name("清除死亡惩罚")]
+    [Name("免死亡惩罚")]
     public bool ClearDeathPenalty = false;
 
-    [Name("钓鱼 100% 成功")]
+    [Name("钓鱼必成功")]
     public bool QuickFishing = false;
 
     // ——— v2.7.86 新增功能 ———
@@ -319,29 +419,36 @@ internal class TldHacksSettings : JsonModSettings
 
     // ——— v2.7.55 商人 + 美洲狮 ———
     [Section("商人 Trader")]
-    [Name("交易清单不限制(上限 → 64)")]
+    [Name("交易扩充")]
+    [Description("一次交易最多能选 64 样")]
     public bool TraderUnlimitedList = false;
 
-    [Name("信任值最大化")]
+    [Name("信任满值")]
+    [Description("信任值加满,按原版规则解锁商品、降价和对话,第一次满格会解锁 DLC 成就")]
     public bool TraderMaxTrust = false;
 
-    [Name("商人交易秒完成")]
+    [Name("即时交易")]
+    [Description("不用交货,关上交换箱就完成交易")]
     public bool TraderInstantExchange = false;
 
-    [Name("随时可联系商人(无线电)")]
+    [Name("商人常驻")]
+    [Description("随时能用无线电联系商人,交易完成后也不用等")]
     public bool TraderAlwaysAvailable = false;
 
     [Section("美洲狮")]
-    [Name("新档首次立即激活美洲狮")]
+    [Name("召唤美洲狮")]
+    [Description("新档第一次就立即激活美洲狮")]
     public bool CougarInstantActivate = false;
 
     [Section("与 ItemPicker mod 交互")]
-    [Name("W 键自动拾取时跳过自己丢的物品")]
-    [Description("按 W 触发 ItemPicker 自动拾取时,忽略本会话内玩家 drop 的 GearItem,避免刚丢就又捡回来")]
-    public bool BlockAutoPickupOwnDrops = false;
+    [Name("不捡丢物")]
+    [Description("默认开。在基地整理物资时把东西丢一地或右键摆好,走过去不会又被吸回背包,一键搜刮也不会把它们收走。管两条路:按 W 的 ItemPicker 自动拾取,和一键搜刮。只记本次进图之后丢的东西,换地图或重进游戏就不记得了,那时这些物品会重新变成可搜刮的。想让一键搜刮连自己丢的一起收,关掉这一项。")]
+    // v8.2 默认 false → true。丢一地整理物资是常见玩法,默认把它们再吸回来等于跟玩家对着干;
+    //   这一项本来就是为这个场景加的,却默认关着,新装的人根本不知道有它。
+    public bool BlockAutoPickupOwnDrops = true;
 
     [Section("Weapon / 武器微调")]
-    [Slider(0f, 1f, 10)]
+    [Slider(0f, 1f, 11)]
     [Name("后坐力强度 (0=无 1=原版)")]
     public float RecoilScaleESP = 1f;
 
@@ -375,19 +482,19 @@ internal class TldHacksSettings : JsonModSettings
     [Name("体力消耗速度")]
     public float StaminaDrain = 0.44f;
 
-    [Slider(0f, 2f, 20)]
+    [Slider(0f, 2f, 21)]
     [Name("体力恢复延迟倍率")]
     [Description("停止冲刺后多久开始恢复体力的倍率,0=立即恢复,1=原版,2=双倍等待")]
     public float StaminaRecoveryDelay = 0.5f;
 
     // ——— Integrated: StretchArmstrong (交互距离) ———
     [Slider(1f, 5f, 8)]
-    [Name("交互距离倍率")]
+    [Name("拾取距离")]
     [Description("拾取/交互距离倍数。1=原版,5=五倍远距离拾取")]
     public float PickupRange = 1f;
 
     // ——— Integrated: SilentWalker (脚步静音) ———
-    [Name("脚步完全静音")]
+    [Name("脚步静音")]
     [Description("完全消除自身脚步声,动物也听不到。启用后忽略以下4项")]
     public bool SilentFootsteps = false;
 
@@ -444,12 +551,12 @@ internal class TldHacksSettings : JsonModSettings
     public float JumpStaminaCost = 7f;
 
     [Slider(0f, 10f, 100)]
-    [Name("疲劳消耗/次")]
+    [Name("疲劳消耗(%)/次")]
     [Description("每次跳跃增加的疲劳百分比(Jump King关闭时生效)")]
     public float JumpFatigueCost = 0.5f;
 
     // ——— Integrated: GunZoom (瞄准缩放) ———
-    [Name("滚轮瞄准缩放")]
+    [Name("滚轮缩放")]
     [Description("瞄准时滚动鼠标滚轮可放大/缩小视野")]
     public bool GunZoomEnabled = true;
 
@@ -459,215 +566,205 @@ internal class TldHacksSettings : JsonModSettings
     public bool RunWithLantern = true;
 
     // ——— Integrated: DisableAutoEquipCharcoal ———
-    [Name("取炭不自动装备")]
+    [Name("取炭不戴")]
     [Description("从篝火收集炭笔后不会自动装备到手上")]
     public bool NoAutoEquipCharcoal = true;
 
     // ——— Integrated: AutoToggleLights ———
-    [Name("休息时自动熄灯")]
+    [Name("休息熄灯")]
     [Description("睡觉或等待时自动关闭手持油灯/火把/手电")]
     public bool AutoExtinguishOnRest = true;
 
     // ——— Integrated: FullSwing (开门角度) ———
     [Slider(0.03f, 0.6f, 57)]
-    [Name("开门角度")]
+    [Name("开门幅度")]
     [Description("门的打开弧度,0.03=原版,0.3=大开")]
     public float DoorSwingAngle = 0.29f;
 
-    [Slider(0f, 1f, 10)]
+    [Slider(0f, 1f, 11)]
     [Name("开门速度")]
     [Description("门的开启速度,1=原版,0=最快")]
     public float DoorSwingSpeed = 0.53f;
 
     // ——— Integrated: TimeScaleHotkey ———
-    [Section("Time Scale / 时间加速")]
-    [Name("使用说明")]
-    [Description("按住热键1/2期间游戏加速到对应倍率,松开恢复正常速度")]
+    // 以前借来放说明的一行,不是开关。现在不在面板上显示(见 HideRetiredFields),说明挪到热键1
     public bool TimeScaleInfo = true;
 
+    [Section("Time Scale / 时间加速")]
     [Name("时间加速 热键1")]
+    [Description("按住热键1/2期间游戏加速到对应倍率,松开恢复正常速度")]
     public KeyCode TimeScaleKey1 = KeyCode.Keypad1;
 
-    [Slider(1f, 50f, 49)]
+    [Slider(1f, 50f, 50)]
     [Name("时间加速1 (热键倍率)")]
     public float TimeScale1 = 20f;
 
     [Name("时间加速 热键2")]
     public KeyCode TimeScaleKey2 = KeyCode.Keypad2;
 
-    [Slider(1f, 50f, 49)]
+    [Slider(1f, 50f, 50)]
     [Name("时间加速2 (热键倍率)")]
     public float TimeScale2 = 5f;
 
     // ——— Integrated: GearDecayModifier ———
     [Section("Decay / 衰减倍率")]
-    [Slider(0f, 2f, 20)]
+    [Slider(0f, 2f, 21)]
     [Name("通用衰减倍率")]
     public float GeneralDecay = 1f;
 
-    [Slider(0f, 2f, 20)]
+    [Slider(0f, 2f, 21)]
     [Name("拾取前衰减")]
     public float DecayBeforePickup = 1f;
 
-    [Slider(0f, 2f, 20)]
+    [Slider(0f, 2f, 21)]
     [Name("使用时衰减")]
     public float OnUseDecay = 1f;
 
-    [Slider(0f, 2f, 20)]
-    [Name("食物衰减")]
+    [Slider(0f, 2f, 21)]
+    [Name("食物(总)衰减")]
     public float FoodDecay = 1f;
 
-    [Slider(0f, 2f, 20)]
+    [Slider(0f, 2f, 21)]
     [Name("生肉衰减")]
     public float RawMeatDecay = 1f;
 
-    [Slider(0f, 2f, 20)]
+    [Slider(0f, 2f, 21)]
     [Name("熟肉衰减")]
     public float CookedMeatDecay = 1f;
 
-    [Slider(0f, 2f, 20)]
+    [Slider(0f, 2f, 21)]
     [Name("饮品衰减")]
     public float DrinksDecay = 1f;
 
-    [Slider(0f, 2f, 20)]
+    [Slider(0f, 2f, 21)]
     [Name("衣物衰减")]
     public float ClothingDecayRate = 1f;
 
-    [Slider(0f, 2f, 20)]
+    [Slider(0f, 2f, 21)]
     [Name("枪械衰减")]
     public float GunDecay = 1f;
 
-    [Slider(0f, 2f, 20)]
+    [Slider(0f, 2f, 21)]
     [Name("弓箭衰减")]
     public float BowDecay = 1f;
 
-    [Slider(0f, 2f, 20)]
+    [Slider(0f, 2f, 21)]
     [Name("工具衰减")]
     public float ToolsDecay = 1f;
 
-    [Slider(0f, 2f, 20)]
+    [Slider(0f, 2f, 21)]
     [Name("睡袋衰减")]
     public float BedrollDecay = 1f;
 
-    [Slider(0f, 2f, 20)]
+    [Slider(0f, 2f, 21)]
     [Name("雪橇衰减")]
     public float TravoisDecay = 1f;
 
-    [Slider(0f, 2f, 20)]
+    [Slider(0f, 2f, 21)]
     [Name("箭矢衰减")]
     public float ArrowDecay = 1f;
 
-    [Slider(0f, 2f, 20)]
+    [Slider(0f, 2f, 21)]
     [Name("陷阱衰减")]
     public float SnareDecay = 1f;
 
-    [Slider(0f, 2f, 20)]
+    [Slider(0f, 2f, 21)]
     [Name("生火工具衰减")]
     public float FirestartingDecay = 1f;
 
-    [Slider(0f, 2f, 20)]
+    [Slider(0f, 2f, 21)]
     [Name("腌肉衰减")]
     public float CuredMeatDecay = 1f;
 
-    [Slider(0f, 2f, 20)]
+    [Slider(0f, 2f, 21)]
     [Name("生鱼衰减")]
     public float RawFishDecay = 1f;
 
-    [Slider(0f, 2f, 20)]
+    [Slider(0f, 2f, 21)]
     [Name("熟鱼衰减")]
     public float CookedFishDecay = 1f;
 
-    [Slider(0f, 2f, 20)]
+    [Slider(0f, 2f, 21)]
     [Name("罐头食品衰减")]
     public float CannedFoodDecay = 1f;
 
-    [Slider(0f, 2f, 20)]
+    [Slider(0f, 2f, 21)]
     [Name("咖啡/茶衰减")]
     public float CoffeeTeaDecay = 1f;
 
-    [Slider(0f, 2f, 20)]
+    [Slider(0f, 2f, 21)]
     [Name("包装食品衰减")]
     public float PackagedFoodDecay = 1f;
 
-    [Slider(0f, 2f, 20)]
+    [Slider(0f, 2f, 21)]
     [Name("其他食品衰减")]
     public float OtherFoodDecay = 1f;
 
-    [Slider(0f, 2f, 20)]
+    [Slider(0f, 2f, 21)]
     [Name("油脂衰减")]
     public float FatDecay = 1f;
 
-    [Slider(0f, 2f, 20)]
+    [Slider(0f, 2f, 21)]
     [Name("腌鱼衰减")]
     public float CuredFishDecay = 1f;
 
-    [Slider(0f, 2f, 20)]
+    [Slider(0f, 2f, 21)]
     [Name("食材衰减")]
     public float IngredientsDecay = 1f;
 
-    [Slider(0f, 2f, 20)]
+    [Slider(0f, 2f, 21)]
     [Name("兽皮/尸骸衰减")]
     public float HideDecay = 1f;
 
-    [Slider(0f, 2f, 20)]
+    [Slider(0f, 2f, 21)]
     [Name("急救品衰减")]
     public float FirstAidDecay = 1f;
 
-    [Slider(0f, 2f, 20)]
+    [Slider(0f, 2f, 21)]
     [Name("净水片衰减")]
     public float WaterPurifierDecay = 1f;
 
-    [Slider(0f, 2f, 20)]
+    [Slider(0f, 2f, 21)]
     [Name("锅具衰减")]
     public float CookingPotDecay = 1f;
 
-    [Slider(0f, 2f, 20)]
+    [Slider(0f, 2f, 21)]
     [Name("信号枪弹药衰减")]
     public float FlareGunAmmoDecay = 1f;
 
-    [Slider(0f, 2f, 20)]
+    [Slider(0f, 2f, 21)]
     [Name("磨刀石使用衰减")]
     public float WhetstoneDecay = 1f;
 
-    [Slider(0f, 2f, 20)]
+    [Slider(0f, 2f, 21)]
     [Name("开罐器使用衰减")]
     public float CanOpenerDecay = 1f;
 
-    [Slider(0f, 2f, 20)]
+    [Slider(0f, 2f, 21)]
     [Name("撬棍使用衰减")]
     public float PrybarDecay = 1f;
 
-    [Slider(0f, 2f, 20)]
+    [Slider(0f, 2f, 21)]
     [Name("尸骸采集工具衰减")]
     [Description("刀/斧/锯在采集动物尸体时的衰减倍率")]
     public float BodyHarvestDecay = 1f;
 
-    // ——— Integrated: ClothingTweaker2 ———
-    [Slider(0f, 1f, 10)]
-    [Name("衣物每日衰减率")]
-    public float ClothingDecayDaily = 1f;
-
-    [Slider(0f, 1f, 10)]
-    [Name("衣物室内衰减")]
-    public float ClothingDecayIndoors = 1f;
-
-    [Slider(0f, 1f, 10)]
-    [Name("衣物室外衰减")]
-    public float ClothingDecayOutdoors = 1f;
+    // (v7.2 移除 ClothingTweaker2 的 Daily/Indoor/Outdoor 三个细分字段:
+    //  无 patch 消费,拖动只空挂高频 patch 掉 FPS。衣物衰减由 ClothingDecayRate 总倍率覆盖。)
 
     // ——— Integrated: TorchTweaker + KeroseneLampTweaks ———
     [Section("Light Sources / 光源")]
     [Slider(1f, 2880f, 100)]
-    [Name("火把燃烧时间(分钟)")]
+    [Name("火把燃烧时间(分)")]
     [Description("默认90=原版(实测GEAR_Torch原版值)。拖高=火把烧更久;90=完全原版,不挂载补丁")]
     public float TorchBurnMinutes = 90f;
 
-    [Slider(0f, 1f, 10)]
-    [Name("火把最低品质")]
+    [Slider(0f, 1f, 11)]
+    [Name("火把最小状态")]
     public float TorchMinCondition = 0.6f;
 
-    [Slider(0f, 1f, 10)]
-    [Name("火把最高品质")]
+    [Slider(0f, 1f, 11)]
+    [Name("火把最大状态")]
     public float TorchMaxCondition = 0.9f;
 
     // ——— Integrated: KeroseneLampTweaks v2.4.1 (DIY 定制) ———
@@ -706,7 +803,7 @@ internal class TldHacksSettings : JsonModSettings
     [Description("HP 接近 0 时额外耗油。100=两倍消耗,200=三倍")]
     public int LampMaxPenalty = 100;
 
-    [Name("油灯静音(放置时)")]
+    [Name("油灯放置静音")]
     [Description("油灯放置(非手持)时不发出燃烧/嘶嘶声")]
     public bool LampMute = false;
 
@@ -718,11 +815,11 @@ internal class TldHacksSettings : JsonModSettings
 
 
     // ——— Integrated: TorchTweaker 额外 ———
-    [Name("禁用左键灭火把")]
+    [Name("锁火把键")]
     [Description("防止鼠标左键误熄火把")]
     public bool DisableTorchLeftClick = true;
 
-    [Name("禁用左键灭油灯")]
+    [Name("锁油灯键")]
     [Description("防止鼠标左键误熄油灯")]
     public bool DisableLampLeftClick = true;
 
@@ -732,11 +829,11 @@ internal class TldHacksSettings : JsonModSettings
     [Description("非极光时也能通过开关点亮室内灯")]
     public bool HL_Enabled = true;
 
-    [Name("室外场景启用")]
+    [Name("室外也启用")]
     [Description("室外地图也启用灯光(实验性,可能影响性能)")]
     public bool HL_EnableOutside = false;
 
-    [Name("白光")]
+    [Name("白光模式")]
     [Description("灯光颜色去饱和,呈白色")]
     public bool HL_WhiteLights = false;
 
@@ -778,31 +875,31 @@ internal class TldHacksSettings : JsonModSettings
     [Description("打开Panel_Log(日志/地图)时游戏时间暂停")]
     public bool PauseInJournal = true;
 
-    [Name("跳过开场动画")]
+    [Name("跳过片头")]
     [Description("跳过启动免责声明、开场动画、隐藏新闻轮播")]
     public bool SkipIntro = true;
 
-    [Name("静音主菜单美洲狮")]
+    [Name("静音狮吼")]
     [Description("销毁主菜单的美洲狮叫声音效")]
     public bool MuteCougarMenuSound = true;
 
-    [Name("车内保持玩家FOV")]
+    [Name("车内保持FOV")]
     [Description("进入车辆时使用当前FOV而非车辆默认FOV")]
     public bool VehicleKeepFov = true;
 
-    [Name("允许丢弃不可丢物品")]
+    [Name("任意丢弃")]
     [Description("相机/对讲机/断线钳等原本不可丢的物品变为可丢弃")]
     public bool DroppableUndroppables = true;
 
-    [Name("关键物品保留重量")]
+    [Name("关键重量")]
     [Description("关闭则相机/断线钳等重量归零;开启则保留原重量")]
     public bool ImportantWeight = true;
 
-    [Name("收藏品可丢弃")]
+    [Name("笔记可丢")]
     [Description("笔记/钥匙/科技背包等变为可丢弃(注意:笔记将不可阅读)")]
     public bool AllNote = false;
 
-    [Name("记忆拆解工具")]
+    [Name("记忆工具")]
     [Description("拆解面板自动选中上次使用的工具")]
     public bool RememberBreakdownTool = true;
 
@@ -811,11 +908,11 @@ internal class TldHacksSettings : JsonModSettings
     public bool VehicleFreeLook = true;
 
     [Slider(30f, 180f, 30)]
-    [Name("车内最大水平角度")]
+    [Name("车内水平转头(°)")]
     public float VehicleFreeLookYaw = 120f;
 
     [Slider(20f, 90f, 14)]
-    [Name("车内最大俯仰角度")]
+    [Name("车内上下抬头(°)")]
     public float VehicleFreeLookPitch = 60f;
 
 
@@ -824,17 +921,17 @@ internal class TldHacksSettings : JsonModSettings
     [Description("瞄准时显示额外准星(石头/步枪/弓)")]
     public bool CrosshairEnabled = false;
 
-    [Slider(0f, 1f, 20)]
+    [Slider(0f, 1f, 21)]
     [Name("准星透明度")]
     public float CrosshairAlpha = 1f;
 
-    [Name("石块准星")]
+    [Name("投掷石块准星")]
     public bool CrosshairStone = false;
 
-    [Name("步枪准星")]
+    [Name("步枪瞄准准星")]
     public bool CrosshairRifle = false;
 
-    [Name("弓箭准星")]
+    [Name("弓箭瞄准准星")]
     public bool CrosshairBow = false;
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -847,24 +944,31 @@ internal class TldHacksSettings : JsonModSettings
 
 
     [Section("QoL: TinyTweaks / 小改动")]
-    [Name("扭伤不自动存档")]
+    [Name("扭伤不存")]
+    [Description("扭伤时不触发自动存档")]
     public bool QoL_NoSaveOnSprain = false;
-    [Name("坠落扭伤也不存档")]
+    [Name("含坠扭伤")]
     [Description("坠落引起的扭伤同样不触发自动存档")]
     public bool QoL_NoSaveOnSprainFalls = false;
     [Name("睡眠中可醒来")]
     [Description("暂停菜单里可以选择醒来")]
     public bool QoL_WakeUpCall = true;       // v7.0 便利性默认开:睡眠可随时醒(纯QoL,不影响进度)
-    [Name("极光感应(睡眠时极光自动醒)")]
+    [Name("极光时叫醒")]
+    [Description("睡觉时来了极光会自动醒")]
     public bool QoL_AuroraSense = true;
-    [Name("睡眠时显示时间")]
+    [Name("睡眠显示时间")]
     public bool QoL_ShowTimeSleep = true;    // v7.0 便利性默认开:睡眠显示当前时间(纯信息)
-    [Name("睡眠不全黑")]
+    [Name("不要纯黑")]
+    [Description("睡觉时画面不全黑")]
     public bool QoL_NoPitchBlack = true;     // v7.0 便利性默认开:睡眠不全黑屏(纯视觉)
-    [Choice("黑字白描边", "黑字棕描边", "白字黑描边", "浅字黑描边")]
+    // v8.0 修标签错位:标签与 IntegratedPatches3.cs:525-549 的 case 实际颜色对不上
+    //   (case 0 描边是棕 0.581/0.551/0.495 却标"白描边",case 1 才是纯白;case 2 文字是
+    //   米白 0.88/0.83/0.735 不是纯白,case 3 才是纯白)。只改标签不动 case ——
+    //   存的是 int 索引,改 case 会让老存档的地图突然变样。
+    [Choice("黑字棕描边", "黑字白描边", "米白字黑描边", "白字黑描边")]
     [Name("地图文字样式")]
     public int QoL_MapTextOutline = 0;
-    [Name("启用地图文字样式修改")]
+    [Name("地图描边")]
     public bool QoL_MapTextOutlineEnabled = false;
     [Name("埋葬尸体")]
     [Description("对人类/动物尸体按 Alt+Fire 埋葬")]
@@ -874,27 +978,28 @@ internal class TldHacksSettings : JsonModSettings
     [Name("无睡袋也能睡觉")]
     public bool QoL_SleepAnywhere = false;
     [Slider(0.15f, 1f, 17)]
-    [Name("疲劳恢复惩罚")]
+    [Name("疲劳恢复率")]
     public float QoL_SleepFatigueRecovery = 0.75f;
     [Slider(0.05f, 1f, 19)]
-    [Name("状态恢复倍率")]
+    [Name("状态恢复率")]
     public float QoL_SleepConditionRecovery = 0.50f;
-    [Slider(1f, 3f, 20)]
-    [Name("受冻加速倍率")]
+    [Slider(0f, 5f, 101)]
+    [Name("失温倍率")]
     public float QoL_SleepFreezingScale = 1.75f;
-    [Slider(1f, 2f, 20)]
+    [Slider(1f, 2f, 21)]
     [Name("冻伤生命损失倍率")]
     public float QoL_SleepFreezingHealthLoss = 1.2f;
-    [Slider(1f, 2f, 20)]
+    [Slider(1f, 2f, 21)]
     [Name("低温症生命损失倍率")]
     public float QoL_SleepHypothermicHealthLoss = 1.4f;
     [Slider(0.25f, 2f, 35)]
     [Name("消磨时间暴露惩罚")]
     public float QoL_SleepPassTimeExposure = 0.75f;
-    [Name("低血量中断睡眠")]
+    [Name("冷醒机制")]
+    [Description("睡觉时血量低于阈值就会醒")]
     public bool QoL_SleepInterrupt = true;
     [Slider(0.05f, 0.2f, 15)]
-    [Name("中断血量阈值%")]
+    [Name("冷醒阈值(血量%)")]
     public float QoL_SleepInterruptThreshold = 0.10f;
     [Slider(1f, 60f, 59)]
     [Name("中断冷却(秒)")]
@@ -919,10 +1024,10 @@ internal class TldHacksSettings : JsonModSettings
     [Slider(0f, 10f, 20)]
     [Name("绘制范围倍率")]
     public float QoL_AutoSurveyRange = 1f;
-    [Name("解除天气限制")]
+    [Name("无视天气限制")]
     public bool QoL_AutoSurveyUnlock = false;
 
-    [Name("出门自动开小地图(MotionTrackerLite)")]
+    [Name("出门开小地图")]
     [Description("室内→室外场景切换后自动打开 MotionTrackerLite 小地图(需装 MotionTrackerLite mod)")]
     public bool QoL_AutoOpenMapOnExit = false;
 
@@ -931,19 +1036,19 @@ internal class TldHacksSettings : JsonModSettings
     // ═══════════════════════════════════════════════════════════════════════════
 
     [Section("Craft Anywhere / 随意制作")]
-    [Name("启用随意制作")]
+    [Name("随地制作")]
     [Description("修改每个蓝图的制作位置要求")]
     public bool Craft_Anywhere = false;
-    [Choice("任意", "工作台", "锻造台", "弹药台", "火堆")]
-    [Name("默认位置(新蓝图)")]
-    public int Craft_DefaultLocation = 0;
+    // v8.2 从面板摘掉。全仓库没有一处读这个值,随地制作是直接把蓝图要求改成 Anywhere,
+    //   跟位置编号无关。字段留成 internal,老 JSON 里的这一项照旧解析,不报错。
+    internal int Craft_DefaultLocation = 0;
 
     [Section("More Cooking Slots / 更多烹饪位")]
     [Name("启用额外烹饪位")]
     public bool Craft_MoreCookingSlots = false;
     [Name("壁炉(2→3)")]
     public bool Craft_MoreSlots_Fireplace = true;
-    [Name("火桶(2→4)")]
+    [Name("油桶(2→4)")]
     public bool Craft_MoreSlots_Barrel = true;
     [Name("烤架(2→4)")]
     public bool Craft_MoreSlots_Grill = true;
@@ -960,18 +1065,18 @@ internal class TldHacksSettings : JsonModSettings
     [Name("预设")]
     public int World_SprainklePreset = 0;
     [Slider(10f, 60f, 10)]
-    [Name("最小坡度(度)")]
+    [Name("最小坡度(°)")]
     public float World_SprainkleSlopeMin = 30f;
     [Slider(0.5f, 5f, 9)]
     [Name("坡度递增系数")]
     public float World_SprainkleSlopeIncrease = 1.5f;
     [Slider(0f, 50f, 50)]
-    [Name("移动基础概率%")]
+    [Name("移动概率%")]
     public float World_SprainkleBaseChanceMoving = 15f;
-    [Slider(0f, 1f, 20)]
+    [Slider(0f, 1f, 21)]
     [Name("负重加成概率")]
     public float World_SprainkleEncumberChance = 0.3f;
-    [Slider(0f, 1f, 20)]
+    [Slider(0f, 1f, 21)]
     [Name("疲劳加成概率")]
     public float World_SprainkleExhaustionChance = 0.3f;
     [Slider(0f, 10f, 20)]
@@ -986,10 +1091,10 @@ internal class TldHacksSettings : JsonModSettings
     [Slider(0f, 100f, 20)]
     [Name("手腕移动触发%")]
     public float World_SprainkleWristMovementChance = 50f;
-    [Slider(0f, 1f, 10)]
+    [Slider(0f, 1f, 11)]
     [Name("冲刺UI阈值(显示)")]
     public float World_SprainkleSprintUIOn = 0.5f;
-    [Slider(0f, 1f, 10)]
+    [Slider(0f, 1f, 11)]
     [Name("冲刺UI阈值(隐藏)")]
     public float World_SprainkleSprintUIOff = 0.3f;
     [Name("脚踝扭伤启用")]
@@ -1037,19 +1142,19 @@ internal class TldHacksSettings : JsonModSettings
     // 跳过已有重复:InfiniteEncumberWeight/InfiniteContainerWeight/PermanentCrosshair/RemoveMainMenuItems
 
     [Section("UT / 常用修改 v1.4.8")]
-    [Name("启用哈气效果")]
+    [Name("哈气特效")]
     [Description("关闭则不显示寒冷天气下口鼻哈气特效")]
     public bool UT_BreathVisibility = true;
-    [Name("胡须地衣绷带统一重量(0.03kg)")]
+    [Name("绷带统重")]
     [Description("把 OldMansBeardDressing 重量改为 0.03kg")]
     public bool UT_ConsistantDressingWeight = false;
-    [Name("自定义模式徽章进度")]
+    [Name("难度徽章")]
     [Description("自定义难度也能解锁徽章进度")]
     public bool UT_FeatProgressInCustom = false;
-    [Name("物品掉落随机旋转")]
+    [Name("随机朝向")]
     [Description("Drop 物品时朝向随机化")]
     public bool UT_RandomizedItemRotation = false;
-    [Name("左轮操作改良")]
+    [Name("左轮可走")]
     [Description("瞄准状态下也可以走动并隐藏限制 UI")]
     public bool UT_RevolverImprovements = false;
     [Slider(0.1f, 5f, 50)]
@@ -1065,12 +1170,12 @@ internal class TldHacksSettings : JsonModSettings
     [Name("雪屋每日损耗 HP")]
     [Description("100=原版,0=不损耗")]
     public int UT_SnowShelterDecay = 100;
-    [Name("马桶水可饮用")]
+    [Name("马桶可饮")]
     [Description("马桶水设为 Potable(无需净化)")]
     public bool UT_ToiletWaterPotable = false;
 
     [Section("UT / 食物修改")]
-    [Name("移除甜点头疼 Debuff")]
+    [Name("免甜点疼")]
     [Description("CookedPiePeach/RoseHip/PorridgeFruit/PancakePeach 不再头疼")]
     public bool UT_RemoveHeadacheDebuff = false;
     [Slider(0f, 50f, 26)]
@@ -1079,7 +1184,7 @@ internal class TldHacksSettings : JsonModSettings
     public int UT_StewFatigueLoss = 15;
 
     [Section("UT / 岩石贮藏处")]
-    [Name("允许室内放置")]
+    [Name("室内贮石")]
     public bool UT_RockCacheIndoors = false;
     [Slider(1f, 50f, 50)]
     [Name("每区域最大数量")]
@@ -1114,51 +1219,53 @@ internal class TldHacksSettings : JsonModSettings
     [Slider(0.1f, 5f, 50)]
     [Name("转向速度")]
     public float UT_TravoisTurnSpeed = 0.5f;
-    [Name("解除移动区域限制")]
+    [Name("雪橇可动")]
+    [Description("解除雪橇的移动区域限制")]
     public bool UT_TravoisOverrideMovement = false;
-    [Name("解除互动限制")]
+    [Name("雪橇可拿")]
+    [Description("解除雪橇的互动限制")]
     public bool UT_TravoisOverrideInteraction = false;
 
     [Section("UT / 手电筒")]
-    [Name("无限电量")]
+    [Name("手电无限电")]
     [Description("手电筒永不耗电")]
     public bool UT_FlashInfiniteBattery = false;
 
     [Section("StackManager / 堆叠管理 v1.0.6")]
-    [Name("启用堆叠组件添加")]
+    [Name("更多可堆叠")]
     [Description("给 Coffee/茶/胡萝卜/土豆等指定物品添加可堆叠")]
     public bool Stack_AddComponent = true;
-    [Name("使用最大状态合并")]
+    [Name("合并取最高")]
     [Description("堆叠时按更高 HP 计算(8 张鹿皮按最佳那张)")]
     public bool Stack_UseMaxHP = true;
 
 
     [Section("Bow Repair / 弓修复")]
     [Name("允许修复弓")]
-    [Description("给弓类武器添加修理/磨坊选项")]
+    [Description("给弓类武器添加手修/铣床修理选项")]
     public bool World_BowRepair = false;
     [Name("DLC弓启用")]
     [Description("是否允许修复DLC弓(猎弓/灌木弓)")]
     public bool World_BowRepairDLC = false;
-    [Choice("手修", "磨坊", "都可")]
+    [Choice("手修", "铣床", "都可")]
     [Name("生存弓模式")]
     public int World_BowRepairMode = 2;
     [Choice("低", "中", "高")]
     [Name("生存弓材料需求")]
     public int World_BowMaterialNeed = 1;
-    [Choice("手修", "磨坊", "都可")]
+    [Choice("手修", "铣床", "都可")]
     [Name("运动弓模式")]
     public int World_SportBowRepairMode = 1;
     [Choice("低", "中", "高")]
     [Name("运动弓材料需求")]
     public int World_SportBowMaterialNeed = 1;
-    [Choice("手修", "磨坊", "都可")]
+    [Choice("手修", "铣床", "都可")]
     [Name("木弓模式")]
     public int World_WoodBowRepairMode = 2;
     [Choice("低", "中", "高")]
     [Name("木弓材料需求")]
     public int World_WoodBowMaterialNeed = 0;
-    [Choice("手修", "磨坊", "都可")]
+    [Choice("手修", "铣床", "都可")]
     [Name("灌木弓模式")]
     public int World_BushBowRepairMode = 2;
     [Choice("低", "中", "高")]
@@ -1198,12 +1305,21 @@ internal class TldHacksSettings : JsonModSettings
     [Name("搬运猎物尸骸")]
     [Description("可拾取鹿/狼尸体搬运到其他地方(含跨场景)")]
     public bool World_CarcassMoving = false;
-    [Name("搬运所有猎物")]
+    [Name("搬运全部")]
     [Description("开启后熊/驼鹿/美洲狮也可搬运")]
     public bool World_CarcassMovingAll = false;
     [Name("极光点火把")]
     [Description("极光期间可从电源插座/电线点燃火把")]
     public bool World_ElectricTorch = false;
+
+    [Slider(0f, 5f, 51)]
+    [Name("鹿出肉倍率下限")]
+    [Description("鹿尸体初始肉量倍率区间下限(1=原版6-9kg, 真实约18-25kg→约2.5)")]
+    public float DeerMeatMultMin = 1f;
+    [Slider(0f, 5f, 51)]
+    [Name("鹿出肉倍率上限")]
+    [Description("鹿尸体初始肉量倍率区间上限;生成时在[下限,上限]内随机取一个倍率")]
+    public float DeerMeatMultMax = 1f;
 
     // ——— TinyTweaks 整合 ———
     [Section("TinyTweaks / 微调合集")]
@@ -1215,7 +1331,7 @@ internal class TldHacksSettings : JsonModSettings
     [Description("0=不限制")]
     [Slider(-50, 10)]
     public int TT_CapFeelsLow = 0;
-    [Name("启用体感温度限制")]
+    [Name("限制体感温度")]
     public bool TT_CapFeelsEnabled = false;
 
     [Name("无视坠落即死墙")]
@@ -1225,28 +1341,28 @@ internal class TldHacksSettings : JsonModSettings
     [Slider(1, 12)]
     public int TT_FallDamageMult = 6;
 
-    [Name("步枪落地竖立")]
+    [Name("步枪落地竖放")]
     public bool TT_DroppedOrientation = true;
-    [Name("FOV滑块扩展(30-150)")]
+    [Name("FOV 上限扩展 (30-150)")]
     public bool TT_ExtendedFOV = true;
-    [Name("辐射轮暂停")]
+    [Name("开轮盘减速")]
     public bool TT_PauseOnRadial = false;
 
-    [Name("交互加速-通用")]
+    [Name("交互加速(通用动作)")]
     [Description("修理/制作/烹饪/净水/雪屋等")]
     [Slider(0.2f, 6f, 30)]
     public float TT_GlobalSpeedMult = 1f;
-    [Name("交互加速-开容器")]
+    [Name("交互加速(开容器)")]
     [Description("开箱/采植物/进车/开门")]
     [Slider(0.2f, 6f, 30)]
     public float TT_InteractionSpeedMult = 1f;
-    [Name("交互加速-进食")]
+    [Name("交互加速(进食/喝水)")]
     [Slider(0.2f, 6f, 30)]
     public float TT_EatingSpeedMult = 1f;
-    [Name("交互加速-拆解")]
+    [Name("交互加速(拆解物品)")]
     [Slider(0.2f, 6f, 30)]
     public float TT_BreakdownSpeedMult = 1f;
-    [Name("交互加速-阅读")]
+    [Name("交互加速(阅读研究)")]
     [Slider(0.2f, 6f, 30)]
     public float TT_ReadingSpeedMult = 1f;
 
@@ -1256,11 +1372,11 @@ internal class TldHacksSettings : JsonModSettings
     [Name("启用植物重生")]
     public bool TT_RespawnPlants = false;
 
-    [Name("显示商人信任度")]
-    public bool TT_ShowTraderTrust = false;
+    [Name("显示信任度")]
+    public bool TT_ShowTraderTrust = true;   // 只显示信息,不改玩法,新装默认开
 
-    [Name("商人到来天数")]
-    [Description("游戏内经过该天数后商人可用。原版约25-30天。设为30及以上=完全跟随原版进度(默认),拖低=提前到货")]
+    [Name("商人到来(天)")]
+    [Description("游戏内经过该天数后商人可用。原版天数随难度不同。设为30及以上=完全跟随原版进度(默认),拖低只会让商人提前来,不会推迟")]
     [Slider(1f, 40f, 40)]
     public float TraderArrivalDays = 30f;
 

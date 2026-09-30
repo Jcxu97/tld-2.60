@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
@@ -36,8 +36,14 @@ internal static class TransitionRecorder
         try
         {
             // 存游戏目录 Mods/ 同级,便于重装 mod 不丢
-            var modsDir = Path.Combine(Directory.GetCurrentDirectory(), "Mods");
-            if (!Directory.Exists(modsDir)) modsDir = Directory.GetCurrentDirectory();
+            // 优先用 MelonLoader 给的 Mods 目录:进程工作目录不一定是游戏根目录(崩溃哨兵 v7.5 修过同一个坑)
+            string modsDir = null;
+            try { modsDir = MelonLoader.Utils.MelonEnvironment.ModsDirectory; } catch { }
+            if (string.IsNullOrEmpty(modsDir) || !Directory.Exists(modsDir))
+            {
+                modsDir = Path.Combine(Directory.GetCurrentDirectory(), "Mods");
+                if (!Directory.Exists(modsDir)) modsDir = Directory.GetCurrentDirectory();
+            }
             _path = Path.Combine(modsDir, "TldHacks_Transitions.txt");
             Load();
             ModMain.Log?.Msg($"[TransitionRecorder] loaded {_data.Count} snapshots from {_path}");
@@ -102,7 +108,11 @@ internal static class TransitionRecorder
                 FromSaveId       = std.m_SceneSaveFilenameCurrent ?? "",
                 ToSaveId         = std.m_SceneSaveFilenameNextLoad ?? "",
                 LastOutdoor      = std.m_LastOutdoorScene ?? "",
+                #if STORY_EDITION
+                LocIDOverride    = std.m_SceneLocationLocIDToShow ?? "",   // 2.24 字段名
+#else
                 LocIDOverride    = std.m_SceneLocationLocIDOverride ?? "",
+#endif
                 SpawnPoint       = std.m_SpawnPointName ?? "",
                 SpawnAudio       = std.m_SpawnPointAudio ?? "",
                 ForceNextTrigger = std.m_ForceNextSceneLoadTriggerScene ?? "",

@@ -1,11 +1,15 @@
-using System;
+﻿using System;
 using System.Reflection;
 using HarmonyLib;
 using Il2Cpp;
+#if !STORY_EDITION
+// 2.24(剧情模式)没有这些命名空间:装备重构、交互系统重构、电解器、新闻轮播
+// 都是 2.24 之后加进游戏的。对应的 Spec 条目同样按 !STORY_EDITION 排除。
 using Il2CppTLD.Gear;
 using Il2CppTLD.Interactions;
 using Il2CppTLD.ModularElectrolizer;
 using Il2CppTLD.News;
+#endif
 using UnityEngine;
 
 namespace TldHacks;
@@ -25,8 +29,18 @@ internal static class DynamicPatch
     private static readonly Type[] OneIntString = { typeof(int), typeof(string) };
     private static readonly Type[] TwoCookingFloats = { typeof(float), typeof(float) };
     private static readonly Type[] PanelBreakDownEnableArgs = { typeof(bool) };
+#if STORY_EDITION
+    // 2.24 Panel_Container.Enable 只有 (bool) 和 (bool, bool) 两个重载,没有 2.55 的
+    // (bool, bool, Action)。取 2 参那个 —— 1 参版在 2.24 里就是转调它,挂 2 参覆盖面更全。
+    private static readonly Type[] ContainerEnableArgs = { typeof(bool), typeof(bool) };
+#else
     private static readonly Type[] ContainerEnableArgs = { typeof(bool), typeof(bool), typeof(Il2CppSystem.Action) };
+#endif
+#if !STORY_EDITION
+    // 2.24 无 Il2Cpp.FatigueFlags(疲劳标志枚举是后加的)。这是运行时 cctor
+    // TypeLoadException 的元凶之一:静态数组里任何一个 typeof 解析失败,整个 mod 初始化就死。
     private static readonly Type[] FloatFatigueFlags = { typeof(float), typeof(FatigueFlags) };
+#endif
     private static readonly Type[] AnimStateArgs = { typeof(UnityEngine.Animator), typeof(UnityEngine.AnimatorStateInfo), typeof(int) };
     private static readonly Type[] OneString = { typeof(string) };
     private static readonly Type[] TwoBool = { typeof(bool), typeof(bool) };
@@ -102,16 +116,32 @@ internal static class DynamicPatch
             "Prefix", null, () => CheatState.FireNeverDie),
         Spec(typeof(FireManager), "PlayerCalculateFireStartTime", typeof(Patch_FireManager_CalcStartTime_Uncap),
             "Prefix", null, () => CheatState.FireMaxBurnHours > 12f),
+        // v7.6:喂火面板打开时同步顶 cap,修"锻造炉/现成炉子喂料仍卡12h"(点火路径的对称补丁,让预览标签也对)
+        Spec(typeof(Panel_FeedFire), "Enable", typeof(Patch_FeedFire_UncapOnOpen),
+            null, "Postfix", () => CheatState.FireMaxBurnHours > 12f),
+        // v7.6:喂料提交时顶 cap(根治面板长开跨过时间/场景后再次喂料被 clamp 回 12h 的竞态)
+        Spec(typeof(Panel_FeedFire), "OnFeedFire", typeof(Patch_FeedFire_UncapOnCommit),
+            "Prefix", null, () => CheatState.FireMaxBurnHours > 12f),
         Spec(typeof(HeatSource), "Update", typeof(Patch_HeatSource_Update),
             "Prefix", null, () => CheatState.FireTemp300,
             () => Patch_HeatSource_Update.Snapshots.Count == 0),
 
+#if !STORY_EDITION
         Spec(typeof(Il2CppTLD.AI.CougarManager), "Update", typeof(Patch_CougarManager_Update_ForceActivate),
             "Prefix", null, () => CheatState.CougarInstantActivate),
+        Spec(typeof(Il2CppTLD.AI.CougarManager), "UpdateWaitingForArrival", typeof(Patch_CougarManager_UpdateWaitingForArrival),
+            "Prefix", null, () => CheatState.CougarInstantActivate),
+        // 雪橇越过移动限制(UniversalTweaks 原版功能,拖雪橇时每帧调)
+        Spec(typeof(Il2CppTLD.BigCarry.TravoisMovement), "CheckMovementRestriction", typeof(Patch_UT_TravoisMovementRestriction),
+            null, "Postfix", () => ModMain.Settings != null && ModMain.Settings.UT_TravoisOverrideMovement),
+#endif
         Spec(typeof(Panel_BreakDown), "Update", typeof(Patch_BreakDown_Update_Edge),
-            null, "Postfix", () => CheatState.QuickBreakDown),
+            null, "Postfix", () => CheatState.QuickBreakDown || CheatState.QuickAction,
+            () => !BreakDownCleanup.Armed),
+#if !STORY_EDITION
         Spec(typeof(CheatDeathAffliction), "Update", typeof(Patch_CheatDeathAfflict_Update),
             "Prefix", null, () => CheatState.ClearDeathPenalty),
+#endif
 
         Spec(typeof(GearItem), "WearOut", typeof(Patch_GearItem_WearOut),
             "Prefix", null, () => CheatState.InfiniteDurability),
@@ -125,10 +155,18 @@ internal static class DynamicPatch
 
         Spec(typeof(Lock), "IsLocked", typeof(Patch_Lock_IsLocked),
             null, "Postfix", () => CheatState.IgnoreLock),
+#if !STORY_EDITION
         Spec(typeof(LockedInteraction), "IsLocked", typeof(Patch_LockedInteraction_IsLocked_Unlock),
             null, "Postfix", () => CheatState.UnlockSafes || CheatState.IgnoreLock),
+#endif
         Spec(typeof(BodyHarvest), "MaybeFreeze", typeof(Patch_BodyHarvest_MaybeFreeze),
             "Prefix", null, () => CheatState.QuickHarvest),
+        // 鹿出肉量倍率(只在鹿倍率≠1 时挂载;新鲜击杀 roll 初始肉量时乘)
+        Spec(typeof(BodyHarvest), "InitializeResourcesAndConditions", typeof(Patch_DeerMeatYield),
+            null, "Postfix", () => MeatState.Enabled()),
+#if !STORY_EDITION
+        // 2.24 里煤油灯类型在全局命名空间(无 Il2CppTLD.Gear),这三条 Spec 的 typeof 会解析失败。
+        // 剧情模式没有煤油灯相关设定项,直接排除。
         Spec(typeof(Il2CppTLD.Gear.KeroseneLampItem), "ReduceFuel", typeof(Patch_KeroseneLamp_ReduceFuel),
             "Prefix", null, () => CheatState.LampFuelNoDrain
                 || (ModMain.Settings != null && (Mathf.Abs(ModMain.Settings.LampPlacedBurnMult - 1f) >= 0.01f
@@ -139,10 +177,13 @@ internal static class DynamicPatch
         Spec(typeof(Il2CppTLD.Gear.KeroseneLampItem), "Update", typeof(Patch_KeroseneLamp_LightRange),
             null, "Postfix", () => ModMain.Settings != null && (Mathf.Abs(ModMain.Settings.LampRangeMultiplier - 1f) >= 0.01f
                                                              || ModMain.Settings.LampOverTimeDecay >= 0.001f
-                                                             || ModMain.Settings.LampMute || CheatState.LampMute)),
+                                                             || ModMain.Settings.LampMute || CheatState.LampMute),
+            Patch_KeroseneLamp_LightRange.RestoreDone),
+#endif
         Spec(typeof(GunItem), "RemoveNextFromClip", typeof(Patch_Gun_RemoveNextFromClip),
             "Prefix", null, () => CheatState.InfiniteAmmo),
 
+#if !STORY_EDITION   // 2.24 无保温瓶(Il2CppTLD.Gear.InsulatedFlask*)
         Spec(typeof(Il2CppTLD.Gear.InsulatedFlask), "CalculateHeatLoss", typeof(Patch_Flask_CalcHeatLoss),
             "Prefix", null, () => CheatState.FlaskNoHeatLoss),
         Spec(typeof(Il2CppTLD.Gear.InsulatedFlask), "UpdateVolume", typeof(Patch_Flask_UpdateVolume),
@@ -159,12 +200,18 @@ internal static class DynamicPatch
         // m_RealTimeDuration 残留 0.2f,导致 vanilla 单帧吞光材料 — 见 Patch_CraftingOp_StartCrafting 注释)
         Spec(typeof(CraftingOperation), "StartCrafting", typeof(Patch_CraftingOp_StartCrafting),
             null, "Postfix", () => CheatState.QuickCraft),
+#endif
         Spec(typeof(CookingPotItem), "UpdateCookingTimeAndState", typeof(Patch_CookingPot_Update),
             "Prefix", null, () => CheatState.QuickCook || CheatState.NoBurn, null, TwoCookingFloats),
         Spec(typeof(Panel_Crafting), "CraftingEnd", typeof(Patch_Craft_End_ForceBright),
             null, "Postfix", () => CheatState.QuickCraft),
+#if STORY_EDITION   // 2.24 叫 HandleCraftingSuccess
+        Spec(typeof(Panel_Crafting), "HandleCraftingSuccess", typeof(Patch_Craft_OnSuccess_ArmFade),
+            null, "Postfix", () => CheatState.QuickCraft),
+#else
         Spec(typeof(Panel_Crafting), "OnCraftingSuccess", typeof(Patch_Craft_OnSuccess_ArmFade),
             null, "Postfix", () => CheatState.QuickCraft),
+#endif
 
         // v2.8.1: 快速修理 — 从 [HarmonyPatch] 属性迁移到 DynamicPatch(IL2CPP 兼容)
         Spec(typeof(Panel_Repair), "StartRepair", typeof(Patch_Repair_StartRepair),
@@ -176,6 +223,7 @@ internal static class DynamicPatch
             "Prefix", null, () => CheatState.FreeRepair),
         Spec(typeof(SafeCracking), "Update", typeof(Patch_SafeCracking_Update),
             null, "Postfix", () => CheatState.UnlockSafes),
+#if !STORY_EDITION   // 2.24 无 Il2CppTLD.Interactions(交互系统重构后才有)
         Spec(typeof(Il2CppTLD.Interactions.TimedHoldInteraction), "InitializeInteraction", typeof(Patch_HarvestableInteraction_Init),
             null, "Postfix", () => CheatState.QuickSearch),
         // v2.7.80 BeginHold 承担 snapshot restore 责任 —— cleanup 未完不卸
@@ -184,45 +232,64 @@ internal static class DynamicPatch
             () => HarvestableSnaps.Snapshots.Count == 0),
         Spec(typeof(Il2CppTLD.Interactions.TimedHoldInteraction), "UpdateHoldInteraction",
             typeof(Patch_TimedHold_UpdateHoldInteraction_QuickSearch),
-            "Prefix", null, () => CheatState.QuickSearch || CheatState.QuickAction, null, OneFloat),
+            "Prefix", null, () => CheatState.QuickSearch || CheatState.QuickAction,
+            // v7.7 加 cleanupDone:留着 patch 直到把改过的实例都还原完(见该类的 Snapshots)
+            () => Patch_TimedHold_UpdateHoldInteraction_QuickSearch.Snapshots.Count == 0, OneFloat),
+#endif
         Spec(typeof(Panel_BodyHarvest), "Refresh", typeof(Patch_Harvest_Refresh_Quick),
             "Prefix", null, () => CheatState.QuickHarvest,
             () => Patch_Harvest_Refresh_Quick.Snapshots.Count == 0),
         Spec(typeof(Panel_BreakDown), "UpdateDurationLabel", typeof(Patch_BreakDown_UpdateDuration),
-            "Prefix", null, () => CheatState.QuickBreakDown,
-            () => Patch_BreakDown_UpdateDuration.Snapshots.Count == 0),
+            "Prefix", null, () => CheatState.QuickBreakDown || CheatState.QuickAction,
+            () => Patch_BreakDown_UpdateDuration.Snapshots.Count == 0 && Patch_BreakDown_UpdateDuration.PanelSecs < 0f),
         Spec(typeof(Panel_BodyHarvest), "StartHarvest", typeof(Patch_Harvest_Start),
             null, "Postfix", () => CheatState.QuickAction, null, OneIntString),
         Spec(typeof(Panel_BodyHarvest), "StartQuarter", typeof(Patch_Harvest_StartQuarter),
             null, "Postfix", () => CheatState.QuickAction, null, OneIntString),
         Spec(typeof(Panel_BreakDown), "OnBreakDown", typeof(Patch_BreakDown_OnBreakDown),
-            null, "Postfix", () => CheatState.QuickBreakDown),
+            "Prefix", "Postfix", () => CheatState.QuickBreakDown || CheatState.QuickAction),
         Spec(typeof(Panel_BreakDown), "BreakDownFinished", typeof(Patch_BreakDown_Finished_Unfade),
-            null, "Postfix", () => CheatState.QuickBreakDown),
+            null, "Postfix", () => CheatState.QuickBreakDown || CheatState.QuickAction,
+            () => !BreakDownCleanup.Armed),
         Spec(typeof(Panel_BreakDown), "ExitInterface", typeof(Patch_BreakDown_ExitInterface_UnlockTOD),
-            null, "Postfix", () => CheatState.QuickBreakDown),
+            null, "Postfix", () => CheatState.QuickBreakDown || CheatState.QuickAction,
+            () => !BreakDownCleanup.Armed),
         Spec(typeof(Panel_BreakDown), "OnCancel", typeof(Patch_BreakDown_OnCancel_UnlockTOD),
-            null, "Postfix", () => CheatState.QuickBreakDown),
+            null, "Postfix", () => CheatState.QuickBreakDown || CheatState.QuickAction,
+            () => !BreakDownCleanup.Armed),
         Spec(typeof(Panel_BreakDown), "Enable", typeof(Patch_BreakDown_Enable_Cleanup),
-            null, "Postfix", () => CheatState.QuickBreakDown, null, PanelBreakDownEnableArgs),
+            null, "Postfix", () => CheatState.QuickBreakDown || CheatState.QuickAction,
+            () => !BreakDownCleanup.Armed, PanelBreakDownEnableArgs),
 
         // v2.7.78:把一批原本静态常驻的中/高频 patch 动态化,逻辑不变。
         Spec(typeof(IceCrackingTrigger), "BreakIce", typeof(Patch_IceBreak_BreakIce),
             "Prefix", null, () => CheatState.ThinIceNoBreak),
         Spec(typeof(IceCrackingTrigger), "FallInWater", typeof(Patch_IceBreak_FallInWater),
             "Prefix", null, () => CheatState.ThinIceNoBreak),
+#if STORY_EDITION   // 2.24 官方拼写错误:Calclate(少一个 u),2.55 才改对
+        Spec(typeof(FireManager), "CalclateFireStartSuccess", typeof(Patch_FireMgr_Success),
+            null, "Postfix", () => CheatState.QuickFire),
+#else
         Spec(typeof(FireManager), "CalculateFireStartSuccess", typeof(Patch_FireMgr_Success),
             null, "Postfix", () => CheatState.QuickFire),
+#endif
+#if STORY_EDITION   // 2.24 叫 SetNextCatchTime;patch 只改 m_Min/MaxGameMinutesCatchFish,两版字段名一致
+        Spec(typeof(IceFishingHole), "SetNextCatchTime", typeof(Patch_IceFishing_GuaranteedCatch),
+            "Prefix", null, () => CheatState.QuickFishing),
+#else
         Spec(typeof(IceFishingHole), "RollNextCatch", typeof(Patch_IceFishing_GuaranteedCatch),
             "Prefix", null, () => CheatState.QuickFishing),
+#endif
         Spec(typeof(Panel_Container), "EnableAfterDelay", typeof(Patch_Container_EnableAfterDelay),
             "Prefix", null, () => CheatState.QuickOpenContainer, null, OneFloat),
         Spec(typeof(Panel_Container), "Enable", typeof(Patch_Container_Enable),
             null, "Postfix", () => CheatState.QuickOpenContainer || CheatState.InfiniteContainer, null, ContainerEnableArgs),
 
+#if !STORY_EDITION   // 2.24 无 Il2CppTLD.Trader(剧情模式没有商人)
         Spec(typeof(Il2CppTLD.Trader.TraderManager), "GetAvailableTradeExchanges",
             typeof(Patch_TraderManager_GetAvailableTradeExchanges),
-            "Prefix", null, () => CheatState.TraderUnlimitedList || CheatState.TraderMaxTrust),
+            "Prefix", null, () => CheatState.TraderUnlimitedList || CheatState.TraderMaxTrust,
+            cleanupDone: Patch_TraderManager_GetAvailableTradeExchanges.RestoreDone),
         // v6.9.6 改为按需挂载(原 () => true):默认 days>=30(≈原版) → 不挂载 → 商人到货完全走原版进度。
         //   玩家把"到来天数"拖到 <30 或开"商人常驻"才挂,且 Postfix 只升不降(见 Patch 内注释)。
         Spec(typeof(Il2CppTLD.Trader.TraderManager), "IsTraderAvailable",
@@ -232,9 +299,16 @@ internal static class DynamicPatch
         Spec(typeof(Il2CppTLD.Trader.TraderRadio), "CanContactTrader",
             typeof(Patch_TraderRadio_CanContactTrader),
             null, "Postfix", () => CheatState.TraderAlwaysAvailable),
+        Spec(typeof(Il2CppTLD.Trader.TraderRadio), "IsTraderAvailable",
+            typeof(Patch_TraderRadio_IsTraderAvailable),
+            null, "Postfix", () => CheatState.TraderAlwaysAvailable),
         Spec(typeof(Il2CppTLD.Trader.ExchangeItem), "IsFullyExchanged",
             typeof(Patch_ExchangeItem_IsFullyExchanged),
             "Prefix", "Postfix", () => CheatState.TraderInstantExchange),
+        Spec(typeof(Il2CppTLD.Trader.TraderManager), "CloseTrade",
+            typeof(Patch_TraderManager_CloseTrade),
+            null, "Postfix", () => CheatState.TraderInstantExchange),
+#endif
 
         // v2.7.89 无后坐力:零化 GunItem 后坐参数(Prefix 归零 + Postfix 恢复)
         Spec(typeof(vp_FPSWeapon), "PlayFireAnimation", typeof(Patch_FPSWeapon_PlayFireAnimation),
@@ -286,27 +360,38 @@ internal static class DynamicPatch
             null, "Postfix", () => ModMain.Settings != null && ModMain.Settings.SpeedTweaksEnabled),
         // v2.7.88 体力恢复改为 ModMain.OnUpdate 主动 ApplyTick (Harmony hook 在此类不可靠),不再注册 Spec
 
+#if !STORY_EDITION
         // 整合 TorchTweaker:火把 condition(两个面板都 patch,覆盖所有交互入口)
+        // 2.24 Panel_FeedFire 无 m_Min/MaxNormalizedTorchCondition(取火把品质范围是 2.24 之后加的),
+        // 两个 patch 类连同这两条 Spec 一起排除。
         Spec(typeof(Panel_FeedFire), "Enable", typeof(Patch_TorchCondition),
             null, "Postfix", () => ModMain.Settings != null && (ModMain.Settings.TorchMinCondition != 0.6f || ModMain.Settings.TorchMaxCondition != 0.9f)),
         Spec(typeof(Panel_ActionPicker), "Enable", typeof(Patch_TorchCondition_ActionPicker),
             null, "Postfix", () => ModMain.Settings != null && (ModMain.Settings.TorchMinCondition != 0.6f || ModMain.Settings.TorchMaxCondition != 0.9f)),
+#endif
 
-        // 整合 GearDecayModifier:物品衰减倍率(仅在有衰减修改/无限耐久/快速制作时挂载)
+        // 整合 GearDecayModifier:物品衰减倍率(仅在有衰减修改/无限耐久时挂载)
+        // 睡袋不用另挂 Bed.Degrade:反汇编确认 Bed.Degrade 内部就是调 m_Bedroll 的 GearItem.Degrade,
+        //   两边都挂会把睡袋倍率和总倍率各乘两遍。
         Spec(typeof(GearItem), "Degrade", typeof(Patch_GearDegrade),
-            "Prefix", null, () => CheatState.InfiniteDurability || CheatState.QuickCraft || DecayState.HasNonDefaultMultiplier(), null, OneFloat),
+            "Prefix", null, () => CheatState.InfiniteDurability || DecayState.HasNonDefaultMultiplier(), null, OneFloat),
 
         // 整合 PauseInJournal: 开日志暂停
+        // v7.7 cleanupDone:开关关掉时若时间还冻在 0,补丁必须留着,等玩家关日志那次
+        //   Enable(false) 把 m_GlobalTimeScale 写回 1 才允许卸载。
         Spec(typeof(Panel_Log), "Enable", typeof(Patch_PanelLog_Pause),
-            null, "Postfix", () => CheatState.PauseInJournal),
+            null, "Postfix", () => CheatState.PauseInJournal,
+            cleanupDone: () => !PauseInJournalState.IsPaused),
 
         // 整合 SkipIntroRedux: 跳过开场
         Spec(typeof(Panel_Boot), "Update", typeof(Patch_PanelBoot_SkipIntro),
             null, "Postfix", () => CheatState.SkipIntro),
         Spec(typeof(Panel_MainMenu), "Enable", typeof(Patch_PanelMainMenu_SkipIntro),
             "Prefix", null, () => CheatState.SkipIntro),
+#if !STORY_EDITION   // 2.24 无 NewsCarousel(主菜单新闻轮播)
         Spec(typeof(NewsCarousel), "Awake", typeof(Patch_NewsCarousel_Hide),
             null, "Postfix", () => CheatState.SkipIntro),
+#endif
 
         // 整合 VehicleFov + FreeLook: 车内FOV/视角
         Spec(typeof(PlayerInVehicle), "EnterVehicle", typeof(Patch_VehicleFov_Enter),
@@ -315,8 +400,13 @@ internal static class DynamicPatch
             null, "Postfix", () => CheatState.VehicleFreeLook),
 
         // 整合 DroppableUndroppables: 允许丢弃不可丢物品
+        // v7.7 挂载条件补上 AllNote / ImportantWeight:这个 Postfix 同时负责三件事,
+        //   原先只看 DroppableUndroppables → 单开「收藏品可丢弃」或关掉「关键物品保留重量」时
+        //   patch 根本不挂,开关是死的。
         Spec(typeof(GearItem), "Awake", typeof(Patch_GearItem_Awake_Droppable),
-            null, "Postfix", () => CheatState.DroppableUndroppables),
+            null, "Postfix", () => CheatState.DroppableUndroppables
+                                || (ModMain.Settings != null
+                                    && (ModMain.Settings.AllNote || !ModMain.Settings.ImportantWeight))),
 
         // 整合 RememberBreakDownItem: 记忆拆解工具
         Spec(typeof(Panel_BreakDown), "Enable", typeof(Patch_BreakDown_RememberTool_Enable),
@@ -371,20 +461,27 @@ internal static class DynamicPatch
 
         // 整合 Sprainkle: 扭伤参数实时覆写
         Spec(typeof(Sprains), "Update", typeof(Patch_Sprains_Update),
-            null, "Postfix", () => CheatState.World_Sprainkle),
+            null, "Postfix", () => CheatState.World_Sprainkle, Patch_Sprains_Update.RestoreDone),
         Spec(typeof(SprainedAnkle), "SprainedAnkleStart", typeof(Patch_SprainedAnkle_Sprainkle),
             null, "Postfix", () => CheatState.World_Sprainkle),
         Spec(typeof(SprainedWrist), "SprainedWristStart", typeof(Patch_SprainedWrist_Sprainkle),
             null, "Postfix", () => CheatState.World_Sprainkle),
 
+#if !STORY_EDITION   // 2.24 无 FireplaceInteraction / CookingSlot.m_FireplaceHost
         // 整合 MoreCookingSlots: 增加烹饪槽位
         Spec(typeof(WoodStove), "Awake", typeof(Patch_WoodStove_Awake_CookingSlots),
             null, "Postfix", () => CheatState.Craft_MoreCookingSlots),
+#endif
 
 
+#if !STORY_EDITION   // 2.24 无 Il2CppTLD.Gear.BlueprintData
         // 整合 CraftAnywhere: 制作位置覆写(hook Panel_Crafting.ItemPassesFilter, 非 BlueprintData.Awake)
         Spec(typeof(Panel_Crafting), "ItemPassesFilter", typeof(Patch_CraftAnywhere),
             "Prefix", "Postfix", () => CheatState.Craft_Anywhere, null, new[] { typeof(BlueprintData) }),
+        // 同上第二道闸:位置检查本身放行(列表可见 ≠ 能按下制作)
+        Spec(typeof(BlueprintData), "CanCraftAtLocation", typeof(Patch_CraftAnywhere_Location),
+            null, "Postfix", () => CheatState.Craft_Anywhere, null, new[] { typeof(CraftingLocation) }),
+#endif
 
         // 整合 CaffeinatedSodas: 苏打水加减疲劳 buff
         Spec(typeof(GearItem), "Awake", typeof(Patch_GearItem_Awake_CaffeinatedSodas),
@@ -408,8 +505,13 @@ internal static class DynamicPatch
         // 整合 WakeUpCall: 睡眠唤醒+极光+时间+微光
         Spec(typeof(Rest), "BeginSleeping", typeof(Patch_WakeUpCall_BeginSleeping),
             "Prefix", null, () => CheatState.QoL_WakeUpCall || CheatState.QoL_AuroraSense, null, BeginSleepArgs),
+#if STORY_EDITION   // 2.24 极光强度推进在 UpdateActivation 里;patch 只读 IsFullyActive(),语义相同
+        Spec(typeof(AuroraManager), "UpdateActivation", typeof(Patch_WakeUpCall_AuroraWake),
+            null, "Postfix", () => CheatState.QoL_AuroraSense),
+#else
         Spec(typeof(AuroraManager), "UpdateAuroraValue", typeof(Patch_WakeUpCall_AuroraWake),
             null, "Postfix", () => CheatState.QoL_AuroraSense),
+#endif
         Spec(typeof(InterfaceManager), "SetTimeWidgetActive", typeof(Patch_WakeUpCall_TimeWidget),
             "Prefix", null, () => CheatState.QoL_ShowTimeSleep, null, OneBool),
         Spec(typeof(Panel_Rest), "Enable", typeof(Patch_WakeUpCall_RestEnable),
@@ -422,8 +524,13 @@ internal static class DynamicPatch
             null, "Postfix", () => CheatState.World_CarcassMoving, null, BodyHarvestEnableArgs),
         Spec(typeof(GameManager), "SetAudioModeForLoadedScene", typeof(Patch_Carcass_SceneLoaded),
             null, "Postfix", () => CheatState.World_CarcassMoving),
+        // 2.24 LoadScene.Activate 只有无参重载(2.55 才多出 (bool));Postfix 本身不取参数。
         Spec(typeof(LoadScene), "Activate", typeof(Patch_Carcass_LoadScene),
+#if STORY_EDITION
+            null, "Postfix", () => CheatState.World_CarcassMoving, null, System.Type.EmptyTypes),
+#else
             null, "Postfix", () => CheatState.World_CarcassMoving, null, OneBool),
+#endif
         Spec(typeof(GameManager), "TriggerSurvivalSaveAndDisplayHUDMessage", typeof(Patch_Carcass_BeforeSave),
             "Prefix", null, () => CheatState.World_CarcassMoving),
         Spec(typeof(PlayerManager), "PlayerCanSprint", typeof(Patch_Carcass_NoSprint),
@@ -439,6 +546,7 @@ internal static class DynamicPatch
         Spec(typeof(RopeClimbPoint), "OnRopeTransition", typeof(Patch_Carcass_RopeDrop),
             null, "Postfix", () => CheatState.World_CarcassMoving, null, OneBool),
 
+#if !STORY_EDITION   // 2.24 无 SimpleInteraction / BaseInteraction
         // 整合 RnStripped-ElectricTorchLighting: 极光电点火把
         Spec(typeof(MissionServicesManager), "RegisterAnyMissionObjects", typeof(Patch_ElectricTorch_SceneInit),
             null, "Postfix", () => CheatState.World_ElectricTorch),
@@ -452,6 +560,7 @@ internal static class DynamicPatch
             "Prefix", null, () => CheatState.World_ElectricTorch),
         Spec(typeof(PlayerManager), "GetInteractiveObjectUnderCrosshairs", typeof(Patch_ElectricTorch_Crosshair),
             null, "Postfix", () => CheatState.World_ElectricTorch, null, OneFloat),
+#endif
 
         // 整合 TinyTweaks-BuryHumanCorpses: Alt交互埋葬尸体
         Spec(typeof(InputManager), "ExecuteAltFire", typeof(Patch_BuryCorpses_AltFire),
@@ -478,8 +587,10 @@ internal static class DynamicPatch
             null, "Postfix", () => CheatState.QoL_SleepAnywhere),
         Spec(typeof(Rest), "UpdateWhenSleeping", typeof(Patch_SleepAnywhere_SleepInterruption),
             null, "Postfix", () => CheatState.QoL_SleepAnywhere),
+        // v7.7 加 cleanupDone:临时床卷还挂在场景里时不能卸载,否则没人销毁它(见该类注释)
         Spec(typeof(Rest), "EndSleeping", typeof(Patch_SleepAnywhere_EndSleeping),
-            null, "Postfix", () => CheatState.QoL_SleepAnywhere, null, OneBool),
+            null, "Postfix", () => CheatState.QoL_SleepAnywhere,
+            () => SleepAnywhereState.TempBedroll == null, OneBool),
         Spec(typeof(Panel_Rest), "OnPassTime", typeof(Patch_SleepAnywhere_PassTimeExposure),
             null, "Postfix", () => CheatState.QoL_SleepAnywhere),
         Spec(typeof(PlayerManager), "PlayerIsSleeping", typeof(Patch_SleepAnywhere_RestPanelClose),
@@ -520,10 +631,15 @@ internal static class DynamicPatch
         Spec(typeof(Panel_OptionsMenu), "OnDisplayTab", typeof(Patch_ExtendedFOV_Display),
             null, "Postfix", () => CheatState.TT_ExtendedFOV),
 
+        // v7.7 加 cleanupDone:这两个 patch 是 timeScale 的唯一恢复者。轮盘正开着(IsSlowed=true)
+        //   时关掉开关,若立刻 Unpatch 就没人把 timeScale 从 0.1 写回 1 → 永久慢速。
+        //   等 IsSlowed 落回 false 再卸。
         Spec(typeof(Panel_ActionsRadial), "Enable", typeof(Patch_PauseOnRadial_Enable),
-            "Prefix", null, () => CheatState.TT_PauseOnRadial, null, new[] { typeof(bool), typeof(bool) }),
+            "Prefix", null, () => CheatState.TT_PauseOnRadial,
+            () => !PauseOnRadialState.IsSlowed, new[] { typeof(bool), typeof(bool) }),
         Spec(typeof(GameManager), "Update", typeof(Patch_PauseOnRadial_FoolProof),
-            null, "Postfix", () => CheatState.TT_PauseOnRadial),
+            null, "Postfix", () => CheatState.TT_PauseOnRadial,
+            () => !PauseOnRadialState.IsSlowed),
 
         // SpeedyInteractions — 只在任一倍率 != 1 时才挂载(避免 20 个无用 hook 拖 FPS)
         Spec(typeof(PlayerManager), "UseFoodInventoryItem", typeof(Patch_Speedy_Eating),
@@ -548,8 +664,10 @@ internal static class DynamicPatch
             "Prefix", null, () => ModMain.Settings.TT_GlobalSpeedMult != 1f),
         Spec(typeof(Panel_Cooking), "OnCook", typeof(Patch_Speedy_Cook1),
             "Prefix", null, () => ModMain.Settings.TT_GlobalSpeedMult != 1f),
+#if !STORY_EDITION   // 2.24 无 OnCookRecipe(配方烹饪是后加的);OnCook 那条已由 Cook1 覆盖
         Spec(typeof(Panel_Cooking), "OnCookRecipe", typeof(Patch_Speedy_Cook2),
             "Prefix", null, () => ModMain.Settings.TT_GlobalSpeedMult != 1f),
+#endif
         Spec(typeof(Panel_Milling), "BeginRepair", typeof(Patch_Speedy_Milling),
             "Prefix", null, () => ModMain.Settings.TT_GlobalSpeedMult != 1f),
         Spec(typeof(Panel_SnowShelterBuild), "OnBuild", typeof(Patch_Speedy_SnowShelterBuild),
@@ -565,10 +683,16 @@ internal static class DynamicPatch
             null, "Postfix", () => ModMain.Settings.TT_GlobalSpeedMult != 1f),
         Spec(typeof(AfflictionDefinition), "GetAlternateDurationUsed", typeof(Patch_Speedy_Affliction2),
             null, "Postfix", () => ModMain.Settings.TT_GlobalSpeedMult != 1f),
+#if !STORY_EDITION   // 2.24 无 TimedHoldInteraction
         Spec(typeof(TimedHoldInteraction), "BeginHold", typeof(Patch_Speedy_HoldInteraction),
             "Prefix", null, () => ModMain.Settings != null && (ModMain.Settings.TT_InteractionSpeedMult != 1f || CheatState.QuickSearch || Patch_Speedy_HoldInteraction.Data.Count > 0)),
+        // v7.7 加 `|| Data.Count > 0`:这是 Data 的唯一清理者,原先它比被保护的 BeginHold spec
+        //   先卸载(上面那个 wanted 有 Data.Count > 0,这个没有)→ 字典里的旧 Il2Cpp wrapper
+        //   永远留着,跨场景后指向已销毁的原生对象,GetHashCode/Equals 会摸到已释放内存。
         Spec(typeof(GameManager), "ResetLists", typeof(Patch_Speedy_ResetDict),
-            null, "Postfix", () => ModMain.Settings.TT_InteractionSpeedMult != 1f || CheatState.QuickSearch),
+            null, "Postfix", () => ModMain.Settings.TT_InteractionSpeedMult != 1f || CheatState.QuickSearch
+                                || Patch_Speedy_HoldInteraction.Data.Count > 0),
+#endif
 
         // ImprovedFlasks 整合已移除(v6.8.3) —— 原 mod ImprovedFlasks 1.2.3 假设保温瓶里装 GearItem,
         // TLD 2.55 改为液体容器(AddLiquid/RemoveLiquid),GetAllItems 永远返回空,饮用代码全瘫。
@@ -577,8 +701,11 @@ internal static class DynamicPatch
         // RespawnablePlants
         Spec(typeof(Harvestable), "Awake", typeof(Patch_RespawnPlants_Awake),
             "Prefix", null, () => CheatState.TT_RespawnPlants),
+#if !STORY_EDITION   // 2.24 叫 DoHarvest;但 StoryGuard 已强制 TT_RespawnPlants=false 且
+        // patch 体在 STORY 下就是空 return,挂上去纯属浪费,整条排除
         Spec(typeof(Harvestable), "Harvest", typeof(Patch_RespawnPlants_Harvest),
             null, "Postfix", () => CheatState.TT_RespawnPlants),
+#endif
         Spec(typeof(Harvestable), "Deserialize", typeof(Patch_RespawnPlants_Deserialize),
             "Prefix", "Postfix", () => CheatState.TT_RespawnPlants),
         Spec(typeof(SaveGameSystem), "SaveSceneData", typeof(Patch_RespawnPlants_Save),
@@ -589,14 +716,21 @@ internal static class DynamicPatch
         // HouseLights
         Spec(typeof(GameManager), "InstantiatePlayerObject", typeof(Patch_HL_GameManager_InstantiatePlayer),
             "Prefix", null, () => CheatState.HL_Enabled),
+#if !STORY_EDITION   // 2.24 无 AuroraModularElectrolizer(极光电解器)
         Spec(typeof(AuroraModularElectrolizer), "Initialize", typeof(Patch_HL_Electrolizer_Initialize),
             null, "Postfix", () => CheatState.HL_Enabled),
+#endif
         Spec(typeof(AuroraManager), "RegisterAuroraLightSimple", typeof(Patch_HL_AuroraManager_RegisterLightSimple),
             null, "Postfix", () => CheatState.HL_Enabled, null, HLRegisterLightArgs),
         Spec(typeof(AuroraManager), "UpdateForceAurora", typeof(Patch_HL_AuroraManager_UpdateForceAurora),
-            null, "Postfix", () => CheatState.HL_Enabled),
+            null, "Postfix", () => CheatState.HL_Enabled, cleanupDone: HouseLightsState.RestoreAll),
+        // 2.24 UpdateHUDText 无参,Panel_HUD 由 patch 自己从 InterfaceManager 取。
         Spec(typeof(PlayerManager), "UpdateHUDText", typeof(Patch_HL_PlayerManager_UpdateHUDText),
+#if STORY_EDITION
+            null, "Postfix", () => CheatState.HL_Enabled, null, System.Type.EmptyTypes),
+#else
             null, "Postfix", () => CheatState.HL_Enabled, null, HLUpdateHUDArgs),
+#endif
         Spec(typeof(PlayerManager), "InteractiveObjectsProcessInteraction", typeof(Patch_HL_PlayerManager_ProcessInteraction),
             null, "Postfix", () => CheatState.HL_Enabled),
         Spec(typeof(Weather), "IsTooDarkForAction", typeof(Patch_HL_Weather_IsTooDarkForAction),
@@ -635,10 +769,13 @@ internal static class DynamicPatch
             try { Specs[i].Sync(); }
             catch (Exception ex)
             {
-                if (!Specs[i]._failed)
+                // 挂载条件或清理判断抛了异常(Patch/Unpatch 自己会吞异常,能抛到这里的只有这两个回调)。
+                //   这一轮不动挂载状态,下一轮再判。原先直接标成永久失败:当时补丁若正挂着,
+                //   就一直挂到退游戏,日志却写着 disabled。日志每个 spec 只写一次。
+                if (!Specs[i]._warned)
                 {
-                    Specs[i]._failed = true;
-                    ModMain.Log?.Error($"[DynPatch] {Specs[i].Key} permanently disabled: {ex.GetType().Name}: {ex.Message}");
+                    Specs[i]._warned = true;
+                    ModMain.Log?.Error($"[DynPatch] {Specs[i].Key} 条件判断异常,本轮跳过: {ex.GetType().Name}: {ex.Message}");
                 }
             }
         }
@@ -704,6 +841,9 @@ internal static class DynamicPatch
         public readonly string Key;
         public bool Applied;
         internal bool _failed;
+        internal bool _warned;
+        // 前缀、后缀各记各的:卸载时第二个抛异常的话,原先 Applied 仍是 true,再开开关不会重挂,只剩一半在跑
+        private bool _preOn, _postOn;
 
         private readonly Type _target;
         private readonly string _method;
@@ -740,7 +880,7 @@ internal static class DynamicPatch
             bool wanted = _wanted();
             if (wanted)
             {
-                if (!Applied) Patch();
+                if (!Applied || (_prefix != null && !_preOn) || (_postfix != null && !_postOn)) Patch();
                 return;
             }
 
@@ -802,7 +942,9 @@ internal static class DynamicPatch
             {
                 var original = Original;
                 if (original == null) { _failed = true; ModMain.Log?.Warning($"[DynPatch] method not found (disabled): {Key}"); return; }
-                H.Patch(original, _prefix, _postfix);
+                H.Patch(original, _preOn ? null : _prefix, _postOn ? null : _postfix);
+                _preOn = _prefix != null;
+                _postOn = _postfix != null;
                 Applied = true;
                 ModMain.Log?.Msg($"[DynPatch] ON  {Key}");
             }
@@ -811,15 +953,35 @@ internal static class DynamicPatch
 
         private void Unpatch()
         {
-            try
+            var original = Original;
+            if (original == null) return;
+            // v7.7 修「关一个功能连带关掉另一个」:原先是
+            //     H.Unpatch(original, HarmonyPatchType.All, HARMONY_ID)
+            //   按 ID 卸载 = 把这个方法上所有 TldHacks.Dynamic 的补丁全删掉,而 15 组 spec
+            //   共享同一个目标方法(如 Panel_BreakDown.OnBreakDown 上同时有 QuickBreakDown、
+            //   RememberBreakdownTool、BreakdownSpeedMult)。关掉其中一个 → 另外两个也被删,
+            //   而它们的 Applied 仍是 true → Reconcile 走 wanted&&Applied 分支直接 return,
+            //   整个 session 都不会重新挂上。改成按补丁方法精确卸载,只动自己这一份。
+            //   前缀、后缀分开卸,各自成功才清自己的标记;失败的那一半下一轮 Reconcile 再卸。
+            if (_preOn && _prefix?.method != null)
             {
-                var original = Original;
-                if (original == null) return;
-                H.Unpatch(original, HarmonyPatchType.All, HARMONY_ID);
-                Applied = false;
-                ModMain.Log?.Msg($"[DynPatch] OFF {Key}");
+                try { H.Unpatch(original, _prefix.method); _preOn = false; }
+                catch (Exception ex) { WarnUnpatch(ex); }
             }
-            catch (Exception ex) { ModMain.Log?.Error($"[DynPatch] Unpatch {Key}: {ex.Message}"); }
+            if (_postOn && _postfix?.method != null)
+            {
+                try { H.Unpatch(original, _postfix.method); _postOn = false; }
+                catch (Exception ex) { WarnUnpatch(ex); }
+            }
+            Applied = _preOn || _postOn;
+            if (!Applied) ModMain.Log?.Msg($"[DynPatch] OFF {Key}");
+        }
+
+        private void WarnUnpatch(Exception ex)
+        {
+            if (_warned) return;
+            _warned = true;
+            ModMain.Log?.Error($"[DynPatch] Unpatch {Key}(下一轮重试): {ex.Message}");
         }
     }
 }

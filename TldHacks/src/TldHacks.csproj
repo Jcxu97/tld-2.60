@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
@@ -9,7 +9,7 @@
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Version>6.9.4</Version>
+    <Version>9.5.0</Version>
 
     <TldRoot>D:\Steam\steamapps\common\TheLongDark</TldRoot>
     <TldMlNet6>$(TldRoot)\MelonLoader\net6</TldMlNet6>
@@ -124,7 +124,9 @@
     <EmbeddedResource Include="HouseLights.hlbundle" />
   </ItemGroup>
 
-  <Target Name="CopyToMods" AfterTargets="Build">
+  <!-- 用 -p:NoDeploy=true 只编译不部署(验证阶段别动游戏 Mods 目录)。
+       注意不要拿 -p:TldModsDir=... 改路径:ModSettings / ModData 的 HintPath 也走它。 -->
+  <Target Name="CopyToMods" AfterTargets="Build" Condition="'$(NoDeploy)' != 'true'">
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(TldModsDir)" SkipUnchangedFiles="false" />
     <Message Importance="high" Text="==> Deployed $(TargetFileName) to $(TldModsDir)" />
   </Target>

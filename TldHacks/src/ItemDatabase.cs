@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace TldHacks;
 
@@ -17,6 +17,10 @@ public class ItemEntry
     // v6.6 GC: 预缓存带卡路里后缀的显示名,避免 Spawner UI 每帧字符串拼接
     public string DisplayLabelZh;
     public string DisplayLabelEn;
+    // v9.0 搜索索引:全拼 / 拼音首字母 / 英文名+prefab(小写)。首次搜索时由 PinyinSearch 填一次
+    public string SearchFull;
+    public string SearchInit;
+    public string SearchEn;
 
     public ItemEntry(string prefab, string name, string category, string icon, float weight, int calories = 0, string remark = "")
     {
@@ -185,6 +189,15 @@ internal static class ItemDatabase
     new ItemEntry("GEAR_FishingLureA", "鱼饵A", "工具", "", 0.02f),
     new ItemEntry("GEAR_FishingLureB", "鱼饵B", "工具", "", 0.02f),
     new ItemEntry("GEAR_FishingLureC", "鱼饵C", "工具", "", 0.02f),
+    new ItemEntry("GEAR_FishingLureD", "鱼饵D", "工具", "", 0.02f),
+    // —— TFTFT 资料片工具/装备(沙盒可刷,v7.1 补漏) ——
+    new ItemEntry("GEAR_HandheldShortwave", "手持短波收音机", "工具", "", 0.5f),
+    new ItemEntry("GEAR_Flashlight_CrankLamp", "手摇灯", "工具", "", 0.5f),
+    new ItemEntry("GEAR_ToolBelt", "工头的工具腰带", "工具", "", 0.5f),
+    new ItemEntry("GEAR_Respirator", "防毒面具", "工具", "", 0.5f),
+    new ItemEntry("GEAR_Canister", "滤罐", "工具", "", 0.2f),
+    new ItemEntry("GEAR_AnimalFat", "动物脂肪", "材料", "", 0.1f),
+    new ItemEntry("GEAR_BedRoll_Down", "改良羽绒睡袋", "工具", "", 1f),
     new ItemEntry("GEAR_Hacksaw", "钢锯", "工具", "", 0.8f),
     new ItemEntry("GEAR_Hammer", "重锤", "工具", "", 1f),
     new ItemEntry("GEAR_Hatchet", "小斧头", "工具", "", 1.5f),
@@ -236,6 +249,7 @@ internal static class ItemDatabase
     new ItemEntry("GEAR_CottonHoodie", "连帽衫", "衣物", "", 0.5f),
     new ItemEntry("GEAR_CottonScarf", "棉布围巾", "衣物", "", 0.1f),
     new ItemEntry("GEAR_CottonShirt", "礼服衬衫", "衣物", "", 0.3f),
+    new ItemEntry("GEAR_CougarWrap", "美洲狮皮护套", "衣物", "", 1f),
     new ItemEntry("GEAR_DeerSkinBoots", "鹿皮靴", "衣物", "", 1f),
     new ItemEntry("GEAR_DeerSkinPants", "鹿皮短裤", "衣物", "", 1.5f),
     new ItemEntry("GEAR_DownVest", "羽绒背心", "衣物", "", 0.5f),
@@ -283,6 +297,27 @@ internal static class ItemDatabase
     new ItemEntry("GEAR_TacticalJacket", "战术夹克", "衣物", "", 2f),
     new ItemEntry("GEAR_ExpeditionCoat", "远征风雪大衣", "衣物", "", 2.5f),
     new ItemEntry("GEAR_ExpeditionParka", "远征派克大衣", "衣物", "", 2.5f),
+    // —— TFTFT 资料片衣物(沙盒可刷,v7.1 补漏) ——
+    new ItemEntry("GEAR_HatGatorBalaclavaA", "高科技巴拉克拉法帽", "衣物", "", 0.2f),
+    new ItemEntry("GEAR_ImprovisedDownInsulation", "防水贴身衣物", "衣物", "", 0.3f),
+    new ItemEntry("GEAR_WolfSkinHat", "狼皮帽", "衣物", "", 0.3f),
+    new ItemEntry("GEAR_WolfSkinPant", "狼皮裤", "衣物", "", 1f),
+    new ItemEntry("GEAR_HatLeatherAviatorA", "飞行员帽", "衣物", "", 0.3f),
+    new ItemEntry("GEAR_JacketLeatherFlightA", "飞行夹克", "衣物", "", 2f),
+    new ItemEntry("GEAR_JerseyHockeyA", "曲棍球衣", "衣物", "", 0.4f),
+    new ItemEntry("GEAR_MittenBlueStripe", "花纹羊毛连指手套(蓝条)", "衣物", "", 0.2f),
+    new ItemEntry("GEAR_MittenBrownStripe", "花纹羊毛连指手套(棕条)", "衣物", "", 0.2f),
+    new ItemEntry("GEAR_MittenBurgundyPattern", "花纹羊毛连指手套(酒红)", "衣物", "", 0.2f),
+    new ItemEntry("GEAR_SockDots", "花纹羊毛短袜(圆点)", "衣物", "", 0.1f),
+    new ItemEntry("GEAR_SockMoose", "花纹羊毛短袜(驼鹿)", "衣物", "", 0.1f),
+    new ItemEntry("GEAR_SockPlaid", "花纹羊毛短袜(格纹)", "衣物", "", 0.1f),
+    new ItemEntry("GEAR_TShirtCM", "T 恤衫(CM)", "衣物", "", 0.2f),
+    new ItemEntry("GEAR_TShirtGBI", "T 恤衫(GBI)", "衣物", "", 0.2f),
+    new ItemEntry("GEAR_TShirtSnappy", "T 恤衫(Snappy)", "衣物", "", 0.2f),
+    new ItemEntry("GEAR_MinersBoots", "防化靴", "衣物", "", 1.5f),
+    new ItemEntry("GEAR_MinersHelmet", "安全帽", "衣物", "", 0.5f),
+    new ItemEntry("GEAR_MinersJacket", "矿工夹克", "衣物", "", 1.5f),
+    new ItemEntry("GEAR_MinersPants", "矿工裤子", "衣物", "", 0.8f),
     new ItemEntry("GEAR_Accelerant", "助燃剂", "材料", "", 0.1f),
     new ItemEntry("GEAR_AccelerantGunpowder", "火药引火剂", "材料", "", 0.1f),
     new ItemEntry("GEAR_AccelerantKerosene", "煤油引火剂", "材料", "", 0.1f),
@@ -340,9 +375,9 @@ internal static class ItemDatabase
     new ItemEntry("GEAR_PtarmiganPelt", "松鸡皮", "狩猎", "", 0.1f),
     new ItemEntry("GEAR_CaribouHide", "驯鹿皮(生)", "狩猎", "", 2f),
     new ItemEntry("GEAR_CaribouHideDried", "驯鹿皮(晒干)", "狩猎", "", 1.5f),
-    new ItemEntry("GEAR_CougarHide", "新剥取的美洲狮皮", "狩猎", "", 3f),
-    new ItemEntry("GEAR_CougarHideDried", "鞣制的美洲狮皮", "狩猎", "", 2f),
-    new ItemEntry("GEAR_CougarClaw", "美洲狮爪", "狩猎", "", 0.05f, 0, "合成美洲狮爪刀"),
+    new ItemEntry("GEAR_CougarHide", "新剥取的美洲狮皮", "狩猎", "", 0.75f),
+    new ItemEntry("GEAR_CougarHideDried", "鞣制的美洲狮皮", "狩猎", "", 0.75f),
+    new ItemEntry("GEAR_CougarClaw", "美洲狮爪", "狩猎", "", 0.07f, 0, "合成美洲狮爪刀"),
     new ItemEntry("GEAR_CuredLeather", "鞣制皮革", "狩猎", "", 0.3f),
     new ItemEntry("GEAR_ForgedKnifeBladeA", "锻造刀刃A", "材料", "", 0.3f),
     new ItemEntry("GEAR_ForgedKnifeBladeB", "锻造刀刃B", "材料", "", 0.3f),
@@ -362,7 +397,7 @@ internal static class ItemDatabase
     new ItemEntry("GEAR_RevolverGreen", "护林人的左轮手枪", "武器", "", 1.5f, 0, "绿色涂装"),
     new ItemEntry("GEAR_RevolverStubNosed", "典狱长的左轮手枪", "武器", "", 1.5f, 0, "短管，近距离强"),
     new ItemEntry("GEAR_Knife_Hunter", "狩猎刀（传奇）", "武器", "", 0.3f, 0, "更快剥皮，高耐久"),
-    new ItemEntry("GEAR_CougarClawKnife", "美洲狮爪刀", "武器", "", 0.3f, 0, "美洲狮爪 + 锻造刀刃合成"),
+    new ItemEntry("GEAR_CougarClawKnife", "美洲狮爪刀", "武器", "", 0.6f, 0, "美洲狮爪 + 锻造刀刃合成"),
     new ItemEntry("GEAR_Hatchet_Crafted", "手斧（传奇）", "武器", "", 1f, 0, "锻造版，效率更高"),
     new ItemEntry("GEAR_BearSpear", "猎熊矛", "武器", "", 2.5f, 0, "剧情DLC专属，可击杀熊"),
     new ItemEntry("GEAR_BearSpearBroken", "损坏的猎熊矛", "武器", "", 2f),

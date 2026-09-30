@@ -1,6 +1,8 @@
-using HarmonyLib;
+﻿using HarmonyLib;
 using Il2Cpp;
+#if !STORY_EDITION   // 2.24 无 Il2CppTLD.Placement(PlaceMeshRules 是 2.55 才有的)
 using Il2CppTLD.Placement;
+#endif
 using UnityEngine;
 
 namespace TldHacks;
@@ -40,7 +42,12 @@ internal static class PlaceFromInvUI
         {
             HideCurrentPanel();
             var pm = GameManager.GetPlayerManagerComponent();
+#if STORY_EDITION
+            // 2.24 StartPlaceMesh 只有 (GameObject, PlaceMeshFlags),没有 PlaceMeshRules 这个类型
+            if (pm != null) pm.StartPlaceMesh(go, flags);
+#else
             if (pm != null) pm.StartPlaceMesh(go, flags, (PlaceMeshRules)1);
+#endif
         }
         catch { }
     }
@@ -146,6 +153,8 @@ internal static class PlaceFromInvStackDrop
 {
     private static bool _dropAsStack;
     private static GearItem _droppedItem;
+    // 按钮文字上次写的是哪种:弹窗开着时 Update 每帧都跑,Ctrl 状态没变就别再找组件、查本地化、写文字
+    private static bool? _labelIsStack;
 
     private static bool Active =>
         ModMain.Settings != null && ModMain.Settings.PlaceFromInv_Enabled && ModMain.Settings.PlaceFromInv_StackDrop;
@@ -160,6 +169,8 @@ internal static class PlaceFromInvStackDrop
                 if (!Active) { _dropAsStack = false; return; }
                 if (!((Panel_Base)__instance).IsEnabled() || (int)__instance.m_ExecuteAction != 0) return;
                 _dropAsStack = Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
+                if (_labelIsStack == _dropAsStack) return;
+                _labelIsStack = _dropAsStack;
                 string text = _dropAsStack
                     ? I18n.T("整堆丢出", "Drop as stack")
                     : Localization.Get("GAMEPLAY_Drop");
@@ -174,6 +185,7 @@ internal static class PlaceFromInvStackDrop
     {
         static void Postfix(Panel_PickUnits __instance)
         {
+            _labelIsStack = null;   // 弹窗重新填内容时游戏会重写按钮文字,下一帧 Update 要重新写一次
             try
             {
                 if (!Active || (int)__instance.m_ExecuteAction != 0) return;
@@ -188,6 +200,7 @@ internal static class PlaceFromInvStackDrop
     {
         static void Postfix()
         {
+            _labelIsStack = null;
             try
             {
                 if (_droppedItem == null) return;
@@ -202,6 +215,22 @@ internal static class PlaceFromInvStackDrop
     internal static class Patch_StackDrop_DropGear
     {
         // 返回 false 跳过 vanilla:手动整堆 Drop 并捕获掉落物,ExitInterface 再进入精确放置
+#if STORY_EDITION
+        // 2.24 DropGear() 是无参的,数量与物品挂在面板自己身上(m_GearItem / m_numUnits)。
+        // 写 __0/__1 会让 Harmony 在编译 patch IL 时报 "No parameter found at index 0"。
+        static bool Prefix(Panel_PickUnits __instance)
+        {
+            try
+            {
+                if (!Active || (int)__instance.m_ExecuteAction != 0 || !_dropAsStack) return true;
+                var gear = __instance.m_GearItem;
+                if (gear == null) return true;
+                _droppedItem = gear.Drop(__instance.m_numUnits, true, true, false);
+                return false;
+            }
+            catch { return true; }
+        }
+#else
         static bool Prefix(Panel_PickUnits __instance, GearItem __0, int __1)
         {
             try
@@ -213,5 +242,6 @@ internal static class PlaceFromInvStackDrop
             }
             catch { return true; }
         }
+#endif
     }
 }

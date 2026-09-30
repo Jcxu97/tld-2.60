@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using HarmonyLib;
 using Il2Cpp;
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
@@ -25,7 +25,8 @@ internal static class QoLHotkeys
         get
         {
             var s = ModMain.Settings;
-            return s == null || !s.QoL_HotkeysEnabled;
+            // 物品生成器搜索框在收字时也让路:背包开着时敲 q 会把选中物品丢掉
+            return s == null || !s.QoL_HotkeysEnabled || Menu.CapturingKeys;
         }
     }
 
@@ -96,6 +97,17 @@ internal static class Patch_QoL_Inventory_DropKey
         try
         {
             if (QoLHotkeys.Disabled) return;
+#if STORY_EDITION
+            // 2.24:Panel_Inventory 无 m_PickUnits,ItemDescriptionPage 无 m_ProgressBar,
+            // GetCurrentlySelectedItem 叫 GetCurrentlySelectedGearItem 且直接返回 GearItem,
+            // GearItem 也没有 m_CantDropItem。守卫只剩 CanDrop(它内部已判断进行中的操作)。
+            if (!InputManager.GetKeyDown(InputManager.m_CurrentContext, ModMain.Settings.QoL_DropKey)) return;
+
+            var gear = __instance.GetCurrentlySelectedGearItem();
+            if (gear == null) return;
+            var page = __instance.m_ItemDescriptionPage;
+            if (page == null || !page.CanDrop(gear)) return;
+#else
             if (__instance.m_PickUnits.IsEnabled() || __instance.m_ItemDescriptionPage.m_ProgressBar.IsEnabled()) return;
             if (!InputManager.GetKeyDown(InputManager.m_CurrentContext, ModMain.Settings.QoL_DropKey)) return;
 
@@ -105,6 +117,7 @@ internal static class Patch_QoL_Inventory_DropKey
             if (gear == null || gear.m_CantDropItem) return;
             var page = __instance.m_ItemDescriptionPage;
             if (page == null || !page.CanDrop(gear)) return;
+#endif
 
             // 只走 vanilla OnDrop 主路径(原 QoL 的 modifierKey 分支跳过)
             __instance.OnDrop();
@@ -227,6 +240,11 @@ internal static class Patch_QoL_Rest_Bulk
     }
 }
 
+// Panel_Crafting / Panel_Cooking 的 Shift 批量滚动:
+// 2.24 两个面板都没有 m_ScrollBehaviour(滚动列表是 2.55 引入的
+// Il2CppTLD.UI.Scroll 体系),也没有 m_CraftingOperation / m_RecipePrepOperation。
+// 两个 patch 类整体排除;它们是静态 [HarmonyPatch],无 DynamicPatch Spec 需要配对。
+#if !STORY_EDITION
 // Panel_Crafting:Shift+W/S 滚动 4 行
 [HarmonyPatch(typeof(Panel_Crafting), "Update")]
 internal static class Patch_QoL_Crafting_Bulk
@@ -276,6 +294,7 @@ internal static class Patch_QoL_Cooking_Bulk
         catch (Exception ex) { ModMain.Log?.Warning($"[QoLHotkeys.CookingBulk] {ex.Message}"); }
     }
 }
+#endif
 
 // Panel_Inventory_Examine 阅读:Shift+A/D / 滚轮 阅读小时 ×5
 [HarmonyPatch(typeof(Panel_Inventory_Examine), "Update")]
@@ -307,8 +326,10 @@ internal static class Patch_QoL_Examine_ReadBulk
     }
 }
 
+#if !STORY_EDITION
 // Panel_CookWater:6 个独立 OnXxxUp/Down,bulk 持有时 Postfix 重复调用 4 次 → 总 5 次
 // 注意 vanilla 已经触发 1 次,所以这里再补 4 次
+// 2.24 无 Panel_CookWater(融雪/煮水面板是 2.24 之后重做的),整块 6 个 patch 类一起排除。
 [HarmonyPatch(typeof(Panel_CookWater), "OnMeltSnowUp")]
 internal static class Patch_QoL_CookWater_MeltUp
 {
@@ -410,3 +431,4 @@ internal static class Patch_QoL_CookWater_BoilDown
         catch (Exception ex) { ModMain.Log?.Warning($"[QoLHotkeys.CWBoilDown] {ex.Message}"); }
     }
 }
+#endif

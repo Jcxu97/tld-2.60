@@ -217,12 +217,56 @@ internal static class CheatState
 
     // v6.9.5 诊断:affliction auto-cure bug 排查 — 在 Menu 里勾 "诊断:Affliction日志" 后
     // 每次 BloodLossEnd/InfectionEnd/HypothermiaEnd 被调时记录调用栈到 MelonLoader log
-    public static bool DiagAfflictionLog;
+    public static bool DiagAfflictionLog = false;   // v7.2 起 UI 不再暴露开关(诊断方法保留待需);显式初始化消除 CS0649
 }
 
 // 工具函数:刷物品/清 affliction/天气/时间/耐久恢复
 internal static class Cheats
 {
+    // v8.2 全关时要清哪些字段。
+    //   不手写清单。下面那份手写的 DisableAllCheats 清单已经漏了 20 多个 toggle
+    //   (v7.7 补过 9 个还是不全),每加一个新功能都要记得回来补一行,忘一次就变成
+    //   "全部关闭之后这个功能还在生效"。反射直接跟着字段走,加功能不用改这里。
+    //   跳过的 2 项不是功能开关:菜单自动缩放的记录位、
+    //   以及逐件确认(那是操作习惯,不该被"全关"顺手改掉)。
+    //   子选项(总开关关了就不起作用)也跳过,保留玩家的选择,重新打开总开关时照旧。
+    private static readonly string[] OneClickSkip =
+    {
+        "MenuAutoScaled", "GrabAllNotify",
+        "Craft_MoreSlots_Fireplace", "Craft_MoreSlots_Barrel", "Craft_MoreSlots_Grill",
+        "World_SodaOrangeEnabled", "World_SodaSummitEnabled", "World_SodaGrapeEnabled",
+        "QoL_SleepInterruptHudMsg", "QoL_SleepInterruptAllBeds",
+        // QoL 总开关在 codex 菜单里没有按钮:全关时关掉它,之后在菜单里单独打开 QoL 功能也不起作用
+        "QoL_Enabled",
+        // 存档结构选项,不是作弊:咖啡罐/茶/胡萝卜/土豆的堆叠组件是它加的,关掉后读档组件不在,堆叠数会丢
+        "Stack_AddComponent",
+    };
+
+    // true 才是原版行为的开关。全关时要把它们设成 true,设 false 反而会启用改动
+    //   (隐藏哈气、关键物品重量归零、扭伤直接治愈)。
+    private static readonly string[] VanillaWhenTrue =
+    {
+        "UT_BreathVisibility", "ImportantWeight",
+        "World_SprainkleAnkleEnabled", "World_SprainkleWristEnabled",
+    };
+
+    private static int SetAllFeatureBools(TldHacksSettings s, bool value)
+    {
+        int n = 0;
+        var fields = typeof(TldHacksSettings).GetFields(BindingFlags.Instance | BindingFlags.Public);
+        for (int i = 0; i < fields.Length; i++)
+        {
+            var f = fields[i];
+            if (f.FieldType != typeof(bool)) continue;
+            if (Array.IndexOf(OneClickSkip, f.Name) >= 0) continue;
+            bool target = Array.IndexOf(VanillaWhenTrue, f.Name) >= 0 ? !value : value;
+            if ((bool)f.GetValue(s) == target) continue;
+            f.SetValue(s, target);
+            n++;
+        }
+        return n;
+    }
+
     // v2.7.80 一键把所有作弊 toggle 设 false —— 修 "ModSettings Disable All 后 5 秒内还生效" 的响应性问题
     //   三步:1) Settings 所有 bool cheat 字段设 false(StackingEnabled/MenuHotkey/MenuScale 等 UI 偏好不动)
     //        2) 立即内联同步到 CheatState(比等 30 帧 SyncStateFromSettings 快)
@@ -330,7 +374,6 @@ internal static class Cheats
             s.CrosshairEnabled = false;
 
             // ═══ QoL General ═══
-            s.QoL_Enabled = false;
             s.QoL_NoSaveOnSprain = false;
             s.QoL_NoSaveOnSprainFalls = false;
             s.QoL_WakeUpCall = false;
@@ -360,7 +403,7 @@ internal static class Cheats
             s.UT_FlashInfiniteBattery = false;
 
             // ═══ StackManager ═══
-            s.Stack_AddComponent = false;
+            // Stack_AddComponent 不关(见 OneClickSkip):关了读档后已经堆起来的那几样会塌成 1 个
             s.Stack_UseMaxHP = false;
 
             // ═══ TinyTweaks ═══
@@ -376,6 +419,19 @@ internal static class Cheats
             s.UT_RemoveHeadacheDebuff = false;
             s.UT_RockCacheIndoors = false;
             s.UT_GlowingDecals = false;
+
+            // v7.7 补齐 9 个漏掉的总开关 —— 原先「全部关闭」后这些功能仍然生效
+            s.StackingEnabled = false;
+            s.MagicBullet = false;
+            s.SpaceFinish_BreakDown = false;
+            s.SpaceFinish_Craft = false;
+            s.SpaceFinish_Harvest = false;
+            s.SpaceFinish_Repair = false;
+            s.QoL_HotkeysEnabled = false;
+            s.TT_ExtendedFOV = false;
+
+            // 手写清单之外的开关(JumpKing、HL 子项、准星、睡眠、UT 等)由反射补齐
+            SetAllFeatureBools(s, false);
 
             s.Save();
 
@@ -485,16 +541,17 @@ internal static class Cheats
         CheatState.VehicleFreeLook = s.VehicleFreeLook;
         // ═══ QoL General ═══
         CheatState.QoL_Enabled = s.QoL_Enabled;
-        CheatState.QoL_NoSaveOnSprain = s.QoL_NoSaveOnSprain;
-        CheatState.QoL_NoSaveOnSprainFalls = s.QoL_NoSaveOnSprainFalls;
-        CheatState.QoL_WakeUpCall = s.QoL_WakeUpCall;
-        CheatState.QoL_AuroraSense = s.QoL_AuroraSense;
-        CheatState.QoL_ShowTimeSleep = s.QoL_ShowTimeSleep;
-        CheatState.QoL_NoPitchBlack = s.QoL_NoPitchBlack;
-        CheatState.QoL_MapTextOutline = s.QoL_MapTextOutlineEnabled;
-        CheatState.QoL_BuryCorpses = s.QoL_BuryCorpses;
-        CheatState.QoL_SleepAnywhere = s.QoL_SleepAnywhere;
-        CheatState.QoL_AutoSurvey = s.QoL_AutoSurvey;
+        bool qol = s.QoL_Enabled;   // QoL 总开关管(小改动 / 随地睡 / 自动绘图)三节
+        CheatState.QoL_NoSaveOnSprain = qol && s.QoL_NoSaveOnSprain;
+        CheatState.QoL_NoSaveOnSprainFalls = qol && s.QoL_NoSaveOnSprainFalls;
+        CheatState.QoL_WakeUpCall = qol && s.QoL_WakeUpCall;
+        CheatState.QoL_AuroraSense = qol && s.QoL_AuroraSense;
+        CheatState.QoL_ShowTimeSleep = qol && s.QoL_ShowTimeSleep;
+        CheatState.QoL_NoPitchBlack = qol && s.QoL_NoPitchBlack;
+        CheatState.QoL_MapTextOutline = qol && s.QoL_MapTextOutlineEnabled;
+        CheatState.QoL_BuryCorpses = qol && s.QoL_BuryCorpses;
+        CheatState.QoL_SleepAnywhere = qol && s.QoL_SleepAnywhere;
+        CheatState.QoL_AutoSurvey = qol && s.QoL_AutoSurvey;
         // ═══ Crafting & Fire ═══
         CheatState.Craft_Anywhere = s.Craft_Anywhere;
         CheatState.Craft_MoreCookingSlots = s.Craft_MoreCookingSlots;
@@ -514,12 +571,52 @@ internal static class Cheats
         CheatState.TT_PauseOnRadial = s.TT_PauseOnRadial;
         CheatState.TT_RespawnPlants = s.TT_RespawnPlants;
         CheatState.TT_ShowTraderTrust = s.TT_ShowTraderTrust;
+
+        // v7.7 魔法子弹镜像在 CheatStateESP 而不是 CheatState,原先这里没同步 →
+        //   「全部关闭」后要等最长 0.5s 的 tick 才真的停。补上,和其他开关一样即时。
+        CheatStateESP.MagicBullet = s.MagicBullet;
     }
 
 
     // v2.7.57 换实现 —— AddItemCONSOLE 对部分物品(DLC / 特殊)返回 null 无响应(console 守卫)
     //   稳定公开 API:GearItem.LoadGearItemPrefab(name) → PlayerManager.InstantiateItemInPlayerInventory
     //   DLC 物品、特殊物品、release build 都 work
+#if STORY_EDITION
+    // 2.24 没有 GearItem.LoadGearItemPrefab 也没有 InventoryInstantiateFlags。
+    // 它有按名字直接进背包的重载 InstantiateItemInPlayerInventory(name, count, bool),
+    // 语义等价且更短,失败再退回 AddItemCONSOLE(name, count)(2.24 只有 2 参)。
+    public static void SpawnItem(string prefabName, int quantity)
+    {
+        try
+        {
+            var pm = GameManager.GetPlayerManagerComponent();
+            if (pm == null) { ModMain.Log?.Warning("[Spawn] PlayerManager not ready"); return; }
+
+            int spawned = 0;
+            for (int i = 0; i < quantity; i++)
+                try { if (pm.InstantiateItemInPlayerInventory(prefabName, 1, false) != null) spawned++; } catch { }
+            if (spawned == 0)
+                for (int i = 0; i < quantity; i++)
+                    try { if (pm.AddItemCONSOLE(prefabName, 1) != null) spawned++; } catch { }
+
+            if (spawned > 0)
+            {
+                ModMain.Log?.Msg($"[Spawn] +{spawned} {prefabName}");
+                CheatState.LastActionLog = I18n.IsEnglish
+                    ? $"Spawned ×{spawned} {prefabName}"
+                    : $"已刷 ×{spawned} {prefabName}";
+            }
+            else
+            {
+                ModMain.Log?.Error($"[Spawn] prefab not found: {prefabName}");
+                CheatState.LastActionLog = I18n.IsEnglish
+                    ? $"Spawn failed: {prefabName} (prefab not found)"
+                    : $"刷物品失败:{prefabName}(prefab 未找到)";
+            }
+        }
+        catch (Exception ex) { ModMain.Log?.Error($"[Spawn] {ex.Message}"); }
+    }
+#else
     public static void SpawnItem(string prefabName, int quantity)
     {
         try
@@ -581,6 +678,7 @@ internal static class Cheats
         }
         catch (Exception ex) { ModMain.Log?.Error($"[Spawn] {ex.Message}"); }
     }
+#endif
 
     public static void ClearAllAfflictions()
     {
@@ -659,7 +757,8 @@ internal static class Cheats
         // —— SprainedWrist / Ankle ——
         try { var c = GameManager.GetSprainedWristComponent(); if (c != null) {
             bool had = c.HasSprainedWrist();
-            try { c.SetForceNoSprainWrist(true); } catch { }
+            // 不再 SetForceNoSprainWrist(true):这个标记写进存档且没人复位,点一次清除就永远不会扭伤手腕。
+            //   防扭伤 / 防坠落开关的强制关闭统一由 ExtraOneShot.TickSprainRisk 管。
             // 没 Active 字段,直接 End(0)
             try { c.SprainedWristEnd(0, (AfflictionOptions)0); } catch { }
             try { c.SprainedWristEnd(1, (AfflictionOptions)0); } catch { } // 另一只手
@@ -725,13 +824,16 @@ internal static class Cheats
             if (had) { cleared++; log.Append(I18n.T("肠寄生虫; ", "Intestinal Parasites; ")); }
         }} catch (Exception ex) { log.Append(I18n.T($"肠寄生虫-err:{ex.Message}; ", $"Parasites-err:{ex.Message}; ")); }
 
+#if !STORY_EDITION
         // —— Scurvy (坏血病) —— v3.0.7 新增,Cure() 同时清 affliction + risk
+        // 2.24 无坏血病系统(GameManager.GetScurvyComponent 不存在)
         try { var c = GameManager.GetScurvyComponent(); if (c != null) {
             bool had = false;
             try { had = c.HasAffliction() || c.HasRisk(); } catch { }
             try { c.Cure(); } catch { }
             if (had) { cleared++; log.Append(I18n.T("坏血病; ", "Scurvy; ")); }
         }} catch (Exception ex) { log.Append(I18n.T($"坏血病-err:{ex.Message}; ", $"Scurvy-err:{ex.Message}; ")); }
+#endif
 
         // —— 第三方 mod 通过 AfflictionComponent 框架追加的 CustomAffliction —— v6.9.1 新增
         // 用户报告:OxygenLevels(高原反应)、Minor Miseries、TLDev(肺炎)等用 AfflictionComponent 框架挂在
@@ -844,6 +946,9 @@ internal static class Cheats
     {
         try
         {
+            // 已经是锁定的那档就不重建天气组。原先每秒无条件 ActivateWeatherSetImmediate 一次,雾、粒子、风声每秒跳一下
+            var w = GameManager.GetWeatherComponent();
+            if (w != null && (int)w.GetWeatherStage() == stage) return;
             var wt = GameManager.GetWeatherTransitionComponent();
             if (wt == null) return;
             WeatherStage stageEnum = (WeatherStage)stage;
@@ -940,7 +1045,12 @@ internal static class Cheats
         try
         {
             float maxHp = 100f;
+#if STORY_EDITION
+            // 2.24 无 GearItemData,MaxHP 直接挂在 GearItem 上
+            try { maxHp = gear.m_MaxHP; } catch { }
+#else
             try { var d = gear.GearItemData; if (d != null) maxHp = d.MaxHP; } catch { }
+#endif
             gear.m_CurrentHP = maxHp;
             return true;
         }
@@ -992,7 +1102,10 @@ internal static class Cheats
                     if (go == null || !go.activeInHierarchy) continue;
                     // 优先 DebugKill(一步到位),失败了 fallback 到 ApplyDamage 9999
                     bool killed = false;
+#if !STORY_EDITION
+                    // 2.24 无 BaseAi.DebugKill,直接走下面的 ApplyDamage
                     try { ai.DebugKill(); killed = true; } catch { }
+#endif
                     if (!killed)
                     {
                         try { ai.ApplyDamage(9999f, 0f, DamageSource.Player, ""); killed = true; } catch { }
@@ -1267,5 +1380,15 @@ internal static class Patch_GearItem_DegradeOnUse
 }
 
 // Patch_GearItem_Awake 也删 —— 同样是'强制到 100',不符合用户'不损耗'要求
+
+// —— 猎物出肉量倍率状态(目前只改鹿) ——
+// 原版鹿净肉 6-9kg,真实世界骡鹿/白尾鹿净肉约 18-25kg。给鹿尸体初始肉量乘一个 [Min,Max] 区间内的随机倍率。
+// 倍率默认 1=原版。只在新鲜击杀(InitializeResourcesAndConditions)时乘一次,存档恢复不触发,无累乘。
+internal static class MeatState
+{
+    public static float DeerMin = 1f;
+    public static float DeerMax = 1f;
+    public static bool Enabled() => Mathf.Abs(DeerMin - 1f) > 0.001f || Mathf.Abs(DeerMax - 1f) > 0.001f;
+}
 
 // Patch_Inventory_MaybeAdd / Patch_Inventory_AddGear 已去除(InfiniteCarry 功能交给其他 mod)

@@ -1,0 +1,384 @@
+﻿kind	field	zh	en
+NAME	DiagPauseRuntime	Emergency: Pause Runtime(暂停所有 tick/update)	Emergency: Pause Runtime (all ticks/updates)
+NAME	DiagUnpatchAll	Emergency: Unpatch All Harmony(卸载所有 patch)	Emergency: Unpatch All Harmony
+NAME	LanguageMode	Language / 语言	Language
+NAME	FlyHotkey	Fly toggle hotkey(飞行)	Fly toggle hotkey
+NAME	MenuScale	Menu UI Scale(菜单缩放,4K 可设 2-3)	Menu UI Scale (2-3 for 4K)
+NAME	MenuAutoScaled	Menu auto-scaled once(已按屏幕自动定过缩放)	Menu auto-scaled once
+NAME	MenuWidth	Menu Width(菜单宽度,拖拽右边缘调整)	Menu Width (drag right edge)
+NAME	MenuHeight	Menu Height(菜单高度,拖拽下边缘调整)	Menu Height (drag bottom edge)
+NAME	MenuX	Menu X Position(窗口 X,拖动自动存)	Menu X Position (auto-saved on drag)
+NAME	MenuY	Menu Y Position(窗口 Y,拖动自动存)	Menu Y Position (auto-saved on drag)
+NAME	GodMode	God Mode(无敌模式)	God Mode
+NAME	NoFallDamage	No Fall Damage(无坠落伤害)	No Fall Damage
+NAME	AlwaysWarm	Always Warm(始终温暖)	Always Warm
+NAME	NoHunger	No Hunger(无饥饿)	No Hunger
+NAME	NoThirst	No Thirst(无口渴)	No Thirst
+NAME	NoFatigue	No Fatigue(无疲劳)	No Fatigue
+NAME	SpeedMultiplier	Speed Multiplier(游戏速度)	Game Speed Multiplier
+NAME	InstantKillAnimals	Instant Kill(一击必杀)	Instant Kill
+NAME	FreezeAnimals	Freeze Animals(动物不能动)	Freeze Animals
+NAME	Stealth	Stealth(动物自动逃跑)	Stealth (animals flee on sight)
+NAME	TrueInvisible	True Invisible(真·隐身,动物检测不到)	True Invisible (animals cannot detect you)
+NAME	ThinIceNoBreak	Thin Ice No Break(冰面不破裂)	Thin Ice No Break
+NAME	IgnoreLock	Ignore Locks(忽略上锁)	Ignore Locks
+NAME	QuickOpenContainer	Quick Open Container(快速打开容器)	Quick Open Container
+NAME	InfiniteDurability	Infinite Durability(物品不损耗)	Infinite Durability
+NAME	NoWetClothes	No Wet Clothes(衣物不潮湿)	No Wet Clothes
+NAME	FreeCraft	Free Crafting(免费制作)	Free Crafting
+NAME	QuickCraft	Quick Craft(快速制作)	Quick Craft
+NAME	FreeRepair	Free Repair(免费修理)	Free Repair
+NAME	InfiniteAmmo	Infinite Ammo(无限弹药)	Infinite Ammo
+NAME	NoJam	No Jam(永不卡壳)	No Jam
+NAME	NoRecoil	No Recoil(无后坐力)	No Recoil
+NAME	NoAimSway	Steady Aim(稳定瞄准,关闭晃动+抖动+呼吸)	Steady Aim (no sway / jitter / breathing)
+NAME	NoAimStamina	No Aim Stamina(瞄准不耗体力)	No Aim Stamina
+NAME	SuperAccuracy	Super Accuracy(已弃用,保留兼容)	Super Accuracy (deprecated, kept for compatibility)
+NAME	NoSprainRisk	No Sprain Risk(免扭伤风险)	No Sprain Risk
+NAME	ImmuneAnimalDamage	Immune Animal Damage(免疫狼/熊/美洲狮伤害)	Immune Animal Damage
+NAME	NoSuffocating	No Suffocating(不会窒息)	No Suffocating
+NAME	QuickFire	Quick Fire Start(生火 100% 成功)	Quick Fire Start (100% success)
+NAME	QuickClimb	Quick Rope Climb(爬绳速度 ×5)	Quick Rope Climb (5x speed)
+NAME	QuickAction	Quick Action(采集/修理/拆解 时间自动加速)	Quick Action (auto speed-up harvest / repair / break down)
+NAME	GrabAllKey	一键搜刮-快捷键 / Grab All key	Grab All hotkey
+NAME	GrabAllRadius	一键搜刮-半径(米) / Grab All radius	Grab All radius (m)
+NAME	GrabAllNotify	一键搜刮-弹拾取提示 / Grab All notify	Grab All pickup popups
+NAME	QuickCook	秒烤肉(CookingPot 瞬完成,自带防烤焦)	Instant Cooking (cooking pot, never burns)
+NAME	NoBurn	防烤焦(只锁 Ready,不秒熟)	No Burning (food stays at Ready, no instant cook)
+NAME	QuickSearch	秒搜索(容器/尸体搜刮 NOP TimedHold)	Instant Search (containers / bodies)
+NAME	QuickHarvest	秒割肉(Panel_BodyHarvest)	Instant Harvest (Panel_BodyHarvest)
+NAME	QuickBreakDown	秒打碎(Panel_BreakDown)	Instant Break Down (Panel_BreakDown)
+NAME	SpaceFinish_BreakDown	空格秒完成-拆解	Space to finish - Break Down
+NAME	SpaceFinish_Harvest	空格秒完成-采集	Space to finish - Harvest
+NAME	SpaceFinish_Craft	空格秒完成-制作	Space to finish - Craft
+NAME	SpaceFinish_Repair	空格秒完成-修理	Space to finish - Repair
+NAME	QoL_HotkeysEnabled	QoL 快捷键-总开关	QoL Hotkeys - master switch
+NAME	QoL_DropKey	QoL-丢弃键	QoL - Drop key
+NAME	QoL_BulkKey	QoL-批量修饰键	QoL - Bulk modifier key
+NAME	QoL_BackKey	QoL-返回键	QoL - Back key
+NAME	UnlockSafes	解锁保险箱/上锁门/柜子	Unlock safes / locked doors / lockers
+NAME	LampFuelNoDrain	防风油灯油量不减	Storm lantern fuel never drains
+NAME	FlaskNoHeatLoss	保温杯永不失温	Thermos never loses heat
+NAME	FlaskInfiniteVol	保温杯存放无限容量	Thermos infinite capacity
+NAME	FlaskAnyItem	保温瓶装所有茶(任意液体)	Thermos holds any liquid
+NAME	QuickEvolve	加工秒完成(风干/腌制)	Instant processing (drying / curing)
+NAME	InfiniteContainer	容器无限容量	Infinite container capacity
+NAME	FireTemp300	篝火温度 300℃	Campfire temperature 300°C
+NAME	FireNeverDie	篝火永不熄灭	Campfire never goes out
+NAME	FireMaxBurnHours	篝火燃烧上限(小时)	Campfire max burn time (hours)
+NAME	NoFrostbiteRisk	无冻伤风险	No frostbite risk
+NAME	WellFedBuff	饱饱 buff(Well Fed 常驻)	Well Fed buff (always active)
+NAME	FreezingBuff	温度加成 buff	Warming buff (always active)
+NAME	FatigueBuff	疲劳加成 buff	Fatigue buff (always active)
+NAME	ClearDeathPenalty	清除死亡惩罚	Clear death penalty
+NAME	QuickFishing	钓鱼 100% 成功	Fishing 100% success
+NAME	FireAnywhere	随意生火(含室内)	Start fires anywhere (incl. indoors)
+NAME	FreeFireFuel	生火材料不减	Free fire fuel
+NAME	TechBackpack	自定义背包负重	Custom carry weight limit
+NAME	TechBackpackKg	背包负重上限(kg)	Carry weight limit (kg)
+NAME	TorchFullValue	火把满值	Full-value torches
+NAME	FreeSprint	无条件冲刺(含拉雪橇)	Free Sprint (incl. travois)
+NAME	InfiniteStamina	无限体力	Infinite Stamina
+NAME	MapClickTP	地图双击传送	Map double-click teleport
+NAME	TraderUnlimitedList	交易清单不限制(上限 → 64)	Unlimited trade list (cap -> 64)
+NAME	TraderMaxTrust	信任值最大化	Max trader trust
+NAME	TraderInstantExchange	商人交易秒完成	Instant trader exchange
+NAME	TraderAlwaysAvailable	随时可联系商人(无线电)	Trader always reachable (radio)
+NAME	CougarInstantActivate	新档首次立即激活美洲狮	Activate cougar immediately on new save
+NAME	BlockAutoPickupOwnDrops	W 键自动拾取时跳过自己丢的物品	Skip own drops when auto-picking up (W key)
+NAME	RecoilScaleESP	后坐力强度 (0=无 1=原版)	Recoil strength (0=none 1=vanilla)
+NAME	MagicBullet	魔法子弹 (开枪自动命中目标)	Magic Bullet (shots auto-hit target)
+NAME	SpeedTweaksEnabled	启用细分速度(关=全部原版)	Enable detailed speed tuning (off = vanilla)
+NAME	CrouchSpeed	蹲行速度倍率	Crouch speed multiplier
+NAME	WalkSpeed	步行速度倍率	Walk speed multiplier
+NAME	SprintSpeed	冲刺速度倍率	Sprint speed multiplier
+NAME	StaminaRecharge	体力恢复速度	Stamina recharge rate
+NAME	StaminaDrain	体力消耗速度	Stamina drain rate
+NAME	StaminaRecoveryDelay	体力恢复延迟倍率	Stamina recovery delay multiplier
+NAME	PickupRange	交互距离倍率	Interaction range multiplier
+NAME	SilentFootsteps	脚步完全静音	Fully silent footsteps
+NAME	InvWeightMetalVol	金属声音(%)	Metal item volume (%)
+NAME	InvWeightWoodVol	木材声音(%)	Wood item volume (%)
+NAME	InvWeightWaterVol	水资源声音(%)	Water item volume (%)
+NAME	InvWeightGeneralVol	其他声音(%)	Other item volume (%)
+NAME	JumpEnabled	启用跳跃功能	Enable jumping
+NAME	JumpKey	跳跃热键	Jump hotkey
+NAME	JumpHeight	跳跃高度	Jump height
+NAME	JumpKing	无限制跳跃(Jump King)	Unrestricted jumping (Jump King)
+NAME	JumpWeightLimit	负重上限(kg)	Weight limit (kg)
+NAME	JumpCalorieCost	卡路里消耗/次	Calorie cost per jump
+NAME	JumpStaminaCost	体力消耗/次	Stamina cost per jump
+NAME	JumpFatigueCost	疲劳消耗/次	Fatigue cost per jump
+NAME	GunZoomEnabled	滚轮瞄准缩放	Scroll-wheel aim zoom
+NAME	RunWithLantern	拿油灯可跑步	Run while holding lantern
+NAME	NoAutoEquipCharcoal	取炭不自动装备	Don't auto-equip charcoal
+NAME	AutoExtinguishOnRest	休息时自动熄灯	Auto-extinguish lights when resting
+NAME	DoorSwingAngle	开门角度	Door swing angle
+NAME	DoorSwingSpeed	开门速度	Door swing speed
+NAME	TimeScaleInfo	使用说明	How to use
+NAME	TimeScaleKey1	时间加速 热键1	Time scale hotkey 1
+NAME	TimeScale1	时间加速1 (热键倍率)	Time scale 1 (hotkey multiplier)
+NAME	TimeScaleKey2	时间加速 热键2	Time scale hotkey 2
+NAME	TimeScale2	时间加速2 (热键倍率)	Time scale 2 (hotkey multiplier)
+NAME	GeneralDecay	通用衰减倍率	General decay rate
+NAME	DecayBeforePickup	拾取前衰减	Decay before pickup
+NAME	OnUseDecay	使用时衰减	Decay on use
+NAME	FoodDecay	食物衰减	Food decay
+NAME	RawMeatDecay	生肉衰减	Raw meat decay
+NAME	CookedMeatDecay	熟肉衰减	Cooked meat decay
+NAME	DrinksDecay	饮品衰减	Drinks decay
+NAME	ClothingDecayRate	衣物衰减	Clothing decay
+NAME	GunDecay	枪械衰减	Firearm decay
+NAME	BowDecay	弓箭衰减	Bow decay
+NAME	ToolsDecay	工具衰减	Tool decay
+NAME	BedrollDecay	睡袋衰减	Bedroll decay
+NAME	TravoisDecay	雪橇衰减	Travois decay
+NAME	ArrowDecay	箭矢衰减	Arrow decay
+NAME	SnareDecay	陷阱衰减	Snare decay
+NAME	FirestartingDecay	生火工具衰减	Fire-starting tool decay
+NAME	CuredMeatDecay	腌肉衰减	Cured meat decay
+NAME	RawFishDecay	生鱼衰减	Raw fish decay
+NAME	CookedFishDecay	熟鱼衰减	Cooked fish decay
+NAME	CannedFoodDecay	罐头食品衰减	Canned food decay
+NAME	CoffeeTeaDecay	咖啡/茶衰减	Coffee / tea decay
+NAME	PackagedFoodDecay	包装食品衰减	Packaged food decay
+NAME	OtherFoodDecay	其他食品衰减	Other food decay
+NAME	FatDecay	油脂衰减	Fat decay
+NAME	CuredFishDecay	腌鱼衰减	Cured fish decay
+NAME	IngredientsDecay	食材衰减	Ingredient decay
+NAME	HideDecay	兽皮/尸骸衰减	Hide / carcass decay
+NAME	FirstAidDecay	急救品衰减	First aid decay
+NAME	WaterPurifierDecay	净水片衰减	Water purification tablet decay
+NAME	CookingPotDecay	锅具衰减	Cookware decay
+NAME	FlareGunAmmoDecay	信号枪弹药衰减	Flare gun ammo decay
+NAME	WhetstoneDecay	磨刀石使用衰减	Whetstone use decay
+NAME	CanOpenerDecay	开罐器使用衰减	Can opener use decay
+NAME	PrybarDecay	撬棍使用衰减	Prybar use decay
+NAME	BodyHarvestDecay	尸骸采集工具衰减	Harvesting tool decay
+NAME	TorchBurnMinutes	火把燃烧时间(分钟)	Torch burn time (minutes)
+NAME	TorchMinCondition	火把最低品质	Torch minimum condition
+NAME	TorchMaxCondition	火把最高品质	Torch maximum condition
+NAME	LampBurnMultiplier	油灯耗油倍率 (旧/0=无限)	Lamp fuel multiplier (legacy / 0=infinite)
+NAME	LampPlacedBurnMult	油灯放置消耗率	Lamp fuel burn rate when placed
+NAME	LampHeldBurnMult	油灯手持消耗率	Lamp fuel burn rate when held
+NAME	LampTurnOnDecay	油灯开启耗损 %	Lamp condition loss per turn-on (%)
+NAME	LampOverTimeDecay	油灯持续耗损 %/h	Lamp condition loss per hour (%)
+NAME	LampConditionThreshold	油灯耗油惩罚阈值 %	Lamp fuel penalty threshold (%)
+NAME	LampMaxPenalty	油灯最大耗油惩罚 %	Lamp max fuel penalty (%)
+NAME	LampMute	油灯静音(放置时)	Mute lamp (when placed)
+NAME	LampRangeMultiplier	油灯光照范围倍率	Lamp light range multiplier
+NAME	DisableTorchLeftClick	禁用左键灭火把	Disable left-click to extinguish torch
+NAME	DisableLampLeftClick	禁用左键灭油灯	Disable left-click to extinguish lamp
+NAME	HL_Enabled	启用室内灯光	Enable house lights
+NAME	HL_EnableOutside	室外场景启用	Enable in outdoor scenes
+NAME	HL_WhiteLights	白光	White lights
+NAME	HL_NoFlicker	禁止闪烁	No flicker
+NAME	HL_CastShadows	投射阴影	Cast shadows
+NAME	HL_LightAudio	灯光音效	Light hum audio
+NAME	HL_Intensity	亮度	Brightness
+NAME	HL_RangeMultiplier	范围倍率	Range multiplier
+NAME	HL_CullDistance	裁剪距离(m)	Cull distance (m)
+NAME	HL_InteractDistance	交互距离(m)	Switch interaction distance (m)
+NAME	PauseInJournal	打开日志暂停游戏	Pause game in journal
+NAME	SkipIntro	跳过开场动画	Skip intro
+NAME	MuteCougarMenuSound	静音主菜单美洲狮	Mute main-menu cougar sound
+NAME	VehicleKeepFov	车内保持玩家FOV	Keep player FOV in vehicles
+NAME	DroppableUndroppables	允许丢弃不可丢物品	Allow dropping undroppable items
+NAME	ImportantWeight	关键物品保留重量	Keep weight on key items
+NAME	AllNote	收藏品可丢弃	Notes and keys droppable
+NAME	RememberBreakdownTool	记忆拆解工具	Remember break-down tool
+NAME	VehicleFreeLook	车内自由视角	Free look in vehicles
+NAME	VehicleFreeLookYaw	车内最大水平角度	Max horizontal angle in vehicle
+NAME	VehicleFreeLookPitch	车内最大俯仰角度	Max vertical angle in vehicle
+NAME	CrosshairEnabled	启用瞄准准星修改	Enable custom aim crosshair
+NAME	CrosshairAlpha	准星透明度	Crosshair opacity
+NAME	CrosshairStone	石块准星	Stone crosshair
+NAME	CrosshairRifle	步枪准星	Rifle crosshair
+NAME	CrosshairBow	弓箭准星	Bow crosshair
+NAME	QoL_Enabled	QoL 总开关	QoL master switch
+NAME	QoL_NoSaveOnSprain	扭伤不自动存档	No autosave on sprain
+NAME	QoL_NoSaveOnSprainFalls	坠落扭伤也不存档	No autosave on fall sprains
+NAME	QoL_WakeUpCall	睡眠中可醒来	Can wake up during sleep
+NAME	QoL_AuroraSense	极光感应(睡眠时极光自动醒)	Aurora sense (wake up on aurora)
+NAME	QoL_ShowTimeSleep	睡眠时显示时间	Show time while sleeping
+NAME	QoL_NoPitchBlack	睡眠不全黑	No pitch black while sleeping
+NAME	QoL_MapTextOutline	地图文字样式	Map text style
+NAME	QoL_MapTextOutlineEnabled	启用地图文字样式修改	Enable map text style override
+NAME	QoL_BuryCorpses	埋葬尸体	Bury corpses
+NAME	QoL_SleepAnywhere	无睡袋也能睡觉	Sleep without a bedroll
+NAME	QoL_SleepFatigueRecovery	疲劳恢复惩罚	Fatigue recovery penalty
+NAME	QoL_SleepConditionRecovery	状态恢复倍率	Condition recovery multiplier
+NAME	QoL_SleepFreezingScale	受冻加速倍率	Freezing rate multiplier
+NAME	QoL_SleepFreezingHealthLoss	冻伤生命损失倍率	Freezing Condition loss multiplier
+NAME	QoL_SleepHypothermicHealthLoss	低温症生命损失倍率	Hypothermia Condition loss multiplier
+NAME	QoL_SleepPassTimeExposure	消磨时间暴露惩罚	Pass-time exposure penalty
+NAME	QoL_SleepInterrupt	低血量中断睡眠	Interrupt sleep at low Condition
+NAME	QoL_SleepInterruptThreshold	中断血量阈值%	Interrupt Condition threshold (%)
+NAME	QoL_SleepInterruptCooldown	中断冷却(秒)	Interrupt cooldown (s)
+NAME	QoL_SleepInterruptHudMsg	中断时显示HUD提示	Show HUD message on interrupt
+NAME	QoL_SleepInterruptAllBeds	对所有床铺启用中断	Enable interrupt for all beds
+NAME	QoL_SleepSensitivityScale	暴露灵敏度系数	Exposure sensitivity scale
+NAME	QoL_SleepAdjustedSensitivity	修正灵敏度	Adjusted sensitivity
+NAME	QoL_AutoSurvey	自动绘制地图	Auto-survey map
+NAME	QoL_AutoSurveyDelay	绘制间隔(秒)	Survey interval (s)
+NAME	QoL_AutoSurveyRange	绘制范围倍率	Survey range multiplier
+NAME	QoL_AutoSurveyUnlock	解除天气限制	Ignore weather restrictions
+NAME	QoL_AutoOpenMapOnExit	出门自动开小地图(MotionTrackerLite)	Auto-open minimap when going outside (MotionTrackerLite)
+NAME	Craft_Anywhere	启用随意制作	Enable Craft Anywhere
+NAME	Craft_DefaultLocation	默认位置(新蓝图)	Default location (new blueprints)
+NAME	Craft_MoreCookingSlots	启用额外烹饪位	Enable extra cooking slots
+NAME	Craft_MoreSlots_Fireplace	壁炉(2→3)	Fireplace (2 -> 3)
+NAME	Craft_MoreSlots_Barrel	火桶(2→4)	Fire barrel (2 -> 4)
+NAME	Craft_MoreSlots_Grill	烤架(2→4)	Grill (2 -> 4)
+NAME	World_Sprainkle	启用扭伤参数调整	Enable sprain tuning
+NAME	World_SprainklePreset	预设	Preset
+NAME	World_SprainkleSlopeMin	最小坡度(度)	Minimum slope (deg)
+NAME	World_SprainkleSlopeIncrease	坡度递增系数	Slope scaling factor
+NAME	World_SprainkleBaseChanceMoving	移动基础概率%	Base chance while moving (%)
+NAME	World_SprainkleEncumberChance	负重加成概率	Added chance from encumbrance
+NAME	World_SprainkleExhaustionChance	疲劳加成概率	Added chance from exhaustion
+NAME	World_SprainkleSprintChance	冲刺加成概率	Added chance from sprinting
+NAME	World_SprainkleCrouchChance	蹲行减免%	Crouch reduction (%)
+NAME	World_SprainkleMinSecondsRisk	最短触发间隔(秒)	Minimum risk interval (s)
+NAME	World_SprainkleWristMovementChance	手腕移动触发%	Wrist sprain from movement (%)
+NAME	World_SprainkleSprintUIOn	冲刺UI阈值(显示)	Sprint UI threshold (show)
+NAME	World_SprainkleSprintUIOff	冲刺UI阈值(隐藏)	Sprint UI threshold (hide)
+NAME	World_SprainkleAnkleEnabled	脚踝扭伤启用	Enable ankle sprains
+NAME	World_SprainkleAnkleDurMin	脚踝最短时长(h)	Ankle min duration (h)
+NAME	World_SprainkleAnkleDurMax	脚踝最长时长(h)	Ankle max duration (h)
+NAME	World_SprainkleAnkleRestHours	脚踝休息恢复(h)	Ankle rest recovery (h)
+NAME	World_SprainkleAnkleFallChance	脚踝坠落概率%	Ankle sprain from falls (%)
+NAME	World_SprainkleWristEnabled	手腕扭伤启用	Enable wrist sprains
+NAME	World_SprainkleWristDurMin	手腕最短时长(h)	Wrist min duration (h)
+NAME	World_SprainkleWristDurMax	手腕最长时长(h)	Wrist max duration (h)
+NAME	World_SprainkleWristRestHours	手腕休息恢复(h)	Wrist rest recovery (h)
+NAME	World_SprainkleWristFallChance	手腕坠落概率%	Wrist sprain from falls (%)
+NAME	PlaceFromInv_Enabled	启用背包右键放置	Enable right-click place from inventory
+NAME	PlaceFromInv_AllowClose	允许物品贴近放置	Allow placing items very close to other objects
+NAME	PlaceFromInv_StackDrop	Ctrl 整堆丢出	Ctrl drops whole stack
+NAME	UT_BreathVisibility	启用哈气效果	Enable breath visibility
+NAME	UT_ConsistantDressingWeight	胡须地衣绷带统一重量(0.03kg)	Uniform wound dressing weight (0.03 kg)
+NAME	UT_FeatProgressInCustom	自定义模式徽章进度	Feat progress in custom mode
+NAME	UT_RandomizedItemRotation	物品掉落随机旋转	Randomized item rotation on drop
+NAME	UT_RevolverImprovements	左轮操作改良	Revolver improvements
+NAME	UT_NoisemakerBurnLength	制噪器引信燃烧时间(分)	Noisemaker fuse burn time (min)
+NAME	UT_NoisemakerThrowForce	制噪器投掷力度	Noisemaker throw force
+NAME	UT_RespiratorCanisterDuration	滤罐持续时间(秒)	Respirator canister duration (s)
+NAME	UT_SnowShelterDecay	雪屋每日损耗 HP	Snow shelter daily condition loss
+NAME	UT_ToiletWaterPotable	马桶水可饮用	Toilet water is potable
+NAME	UT_RemoveHeadacheDebuff	移除甜点头疼 Debuff	Remove dessert headache debuff
+NAME	UT_StewFatigueLoss	炖汤减疲劳量	Stew fatigue reduction
+NAME	UT_RockCacheIndoors	允许室内放置	Allow indoor placement
+NAME	UT_RockCacheMaxPerRegion	每区域最大数量	Max per region
+NAME	UT_RockCacheMinDistance	最小间距(米)	Minimum spacing (m)
+NAME	UT_DecalOverlap	贴图重叠率	Decal overlap ratio
+NAME	UT_GlowingDecals	启用高亮喷漆	Enable glowing decals
+NAME	UT_GlowingDecalMult	高亮倍数	Glow multiplier
+NAME	UT_TravoisDecayBlizzard	暴风雪损耗 HP/h	Blizzard condition loss (HP/h)
+NAME	UT_TravoisDecayHourly	常态损耗 HP/h(/1000)	Normal condition loss (HP/h, value / 1000)
+NAME	UT_TravoisDecayMovement	移动损耗/件物品(/100)	Movement loss per item (/100)
+NAME	UT_TravoisMaxSlope	最大坡度角	Max slope angle
+NAME	UT_TravoisTurnSpeed	转向速度	Turn speed
+NAME	UT_TravoisOverrideMovement	解除移动区域限制	Remove movement zone restrictions
+NAME	UT_TravoisOverrideInteraction	解除互动限制	Remove interaction restrictions
+NAME	UT_FlashInfiniteBattery	无限电量	Infinite battery
+NAME	Stack_AddComponent	启用堆叠组件添加	Add stackable component
+NAME	Stack_UseMaxHP	使用最大状态合并	Merge using best condition
+NAME	World_BowRepair	允许修复弓	Allow bow repair
+NAME	World_BowRepairDLC	DLC弓启用	Enable for DLC bows
+NAME	World_BowRepairMode	生存弓模式	Survival bow repair mode
+NAME	World_BowMaterialNeed	生存弓材料需求	Survival bow material cost
+NAME	World_SportBowRepairMode	运动弓模式	Sport bow repair mode
+NAME	World_SportBowMaterialNeed	运动弓材料需求	Sport bow material cost
+NAME	World_WoodBowRepairMode	木弓模式	Wood bow repair mode
+NAME	World_WoodBowMaterialNeed	木弓材料需求	Wood bow material cost
+NAME	World_BushBowRepairMode	灌木弓模式	Bush bow repair mode
+NAME	World_BushBowMaterialNeed	灌木弓材料需求	Bush bow material cost
+NAME	World_CaffeinatedSodas	苏打水减疲劳	Sodas reduce fatigue
+NAME	World_SodaOrangeEnabled	橙味启用	Enable orange soda
+NAME	World_SodaOrangeInitial	橙味减疲劳%	Orange fatigue reduction (%)
+NAME	World_SodaOrangeDuration	橙味持续	Orange duration
+NAME	World_SodaSummitEnabled	Summit启用	Enable Summit soda
+NAME	World_SodaSummitInitial	Summit减疲劳%	Summit fatigue reduction (%)
+NAME	World_SodaSummitDuration	Summit持续	Summit duration
+NAME	World_SodaGrapeEnabled	葡萄味启用	Enable grape soda
+NAME	World_SodaGrapeInitial	葡萄味减疲劳%	Grape fatigue reduction (%)
+NAME	World_SodaGrapeDuration	葡萄味持续	Grape duration
+NAME	World_CarcassMoving	搬运猎物尸骸	Move animal carcasses
+NAME	World_CarcassMovingAll	搬运所有猎物	Move all animal carcasses
+NAME	World_ElectricTorch	极光点火把	Light torch from aurora power
+NAME	DeerMeatMultMin	鹿出肉倍率·下限	Deer meat multiplier - min
+NAME	DeerMeatMultMax	鹿出肉倍率·上限	Deer meat multiplier - max
+NAME	TT_CapFeelsHigh	体感温度上限(℃)	Feels-like temperature cap (°C)
+NAME	TT_CapFeelsLow	体感温度下限(℃)	Feels-like temperature floor (°C)
+NAME	TT_CapFeelsEnabled	启用体感温度限制	Enable feels-like temperature limits
+NAME	TT_FallDeathGoat	无视坠落即死墙	Ignore instant-death fall volumes
+NAME	TT_FallDamageMult	坠落伤害/米	Fall damage per meter
+NAME	TT_DroppedOrientation	步枪落地竖立	Rifles land upright
+NAME	TT_ExtendedFOV	FOV滑块扩展(30-150)	Extended FOV slider (30-150)
+NAME	TT_PauseOnRadial	辐射轮暂停	Radial menu slow motion (0.1x)
+NAME	TT_GlobalSpeedMult	交互加速-通用	Interaction speed - general
+NAME	TT_InteractionSpeedMult	交互加速-开容器	Interaction speed - containers
+NAME	TT_EatingSpeedMult	交互加速-进食	Interaction speed - eating
+NAME	TT_BreakdownSpeedMult	交互加速-拆解	Interaction speed - break down
+NAME	TT_ReadingSpeedMult	交互加速-阅读	Interaction speed - reading
+NAME	TT_PlantRespawnDays	植物重生(天)	Plant respawn (days)
+NAME	TT_RespawnPlants	启用植物重生	Enable plant respawn
+NAME	TT_ShowTraderTrust	显示商人信任度	Show trader trust
+NAME	TraderArrivalDays	商人到来天数	Trader arrival day
+SECTION	DiagPauseRuntime	Diagnostic / 诊断	Diagnostic
+SECTION	GodMode	Life / 生命	Life
+SECTION	AlwaysWarm	Status / 状态	Status
+SECTION	SpeedMultiplier	Movement / 移动	Movement
+SECTION	InstantKillAnimals	Animals / 动物	Animals
+SECTION	ThinIceNoBreak	World / 世界	World
+SECTION	InfiniteDurability	Items / 物品	Items
+SECTION	FreeCraft	Crafting / 制作	Crafting
+SECTION	InfiniteAmmo	Weapons / 武器	Weapons
+SECTION	NoAimSway	Aiming / 瞄准	Aiming
+SECTION	NoSprainRisk	Environment / 环境	Environment
+SECTION	QuickFire	Shortcuts / 快捷	Shortcuts
+SECTION	QuickCook	CT 复刻 / 参照 Cheat Engine 表	CT Table Replica (Cheat Engine)
+SECTION	TraderUnlimitedList	商人 Trader	Trader
+SECTION	CougarInstantActivate	美洲狮	Cougar
+SECTION	BlockAutoPickupOwnDrops	与 ItemPicker mod 交互	ItemPicker Mod Integration
+SECTION	RecoilScaleESP	Weapon / 武器微调	Weapon Tuning
+SECTION	SpeedTweaksEnabled	Movement Detail / 细分速度	Movement Detail
+SECTION	TimeScaleInfo	Time Scale / 时间加速	Time Scale
+SECTION	GeneralDecay	Decay / 衰减倍率	Decay Rates
+SECTION	TorchBurnMinutes	Light Sources / 光源	Light Sources
+SECTION	HL_Enabled	House Lights / 室内灯光	House Lights
+SECTION	PauseInJournal	QoL / 生活品质	QoL
+SECTION	QoL_NoSaveOnSprain	QoL: TinyTweaks / 小改动	QoL: TinyTweaks
+SECTION	QoL_SleepAnywhere	QoL: Sleep Anywhere / 随地睡	QoL: Sleep Anywhere
+SECTION	QoL_AutoSurvey	QoL: AutoSurvey / 自动绘图	QoL: AutoSurvey
+SECTION	Craft_Anywhere	Craft Anywhere / 随意制作	Craft Anywhere
+SECTION	Craft_MoreCookingSlots	More Cooking Slots / 更多烹饪位	More Cooking Slots
+SECTION	World_Sprainkle	Sprainkle / 扭伤系统	Sprainkle (Sprain System)
+SECTION	PlaceFromInv_Enabled	PlaceFromInv / 微操放置 v1.1.3	Place From Inventory v1.1.3
+SECTION	UT_BreathVisibility	UT / 常用修改 v1.4.8	UniversalTweaks / General v1.4.8
+SECTION	UT_RemoveHeadacheDebuff	UT / 食物修改	UniversalTweaks / Food
+SECTION	UT_RockCacheIndoors	UT / 岩石贮藏处	UniversalTweaks / Rock Cache
+SECTION	UT_DecalOverlap	UT / 喷漆	UniversalTweaks / Decals
+SECTION	UT_TravoisDecayBlizzard	UT / 雪橇	UniversalTweaks / Travois
+SECTION	UT_FlashInfiniteBattery	UT / 手电筒	UniversalTweaks / Flashlight
+SECTION	Stack_AddComponent	StackManager / 堆叠管理 v1.0.6	StackManager v1.0.6
+SECTION	World_BowRepair	Bow Repair / 弓修复	Bow Repair
+SECTION	World_CaffeinatedSodas	Caffeinated Sodas / 苏打提神	Caffeinated Sodas
+SECTION	World_CarcassMoving	RnStripped / 尸骸搬运&极光点火	Carcass Moving & Aurora Torch
+SECTION	TT_CapFeelsHigh	TinyTweaks / 微调合集	TinyTweaks
+CHOICE	LanguageMode	Auto|中文 / Chinese|English	Auto|Chinese|English
+CHOICE	QoL_MapTextOutline	黑字棕描边|黑字白描边|米白字黑描边|白字黑描边	Dark text, tan outline|Dark text, white outline|Cream text, dark outline|White text, dark outline
+CHOICE	Craft_DefaultLocation	任意|工作台|锻造台|弹药台|火堆	Anywhere|Workbench|Forge|Ammo Bench|Fire
+CHOICE	World_SprainklePreset	原版|自定义|增强(高难)	Vanilla|Custom|Hardcore
+CHOICE	World_BowRepairMode	手修|磨坊|都可	By Hand|Milling Machine|Both
+CHOICE	World_BowMaterialNeed	低|中|高	Low|Medium|High
+CHOICE	World_SportBowRepairMode	手修|磨坊|都可	By Hand|Milling Machine|Both
+CHOICE	World_SportBowMaterialNeed	低|中|高	Low|Medium|High
+CHOICE	World_WoodBowRepairMode	手修|磨坊|都可	By Hand|Milling Machine|Both
+CHOICE	World_WoodBowMaterialNeed	低|中|高	Low|Medium|High
+CHOICE	World_BushBowRepairMode	手修|磨坊|都可	By Hand|Milling Machine|Both
+CHOICE	World_BushBowMaterialNeed	低|中|高	Low|Medium|High
+CHOICE	World_SodaOrangeDuration	5分钟|10分钟|15分钟|30分钟	5 min|10 min|15 min|30 min
+CHOICE	World_SodaSummitDuration	5分钟|10分钟|15分钟|30分钟	5 min|10 min|15 min|30 min
+CHOICE	World_SodaGrapeDuration	5分钟|10分钟|15分钟|30分钟	5 min|10 min|15 min|30 min

@@ -14,3 +14,7 @@ GfxBoost/src/bin/
 GfxBoost/src/obj/
 *.bak-*
 tools/_*_old.cs
+
+TldHacksStory/bin/
+TldHacksStory/obj/
+tools/__pycache__/

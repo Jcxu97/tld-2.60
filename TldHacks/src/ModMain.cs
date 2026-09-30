@@ -1,11 +1,23 @@
-using System;
+﻿using System;
 using System.Reflection;
 using System.Runtime;
 using Il2Cpp;
 using MelonLoader;
 using UnityEngine;
 
-[assembly: MelonInfo(typeof(TldHacks.ModMain), "TldHacks", "7.0.0", "user")]
+// v8.3 版本号只写在 ModMain.VERSION 一处,其余全部由它拼出来。
+//   之前四处各写一遍,菜单标题栏一直停在 v8.0 而 MelonInfo 已经是 8.1.0,玩家看到两个版本号。
+//   常量拼接是编译期常量,所以 attribute 里也能用。唯一还要手动跟的是 csproj 的 <Version>。
+#if STORY_EDITION
+[assembly: MelonInfo(typeof(TldHacks.ModMain), "TldHacksStory", "1.3", "user")]
+#else
+[assembly: MelonInfo(typeof(TldHacks.ModMain), "TldHacks", TldHacks.ModMain.VERSION + ".0", "user")]
+// 程序集版本。csproj 设了 GenerateAssemblyInfo=false,<Version> 不会进 DLL 元数据,
+//   右键看属性一直是 0.0.0.0,玩家对不上自己装的是哪一版,所以这里显式写。
+[assembly: AssemblyVersion(TldHacks.ModMain.VERSION + ".0.0")]
+[assembly: AssemblyFileVersion(TldHacks.ModMain.VERSION + ".0.0")]
+[assembly: AssemblyInformationalVersion(TldHacks.ModMain.VERSION)]
+#endif
 [assembly: MelonGame("Hinterland", "TheLongDark")]
 [assembly: MelonAdditionalDependencies("ModSettings")]
 [assembly: MelonOptionalDependencies("ModData")]
@@ -14,6 +26,9 @@ namespace TldHacks;
 
 public class ModMain : MelonMod
 {
+    // 全 mod 唯一的版本号来源。MelonInfo / 程序集版本 / 菜单标题栏 / 启动日志都从这里取。
+    internal const string VERSION = "9.5";
+
     public static MelonLogger.Instance Log;
     internal static TldHacksSettings Settings;
 
@@ -30,6 +45,7 @@ public class ModMain : MelonMod
         try
         {
             RegisterSettings();
+            Settings?.HideRetiredFields();
 
             // 把 Settings 持久值同步到 CheatState
             SyncStateFromSettings();
@@ -42,12 +58,15 @@ public class ModMain : MelonMod
                 catch (Exception ex) { Log.Warning($"[DiagUnpatch] UnpatchSelf: {ex.Message}"); }
                 // DynamicPatch 自己的 instance 也清一下,防上次残留(正常启动不会残留,保险起见)
                 try { new HarmonyLib.Harmony("TldHacks.Dynamic").UnpatchSelf(); } catch { }
+                // Mod Options 英文化用的是独立 Harmony instance,UnpatchSelf 收不到,单独卸
+                ModSettingsEn.Remove();
                 Log.Msg("[DIAG] DiagUnpatchAll = ON → TldHacks 所有 Harmony patch 已卸载,Reconcile / 所有 tick 已停。重启游戏仍会重新应用此开关。");
             }
             else
             {
-                // 写崩溃哨兵:如果 patch 导致加载存档崩溃,下次启动自动重置
-                try { System.IO.File.WriteAllText(SentinelPath, DateTime.Now.ToString("o")); } catch { }
+                // 写崩溃哨兵:内容 = 升级后的崩溃计数。若本次也没稳定进场景,下次启动读到更高
+                //   等级 → 逐级加强恢复(1=关 bool;>=2=全量重置默认但留 UI/绑定)。
+                try { System.IO.File.WriteAllText(SentinelPath, _pendingSentinelLevel.ToString()); } catch { }
                 DynamicPatch.Reconcile();
                 DynamicPatch.SelfCheck();   // v7.0 可维护性:启动即暴露解析失败的补丁(游戏更新破坏检测)
             }
@@ -59,7 +78,7 @@ public class ModMain : MelonMod
             // v6.9.2 拦截 CatchColdMod 在清除窗口期内反复加感冒/肺炎(只在 ClearInProgress 或 ReSweep 时拦)
             try { TryPatchCatchColdMod(); } catch (Exception ex) { Log.Warning($"[CatchColdGuard] init: {ex.Message}"); }
 
-            Log.Msg($"TldHacks v7.0.0 loaded — menu hotkey = {Settings.MenuHotkey}, items = {ItemDatabase.All.Count}+{ItemDatabaseMod.All.Count} mod, transitions = {TransitionRecorder.Count}");
+            Log.Msg($"TldHacks v{VERSION} loaded, menu hotkey = {Settings.MenuHotkey}, items = {ItemDatabase.All.Count}+{ItemDatabaseMod.All.Count} mod, transitions = {TransitionRecorder.Count}");
         }
         catch (Exception ex) { Log.Error($"[Init] {ex}"); }
     }
@@ -113,7 +132,40 @@ public class ModMain : MelonMod
     //   逐字段反射救援 — 兼容字段保留用户值,不兼容字段静默用默认。
     //   仅在 OnInitializeMelon 启动时跑一次,运行时零开销。
     //   全程 try-catch 兜底,任何异常退化为标准 AddToModSettings 路径。
-    private static readonly string SentinelPath = System.IO.Path.Combine("Mods", "TldHacks.loading");
+    // v7.5 关键修复:哨兵路径必须绝对(同 JsonConfigPath 用库的 ModsDirectory)。旧版用相对
+    //   "Mods/TldHacks.loading",玩家进程 cwd != 游戏根时哨兵写/读的是错位置 → 崩溃恢复安全模式
+    //   永不触发 → 玩家只能手删 TldHacks.json 才能进存档(正是本次 bug 的真凶之一)。
+    private static readonly string SentinelPath = ResolveSentinelPath();
+    private static string ResolveSentinelPath()
+    {
+        try { return System.IO.Path.Combine(MelonLoader.Utils.MelonEnvironment.ModsDirectory, "TldHacks.loading"); }
+        catch { return System.IO.Path.Combine("Mods", "TldHacks.loading"); }
+    }
+
+    // v7.5 崩溃升级计数:哨兵文件内容 = 连续"启动但未稳定进场景"的次数。
+    //   0 缺失=正常;1=上次崩了(安全模式:关所有 bool,留数值/热键);>=2=关光 bool 仍崩
+    //   (非 bool 元凶)→ 全量重置默认但保留 UI/绑定。稳定游玩 180 帧或正常退出即清零。
+    private static int _pendingSentinelLevel = 1;
+    private static int ReadSentinelLevel()
+    {
+        try
+        {
+            if (!System.IO.File.Exists(SentinelPath)) return 0;
+            var txt = System.IO.File.ReadAllText(SentinelPath).Trim();
+            if (int.TryParse(txt, out int n)) return n < 0 ? 0 : n;
+            return 1;   // 兼容旧版哨兵(内容是 DateTime)→ 视为至少崩过 1 次
+        }
+        catch { return 0; }
+    }
+
+    // 全量重置时保留的纯 UI/绑定字段:热键/菜单位置/缩放/语言。这些绝不可能影响存档加载,
+    //   保住它们玩家就不用重绑热键、重摆菜单(直击"得重新设置了"的痛点)。
+    private static readonly System.Collections.Generic.HashSet<string> _preserveOnReset = new()
+    {
+        "MenuHotkey", "FlyHotkey", "MenuScale", "MenuWidth", "MenuHeight", "MenuX", "MenuY",
+        "LanguageMode", "QoL_DropKey", "QoL_BulkKey", "QoL_BackKey", "JumpKey",
+        "TimeScaleKey1", "TimeScaleKey2", "GrabAllKey",
+    };
 
     internal static void ClearSentinel()
     {
@@ -135,6 +187,8 @@ public class ModMain : MelonMod
     //   旧 SafeLoad 跑在构造之后(太晚)且用相对路径(可能指错文件),所以对部分玩家无效。
     //   pre-flight 跑在构造之前 + 用库的绝对路径,从根上消除。只保留可转换的已知字段、
     //   slider 越界钳到边界,丢弃不兼容字段与孤儿字段;有变更先备份再写回。
+    private static readonly string[] RetiredSettingKeys = { "OneClickDisableAll" };
+
     private static void PreflightSanitizeJson(string path)
     {
         try
@@ -188,11 +242,20 @@ public class ModMain : MelonMod
                 catch { dropped++; }   // 类型不兼容(老版本字段类型变了)→ 丢弃 → 库用默认
             }
 
-            int orphans = 0;
+            int orphans = 0, retired = 0;
             foreach (var prop in jobj.Properties())
-                if (!validNames.Contains(prop.Name)) orphans++;
+                if (!validNames.Contains(prop.Name))
+                {
+                    if (Array.IndexOf(RetiredSettingKeys, prop.Name) >= 0) retired++; else orphans++;
+                }
 
-            if (dropped > 0 || orphans > 0 || clamped > 0)
+            // 版本里主动删掉的字段不算坏配置:静默去掉,不留 broken 备份
+            if (retired > 0 && dropped == 0 && orphans == 0 && clamped == 0)
+            {
+                System.IO.File.WriteAllText(path, clean.ToString(Newtonsoft.Json.Formatting.Indented));
+                Log?.Msg($"[Settings] 去掉 {retired} 个已删除的旧字段");
+            }
+            else if (dropped > 0 || orphans > 0 || clamped > 0)
             {
                 try { System.IO.File.Copy(path, path + ".broken-" + DateTime.Now.ToString("yyyyMMdd-HHmmss"), true); } catch { }
                 System.IO.File.WriteAllText(path, clean.ToString(Newtonsoft.Json.Formatting.Indented));
@@ -202,20 +265,82 @@ public class ModMain : MelonMod
         catch (Exception ex) { Log?.Warning($"[Settings] pre-flight 异常(已忽略,退回旧路径): {ex.Message}"); }
     }
 
+    // v7.6 补最后一个洞:pre-flight 用 Newtonsoft 判兼容,库(JsonModSettings)却用 TinyJSON/
+    //   Convert.ChangeType 加载,两者不完全一致 —— 极少数跨版本值 Newtonsoft 放行、库却拒绝,
+    //   构造函数当场抛 → Settings 永远 null → 存档进不去,而且哨兵写在构造之后(此处根本到不了)
+    //   → 崩溃恢复救不了 → 玩家每次启动同样崩,只能手删 json。此方法在构造抛异常时被调用:
+    //   解析磁盘 JSON,只保留 _preserveOnReset(热键/菜单/语言)里类型可转换的字段,丢弃其余全部,
+    //   备份后写回。让库能构造成功且玩家不用重绑热键(直击"得重新设置了")。补救本身失败则整删。
+    private static void SalvageJsonKeepPreserved(string path)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(path) || !System.IO.File.Exists(path)) return;
+            var jobj = Newtonsoft.Json.Linq.JObject.Parse(System.IO.File.ReadAllText(path));
+            var clean = new Newtonsoft.Json.Linq.JObject();
+            foreach (var f in typeof(TldHacksSettings).GetFields(BindingFlags.Public | BindingFlags.Instance))
+            {
+                if (f.IsStatic || f.IsInitOnly || !_preserveOnReset.Contains(f.Name)) continue;
+                var token = jobj[f.Name];
+                if (token == null) continue;
+                try
+                {
+                    object val = token.ToObject(f.FieldType);   // 只留能转换的;转不了就丢
+                    if (val != null) clean[f.Name] = Newtonsoft.Json.Linq.JToken.FromObject(val);
+                }
+                catch { }
+            }
+            try { System.IO.File.Copy(path, path + ".ctorfail-" + DateTime.Now.ToString("yyyyMMdd-HHmmss"), true); } catch { }
+            System.IO.File.WriteAllText(path, clean.ToString(Newtonsoft.Json.Formatting.Indented));
+        }
+        catch
+        {
+            try { System.IO.File.Delete(path); } catch { }   // 补救失败 → 整删,让库写全新默认
+        }
+    }
+
     private static void RegisterSettings()
     {
         var path = JsonConfigPath();
         PreflightSanitizeJson(path);   // v7.0:必须在构造之前净化,否则库构造函数直接抛 → 存档进不去
 
-        Settings = new TldHacksSettings();
+        // Mod Options 面板英文化:必须在 new TldHacksSettings() 之前挂 —— 基类构造函数就会跑
+        //   ValidateFields → Attributes.GetAttributes,晚一步就赶不上第一次流出。
+        //   语言=中文 / 挂载失败 → 完全不挂,面板保持中文(等于现状)。
+        ModSettingsEn.Apply(path);
 
-        // 崩溃哨兵:上次启动挂了 patch 后没成功进场景
-        // → 照常加载 JSON(保留 slider/hotkey/菜单位置), 但把所有 bool toggle 关掉
-        bool crashRecovery = System.IO.File.Exists(SentinelPath);
+        // v7.6:构造函数是最后一个可能抛的点(库用 TinyJSON/Convert.ChangeType,比 pre-flight 的
+        //   Newtonsoft 更严,极少数值能溜过 pre-flight 却让构造抛)。此处第一次崩就地补救(留热键/
+        //   菜单/语言,删其余),不依赖"多次崩溃逐级升级"—— 因为构造崩时哨兵根本写不进,无法升级。
+        try { Settings = new TldHacksSettings(); }
+        catch (Exception ex)
+        {
+            Log?.Warning($"[Settings] 构造函数抛异常({ex.Message})→ 库加载器比 pre-flight 更严,就地补救(保留热键/菜单/语言)");
+            SalvageJsonKeepPreserved(path);
+            try { Settings = new TldHacksSettings(); }
+            catch (Exception ex2)
+            {
+                // 补救后仍抛(极端)→ 整删 json,保证库能用全新默认构造成功,绝不让 Settings 留 null
+                Log?.Warning($"[Settings] 补救后仍抛({ex2.Message})→ 删除 json 用全新默认");
+                try { System.IO.File.Delete(path); } catch { }
+                Settings = new TldHacksSettings();
+            }
+        }
+
+        // 崩溃哨兵:上次启动挂了 patch 后没成功进场景 → 逐级恢复。
+        //   level 1 = 安全模式(加载配置但关所有 bool,留数值/热键)
+        //   level >=2 = 关光 bool 仍崩(元凶是某个非 bool 值)→ 全量重置默认但保留 UI/绑定
+        // 关键:本次启动前把哨兵写成"更高一级",若本次又没稳定进场景,下次就自动升级恢复力度;
+        //   稳定 180 帧或正常退出会清零(见 OnUpdate / OnDeinitializeMelon)。
+        int crashLevel = ReadSentinelLevel();
+        bool crashRecovery = crashLevel >= 1;
+        bool fullReset = crashLevel >= 2;
+        _pendingSentinelLevel = crashLevel + 1;   // 本次若再崩,下次读到的等级
         if (crashRecovery)
         {
-            Log?.Warning("[Settings] 检测到上次加载崩溃 → 安全模式: 加载配置但禁用所有开关");
-            ClearSentinel();
+            Log?.Warning(fullReset
+                ? $"[Settings] 连续 {crashLevel} 次加载崩溃 → 强恢复: 全量重置为默认值(仅保留热键/菜单/语言)"
+                : "[Settings] 检测到上次加载崩溃 → 安全模式: 加载配置但禁用所有开关");
         }
 
         // 全新安装 → 直接走标准路径
@@ -306,7 +431,7 @@ public class ModMain : MelonMod
             Settings = new TldHacksSettings();
         }
 
-        // 崩溃恢复:保留 slider/hotkey/菜单位置,但把所有 bool 开关关回默认
+        // 崩溃恢复:level 1 只关 bool(留数值/热键);level >=2 全量重置默认(仅留 UI/绑定)。
         if (crashRecovery)
         {
             // v6.9.6 整体 try 兜底 + 逐字段 try:任何反射异常都不能炸穿 RegisterSettings,
@@ -321,16 +446,27 @@ public class ModMain : MelonMod
                     try
                     {
                         if (f.IsStatic || f.IsInitOnly) continue;
-                        if (f.FieldType != typeof(bool)) continue;
+                        // level >=2:重置所有字段(元凶可能是某个非 bool 值),但保留纯 UI/绑定字段。
+                        // level 1:只重置 bool 开关。
+                        if (fullReset)
+                        {
+                            if (_preserveOnReset.Contains(f.Name)) continue;
+                        }
+                        else
+                        {
+                            if (f.FieldType != typeof(bool)) continue;
+                        }
                         object defVal = f.GetValue(defaults);
                         object curVal = f.GetValue(Settings);
                         if (!Equals(curVal, defVal)) { f.SetValue(Settings, defVal); resetCount++; }
                     }
                     catch { }
                 }
-                Log?.Warning($"[Settings] 安全模式: 重置 {resetCount} 个 bool 开关为默认值, 保留所有数值/热键设置");
+                Log?.Warning(fullReset
+                    ? $"[Settings] 强恢复: 全量重置 {resetCount} 个字段为默认值, 保留热键/菜单/语言绑定"
+                    : $"[Settings] 安全模式: 重置 {resetCount} 个 bool 开关为默认值, 保留所有数值/热键设置");
             }
-            catch (Exception ex) { Log?.Warning($"[Settings] 安全模式重置异常(已忽略): {ex.Message}"); }
+            catch (Exception ex) { Log?.Warning($"[Settings] 崩溃恢复重置异常(已忽略): {ex.Message}"); }
             needRewrite = true;
         }
 
@@ -472,15 +608,16 @@ public class ModMain : MelonMod
         // v2.8.0 批量整合 — Tab 6: Universal Tweaks
         // v2.8.0 批量整合 — Tab 7: QoL
         CheatState.QoL_Enabled = Settings.QoL_Enabled;
-        CheatState.QoL_NoSaveOnSprain = Settings.QoL_NoSaveOnSprain;
-        CheatState.QoL_NoSaveOnSprainFalls = Settings.QoL_NoSaveOnSprainFalls;
-        CheatState.QoL_WakeUpCall = Settings.QoL_WakeUpCall;
-        CheatState.QoL_AuroraSense = Settings.QoL_AuroraSense;
-        CheatState.QoL_ShowTimeSleep = Settings.QoL_ShowTimeSleep;
-        CheatState.QoL_NoPitchBlack = Settings.QoL_NoPitchBlack;
-        CheatState.QoL_MapTextOutline = Settings.QoL_MapTextOutlineEnabled;
-        CheatState.QoL_BuryCorpses = Settings.QoL_BuryCorpses;
-        CheatState.QoL_SleepAnywhere = Settings.QoL_SleepAnywhere;
+        bool qol = Settings.QoL_Enabled;   // QoL 总开关管(小改动 / 随地睡 / 自动绘图)三节
+        CheatState.QoL_NoSaveOnSprain = qol && Settings.QoL_NoSaveOnSprain;
+        CheatState.QoL_NoSaveOnSprainFalls = qol && Settings.QoL_NoSaveOnSprainFalls;
+        CheatState.QoL_WakeUpCall = qol && Settings.QoL_WakeUpCall;
+        CheatState.QoL_AuroraSense = qol && Settings.QoL_AuroraSense;
+        CheatState.QoL_ShowTimeSleep = qol && Settings.QoL_ShowTimeSleep;
+        CheatState.QoL_NoPitchBlack = qol && Settings.QoL_NoPitchBlack;
+        CheatState.QoL_MapTextOutline = qol && Settings.QoL_MapTextOutlineEnabled;
+        CheatState.QoL_BuryCorpses = qol && Settings.QoL_BuryCorpses;
+        CheatState.QoL_SleepAnywhere = qol && Settings.QoL_SleepAnywhere;
         SleepAnywhereState.FatigueRecoveryPenalty = Settings.QoL_SleepFatigueRecovery;
         SleepAnywhereState.ConditionGainRate = Settings.QoL_SleepConditionRecovery;
         SleepAnywhereState.FreezingScale = Settings.QoL_SleepFreezingScale;
@@ -494,7 +631,7 @@ public class ModMain : MelonMod
         SleepAnywhereState.ApplyInterruptToBeds = Settings.QoL_SleepInterruptAllBeds;
         SleepAnywhereState.SensitivityScale = Settings.QoL_SleepSensitivityScale;
         SleepAnywhereState.AdjustedSensitivity = Settings.QoL_SleepAdjustedSensitivity;
-        CheatState.QoL_AutoSurvey = Settings.QoL_AutoSurvey;
+        CheatState.QoL_AutoSurvey = qol && Settings.QoL_AutoSurvey;
 
         // v2.8.0 批量整合 — Tab 8: Crafting & Fire
         CheatState.Craft_Anywhere = Settings.Craft_Anywhere;
@@ -541,6 +678,21 @@ public class ModMain : MelonMod
         CheatState.TT_PauseOnRadial = Settings.TT_PauseOnRadial;
         CheatState.TT_RespawnPlants = Settings.TT_RespawnPlants;
         CheatState.TT_ShowTraderTrust = Settings.TT_ShowTraderTrust;
+#if STORY_EDITION
+        // 剧情版:在所有 Settings→CheatState 拷贝之后强制清零被 BLOCK 的沙盒专属/传送开关。
+        // 沙盒版无此符号,本调用不存在,DLL 字节不变。
+        StoryGuard.Enforce();
+#endif
+    }
+
+    // v7.5 正常退出即清哨兵:防"在主菜单待着从没进存档就退出"这类非崩溃留下 stale 哨兵,
+    //   否则下次启动会误判成崩溃 → 误进恢复模式(升级后甚至可能全量重置)。硬崩溃时本回调
+    //   不保证触发,正是我们要的:那种情况哨兵留存 → 下次启动接住并恢复。
+    public override void OnApplicationQuit()
+    {
+        // v7.7 退出兜底:把延迟落盘的脏数据写掉(正常退出路径必到,硬崩溃时丢的只是 ≤0.5s 内的设置改动)
+        try { Settings?.FlushPendingSave(); } catch { }
+        ClearSentinel();
     }
 
     public override void OnLateInitializeMelon()
@@ -548,6 +700,9 @@ public class ModMain : MelonMod
         // BlueprintCleaner 的 ScrollBehaviourItem.OnClick Postfix 调用了 TLD 2.55 中不存在的
         // GameManager.IsBootSceneActive()，导致 MissingMethodException 刷屏。
         // 在所有 mod 加载完后移除该 broken postfix。
+        // 2.24 无 Il2CppTLD.UI.Scroll 命名空间(滚动列表体系是 2.55 引入的),
+        // 且剧情版不会装 BlueprintCleaner(它依赖 2.55 的蓝图系统),整块跳过。
+#if !STORY_EDITION
         try
         {
             var target = HarmonyLib.AccessTools.Method(typeof(Il2CppTLD.UI.Scroll.ScrollBehaviourItem), "OnClick");
@@ -569,11 +724,13 @@ public class ModMain : MelonMod
             }
         }
         catch (Exception ex) { Log.Warning($"[Compat] BlueprintCleaner unpatch failed: {ex.Message}"); }
-
+#endif
     }
 
     public override void OnUpdate()
     {
+        // 帧计数在方法中段才自增,前面的 tick 抛一次异常的话,不补这一下就会停在同一个相位每帧重抛,后面的 tick 全停
+        bool advanced = false;
         try
         {
             if (Settings == null) return;
@@ -602,20 +759,30 @@ public class ModMain : MelonMod
                 if (Menu.Open) try { System.GC.Collect(0, System.GCCollectionMode.Optimized, false); } catch { }
             }
 
+            // 物品生成器搜索框自己收键盘(IMGUI 文本框在这个版本不可用),必须每帧一次
+            Menu.UpdateSearchInput();
+
+            // 搜索框收字期间,下面这些直接读键盘的热键全部让路(否则敲 e/f 会触发时间加速)
+            bool typing = Menu.CapturingKeys;
+
             // Fly toggle hotkey
-            if (Settings.FlyHotkey != KeyCode.None && Input.GetKeyDown(Settings.FlyHotkey))
+            if (!typing && Settings.FlyHotkey != KeyCode.None && Input.GetKeyDown(Settings.FlyHotkey))
             {
                 CheatState.CFly = !CheatState.CFly;
                 ConsoleBridge.Run("fly");
             }
+
+            // v7.7 一键搜刮:按键把半径内全部物品收进背包(一次性动作,不挂 patch)
+            if (!typing && Settings.GrabAllKey != KeyCode.None && Input.GetKeyDown(Settings.GrabAllKey))
+                GrabAll.Trigger(Settings.GrabAllRadius, Settings.GrabAllNotify);
 
             // Time scale —— 按住加速,松开恢复
             // v2.8.1: 不再用 DetermineIfOverlayIsActive (读条面板也算 overlay 导致加速失效)
             //   只在暂停菜单/uConsole 时屏蔽,读条/制作/搜刮等进度条期间允许加速
             if (Settings.TimeScaleKey1 != KeyCode.None || Settings.TimeScaleKey2 != KeyCode.None || _tsActive1 || _tsActive2 || Time.timeScale != 1f)
             {
-                bool held1 = Settings.TimeScaleKey1 != KeyCode.None && Input.GetKey(Settings.TimeScaleKey1);
-                bool held2 = Settings.TimeScaleKey2 != KeyCode.None && Input.GetKey(Settings.TimeScaleKey2);
+                bool held1 = !typing && Settings.TimeScaleKey1 != KeyCode.None && Input.GetKey(Settings.TimeScaleKey1);
+                bool held2 = !typing && Settings.TimeScaleKey2 != KeyCode.None && Input.GetKey(Settings.TimeScaleKey2);
                 bool blocked = uConsole.m_On;
                 if (!blocked)
                 {
@@ -653,7 +820,26 @@ public class ModMain : MelonMod
             if (_frame > 0 && (_frame % 30) == 15)
             {
                 SyncStateFromSettings();
+                if (Settings.World_BowRepair)
+                    Patch_GearItem_Awake_BowRepair.PreloadMaterials();
                 Patch_GearDegrade.InvalidateCache();
+                // v7.7 延迟落盘的真正写盘点(见 Settings.RequestSave)。无脏标记时是一次 bool 判定,零成本。
+                Settings.FlushPendingSave();
+                // v7.7 交互加速倍率拖回 1 后,把改过的 panel 字段写回 vanilla 基准
+                //   (patch 此时已卸载,没人再跑 prefix,只能在这里还)。无待还项时只是一次 Count 判定。
+                //   按 key 逐个判自己那个滑条是否已回 1(见 SpeedyGuard.RestoreSettled)。
+                if (SpeedyGuard.HasPending) SpeedyGuard.RestoreSettled();
+
+                // v8.2 修「UI 里勾了开关要等几秒才生效」。
+                //   动态 patch 只在下面 (_frame % 300) == 25 那一处 Reconcile,60fps 约 5 秒一次,
+                //   帧率低时更久。CheatState 是当场就写的,所以玩家看到的是"开关亮了但功能没反应",
+                //   等几秒后才忽然生效 —— 正是"UI 和 Mod Settings 对不上"的实际观感。
+                //   改过开关才 Reconcile 一次(脏标记见 Settings.RequestSave / OnConfirm),
+                //   没改过时只是一次 bool 判定;Reconcile 对没变化的 patch 自己早退,
+                //   所以拖滑条时也不会反复挂卸。
+                //   衰减 / 鹿肉倍率三个 spec 的条件读 DecayState / MeatState,它们平时由 TweaksRuntime 每 60 帧另起一个计数器同步,
+                //   这里先同步一次,否则约七成的改动会被一次还看着旧值的 Reconcile 吃掉脏标记,又要等 5 秒。
+                if (TldHacksSettings.ConsumePatchDirty()) { TweaksRuntime.SyncDecayState(Settings); DynamicPatch.Reconcile(); }
             }
 
             // v2.7.88: 体力恢复直接每帧写字段 (跳过 Harmony hook,确保滑条立即生效)
@@ -664,11 +850,17 @@ public class ModMain : MelonMod
             try { AutoOpenMapHandler.Tick(); } catch { }
             // v2.7.88: 空格秒完成 (拆解/采集/制作/修理 面板按空格立刻完成)
             try { SpaceFinishHandler.Tick(); } catch { }
+            // v8.3 一键搜刮的逐件确认队列。队列空着时第一句 bool 判定就返回,零成本。
+            try { GrabAll.TickQueue(); } catch { }
 
             // v2.7.75 稳定节奏:动态 patch 只在固定低频点 reconcile。
             if ((_frame % 300) == 25) DynamicPatch.Reconcile();
-            // v6.0.7 FlaskAnyItem 原生 NOP patch
+#if !STORY_EDITION
+            // v6.0.7 FlaskAnyItem 原生 NOP patch(2.24 无保温瓶,整类已排除)
             if ((_frame % 300) == 30) FlaskNativePatch.Sync();
+#endif
+            // v7.5 篝火燃烧上限 keeper:持续把 FireManager cap 顶在目标值,修"已存在篝火加不过12h"
+            if ((_frame % 300) == 35) FireCapKeeper.Tick();
 
             // (InfiniteCarry 已去除,由其他 mod 覆盖)
 
@@ -676,6 +868,7 @@ public class ModMain : MelonMod
             // 之前 _extraTick==90 时 7 个 sub-tick 同帧触发 = 单帧 ~50ms 巨 spike = 跳帧
             // 现在每种 tick 有自己的 phase + period,最多 1 个 heavy tick/帧
             _frame++;
+            advanced = true;
 
             // Infinite durability: 每 300 帧(~5s)phase 0
             if (CheatState.InfiniteDurability && (_frame % 300) == 0)
@@ -705,7 +898,7 @@ public class ModMain : MelonMod
             // One-shot 类:状态变化时重设即可,低频 OK
             if ((_frame % 180) == 90) { ExtraOneShot.TickSprainRisk(); }
 
-            // 天气锁定:每 600 帧(~10s)重新 apply,防止游戏计时器自动切换
+            // 天气锁定:每 60 帧(~1s)查一次,游戏计时器切走了才重新 apply(见 SetWeatherStageInternal)
             if (CheatState.WeatherLocked && (_frame % 60) == 30)
                 try { Cheats.SetWeatherStageInternal(CheatState.WeatherLockedStage); } catch { }
 
@@ -790,18 +983,24 @@ public class ModMain : MelonMod
             if ((_frame % 3600) == 1800)
                 try { System.GC.Collect(0, System.GCCollectionMode.Optimized, false); } catch { }
 
-            // ShowTraderTrust 仅在用户开启时才 tick
+#if !STORY_EDITION
+            // ShowTraderTrust 仅在用户开启时才 tick(2.24 无商人系统,整块已排除)
             if (CheatState.TT_ShowTraderTrust && (_frame % 60) == 5)
                 try { ShowTraderTrustHelper.Tick(); } catch { }
+            if (Patch_TraderManager_CloseTrade.Pending && (_frame % 30) == 7)
+                Patch_TraderManager_CloseTrade.Tick();
+#endif
 
         }
-        catch (Exception ex) { Log?.Error($"[OnUpdate] {ex}"); }
+        catch (Exception ex) { if (!advanced) _frame++; Log?.Error($"[OnUpdate] {ex}"); }
     }
 
     public override void OnLateUpdate()
     {
         if (Settings != null && (Settings.DiagPauseRuntime || Settings.DiagUnpatchAll)) return;
-        Stacking.OnLateUpdate();
+#if !STORY_EDITION
+        Stacking.OnLateUpdate();   // 2.24 无 InventoryGridDataItem,整个 Stacking.cs 已排除
+#endif
         // v2.7.84 HUD 状态 clamp 每帧跑 —— LateUpdate 在 Update 的 drain 后、render 前,UI 不看到"掉到中间值"闪烁
         CheatsTick.TickStatus();
     }
@@ -810,7 +1009,9 @@ public class ModMain : MelonMod
     {
         if (Settings != null && (Settings.DiagPauseRuntime || Settings.DiagUnpatchAll)) return;
         Menu.Draw();
+#if !STORY_EDITION
         ShowTraderTrustHelper.DrawGUI();
+#endif
         MagicBulletOverlay.OnGUI();
     }
 
@@ -820,6 +1021,8 @@ public class ModMain : MelonMod
         //   场景 init 之后的存档数据加载/应用阶段。立即清会让那种崩溃逃过下次启动的安全模式。
         //   改为:每次场景切换都重置稳定计时,由 OnUpdate 跑满 180 帧无崩才清(见 OnUpdate)。
         if (!_sentinelCleared) _stableFrames = 0;
+        BreakDownCleanup.Armed = false;
+        Patch_GearItem_Awake_BowRepair.OnSceneInitialized();
         Teleport.OnSceneLoaded(sceneName);
         // v2.7.64 学习 scene transition 字段到 JSON,解决 DLC Tale 跨区物品丢失
         TransitionRecorder.OnSceneInitialized(sceneName);
@@ -835,11 +1038,34 @@ public class ModMain : MelonMod
         // v2.7.80 快速采集/割肉 snapshot 闭环 —— 实例随场景 GC,字段污染自然消失
         try { HarvestableSnaps.Snapshots.Clear(); } catch { }
         try { Patch_Harvest_Refresh_Quick.Snapshots.Clear(); } catch { }
+        // v7.7 同理清秒搜刮的 hold-time 快照(实例随场景销毁,旧 IntPtr 失效;
+        //   不清会让 cleanupDone 永远不成立 → patch 卸不掉)
+#if !STORY_EDITION
+        try { Patch_TimedHold_UpdateHoldInteraction_QuickSearch.Snapshots.Clear(); } catch { }
+#endif
+        // v7.7 交互加速的 base-value 字典也没人清过(见审计 M2),同样是跨场景 stale wrapper
+#if !STORY_EDITION
+        try { Patch_Speedy_HoldInteraction.Data.Clear(); } catch { }
+#endif
+        try { SpeedyGuard.OnSceneChange(); } catch { }
+        // v7.7 日志暂停:跨场景时 Enable(false) 不一定会来(面板随场景销毁),而
+        //   m_GlobalTimeScale 是 static → 冻在 0 会带进新场景。这里兜底写回并清标志。
+        try
+        {
+            if (PauseInJournalState.IsPaused)
+            {
+                Il2Cpp.GameManager.m_GlobalTimeScale = 1f;
+                PauseInJournalState.IsPaused = false;
+            }
+        }
+        catch { }
         // v2.7.64 清 AutoPickupGuard 的 DroppedAt dict —— 跨 scene 后地上 gear 会重新 spawn,旧 Pointer 失效
         try { AutoPickupGuard.DroppedAt.Clear(); } catch { }
         try { Patch_GearDegrade.InvalidateCache(); } catch { }
         try { RespawnablePlantsState.OnSceneLoaded(); } catch { }
+#if !STORY_EDITION
         try { ShowTraderTrustHelper.OnSceneChange(); } catch { }
+#endif
         // v2.7.64 清 BreakDown snapshot —— 跨 scene 后 BreakDown 组件重新 spawn,stale ptr
         try { Patch_BreakDown_UpdateDuration.Snapshots.Clear(); } catch { }
         // v2.7.84 清 vp_FPSCamera 缓存 + 重置 aim 诊断 —— 跨场景相机实例重建
@@ -853,6 +1079,8 @@ public class ModMain : MelonMod
         try { CougarSoundKiller.OnSceneLoad(sceneName); } catch { }
         // v2.7.96 BreakDownToolMemory 跨场景清理
         try { BreakDownToolMemory.LastToolIndex.Clear(); } catch { }
+        // v7.7 坠落伤害倍率:GameManager.Awake 时 FallDamage 组件还没就绪,在这里补写
+        try { Patch_FallDamageMultiplier.ApplyNow(); } catch { }
         // 场景切换是安全的 GC 时机 — 此时有 loading screen 遮挡，做完整回收
         try { System.GC.Collect(2, System.GCCollectionMode.Forced, true); } catch { }
     }
@@ -972,7 +1200,18 @@ internal static class NLBFontFixHelper
             if (count > 0)
             {
                 _fixed = true;
+                _scanAttempts = 0;   // 这次真修到东西 → 重新给满额度(可能还有后续 bundle 加载进来)
                 ModMain.Log?.Msg($"[NLB] Fixed {count} TMP_Text with broken font -> {_cachedFont.name}");
+            }
+            else if (++_scanAttempts > 10)
+            {
+                // v7.7 性能修:原先 _scanAttempts 只在 allTmp 为空时递增,于是场景里只要存在
+                //   任何 TMP 对象(任何用 TMP 的第三方 mod 都会带来),额度永不消耗 →
+                //   Resources.FindObjectsOfTypeAll 全托管堆扫描 + 每个结果 3-4 次属性桥
+                //   无限期每 5s(修好后 60s)复发一次,表现为周期性 5-30ms hitch。
+                //   连续 10 轮扫到 TMP 但没有一个 font 坏掉 = NLB 的 bundle 要么没装要么已修好,
+                //   可以停扫。切场景时 OnSceneChange 会重置额度,新 bundle 仍能被接住。
+                Exhausted = true;
             }
         }
         catch { }

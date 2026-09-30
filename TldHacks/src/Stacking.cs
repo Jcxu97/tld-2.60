@@ -1,3 +1,7 @@
+#if !STORY_EDITION
+// 2.24 无 Il2Cpp.InventoryGridDataItem —— 整套背包网格数据模型在 2.24 之后重做,
+// 本文件(堆叠显示/去重/标签重贴)全部依赖它,逐点手术会切碎 8 个 patch 类且留下
+// 功能已死却仍付 Harmony bridge 开销的空壳,所以整文件排除。调用点在 ModMain.OnLateUpdate。
 using System.Collections.Generic;
 using HarmonyLib;
 using Il2Cpp;
@@ -63,6 +67,10 @@ internal static class Stacking
                 {
                     var label = item.m_StackLabel;
                     if (label != null) label.text = CountStr.Get(cachedCount);
+                    // v8.1.1 重量也要每轮跟上。之前这里只补 xN,重量只在
+                    // RefreshDataItem / HoverItem / SelectGridItem / OnMoveItem 这几个 Postfix 里写,
+                    // 首次渲染之后就没人再写了 —— 表现为要点一下物品才从单件重变成总重
+                    LabelFix.ApplyWeightFromDataItem(item, cachedDi, cachedCount);
                 }
                 else
                 {
@@ -70,6 +78,7 @@ internal static class Stacking
                     {
                         var label = item.m_StackLabel;
                         if (label != null) label.text = CountStr.Get(c);
+                        LabelFix.ApplyWeightFromGear(item, curGi, c);
                     }
                 }
             }
@@ -120,6 +129,18 @@ internal static class StackState
         CountsInv.Clear(); CountsCon.Clear();
         CountsByGiInv.Clear(); CountsByGiCon.Clear();
         SeenItems.Clear();
+        LabelFix.ClearWeightCache();
+    }
+
+    // 面板活跃检测:维护轮盘/装备槽/制作面板等会复用同一个 InventoryGridItem cell 池,
+    // 但它们不属于我们 Dedupe 过的背包/容器列表。仅当背包或容器面板真正活跃时才允许写堆叠标签;
+    // 否则 stale count(IL2Cpp 释放后指针复用,旧 99-stack 的地址被新 gi 占用)会把 "xN"
+    // 漏到无关 cell 上(实测:猎枪维护轮盘出现 "x99ITEM NAME")。
+    public static bool AnyTrackedPanelActive()
+    {
+        try { var p = LastInventoryPanel; if (p != null && p.isActiveAndEnabled) return true; } catch { }
+        try { var c = LastContainerPanel; if (c != null && c.isActiveAndEnabled) return true; } catch { }
+        return false;
     }
 
     // OnUpdate tick 用来知道要扫哪个 panel 的 m_TableItems
@@ -312,6 +333,72 @@ internal static class Patch_Container_UpdateFilteredContainerList
 
 internal static class LabelFix
 {
+    // v8.1.1 单位后缀 —— ToStringMetric/ToStringImperial 只保证给出数字,
+    // 游戏原本写在 label 上的单位词("公斤" / "kg" / "lb")不一定被带出来,
+    // 带出来也不保证跟当前语言一致。所以每次都从 label 现有文本里取后缀再接回去。
+    // label 偶尔会是空的(游戏还没填),用上一次见到的后缀兜底。
+    private static string _unitSuffix = "";
+
+    // "0.35 公斤" → " 公斤";"0.77 lb" → " lb";"1.05" → ""
+    private static string UnitSuffix(string s)
+    {
+        if (string.IsNullOrEmpty(s)) return "";
+        int i = 0;
+        while (i < s.Length && (char.IsDigit(s[i]) || s[i] == '.' || s[i] == ',' || s[i] == '-' || s[i] == '+')) i++;
+        return i < s.Length ? s.Substring(i) : "";
+    }
+
+    public static string ApplyWeight(UILabel weightLabel, ItemWeight total)
+    {
+        if (weightLabel == null) return null;
+        string cur = weightLabel.text;
+        string curSuffix = UnitSuffix(cur);
+        if (curSuffix.Length != 0) _unitSuffix = curSuffix;
+
+        string unit = curSuffix.Length != 0 ? curSuffix : _unitSuffix;
+        bool imperial = unit.Contains("lb");
+        string want = imperial ? total.ToStringImperial(2u) : total.ToStringMetric(2u);
+        if (UnitSuffix(want).Length == 0 && unit.Length != 0) want += unit;
+
+        if (cur != want) weightLabel.text = want;
+        return want;
+    }
+
+    // 每 3 帧那轮补写用:同一格子、同一物品、同一数量时总重文本不变,直接拿上次算好的比。
+    //   仍然读一次标签,游戏把它重置回单件重量时照样写回;省掉的是取重量、格式化和拼单位(每格每轮 4 次分配)。
+    private static readonly System.Collections.Generic.Dictionary<System.IntPtr, (System.IntPtr di, int count, string want)> _weightDone = new();
+    internal static void ClearWeightCache() => _weightDone.Clear();
+
+    public static void ApplyWeightFromDataItem(InventoryGridItem item, InventoryGridDataItem di, int count)
+    {
+        try
+        {
+            if (item == null || di == null) return;
+            var wl = item.m_WeightLabel;
+            if (wl == null) return;
+            if (_weightDone.TryGetValue(item.Pointer, out var done) && done.di == di.Pointer && done.count == count)
+            {
+                if (wl.text != done.want) wl.text = done.want;
+                return;
+            }
+            string want = ApplyWeight(wl, di.GetItemWeight(false) * count);
+            // 标签还没填、单位没取到时别缓存,不然之后一直写回不带单位的文本
+            if (want != null && UnitSuffix(want).Length != 0) _weightDone[item.Pointer] = (di.Pointer, count, want);
+        }
+        catch { }
+    }
+
+    // Refresh(GearItem, int) 这条路没 dataItem,重量取 GearItem 自身的
+    public static void ApplyWeightFromGear(InventoryGridItem item, GearItem gi, int count)
+    {
+        try
+        {
+            if (item == null || gi == null) return;
+            ApplyWeight(item.m_WeightLabel, gi.GetItemWeightKG() * count);
+        }
+        catch { }
+    }
+
     public static void ReapplyStackLabelOnly(InventoryGridItem item, InventoryGridDataItem di)
     {
         try
@@ -358,15 +445,7 @@ internal static class LabelFix
             }
 
             // weight label —— 只在 text 不是已经是预期值时重算
-            var weightLabel = item.m_WeightLabel;
-            if (weightLabel != null)
-            {
-                string cur = weightLabel.text;
-                bool imperial = cur != null && cur.Contains("lb");
-                ItemWeight total = di.GetItemWeight(false) * count;
-                string want = imperial ? total.ToStringImperial(2u) : total.ToStringMetric(2u);
-                if (cur != want) weightLabel.text = want;
-            }
+            ApplyWeightFromDataItem(item, di, count);
         }
         catch (System.Exception ex)
         {
@@ -383,6 +462,8 @@ internal static class Patch_RefreshDataItem
         try
         {
             if (dataItem == null) return;
+            // 仅在背包/容器面板活跃时登记+写标签,避免漏到维护轮盘等复用 cell
+            if (!StackState.AnyTrackedPanelActive()) return;
 
             // 记录 (item, 此次绑的 dataItem, 此次的 gi.Pointer) 到 SeenItems。
             // OnLateUpdate 每帧 verify(靠 giPtr 对比当前绑定)+ reapply;复用后 gi 变,verify 会 skip。
@@ -489,6 +570,8 @@ internal static class Patch_InventoryGridItem_Refresh
         try
         {
             if (__instance == null || gi == null) return;
+            // 仅在背包/容器面板活跃时写标签,避免漏到维护轮盘/装备槽等复用 cell
+            if (!StackState.AnyTrackedPanelActive()) return;
             if (!StackState.TryGetCountByGi(gi.Pointer, out int count) || count <= 1) return;
 
             var label = __instance.m_StackLabel;
@@ -499,19 +582,7 @@ internal static class Patch_InventoryGridItem_Refresh
                 if (label.gameObject != null && !label.gameObject.activeSelf)
                     label.gameObject.SetActive(true);
             }
-            // weight label 这条路没 dataItem,改用 GearItem 自身的 GetItemWeightKG() * count
-            var weightLabel = __instance.m_WeightLabel;
-            if (weightLabel != null)
-            {
-                try
-                {
-                    ItemWeight total = gi.GetItemWeightKG() * count;
-                    bool imperial = weightLabel.text != null && weightLabel.text.Contains("lb");
-                    string want = imperial ? total.ToStringImperial(2u) : total.ToStringMetric(2u);
-                    if (weightLabel.text != want) weightLabel.text = want;
-                }
-                catch { }
-            }
+            LabelFix.ApplyWeightFromGear(__instance, gi, count);
         }
         catch (System.Exception ex)
         {
@@ -519,3 +590,4 @@ internal static class Patch_InventoryGridItem_Refresh
         }
     }
 }
+#endif

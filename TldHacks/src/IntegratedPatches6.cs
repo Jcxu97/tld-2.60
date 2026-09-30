@@ -1,10 +1,14 @@
-using HarmonyLib;
+﻿using HarmonyLib;
 using Il2Cpp;
+#if !STORY_EDITION   // 2.24 无此命名空间(2.24 之后才加入游戏)
 using Il2CppTLD.BigCarry;
 using Il2CppTLD.Gear;
+#endif
 using Il2CppTLD.IntBackedUnit;
+#if !STORY_EDITION   // 2.24 无此命名空间(2.24 之后才加入游戏)
 using Il2CppTLD.Interactions;
 using Il2CppTLD.Placement;
+#endif
 using UnityEngine;
 
 namespace TldHacks;
@@ -127,6 +131,9 @@ internal static class Patch_UT_GearItemDeserialize
                 __instance.m_NoiseMakerItem.m_ThrowForce = s.UT_NoisemakerThrowForce;
             }
 
+#if !STORY_EDITION
+            // 2.24 无 FoodStatEffect 类型(炖汤疲劳效果是 2.55 的食物 buff 系统),
+            // 也无 GearItemData(重量在 GearItem.m_WeightKG,见下面剧情分支)。
             // 炖汤疲劳调整
             if (n == "GEAR_CookedStewMeat" || n == "GEAR_CookedStewVegetables")
             {
@@ -144,12 +151,21 @@ internal static class Patch_UT_GearItemDeserialize
             {
                 __instance.m_GearItemData.m_BaseWeight = ItemWeight.FromKilograms(0.03f);
             }
+#else
+            // 绷带重量(2.24:裸 float 挂在 GearItem 上)
+            if (s.UT_ConsistantDressingWeight && n == "GEAR_OldMansBeardDressing")
+            {
+                __instance.m_WeightKG = 0.03f;
+            }
+#endif
         }
         catch { }
     }
 }
 
+#if !STORY_EDITION
 // ─── 滤罐持续时间 ───
+// 2.24 无 Respirator / RespiratorCanister(防毒面具随沙盒新区域一起加入)。
 [HarmonyPatch(typeof(Respirator), "AttachCanister")]
 internal static class Patch_UT_CanisterDuration
 {
@@ -163,6 +179,7 @@ internal static class Patch_UT_CanisterDuration
         catch { }
     }
 }
+#endif
 
 // ─── 岩石贮藏: 室内 + 数量/距离 ───
 [HarmonyPatch(typeof(RockCacheManager), "CanAttemptToPlaceRockCache")]
@@ -192,6 +209,24 @@ internal static class Patch_UT_RockCacheCheck
 }
 
 // ─── 雪屋衰减 ───
+// 2.24 没有 SnowShelterManager.InstantiateSnowShelter(雪屋实例化走 PlaceMesh 流程),
+// 改挂 SnowShelter.BuildFinished:建造完成的那一刻写衰减值,与 2.55 挂实例化等价
+// (两者都是"这个雪屋刚诞生"的时点,后续 Update 才开始扣血)。
+#if STORY_EDITION
+[HarmonyPatch(typeof(SnowShelter), "BuildFinished")]
+internal static class Patch_UT_SnowShelterDecay
+{
+    static void Postfix(SnowShelter __instance)
+    {
+        try
+        {
+            if (ModMain.Settings == null || __instance == null) return;
+            __instance.m_DailyDecayHP = ModMain.Settings.UT_SnowShelterDecay;
+        }
+        catch { }
+    }
+}
+#else
 [HarmonyPatch(typeof(SnowShelterManager), "InstantiateSnowShelter")]
 internal static class Patch_UT_SnowShelterDecay
 {
@@ -205,8 +240,11 @@ internal static class Patch_UT_SnowShelterDecay
         catch { }
     }
 }
+#endif
 
+#if !STORY_EDITION
 // ─── 雪橇: 互动限制 ───
+// 2.24 无 TravoisBigCarryItem / IInteraction(雪橇与交互系统重构都在 2.24 之后)。
 [HarmonyPatch(typeof(TravoisBigCarryItem), "CanPerformInteractionWhileCarrying")]
 internal static class Patch_UT_TravoisInteract
 {
@@ -222,9 +260,16 @@ internal static class Patch_UT_TravoisInteract
     }
 }
 
-// ─── 雪橇: 移动限制 (CarryDisplayError 类型 IL2CPP 不公开,用反射方式后续补) ───
-// v3.0.4 chunk 3a 暂跳过 — UT_TravoisOverrideMovement toggle 当前无效
-// chunk 3b 用 DynamicPatch/反射方式注册
+// ─── 雪橇: 移动限制 ───
+// 照抄 UniversalTweaks.Travois.OverrideMovementRestrictions:检查结果一律改成 None(没有限制)。
+//   v3.0.4 移植时跳过了,开关一直没接上。CheckMovementRestriction 拖雪橇移动时每帧都调,走 DynamicPatch。
+internal static class Patch_UT_TravoisMovementRestriction
+{
+    internal static void Postfix(ref CarryDisplayError __result)
+    {
+        __result = CarryDisplayError.None;   // 原版写的是 (CarryDisplayError)(-1),就是 None
+    }
+}
 
 // ─── 雪橇: 全参数 (OnCarried) ───
 [HarmonyPatch(typeof(TravoisBigCarryItem), "OnCarried")]
@@ -246,6 +291,7 @@ internal static class Patch_UT_TravoisParams
         catch { }
     }
 }
+#endif
 
 // ─── 喷漆: 高亮 (DynamicPatch 注册,不常驻 — 渲染路径,每帧每喷漆标记触发一次) ───
 internal static class Patch_UT_GlowingDecals

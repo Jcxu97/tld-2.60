@@ -52,8 +52,11 @@ internal static class MapClickTeleport
 
     private static Panel_Map GetPanel()
     {
-        if (_cachedPanel != null && _cachedPanel.isActiveAndEnabled) return _cachedPanel;
-        _cachedPanel = UnityEngine.Object.FindObjectOfType<Panel_Map>();
+        // 地图关着时面板对象还在,只是没激活,留着缓存由 Tick 判 isActiveAndEnabled。
+        //   原先不激活就丢缓存再 FindObjectOfType(它不返回未激活对象)→ 地图关着时每次左键都全场景搜一遍。
+        //   改用游戏自己的面板表,不扫场景;面板还没创建时返回 null。
+        if (_cachedPanel != null) return _cachedPanel;
+        try { _cachedPanel = InterfaceManager.GetPanel<Panel_Map>(); } catch { _cachedPanel = null; }
         return _cachedPanel;
     }
 
@@ -374,7 +377,7 @@ internal static class MapClickTeleport
             {
                 panel.Enable(false);
                 Teleport.MovePlayerTo(worldPos);
-                CheatState.LastActionLog = $"MapTP → {locName} ({worldPos.x:F0},{worldPos.y:F0},{worldPos.z:F0})";
+                CheatState.LastActionLog = $"{I18n.T("地图传送", "Map TP")} → {locName} ({worldPos.x:F0},{worldPos.y:F0},{worldPos.z:F0})";
                 ModMain.Log?.Msg($"[MapTP] (affine) → {locName} mapPos={mapPos} world={worldPos}");
                 return;
             }
@@ -385,7 +388,7 @@ internal static class MapClickTeleport
                 Vector3 finalPos = FindGroundPosition(worldPos);
                 panel.Enable(false);
                 Teleport.MovePlayerTo(finalPos);
-                CheatState.LastActionLog = $"MapTP → {locName} ({finalPos.x:F0},{finalPos.y:F0},{finalPos.z:F0})";
+                CheatState.LastActionLog = $"{I18n.T("地图传送", "Map TP")} → {locName} ({finalPos.x:F0},{finalPos.y:F0},{finalPos.z:F0})";
                 ModMain.Log?.Msg($"[MapTP] (name match) → {locName} world={finalPos}");
                 return;
             }
@@ -396,7 +399,7 @@ internal static class MapClickTeleport
                 Vector3 finalPos = FindGroundPosition(worldPos);
                 panel.Enable(false);
                 Teleport.MovePlayerTo(finalPos);
-                CheatState.LastActionLog = $"MapTP → {locName} ({finalPos.x:F0},{finalPos.y:F0},{finalPos.z:F0})";
+                CheatState.LastActionLog = $"{I18n.T("地图传送", "Map TP")} → {locName} ({finalPos.x:F0},{finalPos.y:F0},{finalPos.z:F0})";
                 ModMain.Log?.Msg($"[MapTP] (closest) → {locName} mapPos={mapPos} world={finalPos}");
                 return;
             }
@@ -406,13 +409,15 @@ internal static class MapClickTeleport
             {
                 panel.Enable(false);
                 Teleport.MovePlayerTo(worldPos);
-                CheatState.LastActionLog = $"MapTP → {locName} ({worldPos.x:F0},{worldPos.y:F0},{worldPos.z:F0})";
+                CheatState.LastActionLog = $"{I18n.T("地图传送", "Map TP")} → {locName} ({worldPos.x:F0},{worldPos.y:F0},{worldPos.z:F0})";
                 ModMain.Log?.Msg($"[MapTP] (waypoint match) → {locName} world={worldPos}");
                 return;
             }
 
             ModMain.Log?.Warning($"[MapTP] no world position found for '{locName}' mapPos={mapPos} in {region}");
-            CheatState.LastActionLog = $"MapTP: 无法定位 {locName}";
+            CheatState.LastActionLog = I18n.IsEnglish
+                ? $"MapTP: can't locate {locName}"
+                : $"MapTP: 无法定位 {locName}";
         }
         catch (Exception ex) { ModMain.Log?.Warning($"[MapTP] teleport: {ex.Message}"); }
     }

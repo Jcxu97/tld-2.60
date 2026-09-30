@@ -1,5 +1,4 @@
-using Il2Cpp;
-using Il2CppTLD.Gear;
+﻿using Il2Cpp;
 using UnityEngine;
 
 namespace TldHacks;
@@ -13,6 +12,8 @@ internal static class TweaksRuntime
 {
     private static int _frameCount;
     private static bool _torchPrefabSet;
+    // v7.7 已写进 prefab 的燃烧分钟数;滑条改动后需要重写 prefab(见 Tick)
+    private static float _torchPrefabMinutes = float.NaN;
 
     public static void Tick()
     {
@@ -22,14 +23,38 @@ internal static class TweaksRuntime
         _frameCount++;
 
         if (_frameCount % 60 == 3) SyncDecayState(s);
-        if (!_torchPrefabSet) SetTorchPrefab(s);
+
+        // v7.7 性能修 + 行为修,两件事:
+        //   (1) 原先是 `if (!_torchPrefabSet) SetTorchPrefab(s);` —— 每帧调一次资源加载 API。
+        //       主菜单里 prefab 恒为 null 所以标记永不置位,等于在主菜单永久每帧 60 次
+        //       LoadGearItemPrefab。降到 60 帧一次 + 只在游戏场景里试。
+        //   (2) 原先 prefab 一旦写成功就永不复位(ResetTorchPrefab 零调用者),
+        //       进游戏后拖"火把燃烧分钟"滑条 → 新造的火把还是旧值。
+        //       改成记住已写入的值,滑条一变就重写一次 prefab。
+        if (_frameCount % 60 == 17)
+        {
+            bool needWrite = !_torchPrefabSet
+                          || !Mathf.Approximately(_torchPrefabMinutes, s.TorchBurnMinutes);
+            if (needWrite && InGameplay()) SetTorchPrefab(s);
+        }
     }
 
+    // 主菜单 / 空场景里 prefab 拿不到,别白试
+    private static bool InGameplay()
+    {
+        try { return !GameManager.IsMainMenuActive() && !GameManager.IsEmptySceneActive(); }
+        catch { return false; }
+    }
 
     private static void SetTorchPrefab(TldHacksSettings s)
     {
         try
         {
+#if STORY_EDITION
+            // 2.24 拿不到 prefab 本体(StoryShim 会实例化一支新火把),改它不影响之后生成的火把,还会漏一支在场景里
+            _torchPrefabSet = true;
+            _torchPrefabMinutes = s.TorchBurnMinutes;
+#else
             var prefab = GearItem.LoadGearItemPrefab("GEAR_Torch");
             if (prefab == null) return;
             var torch = prefab.GetComponent<TorchItem>();
@@ -37,14 +62,16 @@ internal static class TweaksRuntime
             {
                 torch.m_BurnLifetimeMinutes = s.TorchBurnMinutes;
                 _torchPrefabSet = true;
+                _torchPrefabMinutes = s.TorchBurnMinutes;
             }
+#endif
         }
         catch { }
     }
 
-    public static void ResetTorchPrefab() => _torchPrefabSet = false;
+    public static void ResetTorchPrefab() { _torchPrefabSet = false; _torchPrefabMinutes = float.NaN; }
 
-    private static void SyncDecayState(TldHacksSettings s)
+    internal static void SyncDecayState(TldHacksSettings s)
     {
         try
         {
@@ -83,9 +110,8 @@ internal static class TweaksRuntime
             DecayState.CanOpenerDecay = s.CanOpenerDecay;
             DecayState.PrybarDecay = s.PrybarDecay;
             DecayState.BodyHarvestDecay = s.BodyHarvestDecay;
-            DecayState.ClothingDecayDaily = s.ClothingDecayDaily;
-            DecayState.ClothingDecayIndoors = s.ClothingDecayIndoors;
-            DecayState.ClothingDecayOutdoors = s.ClothingDecayOutdoors;
+            MeatState.DeerMin = s.DeerMeatMultMin;
+            MeatState.DeerMax = s.DeerMeatMultMax;
         }
         catch { }
     }
@@ -129,11 +155,8 @@ internal static class DecayState
     public static float CanOpenerDecay = 1f;
     public static float PrybarDecay = 1f;
     public static float BodyHarvestDecay = 1f;
-    public static float ClothingDecayDaily = 1f;
-    public static float ClothingDecayIndoors = 1f;
-    public static float ClothingDecayOutdoors = 1f;
 
-    // v3.0.3: 扩展到全部 38 个字段(之前只检查 10 个,导致细分 slider 不挂载 patch)
+    // v3.0.3: 扩展到全部细分字段(之前只检查 10 个,导致细分 slider 不挂载 patch)
     public static bool HasNonDefaultMultiplier()
     {
         const float e = 0.001f;
@@ -154,7 +177,6 @@ internal static class DecayState
             || Mathf.Abs(WaterPurifierDecay - 1f) > e || Mathf.Abs(CookingPotDecay - 1f) > e
             || Mathf.Abs(FlareGunAmmoDecay - 1f) > e || Mathf.Abs(WhetstoneDecay - 1f) > e
             || Mathf.Abs(CanOpenerDecay - 1f) > e || Mathf.Abs(PrybarDecay - 1f) > e
-            || Mathf.Abs(BodyHarvestDecay - 1f) > e || Mathf.Abs(ClothingDecayDaily - 1f) > e
-            || Mathf.Abs(ClothingDecayIndoors - 1f) > e || Mathf.Abs(ClothingDecayOutdoors - 1f) > e;
+            || Mathf.Abs(BodyHarvestDecay - 1f) > e;
     }
 }

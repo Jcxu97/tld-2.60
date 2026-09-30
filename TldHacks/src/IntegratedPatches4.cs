@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using HarmonyLib;
 using Il2Cpp;
@@ -6,7 +6,9 @@ using Il2CppAK;
 using Il2CppInterop.Runtime.Injection;
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using Il2CppTLD.IntBackedUnit;
+#if !STORY_EDITION   // 2.24 无此命名空间(2.24 之后才加入游戏)
 using Il2CppTLD.Interactions;
+#endif
 using UnityEngine;
 using SceneManager = UnityEngine.SceneManagement.SceneManager;
 
@@ -31,9 +33,10 @@ internal class CarcassMovingBehaviour : MonoBehaviour
         if (GameManager.m_IsPaused || !CarcassMovingState.IsCarrying) return;
         if (!CheatState.World_CarcassMoving) { CarcassMovingState.Drop(); return; }
         CarcassMovingState.DisplayDropHint();
+        var struggle = GameManager.GetPlayerStruggleComponent();
         if ((Input.GetMouseButtonDown(1) && Time.time - CarcassMovingState.PickUpTime > 0.5f) ||
             CarcassMovingState.HasInjuryPreventing() ||
-            GameManager.GetPlayerStruggleComponent().InStruggle())
+            (struggle != null && struggle.InStruggle()))
             CarcassMovingState.Drop();
     }
 }
@@ -69,10 +72,15 @@ internal static class CarcassMovingState
     {
         IsCarrying = true;
         PickUpTime = Time.time;
+#if STORY_EDITION
+        // 2.24 这三个都返回裸 float(2.55 才换成 ItemWeight)
+        Weight = Harvest.m_MeatAvailableKG + Harvest.GetGutsAvailableWeightKg() + Harvest.GetHideAvailableWeightKg();
+#else
         ItemWeight mw = Harvest.m_MeatAvailableKG;
         ItemWeight gw = Harvest.GetGutsAvailableWeightKg();
         ItemWeight hw = Harvest.GetHideAvailableWeightKg();
         Weight = ((ItemWeight)mw).ToQuantity(1f) + ((ItemWeight)gw).ToQuantity(1f) + ((ItemWeight)hw).ToQuantity(1f);
+#endif
         OriginalScene = GameManager.m_ActiveScene;
         if (CarcassObj.GetComponent<CarcassMovingBehaviour>() == null)
             CarcassObj.AddComponent<CarcassMovingBehaviour>();
@@ -230,7 +238,6 @@ internal static class Patch_Carcass_PanelEnable
         if (!CheatState.World_CarcassMoving) return;
         try
         {
-            MelonLoader.MelonLogger.Msg($"[CarcassMove] PanelEnable enable={enable} bh={bh?.ToString() ?? "null"} isCarrying={CarcassMovingState.IsCarrying}");
             if (!enable)
             {
                 CarcassMovingState.RemoveMoveButton(__instance);
@@ -238,7 +245,6 @@ internal static class Patch_Carcass_PanelEnable
             }
             bool canEn = __instance.CanEnable(bh);
             bool movable = bh != null && CarcassMovingState.IsMovable(bh);
-            MelonLoader.MelonLogger.Msg($"[CarcassMove] canEnable={canEn} movable={movable} btnAlive={CarcassMovingState.IsBtnAlive()}");
             if (!canEn) return;
             if (CarcassMovingState.IsCarrying) CarcassMovingState.Drop();
             if (movable && !CarcassMovingState.IsCarrying)
@@ -246,7 +252,6 @@ internal static class Patch_Carcass_PanelEnable
                 CarcassMovingState.Harvest = bh;
                 CarcassMovingState.CarcassObj = ((Component)bh).gameObject;
                 CarcassMovingState.AddMoveButton(__instance);
-                MelonLoader.MelonLogger.Msg($"[CarcassMove] AddMoveButton done, btnAlive={CarcassMovingState.IsBtnAlive()}");
             }
             else
                 CarcassMovingState.RemoveMoveButton(__instance);
@@ -313,7 +318,13 @@ internal static class Patch_Carcass_NoEquip
     internal static bool Prefix()
     {
         if (!CheatState.World_CarcassMoving || !CarcassMovingState.IsCarrying) return true;
+#if STORY_EDITION
+        // 2.24 GameAudioManager 没有 Instance 单例(PlaySound 本身是 static),
+        // 报错音直接走 static PlayGUIError()。
+        GameAudioManager.PlayGUIError();
+#else
         GameAudioManager.PlaySound(GameAudioManager.Instance.m_ErrorAudio, ((Component)GameAudioManager.Instance).gameObject);
+#endif
         HUDMessage.AddMessage(I18n.T("搬运猎物时无法装备物品", "Cannot equip while carrying"), false, false);
         return false;
     }
@@ -374,7 +385,12 @@ internal static class Patch_Carcass_RopeDrop
 
 // ═══════════════════════════════════════════════════════════════
 // ElectricTorchLighting: 极光期间从电源点燃火把
+// 2.24 没有 SimpleInteraction / BaseInteraction(交互体系是 2.55 重构出来的),
+// 整套功能(把插座变成可交互物、点亮悬停文字)在剧情下无法实现。整块 6 个 patch 类
+// 连同 DynamicPatch 里对应的 6 条 Spec 一起排除;StoryGuard 本来就把
+// World_ElectricTorch 强制关掉了(它挂 MissionServicesManager,会碰任务对象注册)。
 // ═══════════════════════════════════════════════════════════════
+#if !STORY_EDITION
 
 internal static class ElectricTorchState
 {
@@ -456,8 +472,10 @@ internal static class Patch_ElectricTorch_Crosshair
                 var si = ElectricTorchState.LookingAt.GetComponent<SimpleInteraction>();
                 if (si != null) { ((Behaviour)si).enabled = false; ElectricTorchState.LookingAt = null; }
             }
-            if (__result != null && ElectricTorchState.NameMatchesSource(((UnityEngine.Object)__result).name)
-                && GameManager.GetAuroraManager().AuroraIsActive() && __instance.PlayerHoldingTorchThatCanBeLit())
+            // 先判极光再读名字:准星对着任何可交互物体时每帧都进这里,.name 每次分配一个字符串,而极光绝大多数时间都没有
+            if (__result != null && GameManager.GetAuroraManager().AuroraIsActive()
+                && ElectricTorchState.NameMatchesSource(((UnityEngine.Object)__result).name)
+                && __instance.PlayerHoldingTorchThatCanBeLit())
             {
                 var si2 = __result.GetComponent<SimpleInteraction>();
                 if (si2 != null && __result != ElectricTorchState.LookingAt)
@@ -513,3 +531,4 @@ internal static class ElectricTorchHelper
         }
     }
 }
+#endif

@@ -79,7 +79,7 @@
 	"TraderInstantExchange": false,
 	"TraderAlwaysAvailable": false,
 	"CougarInstantActivate": false,
-	"BlockAutoPickupOwnDrops": false,
+	"BlockAutoPickupOwnDrops": true,
 	"ESP": false,
 	"AutoAim": false,
 	"MagicBullet": false,
@@ -158,9 +158,6 @@
 	"CanOpenerDecay": 1,
 	"PrybarDecay": 1,
 	"BodyHarvestDecay": 1,
-	"ClothingDecayDaily": 1,
-	"ClothingDecayIndoors": 1,
-	"ClothingDecayOutdoors": 1,
 	"TorchBurnMinutes": 1440,
 	"TorchMinCondition": 0.6,
 	"TorchMaxCondition": 0.9,
@@ -311,5 +308,7 @@
 	"World_SodaGrapeDuration": 1,
 	"World_CarcassMoving": false,
 	"World_CarcassMovingAll": false,
-	"World_ElectricTorch": false
+	"World_ElectricTorch": false,
+	"DeerMeatMultMin": 1,
+	"DeerMeatMultMax": 1
 }

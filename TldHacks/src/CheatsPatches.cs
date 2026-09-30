@@ -1,10 +1,12 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Reflection;
 using HarmonyLib;
 using Il2Cpp;
 using Il2CppInterop.Runtime;
+#if !STORY_EDITION   // 2.24 无此命名空间(2.24 之后才加入游戏)
 using Il2CppTLD.Gear;
+#endif
 using Il2CppTLD.IntBackedUnit;
 using UnityEngine;
 
@@ -100,7 +102,12 @@ internal static class DamageFilter
         if (CheatState.NoSuffocating && cause == DamageSource.Suffocating) return true;
         if (CheatState.ImmuneAnimalDamage)
         {
+#if STORY_EDITION
+            // 2.24 无美洲狮(DamageSource.Cougar 是 2.55 才加的)
+            if (cause == DamageSource.Wolf || cause == DamageSource.Bear)
+#else
             if (cause == DamageSource.Wolf || cause == DamageSource.Bear || cause == DamageSource.Cougar)
+#endif
                 return true;
         }
         return false;
@@ -217,16 +224,32 @@ internal static class Patch_Repair_StartRepair
 }
 
 // ——— 快速拆解 v2.7.29:改 OnBreakDown Postfix 一次 set,删 Update Postfix ———
-// v2.7.61 扩展条件:QuickAction UI 已删(和 QuickBreakDown 重复),所以加 QuickBreakDown 分支
-//   — 否则 OnBreakDown 永远不触发,v2.7.59 为此加的 Update_ForceFinish 路径缺 Fade.Arm 导致留黑屏
+// 秒采集与秒拆解共用同一条拆解流程。
 internal static class Patch_BreakDown_OnBreakDown
 {
+    private static readonly System.Reflection.MethodInfo UpdateDurationLabel =
+        HarmonyLib.AccessTools.Method(typeof(Panel_BreakDown), "UpdateDurationLabel");
+
+    internal static void Prefix(Panel_BreakDown __instance)
+    {
+        Patch_BreakDown_UpdateDuration.Prefix(__instance);
+        try
+        {
+            if (UpdateDurationLabel == null)
+                ModMain.Log?.Error("[QuickBreakDown] UpdateDurationLabel method not found");
+            else
+                UpdateDurationLabel.Invoke(__instance, null);
+        }
+        catch (System.Exception ex) { ModMain.Log?.Error($"[QuickBreakDown] Duration refresh failed: {ex}"); }
+    }
+
     internal static void Postfix(Panel_BreakDown __instance)
     {
-        if (!CheatState.QuickAction && !CheatState.QuickBreakDown) return;
+        if ((!CheatState.QuickAction && !CheatState.QuickBreakDown) || !__instance.m_IsBreakingDown) return;
         FadeSuppressionWindow.Arm(5.0f);
         try
         {
+            BreakDownCleanup.Armed = true;
             // v2.7.65 关键修:冻结 TOD 避免游戏推进时钟触发 UniStorm 昼夜/天气 ScreenTint(变灰源头)
             //   和 QuickCraft 用的 m_HoursToSpendCrafting=100 但 TOD 不真实推进是同逻辑
             try { var tod = GameManager.GetTimeOfDayComponent(); if (tod != null) tod.SetTODLocked(true); } catch { }
@@ -246,11 +269,16 @@ internal static class Patch_BreakDown_Finished_Unfade
 {
     internal static void Postfix(Panel_BreakDown __instance)
     {
-        if (!CheatState.QuickAction && !CheatState.QuickBreakDown) return;
+        if (!BreakDownCleanup.Armed) return;
         try
         {
             try { var tod = GameManager.GetTimeOfDayComponent(); if (tod != null) tod.SetTODLocked(false); } catch { }
             FadeSuppressionWindow.Arm(3.0f);
+#if STORY_EDITION
+            // 2.24 的 CameraFade 只有 StartAlphaFade + NotifyFadeFinish,没有
+            // FadeIn/FinishFade 和 m_TargetAlpha 那组字段。StoryShim 里做等价"立刻亮"。
+            StoryShim.FadeInInstant();
+#else
             CameraFade.FadeIn(0f, 0f, null);
             try
             {
@@ -261,6 +289,7 @@ internal static class Patch_BreakDown_Finished_Unfade
                 CameraFade.FinishFade(true);
             }
             catch { }
+#endif
             // v2.7.74 关键:强制终结 PassTime — "阴天感" overlay 来自 m_TimeAccelerated
             try
             {
@@ -279,6 +308,7 @@ internal static class Patch_BreakDown_Finished_Unfade
             catch (System.Exception ex) { ModMain.Log?.Warning($"[QuickBD.PassTime] {ex.Message}"); }
         }
         catch { }
+        finally { BreakDownCleanup.Armed = false; }
     }
 }
 
@@ -325,10 +355,15 @@ internal static class Patch_BreakDown_Enable_Cleanup
 
 internal static class BreakDownCleanup
 {
+    internal static bool Armed;
+
     public static void Run(Panel_BreakDown inst, string tag)
     {
-        if (!CheatState.QuickAction && !CheatState.QuickBreakDown) return;
+        if (!Armed) return;
         try { FadeSuppressionWindow.Arm(5.0f); } catch { }
+#if STORY_EDITION
+        StoryShim.FadeInInstant();
+#else
         try { CameraFade.FadeIn(0f, 0f, null); } catch { }
         try
         {
@@ -339,6 +374,7 @@ internal static class BreakDownCleanup
             CameraFade.FinishFade(true);
         }
         catch { }
+#endif
         try { if (inst != null) inst.m_TimeIsAccelerated = false; } catch { }
         bool ptWasActive = false;
         try
@@ -353,6 +389,7 @@ internal static class BreakDownCleanup
         }
         catch { }
         try { var tod = GameManager.GetTimeOfDayComponent(); if (tod != null) tod.SetTODLocked(false); } catch { }
+        Armed = false;
         ModMain.Log?.Msg($"[QuickBD.Cleanup:{tag}] ptWasActive={ptWasActive}");
     }
 }
@@ -383,6 +420,20 @@ internal static class FadeSuppressionWindow
     }
 }
 
+#if STORY_EDITION
+// 2.24 的淡入淡出全走 StartAlphaFade(Color, bool fadeIn, time, delay, cb),
+// 没有 FadeOut/FadeIn/FadeTo/Fade 四个入口。窗口内把 time/delay 归零即可,
+// 语义与沙盒那四个 patch 一致(吃掉快速操作后的残留黑屏)。
+[HarmonyPatch(typeof(CameraFade), "StartAlphaFade")]
+internal static class Patch_CameraFade_StartAlphaFade
+{
+    // 参数名照 2.24 实签:StartAlphaFade(newScreenOverlayColor, isFadeIn, fadeDuration, delay, OnFadeFinish)
+    private static void Prefix(ref float fadeDuration, ref float delay)
+    {
+        if (FadeSuppressionWindow.IsActive) { fadeDuration = 0f; delay = 0f; }
+    }
+}
+#else
 [HarmonyPatch(typeof(CameraFade), "FadeOut", new System.Type[] { typeof(float), typeof(float), typeof(Il2CppSystem.Action) })]
 internal static class Patch_CameraFade_FadeOut
 {
@@ -428,6 +479,7 @@ internal static class Patch_CameraFade_Fade
         }
     }
 }
+#endif
 
 // v2.7.30 重新加回 TimeOfDay.Accelerate Prefix,但只在 QuickCraft 开时改 gameTimeHours=0
 //   根因:v2.7.29 只把 craft time=1 秒,但 Accelerate 的 gameTimeHours 原值 8h 仍推进游戏时钟
@@ -473,7 +525,9 @@ internal static class Patch_Craft_CanCraft
     }
 }
 
+#if !STORY_EDITION
 // ——— 免费制作扩展:BlueprintData.HasRequiredMaterials 强制返回 true ———
+// 2.24 无 Il2CppTLD.Gear.BlueprintData / Il2CppTLD.Cooking.RecipeBook。
 [HarmonyPatch(typeof(Il2CppTLD.Gear.BlueprintData), "HasRequiredMaterials")]
 internal static class Patch_BlueprintData_HasRequiredMaterials
 {
@@ -492,6 +546,7 @@ internal static class Patch_RecipeBook_IsRecipeUnlocked
         if (CheatState.FreeCraft) __result = true;
     }
 }
+#endif
 
 // ——— 免费制作扩展:Panel_Crafting 内部材料检查(mod 物品路径) ———
 [HarmonyPatch(typeof(Panel_Milling), "HasEnoughMaterials")]
@@ -503,23 +558,11 @@ internal static class Patch_Crafting_HasEnoughMaterials
     }
 }
 
-[HarmonyPatch(typeof(Panel_Crafting), "CanCraftBlueprint", new[] { typeof(Il2CppTLD.Gear.BlueprintData) })]
-internal static class Patch_Crafting_CanCraftBlueprint
-{
-    private static void Postfix(ref bool __result)
-    {
-        if (CheatState.FreeCraft) __result = true;
-    }
-}
+// 原先这里还有一个带参数类型的 CanCraftBlueprint Postfix:2.55 只有这一个重载,和上面 Patch_Craft_CanCraft
+//   落在同一个方法上、方法体相同,每次检查配方多过一次 Harmony 桥,已删。
 
-[HarmonyPatch(typeof(Panel_Crafting), "CanCraftSelectedBlueprint")]
-internal static class Patch_Crafting_CanCraftSelected
-{
-    private static void Postfix(ref bool __result)
-    {
-        if (CheatState.FreeCraft) __result = true;
-    }
-}
+// v7.7 删掉 Patch_Crafting_CanCraftSelected —— 和上面的 Patch_Craft_CanCraftSelected
+//   打在同一个方法上、Postfix 体完全一样,等于每次调用白付一次 IL2Cpp 桥开销。
 
 [HarmonyPatch(typeof(Panel_Cooking), "PlayerHasEnoughPotableWaterForCookingItem")]
 internal static class Patch_Crafting_HasWater
@@ -530,11 +573,13 @@ internal static class Patch_Crafting_HasWater
     }
 }
 
+#if !STORY_EDITION   // 2.24 无 CraftingOperation(制作流程在 2.24 之后重构)
 [HarmonyPatch(typeof(CraftingOperation), "ConsumeMaterialsUsedForCrafting")]
 internal static class Patch_Crafting_SkipConsume
 {
     private static bool Prefix() => !CheatState.FreeCraft;
 }
+#endif
 
 // ——— 免费修理:静态 Postfix 强制修理按钮可用 ———
 [HarmonyPatch(typeof(Panel_Inventory_Examine), "CanRepair")]
@@ -595,6 +640,7 @@ internal static class Patch_Repair_SkipToolDegrade
 //   ConsumeMaterials 一次吞光堆叠材料(用户报"东西直接耗尽")。
 //   改成 StartCrafting Postfix:开始时一次性缩短 duration,vanilla Update 自然完成;
 //   toggle OFF 中途切也不会留下残余 mutation。同时 FPS 收益更大(每帧 bridge → 每次 craft 1 次)。
+#if !STORY_EDITION   // 2.24 无 CraftingOperation
 internal static class Patch_CraftingOp_StartCrafting
 {
     internal static void Postfix(CraftingOperation __instance)
@@ -608,6 +654,7 @@ internal static class Patch_CraftingOp_StartCrafting
         catch (Exception ex) { ModMain.Log?.Warning($"[QuickCraft] {ex.Message}"); }
     }
 }
+#endif
 
 // v2.7.44 —— 修 "做完屏幕暗一点" 残留 fade
 //   craft 完成后 CameraFade 可能留在 alpha > 0,强制 FadeIn(0,0) 瞬亮
@@ -618,7 +665,11 @@ internal static class Patch_Craft_End_ForceBright
         if (!CheatState.QuickCraft) return;
         try
         {
+#if STORY_EDITION
+            StoryShim.FadeInInstant();
+#else
             CameraFade.FadeIn(0f, 0f, null);  // 瞬 fade in,强制亮
+#endif
         }
         catch { }
     }
@@ -891,7 +942,12 @@ internal static class Patch_Container_Enable
                 __instance.m_EnableDelaySeconds /= 50f;
             }
             if (CheatState.InfiniteContainer && __instance.m_Container != null)
+#if STORY_EDITION
+                // 2.24 Container.m_CapacityKG 是裸 float
+                __instance.m_Container.m_CapacityKG = 10000f;
+#else
                 __instance.m_Container.m_Capacity = Il2CppTLD.IntBackedUnit.ItemWeight.FromKilograms(10000f);
+#endif
         }
         catch { }
     }
@@ -911,7 +967,6 @@ internal static class Patch_Container_Enable
 // 值为 0 → 不施加力 → 无后坐。Postfix 恢复原值避免持久修改。
 internal static class Patch_FPSWeapon_PlayFireAnimation
 {
-    internal static bool InFireAnimation;
     private static GunItem _gun;
     private static float _pitchMin, _pitchMax, _yawMin, _yawMax;
 
@@ -963,27 +1018,11 @@ internal static class Patch_FPSWeapon_PlayFireAnimation
     }
 }
 
-// 拦截 AddForce2:PlayFireAnimation 内部调此方法施加后坐力到 weapon spring
-// 在开火动画执行期间 + NoRecoil 时,清零所有力参数
-internal static class Patch_FPSWeapon_AddForce2
-{
-    internal static bool Prefix()
-    {
-        if (!Patch_FPSWeapon_PlayFireAnimation.InFireAnimation) return true;
-        if (!CheatState.NoRecoil && !CheatState.SuperAccuracy) return true;
-        return false;
-    }
-}
-
-internal static class Patch_FPSCamera_AddForce2
-{
-    internal static bool Prefix()
-    {
-        if (!Patch_FPSWeapon_PlayFireAnimation.InFireAnimation) return true;
-        if (!CheatState.NoRecoil && !CheatState.SuperAccuracy) return true;
-        return false;
-    }
-}
+// v7.7 删掉 Patch_FPSWeapon_AddForce2 / Patch_FPSCamera_AddForce2 —— 两个类既没有
+//   [HarmonyPatch] attribute 也没有 DynamicPatch Spec,从来没挂载过;而且它们唯一的
+//   守卫条件读的是 InFireAnimation,那个字段全工程无人赋值(编译器 CS0649),恒为 false
+//   → 即便挂上也永远直接 return true。无后坐力实际由 PlayFireAnimation 前后零化/还原
+//   GunItem 的 recoil 字段实现(见上),与这两个类无关。
 
 // v2.7.89 Camera.Update: Prefix 仍尝试归零弹簧参数(阻止弹簧物理运动)
 // 如果归零无效(IL2Cpp struct 限制),LateUpdate Postfix 的 transform 补偿兜底
@@ -1267,11 +1306,8 @@ internal static class Patch_FPSWeapon_SteadyAim
 }
 
 
-// 跳过 camera ambient sway 计算 → 瞄准视角不晃
-internal static class Patch_Camera_NoAmbientSway
-{
-    internal static bool Prefix() => !(CheatState.NoAimSway || CheatState.SuperAccuracy);
-}
+// v7.7 删掉 Patch_Camera_NoAmbientSway —— 无 attribute 无 Spec,从未挂载。
+//   "瞄准不晃"实际由上面 Patch_Weapon_NoSway 零化 Sway* 字段实现。
 
 // ═══════════════════════════════════════════════════════════════════
 //   v2.7.86 新增功能 —— 随意生火 / 生火材料不减 / 科技背包 / 火把满值 / 无条件冲刺 / 无限体力
@@ -1285,60 +1321,20 @@ internal static class Patch_Camera_NoAmbientSway
 // v2.7.88r4: 加 StaminaDrain (amount<0 路径) + 挂载条件扩到任一滑条非默认值 (见 DynamicPatch)
 internal static class Patch_AddSprintStamina
 {
-    // 默认值 (与 Settings.cs 对齐,用于挂载判定 + 早退出)
-    internal const float DefaultRecharge = 4.9f;
-    internal const float DefaultDrain = 0.44f;
-
-    // STAM-V3 诊断日志节流:>=1s 才再打一行
-    private static float _lastLogTime = -10f;
-
-    // DynamicPatch 挂载条件:InfiniteStamina 或任一倍率滑条非默认值
-    internal static bool ShouldPatch()
-    {
-        if (CheatState.InfiniteStamina) return true;
-        var s = ModMain.Settings;
-        if (s == null) return false;
-        return Mathf.Abs(s.StaminaRecharge - DefaultRecharge) >= 0.01f
-            || Mathf.Abs(s.StaminaDrain - DefaultDrain) >= 0.01f;
-    }
+    // v7.7 修「滑条 4 倍实际 16 倍」:倍率原本在这里(精确 hook)和 Patch_StaminaTweaks.ApplyTick
+    //   (每帧 diff)两处各算一遍,两者叠乘。
+    //   注意挂载条件原先是「任一滑条 != 出厂默认(4.9/0.44)」,所以
+    //     - 用默认值的玩家 → 本补丁不挂 → 只有 ApplyTick 生效 → 4.9 倍(正确)
+    //     - 拖过滑条的玩家 → 本补丁挂上 → 两处叠乘 → 4 倍变约 16 倍(错)
+    //   保留 ApplyTick 作为唯一施加点(它是轮询式的,不依赖 hook 能否挂上,且默认值下也在跑,
+    //   一致性最好),这里只留无限体力的钳位。
+    internal static bool ShouldPatch() => CheatState.InfiniteStamina;
 
     // v6.8.6 修:Harmony 按参数名匹配,vanilla 真实签名是 AddSprintStamina(float stamina) 不是 amount
     internal static void Postfix(PlayerMovement __instance, float stamina)
     {
-        if (CheatState.InfiniteStamina)
-        {
-            try { __instance.m_SprintStamina = 100f; } catch { }
-            return;
-        }
-        var s = ModMain.Settings;
-        if (s == null) return;
-
-        try
-        {
-            // stamina > 0 = 恢复:补加 (recharge-1)*stamina,最终总恢复 = stamina * recharge
-            if (stamina > 0f && Mathf.Abs(s.StaminaRecharge - 1f) > 0.01f)
-            {
-                float extra = stamina * (s.StaminaRecharge - 1f);
-                __instance.m_SprintStamina = Mathf.Clamp(__instance.m_SprintStamina + extra, 0f, 100f);
-            }
-            // stamina < 0 = 消耗:vanilla 已扣 stamina,我们要让总扣 = stamina*drain
-            //   补加 (1-drain)*stamina  (stamina<0,drain<1 时此值为正 → 把多扣的还回来)
-            //                           (stamina<0,drain>1 时此值为负 → 再多扣一点)
-            else if (stamina < 0f && Mathf.Abs(s.StaminaDrain - 1f) > 0.01f)
-            {
-                float adjust = (1f - s.StaminaDrain) * stamina;
-                __instance.m_SprintStamina = Mathf.Clamp(__instance.m_SprintStamina + adjust, 0f, 100f);
-            }
-
-            // STAM-V3 诊断日志:1s 节流,每帧最多 1 行
-            float now = Time.realtimeSinceStartup;
-            if (now - _lastLogTime >= 1f)
-            {
-                _lastLogTime = now;
-                MelonLoader.MelonLogger.Msg($"[STAM-V3] stamina={stamina:F4} recharge={s.StaminaRecharge:F2} drain={s.StaminaDrain:F2} delay={s.StaminaRecoveryDelay:F2} m_SprintStamina={__instance.m_SprintStamina:F2}");
-            }
-        }
-        catch { }
+        if (!CheatState.InfiniteStamina) return;
+        try { __instance.m_SprintStamina = 100f; } catch { }
     }
 }
 
@@ -1370,58 +1366,28 @@ internal static class Patch_SpeedMultiplier
 // v2.7.87 修:解绑 SpeedTweaksEnabled — 体力滑条独立生效,不再被"启用速度调节"锁住
 internal static class Patch_StaminaTweaks
 {
-    internal const float DefaultRecharge = 1f;
-    internal const float DefaultDelay = 1f;
-    private static float _initRecovery;
     private static float _initSeconds;
     private static bool _inited;
-    private static float _lastRecharge = -1f, _lastDelay = -1f;
+    private static float _lastDelay = -1f;
 
-    // DynamicPatch 挂载条件:任一体力滑条非默认值
-    internal static bool ShouldPatch()
-    {
-        var s = ModMain.Settings;
-        if (s == null) return false;
-        return Mathf.Abs(s.StaminaRecharge - DefaultRecharge) >= 0.01f
-            || Mathf.Abs(s.StaminaRecoveryDelay - DefaultDelay) >= 0.01f;
-    }
+    // v7.7 删掉 Postfix / RestoreVanilla / ShouldPatch / DefaultRecharge / DefaultDelay:
+    //   这个类既没有 [HarmonyPatch] attribute 也没有 DynamicPatch Spec,Postfix 从未挂载过
+    //   (全工程只有 ModMain 调 ApplyTick)。而且 Postfix 写的是
+    //   m_SprintStaminaRecoverPerHour *= recharge,与 ApplyTick 的 diff 补差是同一个倍率的
+    //   第二个施加点 —— 一旦有人给它补上 Spec 就会重演 H1 的「4 倍变 16 倍」。
+    //   体力恢复/消耗倍率现在只由 ApplyTick 施加,延迟字段的还原也在 ApplyTick 内闭环。
 
-    // 卸载前恢复原始值,避免滑条调过又关掉后字段卡在改过的值
-    internal static void RestoreVanilla()
+    // v7.7 ApplyTick 的零成本快速门(见 ApplyTick 里的注释)。
+    //   三个倍率全 ≈1 时,ApplyTick 内每条分支都已经是 no-op(delay 写的是 _initSeconds*1,
+    //   两条 diff 分支都被 Mathf.Abs(mult) > 0.01f 挡掉),所以直接退出与跑完全等价。
+    //   _lastDelay 也要一起判:滑条从非默认拖回 1.0 时得让 ApplyTick 再跑一次把字段写回,
+    //   否则会卡在改过的值上。
+    private static bool NeedsTick(TldHacksSettings s)
     {
-        if (!_inited) return;
-        try
-        {
-            var pm = GameManager.GetPlayerMovementComponent();
-            if (pm != null)
-            {
-                pm.m_SprintStaminaRecoverPerHour = _initRecovery;
-                pm.m_SecondsNotSprintingBeforeRecovery = _initSeconds;
-            }
-            _lastRecharge = -1f; _lastDelay = -1f;
-        }
-        catch { }
-    }
-
-    internal static void Postfix(PlayerMovement __instance)
-    {
-        try
-        {
-            var s = ModMain.Settings;
-            if (s == null) return;
-            if (!_inited)
-            {
-                _initRecovery = __instance.m_SprintStaminaRecoverPerHour;
-                _initSeconds = __instance.m_SecondsNotSprintingBeforeRecovery;
-                _inited = true;
-            }
-            float recharge = s.StaminaRecharge, delay = s.StaminaRecoveryDelay;
-            if (recharge == _lastRecharge && delay == _lastDelay) return;
-            _lastRecharge = recharge; _lastDelay = delay;
-            __instance.m_SprintStaminaRecoverPerHour = _initRecovery * recharge;
-            __instance.m_SecondsNotSprintingBeforeRecovery = _initSeconds * delay;
-        }
-        catch { }
+        return Mathf.Abs(s.StaminaRecharge - 1f) > 0.01f
+            || Mathf.Abs(s.StaminaDrain - 1f) > 0.01f
+            || Mathf.Abs(s.StaminaRecoveryDelay - 1f) > 0.01f
+            || (_lastDelay >= 0f && _lastDelay != s.StaminaRecoveryDelay);
     }
 
     // v2.7.88r5: diff trick — 每帧观察 vanilla 改了多少体力,补一笔差值实现倍率
@@ -1432,6 +1398,19 @@ internal static class Patch_StaminaTweaks
     {
         var s = ModMain.Settings;
         if (s == null) return;
+
+        // v7.7 性能修:这个方法由 ModMain.OnUpdate 每帧无条件调用,原先只有 s==null / pm==null
+        //   两道门,于是即使三个体力参数全是原版值也照样每帧 4-6 次 IL2Cpp 桥穿越
+        //   (GetPlayerMovementComponent + 读写 m_SprintStamina)。
+        //   下面这道门是纯浮点比较,三参数全默认时直接退出 → 零桥调用。
+        //   注意:必须同时判 Drain(ShouldPatch() 只判 Recharge/Delay,不能直接复用),
+        //   且 InfiniteStamina 开着时也要继续跑,因为要维护 _lastSprintStamina 基线。
+        if (!NeedsTick(s) && !CheatState.InfiniteStamina)
+        {
+            _diffInited = 0; _lastSprintStamina = -1f;
+            return;
+        }
+
         var pm = GameManager.GetPlayerMovementComponent();
         if (pm == null) { _diffInited = 0; _lastSprintStamina = -1f; return; }
 
@@ -1441,7 +1420,8 @@ internal static class Patch_StaminaTweaks
         {
             if (!_inited)
             {
-                _initRecovery = pm.m_SprintStaminaRecoverPerHour;
+                // v7.7 不再快照 m_SprintStaminaRecoverPerHour:唯一的读取方(已删的 Postfix)
+                //   走的是"改 vanilla 恢复速率"路线,而 ApplyTick 走的是 diff 补差,不碰这个字段。
                 _initSeconds = pm.m_SecondsNotSprintingBeforeRecovery;
                 if (_initSeconds <= 0f) _initSeconds = 1.5f;
                 _inited = true;
@@ -1482,8 +1462,10 @@ internal static class Patch_StaminaTweaks
     }
 }
 
+#if !STORY_EDITION
 // —— 火把燃烧时间:Panel_FeedFire.Enable Postfix ——
 // 复制自 TorchTweaker:设置 min/max condition
+// 2.24 无 Panel_FeedFire.m_Min/MaxNormalizedTorchCondition,两个类连同 DynamicPatch 的 Spec 一起排除。
 internal static class Patch_TorchCondition
 {
     internal static void Postfix(Panel_FeedFire __instance)
@@ -1517,6 +1499,7 @@ internal static class Patch_TorchCondition_ActionPicker
         catch { }
     }
 }
+#endif
 
 
 // —— 交互距离:PlayerManager.ComputeModifiedPickupRange Postfix ——
@@ -1573,6 +1556,7 @@ internal static class Patch_GearDegrade
 {
     private static readonly System.Collections.Generic.Dictionary<IntPtr, float> _cache = new();
     internal static void InvalidateCache() => _cache.Clear();
+    private static bool Has(string name, string key) => name.IndexOf(key, StringComparison.OrdinalIgnoreCase) >= 0;
 
     internal static bool Prefix(GearItem __instance, ref float hp)
     {
@@ -1580,7 +1564,8 @@ internal static class Patch_GearDegrade
         {
             if (FallClothingGuard.Active) { hp = 0f; return true; }
             if (CheatState.InfiniteDurability) { hp = 0f; return true; }
-            if (CheatState.QuickCraft) { hp = 0f; return true; }
+            // 原先这里还有 QuickCraft → hp=0:v3.0.4 时快速制作把制作小时数设成 100,不归零会磨光工具。
+            //   v6.8.2 起只缩真实时长,工具磨损总量就是原版量;留着它等于开快速制作就全局无限耐久。
             if (__instance == null) return true;
 
             // 快速路径：已知物品直接用缓存倍率(子类别 mult,GeneralDecay/OnUseDecay 作为额外乘子在外面再乘)
@@ -1604,7 +1589,9 @@ internal static class Patch_GearDegrade
             string name = __instance.gameObject.name;
 
             // Check specific item types by name first
-            if (name.Contains("Bedroll")) mult = DecayState.BedrollDecay;
+            // 下面几个关键词游戏里的大小写和这里不同(GEAR_BedRoll / GEAR_BottlePainKillers / GEAR_Firestriker /
+            //   GEAR_CatTailStalk / GEAR_RawRockfish),用 Has 忽略大小写;其余保持区分大小写,免得 Tea 误中 Steak 这类名字
+            if (Has(name, "Bedroll")) mult = DecayState.BedrollDecay;
             else if (name.Contains("Travois")) mult = DecayState.TravoisDecay;
             else if (name.Contains("Arrow")) mult = DecayState.ArrowDecay;
             else if (name.Contains("Snare")) mult = DecayState.SnareDecay;
@@ -1612,7 +1599,7 @@ internal static class Patch_GearDegrade
             else if (name.Contains("CookingPot") || name.Contains("RecycledCan")) mult = DecayState.CookingPotDecay;
             else if (name.Contains("Hide") || name.Contains("Pelt") || name.Contains("Gut") || name.Contains("Leather"))
                 mult = DecayState.HideDecay;
-            else if (name.Contains("FirstAid") || name.Contains("Bandage") || name.Contains("Antibiotic") || name.Contains("Painkiller"))
+            else if (name.Contains("FirstAid") || name.Contains("Bandage") || name.Contains("Antibiotic") || Has(name, "Painkiller"))
                 mult = DecayState.FirstAidDecay;
             else if (name.Contains("WaterPurifier")) mult = DecayState.WaterPurifierDecay;
             else if (__instance.m_DegradeOnUse != null)
@@ -1623,7 +1610,7 @@ internal static class Patch_GearDegrade
                     mult = DecayState.WhetstoneDecay;
                 else if (name.Contains("CanOpener")) mult = DecayState.CanOpenerDecay;
                 else if (name.Contains("Prybar")) mult = DecayState.PrybarDecay;
-                else if (name.Contains("FireStriker") || name.Contains("Matches") || name.Contains("Flare"))
+                else if (Has(name, "FireStriker") || name.Contains("Matches") || name.Contains("Flare"))
                     mult = DecayState.FirestartingDecay;
                 else if (__instance.m_ToolsItem != null)
                 {
@@ -1641,15 +1628,15 @@ internal static class Patch_GearDegrade
                 else if (__instance.m_FoodItem.m_IsDrink) mult = DecayState.DrinksDecay;
                 else if (name.Contains("Canned") || name.Contains("PinnacleCanPeaches") || name.Contains("TomatoSoup") || name.Contains("DogFood"))
                     mult = DecayState.CannedFoodDecay;
-                else if (name.Contains("PackagedFood") || name.Contains("GranolaBar") || name.Contains("EnergyBar") || name.Contains("CattailStalk"))
+                else if (name.Contains("PackagedFood") || name.Contains("GranolaBar") || name.Contains("EnergyBar") || Has(name, "CattailStalk"))
                     mult = DecayState.PackagedFoodDecay;
                 else if (name.Contains("CookingFat") || name.Contains("BearFat"))
                     mult = DecayState.FatDecay;
                 else if (name.Contains("CuredFish") || name.Contains("Jerky") && name.Contains("Fish"))
                     mult = DecayState.CuredFishDecay;
-                else if (__instance.m_FoodItem.m_IsRawMeat && name.Contains("Fish"))
+                else if (__instance.m_FoodItem.m_IsRawMeat && Has(name, "Fish"))
                     mult = DecayState.RawFishDecay;
-                else if (__instance.m_FoodItem.m_IsMeat && name.Contains("Fish"))
+                else if (__instance.m_FoodItem.m_IsMeat && Has(name, "Fish"))
                     mult = DecayState.CookedFishDecay;
                 else if (name.Contains("Cured") || name.Contains("Jerky"))
                     mult = DecayState.CuredMeatDecay;
@@ -1723,6 +1710,18 @@ internal static class Patch_TechBackpack
         {
             if (__instance == null || !CheatState.TechBackpack) return;
             float kg = CheatState.TechBackpackKg;
+#if STORY_EDITION
+            // 2.24 这 7 个字段名都带 KG 后缀且是裸 float(2.55 才改成 ItemWeight 并去掉后缀)
+            if (kg == _lastKg && __instance.m_MaxCarryCapacityKG == kg) return;
+            _lastKg = kg;
+            __instance.m_MaxCarryCapacityKG = kg;
+            __instance.m_MaxCarryCapacityWhenExhaustedKG = kg * 0.5f;
+            __instance.m_NoSprintCarryCapacityKG = kg + 10f;
+            __instance.m_NoWalkCarryCapacityKG = kg + 30f;
+            __instance.m_EncumberLowThresholdKG = kg + 1f;
+            __instance.m_EncumberMedThresholdKG = kg + 10f;
+            __instance.m_EncumberHighThresholdKG = kg + 30f;
+#else
             if (kg == _lastKg && __instance.m_MaxCarryCapacity == ItemWeight.FromKilograms(kg)) return;
             _lastKg = kg;
             __instance.m_MaxCarryCapacity = ItemWeight.FromKilograms(kg);
@@ -1732,6 +1731,7 @@ internal static class Patch_TechBackpack
             __instance.m_EncumberLowThreshold = ItemWeight.FromKilograms(kg + 1f);
             __instance.m_EncumberMedThreshold = ItemWeight.FromKilograms(kg + 10f);
             __instance.m_EncumberHighThreshold = ItemWeight.FromKilograms(kg + 30f);
+#endif
         }
         catch { }
     }
@@ -1746,6 +1746,15 @@ internal static class EncumberVanilla
         {
             var e = GameManager.GetEncumberComponent();
             if (e == null) return;
+#if STORY_EDITION
+            e.m_MaxCarryCapacityKG = 30f;
+            e.m_MaxCarryCapacityWhenExhaustedKG = 15f;
+            e.m_NoSprintCarryCapacityKG = 40f;
+            e.m_NoWalkCarryCapacityKG = 60f;
+            e.m_EncumberLowThresholdKG = 31f;
+            e.m_EncumberMedThresholdKG = 40f;
+            e.m_EncumberHighThresholdKG = 60f;
+#else
             e.m_MaxCarryCapacity = ItemWeight.FromKilograms(30f);
             e.m_MaxCarryCapacityWhenExhausted = ItemWeight.FromKilograms(15f);
             e.m_NoSprintCarryCapacity = ItemWeight.FromKilograms(40f);
@@ -1753,6 +1762,7 @@ internal static class EncumberVanilla
             e.m_EncumberLowThreshold = ItemWeight.FromKilograms(31f);
             e.m_EncumberMedThreshold = ItemWeight.FromKilograms(40f);
             e.m_EncumberHighThreshold = ItemWeight.FromKilograms(60f);
+#endif
         }
         catch { }
     }
@@ -1867,19 +1877,21 @@ internal static class CheatsTick
     private static int _lastCamScanFrame = -999;
     private static int _camNullLogCount = 0;
     // v2.7.84 重写:只保留 FindWeapon 需要的 + RecoilSpring struct 操作需要的反射
-    private static FieldInfo _fi_currentWeapon;   // FindWeapon 路径 1 用
-    private static FieldInfo _fi_recoilSpring;    // TickCamera NoRecoil struct 操作用
+    // v8.0.1: m_CurrentWeapon / m_RecoilSpring 原先走 camT.GetField(...),恒为 null ——
+    //   vp_FPSCamera 是 class,interop 把它的实例成员全生成成 property。直接读属性即可。
+    //   (嵌套 struct RecoilSpring 是 ValueType,interop 给的是真字段,所以 _fi_rs* 保留反射;
+    //    不过它们的解析入口原先挂在 _fi_recoilSpring 上,一起改成 typeof 拿。)
     private static FieldInfo _fi_rsCur, _fi_rsTgt, _fi_rsVel;
-    private static FieldInfo _fiBob, _fiShake, _fiShakeSpd;
     private static bool _reflectionInited = false;
 
     // v2.7.84:跨场景时清相机缓存 + 重置诊断开关 —— 从 ModMain.OnSceneWasInitialized 调
     public static void InvalidateCameraCache()
     {
         _cachedCam = null;
-        _aimDiagDone = false;
+        // 不重置 _aimDiagDone:诊断本意是每个进程只打一次,原先每次切场景都重跑(反射 1206 个方法名,写十几行日志)
         _camNullLogCount = 0;
         _lastCamScanFrame = -999;
+        _lastWeaponScanFrame = -999;   // v7.7 跨场景允许立刻重扫一次武器层级
         // 同时清空 TickStatus 组件缓存,场景切换后组件引用失效
         _cFrostbite = null;
         _cFatigue = null;
@@ -1890,34 +1902,60 @@ internal static class CheatsTick
         _cPlayerManager = null;
     }
 
+    // v7.7 路径 2/3 的候选成员缓存(见 FindWeapon 内注释)。跨场景不失效:
+    //   缓存的是类型的 FieldInfo/MethodInfo,不是实例引用。
+    private static FieldInfo[] _weaponFieldCache;
+    private static MethodInfo[] _weaponMethodCache;
+    private static int _lastWeaponScanFrame = -999;
+
+    private static FieldInfo[] ResolveWeaponFields(Type camT)
+    {
+        var list = new System.Collections.Generic.List<FieldInfo>(4);
+        foreach (var name in new[] { "m_Weapon", "m_ActiveWeapon", "currentWeapon", "Weapon" })
+        {
+            var fi = camT.GetField(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            if (fi != null) list.Add(fi);
+        }
+        return list.ToArray();
+    }
+
+    private static MethodInfo[] ResolveWeaponMethods(Type pmT)
+    {
+        var list = new System.Collections.Generic.List<MethodInfo>(3);
+        foreach (var mname in new[] { "GetWeaponItem", "GetCurrentWeapon", "GetActiveWeapon" })
+        {
+            var mi = pmT.GetMethod(mname, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            if (mi != null && mi.GetParameters().Length == 0) list.Add(mi);
+        }
+        return list.ToArray();
+    }
+
     // v2.7.83:多路径查找武器实例(反射 → PlayerManager → GetComponentInChildren)
     private static object FindWeapon(vp_FPSCamera cam)
     {
-        // 路径 1:反射 m_CurrentWeapon 字段
-        if (_fi_currentWeapon != null)
+        // 路径 1:直接读 m_CurrentWeapon 属性
+        try
         {
-            try
-            {
-                var w = _fi_currentWeapon.GetValue(cam);
-                if (w != null) return w;
-            }
-            catch { }
+            var w = cam.m_CurrentWeapon;
+            if (w != null) return w;
         }
+        catch { }
         // 路径 2:尝试其他字段名(m_Weapon / m_ActiveWeapon / currentWeapon)
         try
         {
-            var camT = cam.GetType();
-            foreach (var name in new[] { "m_Weapon", "m_ActiveWeapon", "currentWeapon", "Weapon" })
+            // v7.7 性能:候选成员只解析一次(结果含"一个都没有"),之后每帧复用。
+            //   原先没缓存 → 只要手里没枪(路径 1 返回 null),这里每帧重跑 4 次 GetField
+            //   + 下面 3 次 GetMethod,而 TickCamera 在任一瞄准开关 ON 时每帧都调。
+            //   缓存的是 FieldInfo/MethodInfo 而非取到的值,查找结果与逐帧解析完全一致。
+            var camFields = _weaponFieldCache ??= ResolveWeaponFields(cam.GetType());
+            for (int i = 0; i < camFields.Length; i++)
             {
-                var fi = camT.GetField(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                if (fi != null)
+                var fi = camFields[i];
+                var w = fi.GetValue(cam);
+                if (w != null)
                 {
-                    var w = fi.GetValue(cam);
-                    if (w != null)
-                    {
-                        ModMain.Log?.Msg($"[Aim] Found weapon via fallback field '{name}'");
-                        return w;
-                    }
+                    ModMain.Log?.Msg($"[Aim] Found weapon via fallback field '{fi.Name}'");
+                    return w;
                 }
             }
         }
@@ -1928,24 +1966,28 @@ internal static class CheatsTick
             var pm = GameManager.GetPlayerManagerComponent();
             if (pm != null)
             {
-                var pmT = pm.GetType();
-                foreach (var mname in new[] { "GetWeaponItem", "GetCurrentWeapon", "GetActiveWeapon" })
+                var pmMethods = _weaponMethodCache ??= ResolveWeaponMethods(pm.GetType());
+                for (int i = 0; i < pmMethods.Length; i++)
                 {
-                    var mi = pmT.GetMethod(mname, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                    if (mi != null)
+                    var mi = pmMethods[i];
+                    var w = mi.Invoke(pm, null);
+                    if (w != null)
                     {
-                        var w = mi.Invoke(pm, null);
-                        if (w != null)
-                        {
-                            ModMain.Log?.Msg($"[Aim] Found weapon via PlayerManager.{mname}()");
-                            return w;
-                        }
+                        ModMain.Log?.Msg($"[Aim] Found weapon via PlayerManager.{mi.Name}()");
+                        return w;
                     }
                 }
             }
         }
         catch { }
         // 路径 4:从 camera 的 GameObject 子层级找 vp_FPSWeapon 组件
+        // v7.7 性能:这条路径要跑两次 GetComponentsInChildren(其中一次是 MonoBehaviour 全量
+        //   + 逐个 GetType().Name 字符串匹配),开销远高于路径 1-3。而"手里没武器"时前三条
+        //   路径全返回 null → 原先每帧都会走到这里做一次全层级扫描。限流到每 30 帧一次:
+        //   真装备了武器时路径 1(m_CurrentWeapon)当帧就命中,永远走不到这里;只有反射路径
+        //   全灭的极端情况才依赖路径 4,那种情况下最多晚 0.5 秒找到,行为不变。
+        if (Time.frameCount - _lastWeaponScanFrame < 30) return null;
+        _lastWeaponScanFrame = Time.frameCount;
         try
         {
             var camGo = cam.gameObject;
@@ -1984,16 +2026,10 @@ internal static class CheatsTick
     private static void EnsureReflectionInited()
     {
         if (_reflectionInited) return;
-        var camT = typeof(vp_FPSCamera);
-        _fi_currentWeapon = _fi_currentWeapon ?? camT.GetField("m_CurrentWeapon", BindingFlags.Instance | BindingFlags.Public);
-        _fi_recoilSpring  = _fi_recoilSpring  ?? camT.GetField("m_RecoilSpring",  BindingFlags.Instance | BindingFlags.Public);
-        if (_fi_recoilSpring != null)
-        {
-            var rsT = _fi_recoilSpring.FieldType;
-            _fi_rsCur = _fi_rsCur ?? rsT.GetField("m_Current",  BindingFlags.Instance | BindingFlags.Public);
-            _fi_rsTgt = _fi_rsTgt ?? rsT.GetField("m_Target",   BindingFlags.Instance | BindingFlags.Public);
-            _fi_rsVel = _fi_rsVel ?? rsT.GetField("m_Velocity", BindingFlags.Instance | BindingFlags.Public);
-        }
+        var rsT = typeof(vp_FPSCamera.RecoilSpring);
+        _fi_rsCur = _fi_rsCur ?? rsT.GetField("m_Current",  BindingFlags.Instance | BindingFlags.Public);
+        _fi_rsTgt = _fi_rsTgt ?? rsT.GetField("m_Target",   BindingFlags.Instance | BindingFlags.Public);
+        _fi_rsVel = _fi_rsVel ?? rsT.GetField("m_Velocity", BindingFlags.Instance | BindingFlags.Public);
         _reflectionInited = true;
     }
 
@@ -2099,7 +2135,7 @@ internal static class CheatsTick
                 try { diags.Append($"Stamina={vp_FPSWeapon.m_DisableAimStamina} "); } catch (Exception ex) { diags.Append($"Stamina=ERR({ex.Message}) "); }
                 try { diags.Append($"DOF={vp_FPSWeapon.m_DisableDepthOfField} "); } catch (Exception ex) { diags.Append($"DOF=ERR({ex.Message}) "); }
                 try { diags.Append($"CamAmbSway={vp_FPSCamera.m_DisableAmbientSway} "); } catch (Exception ex) { diags.Append($"CamAmbSway=ERR({ex.Message}) "); }
-                diags.Append($"recoilSpring={(_fi_recoilSpring != null ? "OK" : "null")} ");
+                diags.Append($"recoilSpringFields={(_fi_rsCur != null ? "OK" : "null")} ");
                 diags.Append($"weapon={weapon?.GetType().FullName ?? "null"}");
                 ModMain.Log?.Msg(diags.ToString());
             }
@@ -2124,15 +2160,17 @@ internal static class CheatsTick
 
             if (CheatState.NoAimSway && weapon != null)
             {
+                // v8.0.1: 原先 wType.GetField("BobAmplitude"/"ShakeAmplitude"/"ShakeSpeed"),
+                //   三个在 interop 上都是 property → FieldInfo 恒 null,`?.SetValue` 静默跳过,
+                //   这段兜底从来没生效过。改成强转 vp_FPSWeapon 直接写属性。
                 try
                 {
-                    var wType = weapon.GetType();
-                    _fiBob ??= wType.GetField("BobAmplitude", BindingFlags.Instance | BindingFlags.Public);
-                    _fiShake ??= wType.GetField("ShakeAmplitude", BindingFlags.Instance | BindingFlags.Public);
-                    _fiShakeSpd ??= wType.GetField("ShakeSpeed", BindingFlags.Instance | BindingFlags.Public);
-                    _fiBob?.SetValue(weapon, UnityEngine.Vector4.zero);
-                    _fiShake?.SetValue(weapon, UnityEngine.Vector3.zero);
-                    _fiShakeSpd?.SetValue(weapon, 0f);
+                    if (weapon is vp_FPSWeapon w)
+                    {
+                        w.BobAmplitude = UnityEngine.Vector4.zero;
+                        w.ShakeAmplitude = UnityEngine.Vector3.zero;
+                        w.ShakeSpeed = 0f;
+                    }
                 } catch { }
             }
 
@@ -2268,7 +2306,6 @@ internal static class CheatsTick
     // ——— 忽略上锁:v2.7.8 修 —— 不能用 lk.IsLocked() 判(被 Patch_Lock_IsLocked 篡返回 false)
     // 改直接读 m_LockState 字段
     private static System.Reflection.MethodInfo _mi_lock_setLockState;
-    private static System.Reflection.FieldInfo _fi_lock_state;
     public static void TickLocks()
     {
         if (!CheatState.IgnoreLock) return;
@@ -2279,18 +2316,17 @@ internal static class CheatsTick
 
             if (_mi_lock_setLockState == null)
                 _mi_lock_setLockState = typeof(Lock).GetMethod("SetLockState", BindingFlags.Instance | BindingFlags.Public);
-            if (_fi_lock_state == null)
-                _fi_lock_state = typeof(Lock).GetField("m_LockState", BindingFlags.Instance | BindingFlags.Public);
-            if (_mi_lock_setLockState == null || _fi_lock_state == null) return;
+            if (_mi_lock_setLockState == null) return;
 
             foreach (var lk in locks)
             {
                 if (lk == null) continue;
                 try
                 {
-                    // 直接读字段,绕过 Patch_Lock_IsLocked 的 Postfix 篡改
-                    var state = _fi_lock_state.GetValue(lk);
-                    if (state != null && (int)state == (int)LockState.Locked)
+                    // v8.0.1: 原先用 GetField("m_LockState") 读,Il2CppInterop 把实例成员生成成
+                    //   property(真字段只有 static NativeFieldInfoPtr_*),FieldInfo 恒为 null →
+                    //   整个 TickLocks 在 null 检查处直接 return,无视锁全程空转。改成直接读属性。
+                    if (lk.m_LockState == LockState.Locked)
                         _mi_lock_setLockState.Invoke(lk, new object[] { LockState.Unlocked });
                 }
                 catch { }
@@ -2314,17 +2350,13 @@ internal static class CheatsTick
                 if (p == null) continue;
                 try
                 {
-                    var t = typeof(PlayerClimbRope);
-                    foreach (var fn in new[] { "m_ClimbSpeed", "m_ClimbSpeedUpFullyRested", "m_ClimbSpeedUpExhausted",
-                                               "m_ClimbSpeedDownFullyRested", "m_ClimbSpeedDownExhausted" })
-                    {
-                        var f = t.GetField(fn, BindingFlags.Instance | BindingFlags.Public);
-                        if (f != null && f.FieldType == typeof(float))
-                        {
-                            float cur = (float)f.GetValue(p);
-                            if (cur > 0f && cur < 5f) f.SetValue(p, 5f); // 幂等:设到 5 就不动了
-                        }
-                    }
+                    // v8.0.1: 原先 GetField 这五个名字,interop 实例成员是 property → 恒 null,
+                    //   爬绳加速完全不生效。改成直接写属性(幂等:设到 5 就不再动)。
+                    if (p.m_ClimbSpeed > 0f && p.m_ClimbSpeed < 5f) p.m_ClimbSpeed = 5f;
+                    if (p.m_ClimbSpeedUpFullyRested > 0f && p.m_ClimbSpeedUpFullyRested < 5f) p.m_ClimbSpeedUpFullyRested = 5f;
+                    if (p.m_ClimbSpeedUpExhausted > 0f && p.m_ClimbSpeedUpExhausted < 5f) p.m_ClimbSpeedUpExhausted = 5f;
+                    if (p.m_ClimbSpeedDownFullyRested > 0f && p.m_ClimbSpeedDownFullyRested < 5f) p.m_ClimbSpeedDownFullyRested = 5f;
+                    if (p.m_ClimbSpeedDownExhausted > 0f && p.m_ClimbSpeedDownExhausted < 5f) p.m_ClimbSpeedDownExhausted = 5f;
                 }
                 catch { }
             }
@@ -2430,50 +2462,44 @@ internal static class CheatsTick
         catch { }
     }
 
-    // ——— 节约时间:拆解(BreakDown 没有 StartXxx Prefix 路径,改 tick 设 m_SecondsToBreakDown=0)
-    // Harvest / Repair 走 Patch_Harvest_StartHarvest / Patch_Repair_StartRepair 这些 Prefix 搞定
-    private static FieldInfo _fi_breakdownSecs;
+    // 面板已改写的拆解时长在关闭快速操作后还原。
     public static void TickQuickActions()
     {
-        bool needRestore = !CheatState.QuickBreakDown && Patch_BreakDown_UpdateDuration.Snapshots.Count > 0;
-        bool needZero = CheatState.QuickAction;
-        if (!needRestore && !needZero) return;
+        if (CheatState.QuickBreakDown || CheatState.QuickAction) return;
+        var snaps = Patch_BreakDown_UpdateDuration.Snapshots;
+        if (snaps.Count == 0 && Patch_BreakDown_UpdateDuration.PanelSecs < 0f) return;
 
+        // 每件被改过的物品直接写回原耗时,不用等玩家再打开它;已经拆掉(销毁)的直接丢掉
+        foreach (var kv in snaps)
+        {
+            var bd = kv.Value.bd;
+            if (bd == null) continue;
+            try
+            {
+                bd.m_TimeCostHours = kv.Value.timeCost;
+#if !STORY_EDITION
+                bd.m_EditModeDestroyTimeCostHours = kv.Value.destroyCost;   // 2.24 没有这个字段
+#endif
+            }
+            catch { }
+        }
+        snaps.Clear();
+
+        // 面板读条秒数:面板开着就当场写回,关着就留给下次打开时 UpdateDurationLabel 的 Prefix 写
+        if (Patch_BreakDown_UpdateDuration.PanelSecs < 0f) return;
         try
         {
-            if (_fi_breakdownSecs == null)
-                _fi_breakdownSecs = typeof(Panel_BreakDown).GetField("m_SecondsToBreakDown",
-                    BindingFlags.Instance | BindingFlags.Public);
-            if (_fi_breakdownSecs == null) return;
-
-            // 只调一次 FindObjectsOfType,两个逻辑共用结果
             var panels = UnityEngine.Object.FindObjectsOfType<Panel_BreakDown>();
             if (panels == null) return;
-
-            if (needRestore)
+            foreach (var p in panels)
             {
-                foreach (var p in panels)
+                try
                 {
-                    try
-                    {
-                        var bd = p.m_BreakDown;
-                        if (bd == null) continue;
-                        var ptr = bd.Pointer;
-                        if (Patch_BreakDown_UpdateDuration.Snapshots.TryGetValue(ptr, out var snap))
-                        {
-                            bd.m_TimeCostHours = snap.timeCost;
-                            _fi_breakdownSecs.SetValue(p, snap.seconds);
-                            Patch_BreakDown_UpdateDuration.Snapshots.Remove(ptr);
-                        }
-                    }
-                    catch { }
+                    if (p.m_IsBreakingDown) continue;
+                    p.m_SecondsToBreakDown = Patch_BreakDown_UpdateDuration.PanelSecs;
+                    Patch_BreakDown_UpdateDuration.PanelSecs = -1f;
                 }
-            }
-
-            if (needZero)
-            {
-                foreach (var p in panels)
-                    try { _fi_breakdownSecs.SetValue(p, 0f); } catch { }
+                catch { }
             }
         }
         catch { }
@@ -2500,7 +2526,6 @@ internal static class CheatsTick
 
     // v2.8.2 NoFallDamage tick — 反应式:既然 IL2CPP prefix return false 不可靠,
     // 每几帧检查+清除坠落产生的扭伤/衣物破损
-    private static bool _fallGuardWristSet;
     // v6.9.6 衣物 HP 快照 —— 按 gear 指针 key(不能用列表位置 index:m_Items 会增删/重排,
     //   旧版用 _clothingHpSnapshot[i] 导致把 A 衣物的高 HP 误还原到换位后的 B 小件衣物 → 超过其 MaxHP → 显示 >100%)
     private static readonly System.Collections.Generic.Dictionary<System.IntPtr, float> _clothingHpSnapshot
@@ -2509,23 +2534,11 @@ internal static class CheatsTick
 
     public static void TickNoFallDamage()
     {
-        if (!CheatState.NoFallDamage)
-        {
-            if (_fallGuardWristSet)
-            {
-                try { GameManager.GetSprainedWristComponent()?.SetForceNoSprainWrist(false); } catch { }
-                _fallGuardWristSet = false;
-            }
-            return;
-        }
+        if (!CheatState.NoFallDamage) return;
         try
         {
-            // 1. 强制关闭手腕扭伤风险
-            if (!_fallGuardWristSet)
-            {
-                try { GameManager.GetSprainedWristComponent()?.SetForceNoSprainWrist(true); } catch { }
-                _fallGuardWristSet = true;
-            }
+            // 1. 手腕扭伤的强制关闭标记改由 ExtraOneShot.TickSprainRisk 统一管(会写进存档,关开关要放回)。
+            //   原先这里自己设、自己复位,但本函数只在开关开着时才被调用,复位那支永远走不到。
 
             // 2. 检测并清除已有的坠落扭伤
             try
@@ -2578,7 +2591,11 @@ internal static class CheatsTick
                             {
                                 // 还原到坠落前 HP,但绝不超过该衣物自身 MaxHP(防 >100%)
                                 float maxHp = 100f;
+#if STORY_EDITION
+                                try { maxHp = gi.m_MaxHP; } catch { }   // 2.24 无 GearItemData
+#else
                                 try { var d = gi.GearItemData; if (d != null) maxHp = d.MaxHP; } catch { }
+#endif
                                 float restore = (prev > maxHp) ? maxHp : prev;
                                 gi.m_CurrentHP = restore;
                                 cur = restore;
@@ -2733,6 +2750,10 @@ internal static class HarvestableSnaps
     public static readonly System.Collections.Generic.Dictionary<System.IntPtr, (float holdTime, float timer)> Snapshots = new();
 }
 
+#if !STORY_EDITION
+// 2.24 无 Il2CppTLD.Interactions(交互系统在 2.24 之后整体重构:TimedHoldInteraction /
+// HarvestableInteraction 都不存在)。以下三个类连同 DynamicPatch 里对应的 Spec 一起排除。
+// 上面的 HarvestableSnaps 只用 IntPtr/float,保留(ModMain 的清 dict 调用不受影响)。
 internal static class Patch_HarvestableInteraction_Init
 {
     internal static void Postfix(Il2CppTLD.Interactions.TimedHoldInteraction __instance)
@@ -2744,6 +2765,9 @@ internal static class Patch_HarvestableInteraction_Init
             var ptr = hi.Pointer;
             if (!HarvestableSnaps.Snapshots.ContainsKey(ptr))
                 HarvestableSnaps.Snapshots[ptr] = (hi.m_DefaultHoldTime, hi.m_Timer);
+            // v7.7 同一实例的 hold-time 还有 UpdateHoldInteraction 那条还原路径,
+            //   这里是最早的写入点,先让它把真值存下来(见 CaptureVanilla 的注释)。
+            Patch_TimedHold_UpdateHoldInteraction_QuickSearch.CaptureVanilla(hi);
             hi.m_DefaultHoldTime = 0.001f;
         }
         catch { }
@@ -2777,9 +2801,42 @@ internal static class Patch_HarvestableInteraction_BeginHold
 
 internal static class Patch_TimedHold_UpdateHoldInteraction_QuickSearch
 {
+    // v7.7 修「关掉秒搜刮后已交互过的容器还是秒开」:原先只写 0.001 不留快照,
+    //   spec 卸载后那些 TimedHoldInteraction 实例的字段永远停在 0.001,
+    //   只有换场景重建对象才恢复。改成和同文件 HarvestableSnaps / Patch_Harvest_Refresh_Quick
+    //   一致的 IntPtr 快照 + 关掉时下一次 Update 归还原值。
+    internal static readonly System.Collections.Generic.Dictionary<System.IntPtr, (float def, float hold)> Snapshots
+        = new System.Collections.Generic.Dictionary<System.IntPtr, (float, float)>();
+
+    // vanilla 交互没有短于 0.05 秒的 hold time,低于这个值只可能是别的补丁写进去的加速哨兵
+    //   (Patch_Speedy_HoldInteraction 写 0.01,Patch_HarvestableInteraction_Init 写 0.001)。
+    internal const float AccelSentinel = 0.05f;
+
+    // v7.7 所有会改写 hold-time 的补丁共用的取真值入口。必须在改脏之前调。
+    //   背景:同一个 TimedHoldInteraction 实例上有三个写入者,执行顺序是
+    //   InitializeInteraction → BeginHold → UpdateHoldInteraction(本类),
+    //   所以本类自己去读字段时读到的可能已经是别人写的 0.001/0.01,
+    //   直接当 vanilla 存下来 → 关掉开关"还原"写回去的还是加速值,等于没修。
+    internal static void CaptureVanilla(Il2CppTLD.Interactions.TimedHoldInteraction inst)
+    {
+        try
+        {
+            var ptr = inst.Pointer;
+            if (Snapshots.ContainsKey(ptr)) return;
+            float def = inst.m_DefaultHoldTime, hold = inst.HoldTime;
+            // 采集类交互的真值 Init 已经存进 HarvestableSnaps,优先采信那份
+            if (HarvestableSnaps.Snapshots.TryGetValue(ptr, out var hs) && hs.holdTime > AccelSentinel)
+                def = hs.holdTime;
+            // 仍然是哨兵值 → 拒绝登记(退化成 v7.6 的"不还原",不会更差,
+            //   但绝不把 0.001 冒充 vanilla 还回去)
+            if (def > AccelSentinel && hold > AccelSentinel)
+                Snapshots[ptr] = (def, hold);
+        }
+        catch { }
+    }
+
     internal static void Prefix(Il2CppTLD.Interactions.TimedHoldInteraction __instance, ref float deltaTime)
     {
-        if (!CheatState.QuickSearch && !CheatState.QuickAction) return;
         try
         {
             var name = __instance.GetType().Name;
@@ -2796,7 +2853,21 @@ internal static class Patch_TimedHold_UpdateHoldInteraction_QuickSearch
                            || name.Contains("PickUp");
             bool apply = (CheatState.QuickSearch && searchType)
                       || (CheatState.QuickAction && actionType);
-            if (!apply) return;
+
+            var ptr = __instance.Pointer;
+            if (!apply)
+            {
+                // 关掉了(或这个类型不在白名单):把之前改过的实例还原,只还一次
+                if (Snapshots.TryGetValue(ptr, out var old))
+                {
+                    __instance.m_DefaultHoldTime = old.def;
+                    __instance.HoldTime = old.hold;
+                    Snapshots.Remove(ptr);
+                }
+                return;
+            }
+
+            CaptureVanilla(__instance);
 
             __instance.m_DefaultHoldTime = 0.001f;
             __instance.HoldTime = 0.001f;
@@ -2805,6 +2876,7 @@ internal static class Patch_TimedHold_UpdateHoldInteraction_QuickSearch
         catch { }
     }
 }
+#endif
 
 // —— 秒割肉 CT:Panel_BodyHarvest.Refresh 设 HarvestTimeSeconds=TotalHarvestTimeSeconds,Minutes=0 ——
 // v2.7.80 snapshot+restore 闭环 —— toggle off 后下次打开割肉面板 Refresh 时恢复原值
@@ -2818,6 +2890,25 @@ internal static class Patch_Harvest_Refresh_Quick
         try
         {
             var ptr = __instance.Pointer;
+#if STORY_EDITION
+            // 2.24 只有 m_HarvestTimeSeconds(进度条实时秒),没有 m_HarvestTimeMinutes
+            // (游戏内分钟由 StartHarvest(minutes,...) 的实参决定)也没有 m_TotalHarvestTimeSeconds。
+            // 这里把实时秒归零 = 进度条秒满;游戏内时间消耗仍走 QuickAction 那条
+            // Patch_Harvest_Start → QuickHarvestRunner → HarvestSuccessful 的路。
+            // ponytail: 天花板是 2.24 下"秒割肉"只免实时等待不免游戏内小时;
+            // 要连游戏内时间一起免就得再 patch StartHarvest 的 minutes 实参。
+            if (CheatState.QuickHarvest)
+            {
+                if (!Snapshots.ContainsKey(ptr))
+                    Snapshots[ptr] = (__instance.m_HarvestTimeSeconds, 0f);
+                __instance.m_HarvestTimeSeconds = 0f;
+            }
+            else if (Snapshots.TryGetValue(ptr, out var s))
+            {
+                __instance.m_HarvestTimeSeconds = s.sec;
+                Snapshots.Remove(ptr);
+            }
+#else
             if (CheatState.QuickHarvest)
             {
                 if (!Snapshots.ContainsKey(ptr))
@@ -2831,6 +2922,7 @@ internal static class Patch_Harvest_Refresh_Quick
                 __instance.m_HarvestTimeMinutes = s.min;
                 Snapshots.Remove(ptr);
             }
+#endif
         }
         catch { }
     }
@@ -2847,15 +2939,51 @@ internal static class Patch_BodyHarvest_MaybeFreeze
     }
 }
 
-// —— 秒打碎/回收 CT:Panel_BreakDown.UpdateDurationLabel 设 SecondsToBreakDown=0.2, BreakDown.TimeCostHours=0 ——
+// —— 鹿出肉量倍率:BodyHarvest.InitializeResourcesAndConditions Postfix ——
+// 原版鹿净肉 6-9kg,真实骡鹿/白尾鹿约 18-25kg。给新鲜鹿尸体初始肉量乘 [Min,Max] 区间内随机倍率。
+// 只在新鲜击杀(本方法 roll 初始肉量)时触发;存档恢复走 Deserialize 不进这里 → 无累乘、不坏存档。
+// 排除 Quarter:尸块由原尸体切分而来已带倍率,再乘会累乘。
+internal static class Patch_DeerMeatYield
+{
+    internal static void Postfix(BodyHarvest __instance)
+    {
+        try
+        {
+            if (!MeatState.Enabled()) return;
+            var n = ((UnityEngine.Object)__instance).name;
+            if (n.Contains("Quarter")) return;
+            if (!(n.Contains("Deer") || n.Contains("Doe") || n.Contains("Stag"))) return;
+#if STORY_EDITION
+            float kg = __instance.m_MeatAvailableKG;   // 2.24 是裸 float,不是 ItemWeight
+#else
+            float kg = ((ItemWeight)__instance.m_MeatAvailableKG).ToQuantity(1f);
+#endif
+            if (kg <= 0f) return;
+            float lo = Mathf.Min(MeatState.DeerMin, MeatState.DeerMax);
+            float hi = Mathf.Max(MeatState.DeerMin, MeatState.DeerMax);
+            float mult = UnityEngine.Random.Range(lo, hi);
+#if STORY_EDITION
+            __instance.m_MeatAvailableKG = kg * mult;
+#else
+            __instance.m_MeatAvailableKG = ItemWeight.FromKilograms(kg * mult);
+#endif
+        }
+        catch { }
+    }
+}
+
+// —— 秒打碎/回收 CT:Panel_BreakDown.UpdateDurationLabel 设 SecondsToBreakDown=0.2,两种拆解的时间花费=0 ——
 //   v2.7.61 加 snapshot+restore —— toggle off 时恢复 BreakDown.m_TimeCostHours,否则"UI 还是 0 min"
 //           key 用 m_BreakDown.Pointer(每个物品的 BreakDown 组件独立)
 // v2.7.75 DynamicPatch(有 snapshot,需 SyncWithCleanup)
 // v2.7.82 修:同时存 m_SecondsToBreakDown,toggle OFF 一并恢复(之前只恢复 TimeCostHours 导致读条仍加速)
 internal static class Patch_BreakDown_UpdateDuration
 {
-    internal static readonly System.Collections.Generic.Dictionary<System.IntPtr, (float timeCost, float seconds)> Snapshots
-        = new System.Collections.Generic.Dictionary<System.IntPtr, (float timeCost, float seconds)>();
+    internal static readonly System.Collections.Generic.Dictionary<System.IntPtr, (BreakDown bd, float timeCost, float destroyCost)> Snapshots
+        = new System.Collections.Generic.Dictionary<System.IntPtr, (BreakDown bd, float timeCost, float destroyCost)>();
+    // 读条秒数是面板上的字段,所有物品共用,单独存一份。原先跟着物品快照走:拆掉的那件物品连同
+    //   原值一起销毁,关开关后面板读条永远停在 0.2 秒,快照也清不空,补丁一直卸不掉。
+    internal static float PanelSecs = -1f;
 
     internal static void Prefix(Panel_BreakDown __instance)
     {
@@ -2864,18 +2992,40 @@ internal static class Patch_BreakDown_UpdateDuration
             var bd = __instance.m_BreakDown;
             if (bd == null) return;
             var ptr = bd.Pointer;
-            if (CheatState.QuickBreakDown)
+            if (CheatState.QuickBreakDown || CheatState.QuickAction)
             {
+                // 快照秒数取 SpeedyGuard 记下的 vanilla 基准,没记过才用字段当前值。
+                //   照当前值快照会有这个顺序漏洞:拆解倍率 4x(字段已被写成 base/4)→ 开秒拆解
+                //   (快照把 base/4 当原值)→ 倍率拖回 1(SpeedyGuard 写回 base 并消掉还原登记)
+                //   → 关秒拆解(把 base/4 还回去)。此时两边的还原都用完了,字段永久停在 4 倍速。
+                if (PanelSecs < 0f)
+                    PanelSecs = SpeedyGuard.VanillaOr("Breakdown", __instance.m_SecondsToBreakDown);
                 if (!Snapshots.ContainsKey(ptr))
-                    Snapshots[ptr] = (bd.m_TimeCostHours, __instance.m_SecondsToBreakDown);
+                {
+#if STORY_EDITION
+                    float destroyCost = 0f;   // 2.24 BreakDown 没有 m_EditModeDestroyTimeCostHours
+#else
+                    float destroyCost = bd.m_EditModeDestroyTimeCostHours;
+#endif
+                    Snapshots[ptr] = (bd, bd.m_TimeCostHours, destroyCost);
+                }
                 __instance.m_SecondsToBreakDown = 0.2f;
                 bd.m_TimeCostHours = 0f;
+#if !STORY_EDITION
+                bd.m_EditModeDestroyTimeCostHours = 0f;
+#endif
             }
-            else if (Snapshots.TryGetValue(ptr, out var snap))
+            else
             {
-                bd.m_TimeCostHours = snap.timeCost;
-                __instance.m_SecondsToBreakDown = snap.seconds;
-                Snapshots.Remove(ptr);
+                if (PanelSecs >= 0f) { __instance.m_SecondsToBreakDown = PanelSecs; PanelSecs = -1f; }
+                if (Snapshots.TryGetValue(ptr, out var snap))
+                {
+                    bd.m_TimeCostHours = snap.timeCost;
+#if !STORY_EDITION
+                    bd.m_EditModeDestroyTimeCostHours = snap.destroyCost;
+#endif
+                    Snapshots.Remove(ptr);
+                }
             }
         }
         catch { }
@@ -2896,8 +3046,11 @@ internal static class Patch_SafeCracking_Update
     }
 }
 
+#if !STORY_EDITION
 // —— 解锁上锁门/柜子 CT:LockedInteraction.IsLocked 强 return false ——
 // v2.7.75 DynamicPatch
+// 2.24 无 LockedInteraction(交互系统重构的一部分)。上面的 Patch_Lock_IsLocked
+// 打的是 Lock.IsLocked,Lock 在 2.24 存在,保留。
 internal static class Patch_LockedInteraction_IsLocked_Unlock
 {
     internal static void Postfix(LockedInteraction __instance, ref bool __result)
@@ -2915,6 +3068,7 @@ internal static class Patch_LockedInteraction_IsLocked_Unlock
         }
     }
 }
+#endif
 
 // —— 油灯 Update Postfix: 光照范围 + 持续 HP 损耗 + 静音 ——
 // v3.0.4 整合 KeroseneLampTweaks v2.4.1 三个 Update 行为:lamp_range/overTimeDecay/muteLamps
@@ -2929,6 +3083,22 @@ internal static class Patch_KeroseneLamp_LightRange
         public float[] BaseRanges;
     }
     private static readonly System.Collections.Generic.Dictionary<int, LampCache> s_Cache = new();
+
+    // 倍率拖回 1 后,patch 要等所有改过的灯都还原才卸载。已销毁的灯(换场景)直接丢掉。
+    internal static bool RestoreDone()
+    {
+        if (s_Cache.Count == 0) return true;
+        var dead = new System.Collections.Generic.List<int>();
+        foreach (var kv in s_Cache)
+        {
+            bool alive = false;
+            var arr = kv.Value.Lights;
+            for (int i = 0; i < arr.Length && !alive; i++) alive = arr[i] != null;
+            if (!alive) dead.Add(kv.Key);
+        }
+        for (int i = 0; i < dead.Count; i++) s_Cache.Remove(dead[i]);
+        return s_Cache.Count == 0;
+    }
 
     internal static void Postfix(KeroseneLampItem __instance)
     {
@@ -2961,7 +3131,7 @@ internal static class Patch_KeroseneLamp_LightRange
 
             // 3. 光照范围倍率(性能关键路径) — 缓存 lamp 子 Light 数组
             float mult = s.LampRangeMultiplier;
-            if (Mathf.Abs(mult - 1f) >= 0.005f)
+            if (Mathf.Abs(mult - 1f) >= 0.01f)
             {
                 int lampId = ((UnityEngine.Object)__instance).GetInstanceID();
                 LampCache cache;
@@ -2990,6 +3160,20 @@ internal static class Patch_KeroseneLamp_LightRange
                     if (lt == null) continue;
                     float target = baseArr[i] * mult;
                     if (Mathf.Abs(lt.range - target) > 0.01f) lt.range = target;
+                }
+            }
+            else if (s_Cache.Count > 0)
+            {
+                // 倍率拖回 1 时把改过的范围还原,否则灯一直停在上次的倍率
+                int lampId = ((UnityEngine.Object)__instance).GetInstanceID();
+                if (s_Cache.TryGetValue(lampId, out var cache))
+                {
+                    for (int i = 0; i < cache.Lights.Length; i++)
+                    {
+                        var lt = cache.Lights[i];
+                        if (lt != null) lt.range = cache.BaseRanges[i];
+                    }
+                    s_Cache.Remove(lampId);
                 }
             }
         }
@@ -3080,18 +3264,19 @@ internal static class Patch_Flask_IsCompatibleDrink
     }
 }
 
+#if !STORY_EDITION
 // —— 无后坐力 v6.1.0: 原生 code cave 注入 ——
 // —— 保温瓶装任意饮品 v6.0.8: 原生 NOP patch ——
 // IsItemCompatibleWithFlask: AOB NOP(跟 CT 一样)
 // IsAllowed: 直接把函数开头改成 mov al,1; ret(始终返回 true)
+// 2.24 无 Il2CppTLD.Gear.InsulatedFlask / InsulatedFlaskLiquidTypeConstraint(保温瓶是后加物品),
+// 本类全部方法都靠反射取这两个类型的字段拿原生函数地址,整类排除;ModMain 的 Sync() 调用同步排除。
 internal static class FlaskNativePatch
 {
     private static byte[] _origBytes;
     private static IntPtr _patchAddr;
     private static byte[] _origBytesAllowed;
     private static IntPtr _patchAddrAllowed;
-    private static byte[] _origBytesMatchType;
-    private static IntPtr _patchAddrMatchType;
     private static byte[] _origBytesTryAdd;
     private static IntPtr _patchAddrTryAdd;
     private static bool _applied;
@@ -3170,26 +3355,10 @@ internal static class FlaskNativePatch
                 }
             }
 
-            // IsMatchingType on InsulatedFlask (检查已存类型是否匹配新物品)
-            var fieldMatch = typeof(Il2CppTLD.Gear.InsulatedFlask).GetField(
-                "NativeMethodInfoPtr_IsMatchingType_Public_Boolean_GearItem_0",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-            if (fieldMatch != null)
-            {
-                IntPtr miMatch = (IntPtr)fieldMatch.GetValue(null);
-                if (miMatch != IntPtr.Zero)
-                {
-                    IntPtr ptrMatch = *(IntPtr*)miMatch;
-                    if (ptrMatch != IntPtr.Zero)
-                    {
-                        _origBytesMatchType = new byte[3];
-                        System.Runtime.InteropServices.Marshal.Copy(ptrMatch, _origBytesMatchType, 0, 3);
-                        _patchAddrMatchType = ptrMatch;
-                        WriteBytes(ptrMatch, new byte[] { 0xB0, 0x01, 0xC3 });
-                        ModMain.Log?.Msg($"[FlaskNOP] IsMatchingType: patched to ret true at 0x{ptrMatch:X}");
-                    }
-                }
-            }
+            // v8.0.1 删掉原 IsMatchingType 那段:2.55 的 InsulatedFlask 没有这个方法
+            //   (IsMatchingType 在 Il2CppTLD.Trader.ExchangeItem 上),NativeMethodInfoPtr 字段
+            //   恒为 null,整段是永不执行的死代码。类型匹配已由 IsItemCompatibleWithFlask +
+            //   IsAllowed 两处覆盖。
 
             // NOP TryAddItem 内部的兼容性检查跳转(offset 172: 0F 84 xx xx xx xx = je far)
             var fieldTryAdd = typeof(Il2CppTLD.Gear.InsulatedFlask).GetField(
@@ -3260,15 +3429,12 @@ internal static class FlaskNativePatch
             WriteBytes(_patchAddr, _origBytes);
             if (_patchAddrAllowed != IntPtr.Zero && _origBytesAllowed != null)
                 WriteBytes(_patchAddrAllowed, _origBytesAllowed);
-            if (_patchAddrMatchType != IntPtr.Zero && _origBytesMatchType != null)
-                WriteBytes(_patchAddrMatchType, _origBytesMatchType);
             if (_patchAddrTryAdd != IntPtr.Zero && _origBytesTryAdd != null)
                 WriteBytes(_patchAddrTryAdd, _origBytesTryAdd);
             _applied = false;
             ModMain.Log?.Msg("[FlaskNOP] restored original bytes");
             _patchAddr = IntPtr.Zero; _origBytes = null;
             _patchAddrAllowed = IntPtr.Zero; _origBytesAllowed = null;
-            _patchAddrMatchType = IntPtr.Zero; _origBytesMatchType = null;
             _patchAddrTryAdd = IntPtr.Zero; _origBytesTryAdd = null;
         }
         catch (Exception ex) { ModMain.Log?.Error($"[FlaskNOP.Remove] {ex}"); }
@@ -3311,6 +3477,7 @@ internal static class FlaskNativePatch
     [System.Runtime.InteropServices.DllImport("kernel32.dll")]
     private static extern bool VirtualProtect(IntPtr lpAddress, UIntPtr dwSize, uint flNewProtect, out uint lpflOldProtect);
 }
+#endif
 
 // —— 加工秒完成 CT:EvolveItem.Update 设 TimeToEvolveGameDays=0, TimeSpentEvolvingGameHours=1 ——
 // v2.7.75 DynamicPatch: 去掉 [HarmonyPatch] attribute
@@ -3346,6 +3513,13 @@ internal static class Patch_EvolveItem_Update
         "Ravaged",     // BF mod OrcaCarcassRavaged
         "Rotten",      // 预留
         "Rotted",      // 预留
+        // v7.2 修(用户报虎鲸第一天即成骨架):秒风干只该作用于玩家的风干物,
+        //   世界尸体腐烂链(鲜尸→啃残→腐烂→骸骨)一律放行 vanilla 节奏。
+        //   BF 虎鲸链 GEAR_OrcaCarcass1→Ravaged→Decayed→OrcaBones1,终点 Bones 不含上面任何 token。
+        "Carcass",     // 任何尸体目标(OrcaCarcass*/CrowCarcass*)— 从第一级就拦死,不让秒风干碰
+        "Bones",       // 腐烂链终点骸骨(OrcaBones1/2)— 用户报"成骨架"的那一级
+        "Corpse",      // 预留:人类/动物尸体类
+        "Skeleton",    // 预留:骨架态命名变体
     };
 
     internal static void Prefix(EvolveItem __instance)
@@ -3502,6 +3676,96 @@ internal static class Patch_FireManager_CalcStartTime_Uncap
     }
 }
 
+// —— 篝火燃烧上限 keeper v7.5(修"只有新篝火能超12h,已存在的篝火加不进")——
+// 根因:上面的 Prefix 只在 PlayerCalculateFireStartTime(点新火)时触发。玩家读档后若没先点
+//   一堆新火,FireManager 单例的 m_MaxDurationHoursOfFire 仍是 vanilla 12 → 给已存在的火加燃料
+//   时按 12h clamp,加不进去;一旦点了新火 Prefix 才把 cap 顶上去,之后加旧火也就正常了。
+// 修法:低频 tick 持续把单例的 cap 字段保持在目标值(覆盖 新火/旧火/FeedFire 时长标签 所有路径),
+//   关闭时恢复 vanilla 12。~5s 一次一个 float set,FPS 无感;从没开过则完全零开销。
+// ponytail: 固定 vanilla 默认 12f 作恢复值(与本文件注释、Slider 下限一致);若哪天别的 mod 也改
+//   这个字段,再改成"首次捕获原值"策略。
+internal static class FireCapKeeper
+{
+    private const float VanillaCap = 12f;
+    private static bool _raised;
+
+    public static void Tick()
+    {
+        try
+        {
+            float target = CheatState.FireMaxBurnHours;
+            // 从没开过 → 什么都不做,零开销
+            if (target <= VanillaCap && !_raised) return;
+
+            var fm = GameManager.GetFireManagerComponent();
+            if (fm == null) return;
+
+            if (target > VanillaCap)
+            {
+                if (fm.m_MaxDurationHoursOfFire != target) fm.m_MaxDurationHoursOfFire = target;
+                _raised = true;
+            }
+            else
+            {
+                // 用户调回 ≤12 → 恢复 vanilla,之后不再 tick
+                if (fm.m_MaxDurationHoursOfFire != VanillaCap) fm.m_MaxDurationHoursOfFire = VanillaCap;
+                _raised = false;
+            }
+        }
+        catch { }
+    }
+}
+
+// —— 篝火燃烧上限:喂火路径同步顶 cap v7.6(修"锻造炉/现成炉子加燃料仍卡12h")——
+// 根因:上面的 uncap Prefix 只在 PlayerCalculateFireStartTime(点新火)时触发。锻造炉和已存在的
+//   火炉玩家只"喂料"从不"点火" → 那条路径永不跑,只能靠 5s keeper;而场景切换/过时间会把
+//   FireManager 单例的 m_MaxDurationHoursOfFire 重置回 inspector 默认 12,喂料的 clamp 抢在
+//   keeper 下次 tick 之前执行 → 结果卡回 12h(正是"燃烧时间掉到一定程度再加燃料就不能超12h")。
+// 两个 hook 一起补:
+//   1) Panel_FeedFire.Enable Postfix —— 开面板即顶 cap,让时长预览标签也显示 >12h。
+//   2) Panel_FeedFire.OnFeedFire Prefix(真正提交喂料的入口,内部走 AddFuel→PlayerCalculateFireStartTime
+//      读 cap 做 clamp)—— 在 clamp 真正发生的那一刻同步顶 cap,与点火路径 CalcStartTime_Uncap 完全对称。
+//      这条才是根治:面板可长开、反复喂料("再加燃料"),期间若过时间/切场景把单例重置回 12,
+//      仅靠 Enable(只在开面板时跑一次)会漏,提交时的 Prefix 每次喂料都先顶 cap,彻底消除 keeper 竞态。
+internal static class Patch_FeedFire_UncapOnOpen
+{
+    private static void RaiseCap()
+    {
+        try
+        {
+            if (CheatState.FireMaxBurnHours <= 12f) return;
+            var fm = GameManager.GetFireManagerComponent();
+            if (fm == null) return;
+            if (fm.m_MaxDurationHoursOfFire != CheatState.FireMaxBurnHours)
+                fm.m_MaxDurationHoursOfFire = CheatState.FireMaxBurnHours;
+        }
+        catch { }
+    }
+
+    // 开面板:顶 cap,预览标签正确
+    internal static void Postfix() => RaiseCap();
+}
+
+// —— 喂料提交时顶 cap:Panel_FeedFire.OnFeedFire Prefix ——
+// 与 CalcStartTime_Uncap 对称,在每次实际"加燃料"提交前把单例 cap 顶到目标值,clamp 据此算,
+//   彻底解决面板长开跨过时间/场景后再次喂料被 clamp 回 12h 的竞态。
+internal static class Patch_FeedFire_UncapOnCommit
+{
+    internal static void Prefix()
+    {
+        try
+        {
+            if (CheatState.FireMaxBurnHours <= 12f) return;
+            var fm = GameManager.GetFireManagerComponent();
+            if (fm == null) return;
+            if (fm.m_MaxDurationHoursOfFire != CheatState.FireMaxBurnHours)
+                fm.m_MaxDurationHoursOfFire = CheatState.FireMaxBurnHours;
+        }
+        catch { }
+    }
+}
+
+#if !STORY_EDITION   // 2.24 无 CheatDeathAffliction(第二次机会病症是后加的)
 // —— 清除死亡惩罚 CT:CheatDeathAffliction 设为 cured ——
 // v2.7.75 DynamicPatch: 去 [HarmonyPatch] attribute,只在 ClearDeathPenalty 时挂
 internal static class Patch_CheatDeathAfflict_Update
@@ -3512,84 +3776,112 @@ internal static class Patch_CheatDeathAfflict_Update
         try { if (__instance.HasAffliction) __instance.Cure(AfflictionOptions.None); } catch { }
     }
 }
+#endif
 
+#if !STORY_EDITION
 // ═══════════════════════════════════════════════════════════════════
 //   v2.7.55 CT 复刻 —— 商人 Trader + 美洲狮 Cougar
+//   2.24 既无 Il2CppTLD.Trader 也无 Il2CppTLD.AI(商人与美洲狮都是沙盒后加内容),
+//   整段排除,连带 DynamicPatch 里 CougarManager / TraderManager / ExchangeItem 的 Spec。
 // ═══════════════════════════════════════════════════════════════════
 
-// —— 商人:交易清单上限 + 信任最大化 + 全商品解锁 ——
-//   CT: GetAvailableTradeExchanges Prefix,根据 toggle 改 m_MaxExchangesInTrade(原 3 → 64)
-//       以及把 m_CurrentState.m_CurrentTrust/m_HighestTrust = m_MaxTrustLevel
-//   v6.7.2: 修复"600 天还卖最低级商品"——
-//       vanilla 商人只把 trust 涨到阈值时已 UnlockExchange 过的商品装进 m_UnlockedExchangeNames,
-//       然后 RollExchanges 从已解锁池抽 N 件填进 m_AvailableExchangesThisAurora。
-//       光把 m_CurrentTrust 改满不会回填解锁名单,所以 UI 永远只看到当时已解锁那几件。
-//       修复:toggle 开启时迭代 m_TradeExchangeUnlocks 把全部 reference 调 UnlockExchange,
-//       并清空 m_AvailableExchangesThisAurora 强制下次 RollExchanges 重抽。
-//   v6.8.1: 修复"老存档 toggle 仍卖低级货"——
-//       (a) 拿掉 HashSet 缓存:老存档 Load 后 vanilla 内部可能在玩家打开 UI 前就调过一次
-//           GetAvailableTradeExchanges,缓存命中后真打开时反而 skip,清单不刷新。
-//           GetAvailableTradeExchanges 是低频(只 UI 触发),每次跑一遍开销可忽略,稳妥优先。
-//       (b) 重抽前把 m_LastAuroraNum = -1:vanilla RollExchanges 内部会用
-//           "本极光已 roll 过则直接 return"的早退逻辑(基于 m_LastAuroraNum),
-//           不重置就算我们 Clear() 清单 + 调 RollExchanges() 也是空跑,清单还是空。
-//           老存档持久化了 m_LastAuroraNum,所以这条是命门。
+// —— 商人:一次交易可选的商品数上限 + 信任最大化 ——
+//   m_MaxExchangesInTrade 是一次交易最多选几样(原版 3),和清单长度无关:清单由 RollExchanges
+//   按已解锁商品每样抽一条,每次极光抽一次。旧版为了"满信任还卖低级货"每次打开都全解锁、
+//   重抽、把 m_LastAuroraNum 写成 -1,结果清单每次联系都变,原版"同一次极光重复联系扣信任"
+//   也失效了。低级货的真正原因是直接改信任值跳过了原版解锁,见 TraderTrust。
 internal static class Patch_TraderManager_GetAvailableTradeExchanges
 {
+    private static int _origCap = -1;
+
     internal static void Prefix(Il2CppTLD.Trader.TraderManager __instance)
     {
         try
         {
-            // CT 做法:toggle 开写 64,toggle 关强制写 3(原游戏默认)—— 每次调用都刷新
-            //   这样 toggle off 立刻生效,不会像篝火那样"开了就回不去"
-            __instance.m_MaxExchangesInTrade = CheatState.TraderUnlimitedList ? 64 : 3;
-
-            if (CheatState.TraderMaxTrust)
-            {
-                var st = __instance.m_CurrentState;
-                if (st != null)
-                {
-                    int mx = __instance.m_MaxTrustLevel;
-                    st.m_CurrentTrust = mx;
-                    st.m_HighestTrust = mx;
-                }
-            }
-
-            // v6.8.1: TraderUnlimitedList 开启时,每次都重抽(无缓存)
             if (CheatState.TraderUnlimitedList)
             {
-                // 1) 把所有 trust 阈值的 unlock 都解锁到 m_UnlockedExchangeNames
-                var unlocks = __instance.m_TradeExchangeUnlocks;
-                if (unlocks != null)
-                {
-                    int n = unlocks.Count;
-                    for (int i = 0; i < n; i++)
-                    {
-                        try
-                        {
-                            var u = unlocks[i];
-                            var refex = u?.Unlock;
-                            if (refex != null) __instance.UnlockExchange(refex);
-                        }
-                        catch { }
-                    }
-                }
-
-                var st2 = __instance.m_CurrentState;
-                if (st2 != null)
-                {
-                    // 2) 清空本期清单
-                    if (st2.m_AvailableExchangesThisAurora != null)
-                        st2.m_AvailableExchangesThisAurora.Clear();
-                    // 3) 重置"已 roll 标记",绕开 RollExchanges 内部早退
-                    st2.m_LastAuroraNum = -1;
-                }
-
-                // 4) 强制重抽
-                try { __instance.RollExchanges(); } catch { }
+                if (_origCap < 0) _origCap = __instance.m_MaxExchangesInTrade;
+                __instance.m_MaxExchangesInTrade = 64;
             }
+            else RestoreCap(__instance);
+
+            TraderTrust.HealOnce(__instance);
+            if (CheatState.TraderMaxTrust) TraderTrust.Set(__instance, __instance.m_MaxTrustLevel);
         }
         catch { }
+    }
+
+    private static void RestoreCap(Il2CppTLD.Trader.TraderManager tm)
+    {
+        if (_origCap < 0) return;
+        if (tm != null) tm.m_MaxExchangesInTrade = _origCap;
+        _origCap = -1;
+    }
+
+    internal static bool RestoreDone()
+    {
+        try { RestoreCap(GameManager.GetTraderManager()); } catch { _origCap = -1; }
+        return true;
+    }
+}
+
+// 信任满值和信任滑条走原版 AddTrust:历史最高升上去时它按阈值解锁交易和改进,每次都按当前信任
+//   解锁对话,信任第一次到满格时解锁 DLC 成就 DLC01_GoodAndServices(用户确认要这个成就)。
+internal static class TraderTrust
+{
+    private static IntPtr _healedState;
+
+    internal static void Set(Il2CppTLD.Trader.TraderManager tm, int value)
+    {
+        var st = tm.m_CurrentState;
+        if (st == null) return;
+        int delta = Math.Clamp(value, tm.m_MinTrustLevel, tm.m_MaxTrustLevel) - st.m_CurrentTrust;
+        if (delta != 0) tm.AddTrust(delta);
+    }
+
+    // 旧版直接写信任值:存档里历史最高已经很高,AddTrust 只在超过历史最高时解锁,那些阈值永远补不上。
+    //   每个存档补一次,阈值不超过历史最高的交易、改进、对话都补上(三个解锁函数都会跳过已解锁的)。
+    internal static void HealOnce(Il2CppTLD.Trader.TraderManager tm)
+    {
+        var st = tm.m_CurrentState;
+        if (st == null || st.Pointer == _healedState) return;
+        _healedState = st.Pointer;
+        int high = st.m_HighestTrust;
+
+        var ex = tm.m_TradeExchangeUnlocks;
+        if (ex != null)
+            for (int i = 0; i < ex.Count; i++)
+            {
+                try
+                {
+                    var u = ex[i];
+                    if (u != null && u.Unlock != null && u.TrustThreshold <= high) tm.UnlockExchange(u.Unlock);
+                }
+                catch { }
+            }
+        var im = tm.m_TraderImprovementUnlocks;
+        if (im != null)
+            for (int i = 0; i < im.Count; i++)
+            {
+                try
+                {
+                    var u = im[i];
+                    if (u != null && u.TrustThreshold <= high) tm.UnlockImprovement(u.Unlock);
+                }
+                catch { }
+            }
+        var cv = tm.m_ConversationUnlocks;
+        if (cv != null)
+            for (int i = 0; i < cv.Count; i++)
+            {
+                try
+                {
+                    var u = cv[i];
+                    if (u != null && u.Unlock != null && u.TrustThreshold >= 0 && u.TrustThreshold <= high)
+                        tm.UnlockConversation(u.Unlock, u.TrustThreshold);
+                }
+                catch { }
+            }
     }
 }
 
@@ -3626,9 +3918,21 @@ internal static class Patch_TraderRadio_CanContactTrader
     }
 }
 
+// —— 商人:商人常驻时交易完成后的冷却也不用等 ——
+//   电台版 IsTraderAvailable = 管理器 IsTraderAvailable && 已过交易完成后的冷却(Tunables.m_HoursUnavailableAfterCompletedTrade)。
+//   奖励没拿走前电台主菜单不给开新单(ShowMain 只在没有进行中交易时加这一项),去掉冷却不会冲掉奖励。
+internal static class Patch_TraderRadio_IsTraderAvailable
+{
+    internal static void Postfix(ref bool __result)
+    {
+        if (CheatState.TraderAlwaysAvailable) __result = true;
+    }
+}
+
 // —— 商人:免费即时交易 ——
-//   Prefix: 填充已交换数量(免费,不需要投入物品)
-//   Postfix: 强制 true(秒完成,跳过等待)
+//   Prefix: 填充已交换数量(免费,不需要投入物品),交换箱进度显示满格
+//   Postfix: 强制 true。CompleteTrade / IsFullyFilled / HasRewards 都只经这里判定交齐;
+//   玩家往箱里放取东西时原版 UpdateExchanged 会按实物重算数量,关掉开关后自己改回来。
 internal static class Patch_ExchangeItem_IsFullyExchanged
 {
     internal static void Prefix(Il2CppTLD.Trader.ExchangeItem __instance)
@@ -3649,6 +3953,41 @@ internal static class Patch_ExchangeItem_IsFullyExchanged
     }
 }
 
+// —— 商人:即时交易时关箱就完成交易 ——
+//   原版:关箱确认(CloseTrade,状态改成已关闭)后,要等下次能用电台联系商人、在对话里选一项才调
+//   CompleteTrade 放奖励;完成后商人出去 m_HoursUnavailableAfterCompletedTrade 小时,期间电台联系不上。
+//   这里关箱后补调 CompleteTrade,再把完成时间往前挪一个冷却,商人马上能再联系。
+//   奖励没拿走之前 m_ActiveTrade 一直挂着,电台开不了新单,挪冷却不会冲掉奖励。
+//   不在 CloseTrade 里直接调:那时交换箱面板还在关闭流程里,等面板关完再动交易状态。
+internal static class Patch_TraderManager_CloseTrade
+{
+    internal static bool Pending;
+
+    internal static void Postfix()
+    {
+        if (CheatState.TraderInstantExchange) Pending = true;
+    }
+
+    internal static void Tick()
+    {
+        try
+        {
+            if (!CheatState.TraderInstantExchange) { Pending = false; return; }
+            var panel = InterfaceManager.GetPanel<Panel_ExchangeBox>();
+            if (panel != null && ((Panel_Base)panel).IsEnabled()) return;
+            Pending = false;
+            var tm = GameManager.GetTraderManager();
+            var st = tm?.m_CurrentState;
+            var trade = st?.m_ActiveTrade;
+            if (trade == null || (int)trade.m_TradeState != 1 || !tm.IsTradeFullyFilled()) return;
+            tm.CompleteTrade();
+            if ((int)trade.m_TradeState == 2)
+                st.m_TimeLastTradeComplete -= tm.Tunables.m_HoursUnavailableAfterCompletedTrade;
+        }
+        catch { Pending = false; }
+    }
+}
+
 // —— 美洲狮:新档首次立即激活 ——
 //   CT: UpdateWaitingForArrival Prefix,设 __instance.m_ActiveTerritory.m_CougarState = 2 (WaitingForTransition)
 //   enum CougarState { Start=0, WaitingForArrival=1, WaitingForTransition=2, HasArrivedAfterTransition=3, PlayingIntroTimeline=4, HasArrived=5 }
@@ -3656,10 +3995,11 @@ internal static class Patch_ExchangeItem_IsFullyExchanged
 // v2.7.63 双路并行:
 //   A. Patch UpdateWaitingForArrival Prefix(CT 原路径)—— 仅 state=WaitingForArrival 时调
 //   B. 加 tick 扫 m_ActiveTerritory,state < 2 时强推 2 —— 绕开 CT 路径只在特定 state 才触发的限制
-[HarmonyPatch(typeof(Il2CppTLD.AI.CougarManager), "UpdateWaitingForArrival")]
+// 去掉 [HarmonyPatch],改由 DynamicPatch 按开关挂卸:静态挂载时开关关着也每帧过一次 bridge
+//   (美洲狮处于 WaitingForArrival 的整段时间里每帧都调),和下面 Update_ForceActivate 同一个原因
 internal static class Patch_CougarManager_UpdateWaitingForArrival
 {
-    private static void Prefix(Il2CppTLD.AI.CougarManager __instance)
+    internal static void Prefix(Il2CppTLD.AI.CougarManager __instance)
     {
         if (!CheatState.CougarInstantActivate) return;
         try
@@ -3697,6 +4037,7 @@ internal static class Patch_CougarManager_Update_ForceActivate
         catch { }
     }
 }
+#endif
 
 // ═══════════════════════════════════════════════════════════════════
 //   CT 复刻 —— 无冻伤风险 / 饱饱 buff / 温度加成 / 疲劳加成 / 坏血病查看
@@ -3754,6 +4095,10 @@ internal static class ScurvyViewer
 
     public static void Poll()
     {
+#if STORY_EDITION
+        // 2.24 无坏血病系统。保留类壳(Menu 里的调用点不变),状态恒为不可用。
+        Status = "—";
+#else
         try
         {
             var mgr = GameManager.GetScurvyComponent();
@@ -3766,6 +4111,7 @@ internal static class ScurvyViewer
                    :              (I18n.IsEnglish ? "OK" : "正常");
         }
         catch { Status = "err"; }
+#endif
     }
 }
 
@@ -3778,15 +4124,29 @@ internal static class Patch_RunWithLantern
     internal static bool Prefix() => false;
 }
 
+// OnStateUpdate 是手持油灯时每帧都调的回调。原先每次 new 一个名字数组再调 3 次 IsName
+//   (每次把托管字符串封送成一个新的 Il2Cpp 字符串再算哈希);这里把哈希算一次存起来,只比整数。
+//   IsName 比的是短名和完整路径哈希,这里两个都比。
+internal static class LanternStateHashes
+{
+    private static int[] _h;
+
+    internal static bool IsLanternState(AnimatorStateInfo stateInfo)
+    {
+        _h ??= new[] { Animator.StringToHash("Lantern_Prepare"), Animator.StringToHash("Lantern_Idle"), Animator.StringToHash("Lantern_Extinguish") };
+        int sn = stateInfo.shortNameHash, fp = stateInfo.fullPathHash;
+        for (int i = 0; i < _h.Length; i++)
+            if (sn == _h[i] || fp == _h[i]) return true;
+        return false;
+    }
+}
+
 internal static class Patch_CameraOverride_OnStateUpdate
 {
     internal static bool Prefix(AnimatorStateInfo stateInfo)
     {
         if (!CheatState.RunWithLantern) return true;
-        string[] skip = { "Lantern_Prepare", "Lantern_Idle", "Lantern_Extinguish" };
-        for (int i = 0; i < skip.Length; i++)
-            if (stateInfo.IsName(skip[i])) return false;
-        return true;
+        return !LanternStateHashes.IsLanternState(stateInfo);
     }
 }
 
@@ -3795,10 +4155,7 @@ internal static class Patch_CameraOverride_OnStateEnter
     internal static bool Prefix(AnimatorStateInfo stateInfo)
     {
         if (!CheatState.RunWithLantern) return true;
-        string[] skip = { "Lantern_Prepare", "Lantern_Idle", "Lantern_Extinguish" };
-        for (int i = 0; i < skip.Length; i++)
-            if (stateInfo.IsName(skip[i])) return false;
-        return true;
+        return !LanternStateHashes.IsLanternState(stateInfo);
     }
 }
 
@@ -3905,19 +4262,58 @@ internal static class AutoExtinguishHelper
     }
 }
 
-// —— 防止左键误灭火把 ——
-internal static class Patch_TorchExtinguish_Block
+// —— 防止左键误灭火把 / 油灯 ——
+// v9.0:原来是一律吞掉,遇到状态不同步(比如拆解、休息期间 mod 自动熄灯之后 IsOn() 还报 true)
+//   左键就彻底失效,只能放回背包再拿出来。现在同一件东西 1.2 秒内连点第二下就放过去:
+//   误碰一下仍然拦住,真想操作连点两下总能生效,不会再出现点不动的死局。
+internal static class LeftClickGuard
 {
-    internal static bool Prefix() => !CheatState.DisableTorchLeftClick;
+    private const float DOUBLE_CLICK_WINDOW = 1.2f;
+    private static IntPtr _last;
+    private static float _lastTime;
+
+    // 只有真的按着左键才算"误碰左键"。游戏自己在流程里熄灭(用完自动熄、收起、点火流程内部再调一次
+    // Toggle)一律放过 —— 拦下来会让道具停在"还在燃烧 / 半开"的状态,之后怎么点都点不亮。
+    internal static bool FromLeftClick() => UnityEngine.Input.GetMouseButton(0);
+
+    // true = 这一下要拦住
+    internal static bool Block(IntPtr item)
+    {
+        float now = UnityEngine.Time.realtimeSinceStartup;
+        if (item == _last && now - _lastTime <= DOUBLE_CLICK_WINDOW)
+        {
+            _last = IntPtr.Zero;   // 放过这一下,并且不把它算成新的第一下
+            return false;
+        }
+        _last = item;
+        _lastTime = now;
+        return true;
+    }
 }
 
-// —— 防止左键误灭油灯 ——
+internal static class Patch_TorchExtinguish_Block
+{
+    internal static bool Prefix(TorchItem __instance)
+    {
+        if (!CheatState.DisableTorchLeftClick) return true;
+        if (!LeftClickGuard.FromLeftClick()) return true;
+        if (!LeftClickGuard.Block(__instance.Pointer)) return true;
+        // 关键:吞掉这次熄灭之后必须把"正在熄灭"的中间态撤回。不撤的话这根火把 / 火柴
+        // 永远停在 IsExtinguishing(),表现是点不燃、切不出别的物品、H 也没反应(实测)。
+        try { if (__instance.IsExtinguishing()) __instance.CancelExtinguish(); } catch { }
+        return false;
+    }
+}
+
 internal static class Patch_LampToggle_Block
 {
     internal static bool Prefix(KeroseneLampItem __instance)
     {
-        if (CheatState.DisableLampLeftClick && __instance.IsOn()) return false;
-        return true;
+        if (!CheatState.DisableLampLeftClick) return true;
+        // 点燃 / 熄灭的过渡动画期间一律不插手:这时候拦一下就会把灯卡在过渡态
+        if (!__instance.IsOn() || __instance.IsIgnitingOrExtinguishing()) return true;
+        if (!LeftClickGuard.FromLeftClick()) return true;
+        return !LeftClickGuard.Block(__instance.Pointer);
     }
 }
 
@@ -3988,7 +4384,11 @@ internal static class Patch_Container_Awake_InfiniteCapacity
     internal static void Postfix(Container __instance)
     {
         if (!CheatState.InfiniteContainer) return;
+#if STORY_EDITION
+        try { __instance.m_CapacityKG = 10000f; } catch { }
+#else
         try { __instance.m_Capacity = Il2CppTLD.IntBackedUnit.ItemWeight.FromKilograms(10000f); } catch { }
+#endif
     }
 }
 
@@ -4050,17 +4450,9 @@ internal static class TeleportFallGuard
     public static void Tick() { if (Active && --_frames <= 0) Active = false; }
 }
 
-// ═══════════════════════════════════════════════════════════════════
-//   v2.8.1 免费制作扩展 — NumSetsOfMaterialsAvailable 返回 ≥1
-// ═══════════════════════════════════════════════════════════════════
-
-internal static class Patch_Blueprint_NumSets
-{
-    internal static void Postfix(ref int __result)
-    {
-        if (CheatState.FreeCraft && __result < 1) __result = 1;
-    }
-}
+// v7.7 删掉 Patch_Blueprint_NumSets —— 目标方法 NumSetsOfMaterialsAvailable 在 TLD 2.55
+//   已被移除(见 DynamicPatch.cs:529 的注释),类因此既无 attribute 也无 Spec,从未挂载。
+//   免费制作由上面 7 个 CanCraft/材料检查 patch 覆盖。
 
 // ═══════════════════════════════════════════════════════════════════
 // ═══════════════════════════════════════════════════════════════════
@@ -4126,7 +4518,7 @@ internal static class AutoOpenMapHandler
     public static void Tick()
     {
         var s = ModMain.Settings;
-        if (s == null || !s.QoL_AutoOpenMapOnExit) return;
+        if (s == null || !s.QoL_Enabled || !s.QoL_AutoOpenMapOnExit) return;
         if (++_pollSkip < 15) return;
         _pollSkip = 0;
         if (GameManager.IsMainMenuActive()) { _lastScene = null; _delayTicks = 0; return; }
@@ -4221,12 +4613,13 @@ internal static class SpaceFinishHandler
         if (!s.SpaceFinish_BreakDown && !s.SpaceFinish_Harvest
             && !s.SpaceFinish_Craft && !s.SpaceFinish_Repair) return;
         if (!UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.Space)) return;
+        if (Menu.CapturingKeys) return;   // 在搜索框里敲空格
 
         if (s.SpaceFinish_BreakDown)
         {
             try
             {
-                var p = UnityEngine.Object.FindObjectOfType<Panel_BreakDown>();
+                var p = InterfaceManager.GetPanel<Panel_BreakDown>();   // 游戏自己的面板表,不扫场景(每按一次空格原先要全场景搜 4 遍)
                 if (p != null && p.isActiveAndEnabled && !p.m_IsBreakingDown)
                 {
                     p.OnBreakDown();
@@ -4240,10 +4633,15 @@ internal static class SpaceFinishHandler
         {
             try
             {
-                var p = UnityEngine.Object.FindObjectOfType<Panel_BodyHarvest>();
+                var p = InterfaceManager.GetPanel<Panel_BodyHarvest>();
                 if (p != null && p.isActiveAndEnabled)
                 {
+#if STORY_EDITION
+                    // 2.24 无 m_HarvestTimeMinutes 字段,时长由 GetHarvestDurationMinutes() 算出
+                    int mins = Mathf.Max(1, (int)p.GetHarvestDurationMinutes());
+#else
                     int mins = Mathf.Max(1, (int)p.m_HarvestTimeMinutes);
+#endif
                     p.StartHarvest(mins, string.Empty);
                     ModMain.Log?.Msg("[SpaceClick] Harvest");
                 }
@@ -4255,7 +4653,7 @@ internal static class SpaceFinishHandler
         {
             try
             {
-                var p = UnityEngine.Object.FindObjectOfType<Panel_Crafting>();
+                var p = InterfaceManager.GetPanel<Panel_Crafting>();
                 if (p != null && p.isActiveAndEnabled)
                 {
                     p.CraftingStart();
@@ -4269,7 +4667,7 @@ internal static class SpaceFinishHandler
         {
             try
             {
-                var p = UnityEngine.Object.FindObjectOfType<Panel_Repair>();
+                var p = InterfaceManager.GetPanel<Panel_Repair>();
                 if (p != null && p.isActiveAndEnabled)
                 {
                     int mins = Mathf.Max(1, (int)Mathf.Ceil(p.m_RepairTimeSeconds / 60f));
@@ -4281,4 +4679,3 @@ internal static class SpaceFinishHandler
         }
     }
 }
-

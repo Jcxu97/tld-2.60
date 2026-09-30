@@ -1,0 +1,162 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- 剧情版 (Wintermute) 构建。与沙盒版 TldHacks.csproj 共用同一份 src 源码,
+       仅多定义 STORY_EDITION 编译符号 → 激活 StoryGuard 层与 UI 灰显。
+       独立 obj/bin,绝不触碰沙盒版构建产物,保证 TldHacks.dll 字节不变。 -->
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <AssemblyName>TldHacksStory</AssemblyName>
+    <RootNamespace>TldHacks</RootNamespace>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Version>1.0.0</Version>
+    <DefineConstants>STORY_EDITION</DefineConstants>
+
+    <!-- 关键:关闭默认 glob,手动指定源码;否则会把沙盒 src/obj 里的
+         .AssemblyAttributes.cs 一并拉进来 → 重复 assembly attr 报错。 -->
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
+
+    <!-- 本项目独立的中间/输出目录,与沙盒版隔离 -->
+    <BaseIntermediateOutputPath>obj\</BaseIntermediateOutputPath>
+    <OutputPath>bin\</OutputPath>
+
+    <!-- 剧情模式是独立的第二份游戏安装,冻结在 2.24;沙盒是 2.55。
+         必须编译against 2.24 自己的 interop,否则会烧进 2.24 不存在的类型
+         (BlueprintData / CougarManager / Respirator 等),运行时 TypeLoadException。 -->
+    <TldRoot>D:\Steam\steamapps\common\TheLongDark</TldRoot>
+    <TldStoryRoot>$(TldRoot)\tld_dlc\wintermute</TldStoryRoot>
+    <TldMlNet6>$(TldRoot)\MelonLoader\net6</TldMlNet6>
+    <TldInterop>$(TldStoryRoot)\MelonLoader\Il2CppAssemblies</TldInterop>
+    <TldModsDir>$(TldStoryRoot)\Mods</TldModsDir>
+    <SrcDir>..\TldHacks\src</SrcDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 共用沙盒版全部源码;排除其 bin/obj 下的生成文件 -->
+    <Compile Include="$(SrcDir)\**\*.cs"
+             Exclude="$(SrcDir)\bin\**\*.cs;$(SrcDir)\obj\**\*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 逻辑名保持 TldHacks.HouseLights.hlbundle,与 IntegratedPatches9.cs 里
+         GetManifestResourceStream("TldHacks.HouseLights.hlbundle") 一致 -->
+    <EmbeddedResource Include="$(SrcDir)\HouseLights.hlbundle">
+      <LogicalName>TldHacks.HouseLights.hlbundle</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="MelonLoader">
+      <HintPath>$(TldMlNet6)\MelonLoader.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>$(TldMlNet6)\Newtonsoft.Json.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>$(TldMlNet6)\0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Il2CppInterop.Runtime">
+      <HintPath>$(TldMlNet6)\Il2CppInterop.Runtime.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Il2CppInterop.Common">
+      <HintPath>$(TldMlNet6)\Il2CppInterop.Common.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Il2Cppmscorlib">
+      <HintPath>$(TldInterop)\Il2Cppmscorlib.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Il2CppSystem">
+      <HintPath>$(TldInterop)\Il2CppSystem.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>$(TldInterop)\Assembly-CSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(TldInterop)\UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>$(TldInterop)\UnityEngine.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.IMGUIModule">
+      <HintPath>$(TldInterop)\UnityEngine.IMGUIModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>$(TldInterop)\UnityEngine.InputLegacyModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.TextRenderingModule">
+      <HintPath>$(TldInterop)\UnityEngine.TextRenderingModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.PhysicsModule">
+      <HintPath>$(TldInterop)\UnityEngine.PhysicsModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Il2CppTLD.IntBackedUnit">
+      <HintPath>$(TldInterop)\Il2CppTLD.IntBackedUnit.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.AnimationModule">
+      <HintPath>$(TldInterop)\UnityEngine.AnimationModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="ModSettings">
+      <HintPath>$(TldModsDir)\ModSettings.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="ModData">
+      <HintPath>$(TldModsDir)\ModData.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>$(TldInterop)\UnityEngine.UI.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Unity.Addressables">
+      <HintPath>$(TldInterop)\Unity.Addressables.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Unity.ResourceManager">
+      <HintPath>$(TldInterop)\Unity.ResourceManager.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Il2CppAK.Wwise.Unity.API.WwiseTypes">
+      <HintPath>$(TldInterop)\Il2CppAK.Wwise.Unity.API.WwiseTypes.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Il2CppTLD.PDID">
+      <HintPath>$(TldInterop)\Il2CppTLD.PDID.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Unity.TextMeshPro">
+      <HintPath>$(TldInterop)\Unity.TextMeshPro.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.AssetBundleModule">
+      <HintPath>$(TldInterop)\UnityEngine.AssetBundleModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <!-- 剧情版与沙盒版互斥(同 type、patch 同方法),不能同时放进 Mods\ 否则双重加载。
+       故本项目"不"自动部署;产物留在 bin\。玩剧情时手动用它替换 Mods\TldHacks.dll。 -->
+  <Target Name="ReportOutput" AfterTargets="Build">
+    <Message Importance="high" Text="==> Built $(TargetFileName) at $(OutputPath) (NOT auto-deployed; swap into Mods manually for story playthroughs)" />
+  </Target>
+
+</Project>

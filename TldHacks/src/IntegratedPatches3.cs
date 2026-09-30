@@ -1,11 +1,13 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text.Json;
 using HarmonyLib;
 using Il2Cpp;
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
+#if !STORY_EDITION   // 2.24 无此命名空间(2.24 之后才加入游戏)
 using Il2CppTLD.Gear;
+#endif
 using MelonLoader;
 using ModData;
 using UnityEngine;
@@ -53,6 +55,38 @@ internal static class AutoSurveyHelper
 // ═══════════════════════════════════════════════════════════════
 internal static class Patch_Sprains_Update
 {
+    // 关掉 Sprainkle 时写回原版值:扭伤组件在玩家身上跨场景存在,不还原的话改过的概率要重启游戏才恢复。
+    //   按实例存:换存档后组件是新实例(难度不同原值也不同),旧快照直接丢掉。
+    private static System.IntPtr _savedPtr;
+    private static int _slope;
+    private static float _secs, _base, _enc, _exh, _sprint, _crouch, _uiOn, _uiOff;
+
+    // DynamicPatch 的 cleanupDone:写回成功(或没改过)才返回 true 让补丁卸载
+    internal static bool RestoreDone()
+    {
+        if (_savedPtr == System.IntPtr.Zero) return true;
+        try
+        {
+            var sp = GameManager.GetSprainsComponent();
+            if (sp == null) return false;   // 主菜单里拿不到,等进场景再还
+            if (sp.Pointer == _savedPtr)
+            {
+                sp.m_MinSlopeDegreesForSprain = _slope;
+                sp.m_MinSecondsForSlopeRisk = _secs;
+                sp.m_BaseChanceWhenMovingOnSlope = _base;
+                sp.m_ChanceIncreaseEncumbered = _enc;
+                sp.m_ChanceIncreaseExhausted = _exh;
+                sp.m_ChanceIncreaseSprinting = _sprint;
+                sp.m_ChanceReduceWhenCrouchedPercent = _crouch;
+                sp.m_MinSecondsToShowWarning = _uiOn;
+                sp.m_MinSecondsBeforeHidingWarning = _uiOff;
+            }
+        }
+        catch { return false; }
+        _savedPtr = System.IntPtr.Zero;
+        return true;
+    }
+
     internal static void Postfix(Sprains __instance)
     {
         if (!CheatState.World_Sprainkle) return;
@@ -60,11 +94,33 @@ internal static class Patch_Sprains_Update
         {
             var s = ModMain.Settings;
             int slope = (int)s.World_SprainkleSlopeMin;
-            if (__instance.m_MinSlopeDegreesForSprain == slope) return;
+            // 所有字段都一致才跳过;只比坡度会让其余滑条改了不生效
+            if (__instance.m_MinSlopeDegreesForSprain == slope
+                && __instance.m_MinSecondsForSlopeRisk == s.World_SprainkleMinSecondsRisk
+                && __instance.m_BaseChanceWhenMovingOnSlope == s.World_SprainkleBaseChanceMoving
+                && __instance.m_ChanceIncreaseEncumbered == s.World_SprainkleEncumberChance
+                && __instance.m_ChanceIncreaseExhausted == s.World_SprainkleExhaustionChance
+                && __instance.m_ChanceIncreaseSprinting == s.World_SprainkleSprintChance
+                && __instance.m_ChanceReduceWhenCrouchedPercent == s.World_SprainkleCrouchChance
+                && __instance.m_MinSecondsToShowWarning == s.World_SprainkleSprintUIOn
+                && __instance.m_MinSecondsBeforeHidingWarning == s.World_SprainkleSprintUIOff) return;
             if (GameManager.m_IsPaused || GameManager.s_IsGameplaySuspended) return;
             var pm = GameManager.GetPlayerManagerComponent();
             if (pm == null || pm.m_God) return;
 
+            if (_savedPtr != __instance.Pointer)
+            {
+                _savedPtr = __instance.Pointer;
+                _slope = __instance.m_MinSlopeDegreesForSprain;
+                _secs = __instance.m_MinSecondsForSlopeRisk;
+                _base = __instance.m_BaseChanceWhenMovingOnSlope;
+                _enc = __instance.m_ChanceIncreaseEncumbered;
+                _exh = __instance.m_ChanceIncreaseExhausted;
+                _sprint = __instance.m_ChanceIncreaseSprinting;
+                _crouch = __instance.m_ChanceReduceWhenCrouchedPercent;
+                _uiOn = __instance.m_MinSecondsToShowWarning;
+                _uiOff = __instance.m_MinSecondsBeforeHidingWarning;
+            }
             __instance.m_MinSlopeDegreesForSprain = slope;
             __instance.m_MinSecondsForSlopeRisk = s.World_SprainkleMinSecondsRisk;
             __instance.m_BaseChanceWhenMovingOnSlope = s.World_SprainkleBaseChanceMoving;
@@ -127,7 +183,11 @@ internal static class Patch_SprainedWrist_Sprainkle
 
 // ═══════════════════════════════════════════════════════════════
 // MoreCookingSlots: WoodStove.Awake Postfix — 增加烹饪槽位
+// 2.24 没有 FireplaceInteraction 这个类,CookingSlot 也没有 m_FireplaceHost
+// (烹饪槽跟火源的关联是 2.55 重构出来的)。整个功能在剧情下无法实现,
+// patch 类连同 DynamicPatch 的 Spec 一起排除,StoryGuard 里再把开关强制关掉。
 // ═══════════════════════════════════════════════════════════════
+#if !STORY_EDITION
 internal static class Patch_WoodStove_Awake_CookingSlots
 {
     internal static void Postfix(WoodStove __instance)
@@ -246,6 +306,7 @@ internal static class Patch_WoodStove_Awake_CookingSlots
         RecreateArrays(go, pp);
     }
 }
+#endif
 
 // ═══════════════════════════════════════════════════════════════
 // UT Encumbrance: 额外负重
@@ -265,14 +326,17 @@ internal static class Patch_GearItem_Awake_BowRepair
     private static GearItem _hardwood;
     private static GearItem _cloth;
     private static bool _loaded;
+    private static bool _attempted;
+    private static bool _sceneInitialized;
 
     private static GearItem LoadGear(string key) =>
         UnityEngine.AddressableAssets.Addressables.LoadAssetAsync<GameObject>((Il2CppSystem.Object)key)
             .WaitForCompletion().GetComponent<GearItem>();
 
-    private static void EnsureLoaded()
+    internal static void PreloadMaterials()
     {
-        if (_loaded) return;
+        if (_loaded || _attempted || !_sceneInitialized) return;
+        _attempted = true;
         try
         {
             _simpleTools = LoadGear("GEAR_SimpleTools").m_ToolsItem;
@@ -285,7 +349,15 @@ internal static class Patch_GearItem_Awake_BowRepair
             _cloth = LoadGear("GEAR_Cloth");
             _loaded = true;
         }
-        catch { }
+        catch (Exception ex) { ModMain.Log?.Warning($"[BowRepair] Material preload failed: {ex}"); }
+    }
+
+    internal static void OnSceneInitialized()
+    {
+        _sceneInitialized = true;
+        _attempted = false;
+        if (ModMain.Settings != null && ModMain.Settings.World_BowRepair
+            && !ModMain.Settings.DiagUnpatchAll) PreloadMaterials();
     }
 
     private static Il2CppReferenceArray<ToolsItem> Tools() =>
@@ -344,7 +416,6 @@ internal static class Patch_GearItem_Awake_BowRepair
             if (!CheatState.World_BowRepair) return;
             if (__instance.m_BowItem == null) return;
 
-            EnsureLoaded();
             if (!_loaded) return;
 
             var s = ModMain.Settings;
@@ -382,7 +453,7 @@ internal static class Patch_GearItem_Awake_BowRepair
                 if (mode == 1 || mode == 2) AddMillable(__instance, _softwood, _scrapMetal, mat);
             }
         }
-        catch { }
+        catch (Exception ex) { ModMain.Log?.Error($"[BowRepair] GearItem.Awake: {ex}"); }
     }
 }
 
@@ -460,49 +531,62 @@ internal static class Patch_NoSaveOnSprain_Wrist
     }
 }
 
+#if !STORY_EDITION
 // ═══════════════════════════════════════════════════════════════
 // CraftAnywhere: Panel_Crafting.ItemPassesFilter Prefix/Postfix — 覆写蓝图制作位置
+// 2.24 无 Il2CppTLD.Gear.BlueprintData(蓝图数据在 2.24 之后才拆到该命名空间)。
 // ═══════════════════════════════════════════════════════════════
 internal static class Patch_CraftAnywhere
 {
     // v4.0r3: 旧 Postfix `__result = true` 一刀切让左侧分类按钮失效 ——
     //   vanilla ItemPassesFilter 同时做"位置检查"和"分类筛选",强制 true 把分类也覆盖了。
-    //   改成 CraftAnywhereRedux 原版思路:Prefix 临时把 m_RequiredCraftingLocation 设为 0(AnyWhere),
-    //   vanilla 内部位置检查通过 + 分类筛选独立工作;Postfix 还原原值,不污染存档。
-    //   用反射拿 FieldInfo 避免依赖 CraftingLocation enum 的具体 namespace。
+    //   改成 CraftAnywhereRedux 原版思路:Prefix 临时把 m_RequiredCraftingLocation 设为
+    //   Anywhere,vanilla 内部位置检查通过 + 分类筛选独立工作;Postfix 还原原值。
+    //
+    // v8.0.1 修"任意制作不生效":上一版用 AccessTools.Field 找 m_RequiredCraftingLocation,
+    //   永远返回 null,于是 Prefix 在 `if (_locField == null) return;` 就掉头,整个开关空转。
+    //   Il2CppInterop 把 IL2CPP 实例成员一律生成成 property,interop 类上唯一的真字段是
+    //   static NativeFieldInfoPtr_*,所以任何 GetField / AccessTools.Field 打在 Il2Cpp 类型
+    //   上都拿不到东西。改成直接写属性:编译期校验成员存在(同类错误变成编译错误而不是
+    //   静默失效),顺带省掉反射装箱。
 
-    private static System.Reflection.FieldInfo _locField;
-    private static bool _resolved;
-
-    [System.ThreadStatic] private static object _saved;
+    [System.ThreadStatic] private static CraftingLocation _saved;
     [System.ThreadStatic] private static bool _hasSaved;
 
     internal static void Prefix(BlueprintData bpi)
     {
         _hasSaved = false;
         if (!CheatState.Craft_Anywhere || bpi == null) return;
-        if (!_resolved)
-        {
-            _resolved = true;
-            _locField = HarmonyLib.AccessTools.Field(typeof(BlueprintData), "m_RequiredCraftingLocation");
-        }
-        if (_locField == null) return;
         try
         {
-            _saved = _locField.GetValue(bpi);
+            _saved = bpi.m_RequiredCraftingLocation;
             _hasSaved = true;
-            _locField.SetValue(bpi, System.Enum.ToObject(_locField.FieldType, 0));
+            bpi.m_RequiredCraftingLocation = CraftingLocation.Anywhere;
         }
         catch { _hasSaved = false; }
     }
 
     internal static void Postfix(BlueprintData bpi)
     {
-        if (!_hasSaved || bpi == null || _locField == null) return;
-        try { _locField.SetValue(bpi, _saved); } catch { }
+        if (!_hasSaved || bpi == null) return;
+        try { bpi.m_RequiredCraftingLocation = _saved; } catch { }
         _hasSaved = false;
     }
 }
+
+// ═══════════════════════════════════════════════════════════════
+// CraftAnywhere 第二道闸:BlueprintData.CanCraftAtLocation Postfix
+// 上面那个只让蓝图在列表里"看得见";真正按下制作还要过位置检查这一关
+// (不开免费制作时,CanCraftBlueprint 里的位置分支照样会拦)。这里直接放行。
+// ═══════════════════════════════════════════════════════════════
+internal static class Patch_CraftAnywhere_Location
+{
+    internal static void Postfix(ref bool __result)
+    {
+        if (CheatState.Craft_Anywhere) __result = true;
+    }
+}
+#endif
 
 // ═══════════════════════════════════════════════════════════════
 // MapTextOutline: Panel_Map.CreateObjectPools Postfix — 地图文字描边
@@ -584,7 +668,11 @@ internal static class Patch_WakeUpCall_BeginSleeping
             __5 = (Il2CppSystem.Action)new System.Action(WakeUpCallHelper.PostWakeUp);
 
             float target = CheatState.QoL_NoPitchBlack ? WakeUpCallState.FadeAlpha : 1f;
+#if STORY_EDITION
+            StoryShim.FadeTo(target, 0.5f);   // 2.24 无 CameraFade.Fade,见 StoryCompat
+#else
             CameraFade.Fade(0f, target, 0.5f, 0f, (Il2CppSystem.Action)null);
+#endif
         }
         catch { }
     }
@@ -651,7 +739,11 @@ internal static class WakeUpCallHelper
             if (CheatState.QoL_NoPitchBlack)
                 GameManager.GetCameraEffects().DepthOfFieldTurnOff(false);
             float from = CheatState.QoL_NoPitchBlack ? WakeUpCallState.FadeAlpha : 1f;
+#if STORY_EDITION
+            StoryShim.FadeTo(0f, 0.5f);       // 2.24 无 CameraFade.Fade
+#else
             CameraFade.Fade(from, 0f, 0.5f, 0f, (Il2CppSystem.Action)null);
+#endif
             if (CheatState.QoL_ShowTimeSleep)
                 InterfaceManager.GetInstance().SetTimeWidgetActive(false);
         }
@@ -734,8 +826,16 @@ internal static class BuryCorpsesState
         GameManager.GetPlayerVoiceComponent().BlockNonCriticalVoiceForDuration(10f);
         Interrupted = false;
         InProgress = true;
+#if STORY_EDITION
+        // 2.24 Launch(string, float, float, float, string, string, bool, bool, OnExitDelegate)
+        // 比 2.55 多两个音效名参数和一个 supressHeavyBreathing。
+        InterfaceManager.GetPanel<Panel_GenericProgressBar>().Launch(
+            I18n.T("埋葬遗体", "Bury a friend"), SecondsToInteract, (float)HoursToBury * 60f, 0f,
+            string.Empty, string.Empty, true, false, (OnExitDelegate)null);
+#else
         InterfaceManager.GetPanel<Panel_GenericProgressBar>().Launch(
             I18n.T("埋葬遗体", "Bury a friend"), SecondsToInteract, (float)HoursToBury * 60f, 0f, true, (OnExitDelegate)null);
+#endif
         while (InProgress)
         {
             yield return new WaitForEndOfFrame();
@@ -746,7 +846,13 @@ internal static class BuryCorpsesState
             var crows = corpse.GetComponent<Carrion>();
             if (crows != null)
                 crows.Destroy();
+#if STORY_EDITION
+            // 2.24 ObjectGuid 只有实例 Get(),没有 static GetGuidFromGameObject
+            string guid = null;
+            try { var og = corpse.GetComponent<ObjectGuid>(); if (og != null) guid = og.Get(); } catch { }
+#else
             string guid = ObjectGuid.GetGuidFromGameObject(corpse);
+#endif
             if (BuriedCorpses.ContainsKey(GameManager.m_ActiveScene))
             {
                 BuriedCorpses[GameManager.m_ActiveScene].Add(guid);
@@ -914,9 +1020,17 @@ internal static class Patch_SleepAnywhere_RestEnable
                 if (__instance.m_Bed != null || SleepAnywhereState.TempBedroll != null)
                     return;
 
+#if STORY_EDITION
+                GearItem prefab = StoryShim.LoadGearItemPrefab("GEAR_BedRoll");
+#else
                 GearItem prefab = GearItem.LoadGearItemPrefab("GEAR_BedRoll");
+#endif
                 if (prefab == null) return;
                 GearItem item = GearItem.InstantiateDepletedGearPrefab(((Component)prefab).gameObject).GetComponent<GearItem>();
+#if STORY_EDITION
+                // 2.24 的 StoryShim 已经实例化了一件,复制完就销毁,别留一个床卷在场景里
+                try { GearManager.DestroyGearObject(((Component)prefab).gameObject); } catch { }
+#endif
                 if (item != null)
                 {
                     item.m_CurrentHP = Mathf.Max(2f, item.m_CurrentHP);
@@ -1118,7 +1232,11 @@ internal static class Patch_SleepAnywhere_SleepInterruption
                 _lastWasCondition = true;
                 if (SleepAnywhereState.HudMessage)
                     HUDMessage.AddMessage(I18n.T("你即将坠入漫漫长夜。快寻找庇护和温暖！", "You are about to fade into the long dark. Seek shelter and warmth!"), 5f, false, false);
+#if STORY_EDITION
+                StoryShim.FadeIn(0.5f);       // 2.24 无 CameraFade.FadeIn
+#else
                 CameraFade.FadeIn(0.5f, 0f, (Il2CppSystem.Action)null);
+#endif
             }
             else
             {
@@ -1133,11 +1251,16 @@ internal static class Patch_SleepAnywhere_EndSleeping
 {
     internal static void Postfix(Rest __instance, ref bool interrupted)
     {
-        if (!CheatState.QoL_SleepAnywhere) return;
+        // v7.7 修临时床卷泄漏:这是销毁临时 bedroll、把 Rest.m_Bed 置空的唯一路径,
+        //   原先和「注入床卷」共用 QoL_SleepAnywhere 门控 —— 野外睡觉途中把开关关掉,
+        //   这个 Postfix 就不再执行,假床对象泄漏且 m_Bed 继续指向它(后续休息/存档行为未定义)。
+        //   现在只要还有临时床卷需要清理就允许执行。
+        if (!CheatState.QoL_SleepAnywhere && SleepAnywhereState.TempBedroll == null) return;
         try
         {
             if (__instance == null) return;
-            if (interrupted && SleepAnywhereState.TempBedroll != null)
+            // 开关已关时正常睡醒也要销毁:平时负责销毁的 Panel_Rest.Enable(false) 那条路径随开关卸了
+            if (SleepAnywhereState.TempBedroll != null && (interrupted || !CheatState.QoL_SleepAnywhere))
             {
                 GearManager.DestroyGearObject(((Component)SleepAnywhereState.TempBedroll).gameObject);
                 SleepAnywhereState.TempBedroll = null;

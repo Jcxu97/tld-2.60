@@ -1,0 +1,126 @@
+﻿kind	field	zh	en
+DESC	AllNote	笔记/钥匙/科技背包等变为可丢弃(注意:笔记将不可阅读)	Notes, keys, the tech backpack and similar items become droppable. Note: dropped notes can no longer be read.
+DESC	AutoExtinguishOnRest	睡觉或等待时自动关闭手持油灯/火把/手电	Automatically puts out a held lantern, torch or flashlight when you sleep or pass time.
+DESC	BlockAutoPickupOwnDrops	按 W 触发 ItemPicker 自动拾取时,忽略本会话内玩家 drop 的 GearItem,避免刚丢就又捡回来	When ItemPicker auto-pickup fires on W, any GearItem you dropped during this session is ignored, so you do not pick straight back up what you just put down.
+DESC	BodyHarvestDecay	刀/斧/锯在采集动物尸体时的衰减倍率	Decay multiplier for knives, hatchets and saws used to harvest a carcass.
+DESC	Craft_Anywhere	修改每个蓝图的制作位置要求	Changes the crafting location each blueprint requires.
+DESC	CrosshairEnabled	瞄准时显示额外准星(石头/步枪/弓)	Shows an extra crosshair while aiming (stone, rifle, bow).
+DESC	DeerMeatMultMax	鹿尸体初始肉量倍率区间上限;生成时在[下限,上限]内随机取一个倍率	Upper bound of the multiplier on the starting meat in a deer carcass; each carcass rolls a random multiplier between the lower and upper bound.
+DESC	DeerMeatMultMin	鹿尸体初始肉量倍率区间下限(1=原版6-9kg, 真实约18-25kg→约2.5)	Lower bound of the multiplier on the starting meat in a deer carcass (1 = vanilla 6-9 kg; a real deer holds about 18-25 kg, roughly 2.5).
+DESC	DiagPauseRuntime	诊断用。开了 ModMain 不再跑任何 per-frame tick / Stacking OnLateUpdate / Menu UI。Harmony patch 仍挂着(静态挂载不受此开关影响)。若开了仍卡 → 卡在 patch 本身	Diagnostic. When on, ModMain stops running any per-frame tick, Stacking OnLateUpdate or Menu UI. Harmony patches stay applied (static patching is not affected by this toggle). If the stutter is still there with this on, it comes from the patches themselves.
+DESC	DiagUnpatchAll	启动时立即 UnpatchAll + skip Reconcile,TldHacks 的所有 [HarmonyPatch] 零挂载。需重启游戏生效。开了仍卡 = 100% 不是 TldHacks;开了不卡 = 是 patch 总数问题,下一步全迁 DynamicPatch	Runs UnpatchAll at startup and skips Reconcile, so none of the TldHacks [HarmonyPatch] classes are applied. Requires a game restart. Still stuttering with this on means TldHacks is definitely not the cause; no stutter means the total patch count is the problem, and the next step is moving everything to DynamicPatch.
+DESC	DisableLampLeftClick	防止鼠标左键误熄油灯	Stops a left click from putting out your lantern by accident.
+DESC	DisableTorchLeftClick	防止鼠标左键误熄火把	Stops a left click from putting out your torch by accident.
+DESC	DoorSwingAngle	门的打开弧度,0.03=原版,0.3=大开	How far a door swings open. 0.03 = vanilla, 0.3 = wide open.
+DESC	DoorSwingSpeed	门的开启速度,1=原版,0=最快	How fast a door opens. 1 = vanilla, 0 = fastest.
+DESC	DroppableUndroppables	相机/对讲机/断线钳等原本不可丢的物品变为可丢弃	Items that normally cannot be dropped, such as the camera, the walkie-talkie and the bolt cutters, become droppable.
+DESC	FatigueBuff	强制疲劳 buff 激活(CT: StatusBar fatigue buff=1)	Forces the fatigue buff to stay active (CT: StatusBar fatigue buff=1).
+DESC	FireAnywhere	任何地方都能生火,包括室内	Start a campfire anywhere, including indoors.
+DESC	FireMaxBurnHours	原版上限12小时,提高后可无限加燃料	Vanilla caps a campfire at 12 hours; raise this and you can keep adding fuel without limit.
+DESC	FlyHotkey	按此键切换 uConsole fly 命令。需要 DeveloperConsole.dll 启用。	Press this key to toggle the uConsole fly command. Requires DeveloperConsole.dll to be enabled.
+DESC	FreeFireFuel	添加柴火时不消耗物品	Adding fuel to a fire does not consume the item.
+DESC	FreeSprint	冲刺不消耗体力,拉雪橇也能无限冲刺	Sprinting costs no stamina, and you can sprint without limit while pulling a travois.
+DESC	FreezingBuff	强制温度 buff 激活(CT: FreezingBuffActive=true)	Forces the warming buff to stay active (CT: FreezingBuffActive=true).
+DESC	GrabAllKey	按此键把玩家半径内地上/场景里的全部物品直接收进背包(搜刮距离见下方滑块)。默认 G。设 None 关闭热键。	Press this key to move every item on the ground or in the scene within range straight into your backpack (range is set by the slider below). Default G. Set to None to disable the hotkey.
+DESC	GrabAllNotify	开:每件收进背包时弹原版拾取提示(一次收几十件会刷屏)。关:静默收取,只在菜单底栏汇总。默认开。	On: every item shows the vanilla pickup popup as it goes in (grabbing dozens at once floods the screen). Off: items are collected silently and only summarized in the menu status bar. Default on.
+DESC	GrabAllRadius	一键搜刮的作用半径,默认 15 米。半径越大单次扫描越久。	Radius used by Grab All, default 15 m. A larger radius makes each scan take longer.
+DESC	GunZoomEnabled	瞄准时滚动鼠标滚轮可放大/缩小视野	Scroll the mouse wheel while aiming to zoom the view in and out.
+DESC	HL_CastShadows	灯光投射阴影(可能影响性能)	Lights cast shadows (may cost performance).
+DESC	HL_CullDistance	超出此距离的灯光关闭以节省性能	Lights further away than this are turned off to save performance.
+DESC	HL_EnableOutside	室外地图也启用灯光(实验性,可能影响性能)	Also enables the lights in outdoor regions (experimental, may cost performance).
+DESC	HL_Enabled	非极光时也能通过开关点亮室内灯	Indoor lights can be switched on even when there is no aurora.
+DESC	HL_Intensity	灯光强度,0=灭 3=最亮	Light intensity. 0 = off, 3 = brightest.
+DESC	HL_InteractDistance	可操作开关的最大距离。默认2m(原版1m太近,有些人贴墙也够不到开关)	Maximum distance at which a light switch can be used. Default 2 m (the vanilla 1 m is so short that some switches cannot be reached even standing against the wall).
+DESC	HL_LightAudio	灯开启时发出嗡嗡声	Lights give off a hum while switched on.
+DESC	HL_NoFlicker	极光灯光不闪烁,保持常亮	Aurora lights stop flickering and stay steady.
+DESC	HL_RangeMultiplier	1=默认照射距离, >1 增大范围	1 = default reach; above 1 widens the range.
+DESC	HL_WhiteLights	灯光颜色去饱和,呈白色	Desaturates the light color so it looks white.
+DESC	ImportantWeight	关闭则相机/断线钳等重量归零;开启则保留原重量	Off sets the weight of items like the camera and bolt cutters to zero; on keeps their original weight.
+DESC	InfiniteStamina	体力条永远满,不影响疲劳值	The stamina bar stays full; fatigue is not affected.
+DESC	InvWeightGeneralVol	背包其他物品发出的声音百分比	Noise from all other items in your backpack, as a percentage.
+DESC	InvWeightMetalVol	背包金属物品发出的声音百分比,0=无声,100=原版	Noise from metal items in your backpack, as a percentage. 0 = silent, 100 = vanilla.
+DESC	InvWeightWaterVol	背包水资源发出的声音百分比	Noise from water carried in your backpack, as a percentage.
+DESC	InvWeightWoodVol	背包木材物品发出的声音百分比	Noise from wood items in your backpack, as a percentage.
+DESC	JumpCalorieCost	每次跳跃消耗的卡路里(Jump King关闭时生效)	Calories burned per jump (applies only when Jump King is off).
+DESC	JumpEnabled	总开关 — 关闭则跳跃热键无效	Master switch; with this off the jump hotkey does nothing.
+DESC	JumpFatigueCost	每次跳跃增加的疲劳百分比(Jump King关闭时生效)	Percentage of fatigue added per jump (applies only when Jump King is off).
+DESC	JumpHeight	基础跳跃力度,24=正常高度,42=超级跳	Base jump force. 24 = normal height, 42 = super jump.
+DESC	JumpKing	开启后忽略负重/饥饿/口渴/疲劳/体力限制,直接跳	When on, jumping ignores the carry weight, hunger, thirst, fatigue and stamina requirements.
+DESC	JumpStaminaCost	每次跳跃消耗的体力百分比(Jump King关闭时生效)	Percentage of stamina spent per jump (applies only when Jump King is off).
+DESC	JumpWeightLimit	超过此重量无法跳跃(Jump King关闭时生效)	You cannot jump while carrying more than this weight (applies only when Jump King is off).
+DESC	LampBurnMultiplier	v3.0.4 后已废弃,保留兼容老存档。新版用 放置/手持 分离倍率	Deprecated since v3.0.4, kept so old saves still load. Newer versions use separate multipliers for placed and held lanterns.
+DESC	LampConditionThreshold	HP 低于此阈值,耗油加速。0=关闭惩罚,80=80%以下开始	Below this Condition threshold the lantern burns fuel faster. 0 = penalty off, 80 = starts below 80%.
+DESC	LampHeldBurnMult	手持时燃油消耗倍率。1=原版,0=无限,2=两倍	Fuel burn multiplier while the lantern is held. 1 = vanilla, 0 = burns forever, 2 = double consumption.
+DESC	LampMaxPenalty	HP 接近 0 时额外耗油。100=两倍消耗,200=三倍	Extra fuel use as Condition approaches 0. 100 = double consumption, 200 = triple.
+DESC	LampMute	油灯放置(非手持)时不发出燃烧/嘶嘶声	A placed (not held) lantern makes no burning or hissing sound.
+DESC	LampOverTimeDecay	点亮后每小时耐久损耗 %。0=无,1=每小时 -1%	Percentage of Condition lost per hour while the lantern is lit. 0 = none, 1 = -1% per hour.
+DESC	LampPlacedBurnMult	放置时燃油消耗倍率。1=原版(4小时),0=无限燃烧,2=两倍消耗	Fuel burn multiplier while the lantern is placed. 1 = vanilla (4 hours), 0 = burns forever, 2 = double consumption.
+DESC	LampRangeMultiplier	1=原版, >1 增大照亮距离, 山洞/夜晚更亮	1 = vanilla; above 1 widens the lit area, which helps in caves and at night.
+DESC	LampTurnOnDecay	开启时一次性扣 HP 百分比。0=无损,2=每次开启 -2%	Percentage of Condition lost each time the lantern is switched on. 0 = no loss, 2 = -2% per turn-on.
+DESC	LanguageMode	Auto = 按系统语言(非中文系统 → English);Chinese = 强制中文;English = 强制英文。改完需按菜单热键重开菜单生效。	Auto follows the system language (English on any non-Chinese system); Chinese forces Chinese; English forces English. Press the menu hotkey to close and reopen the menu for the change to take effect.
+DESC	MagicBullet	开枪即对准星前方最近动物直接施加伤害,无视弹道与落点;配合「一击必杀」一枪毙命	Firing applies damage directly to the nearest animal in front of the crosshair, ignoring ballistics and impact point; combine it with Instant Kill for a one-shot kill.
+DESC	MapClickTP	双击游戏地图图标传送到该位置(同区内,按M打开地图)	Double-click an icon on the in-game map to teleport there (same region only; press M to open the map).
+DESC	MenuHotkey	按此键呼出/关闭 TldHacks 菜单。默认 Tab 会和游戏日志键冲突,建议改成 F1 / \ 等。	Press this key to open or close the TldHacks menu. The default Tab clashes with the in-game journal key, so F1 or \ is a better choice.
+DESC	MuteCougarMenuSound	销毁主菜单的美洲狮叫声音效	Destroys the cougar call sound effect on the main menu.
+DESC	NoAimSway	合并瞄准晃动/抖动/呼吸晃动。开枪准星不动、武器不晃、瞄准画面不抖	Combines aim sway, jitter and breathing sway into one toggle. The crosshair holds still, the weapon does not drift and the aiming view does not shake.
+DESC	NoAutoEquipCharcoal	从篝火收集炭笔后不会自动装备到手上	Charcoal collected from a campfire is not auto-equipped to your hands.
+DESC	NoFrostbiteRisk	完全阻止冻伤伤害(CT: DealFrostbiteDamageToLocation=0)	Blocks all frostbite damage (CT: DealFrostbiteDamageToLocation=0).
+DESC	PauseInJournal	打开Panel_Log(日志/地图)时游戏时间暂停	Game time pauses while Panel_Log (journal and map) is open.
+DESC	PickupRange	拾取/交互距离倍数。1=原版,5=五倍远距离拾取	Multiplier on pickup and interaction distance. 1 = vanilla, 5 = five times the reach.
+DESC	PlaceFromInv_AllowClose	解除原版'离物体太近'放置限制	Removes the vanilla 'too close to another object' placement restriction.
+DESC	PlaceFromInv_Enabled	背包/衣物面板右键物品 → 进入放置模式	Right-click an item in the inventory or clothing panel to enter placement mode.
+DESC	PlaceFromInv_StackDrop	Pick Units 面板按住 Ctrl 时按 stack 丢出而非单件	Holding Ctrl in the Pick Units panel drops the whole stack instead of a single item.
+DESC	QoL_AutoOpenMapOnExit	室内→室外场景切换后自动打开 MotionTrackerLite 小地图(需装 MotionTrackerLite mod)	Opens the MotionTrackerLite minimap automatically after an indoor to outdoor transition (requires the MotionTrackerLite mod).
+DESC	QoL_BackKey	在面板内按此键 = 关闭面板返回(等同 Esc)	Press this key inside a panel to close it and go back (same as Esc).
+DESC	QoL_BulkKey	按住此键 + 丢弃键 = 丢整堆;按住此键 + 拾取/转移键 = 批量操作	Hold this key with the drop key to drop a whole stack; hold it with the take or transfer key for bulk actions.
+DESC	QoL_BuryCorpses	对人类/动物尸体按 Alt+Fire 埋葬	Press Alt plus fire on a human body or an animal carcass to bury it.
+DESC	QoL_DropKey	背包内按此键丢弃 hover 的物品 1 个;配合批量键丢整堆	In the inventory, press this key to drop one of the hovered item; hold the bulk key to drop the whole stack.
+DESC	QoL_HotkeysEnabled	启用 QoL 风格热键(背包/搜刮/制作面板内的键盘操作)	Enables QoL-style hotkeys (keyboard actions inside the inventory, loot and crafting panels).
+DESC	QoL_NoSaveOnSprainFalls	坠落引起的扭伤同样不触发自动存档	Sprains caused by falls also skip the autosave.
+DESC	QoL_WakeUpCall	暂停菜单里可以选择醒来	Adds a wake-up option to the pause menu while you sleep.
+DESC	QuickAction	采集尸骸 / 修理工具 / 拆解物品 时游戏内置有加速按钮,这个 toggle 自动帮你按	Harvesting a carcass, repairing a tool and breaking down an item all have a built-in speed-up button; this toggle presses it for you.
+DESC	RememberBreakdownTool	拆解面板自动选中上次使用的工具	The break-down panel preselects the tool you used last time.
+DESC	RunWithLantern	手持油灯时不再锁定移动速度,可正常跑步	Holding a lantern no longer locks your movement speed, so you can run normally.
+DESC	SilentFootsteps	完全消除自身脚步声,动物也听不到。启用后忽略以下4项	Removes your own footstep noise completely, so animals cannot hear you either. When on, the four sliders below are ignored.
+DESC	SkipIntro	跳过启动免责声明、开场动画、隐藏新闻轮播	Skips the startup disclaimer and the intro movie, and hides the news carousel.
+DESC	SpaceFinish_BreakDown	Panel_BreakDown 打开时按空格立即完成,跳过按住进度	Press Space while Panel_BreakDown is open to finish immediately, skipping the hold-to-progress bar.
+DESC	SpaceFinish_Craft	Panel_Crafting 打开时按空格立即完成 (制作)	Press Space while Panel_Crafting is open to finish immediately (crafting).
+DESC	SpaceFinish_Harvest	Panel_BodyHarvest 打开时按空格立即完成 (剥皮/取肉)	Press Space while Panel_BodyHarvest is open to finish immediately (hide and meat).
+DESC	SpaceFinish_Repair	Panel_Repair 打开时按空格立即完成 (修理)	Press Space while Panel_Repair is open to finish immediately (repair).
+DESC	SpeedTweaksEnabled	总开关:关闭后下面所有速度/体力滑条不生效,等于原版速度	Master switch: with this off none of the speed and stamina sliders below apply, and movement stays at vanilla speed.
+DESC	Stack_AddComponent	给 Coffee/茶/胡萝卜/土豆等指定物品添加可堆叠	Adds a stackable component to selected items such as coffee, tea, carrots and potatoes.
+DESC	Stack_UseMaxHP	堆叠时按更高 HP 计算(8 张鹿皮按最佳那张)	Merged stacks take the higher Condition (eight deer hides all use the best one).
+DESC	StaminaRecoveryDelay	停止冲刺后多久开始恢复体力的倍率,0=立即恢复,1=原版,2=双倍等待	Multiplier on the delay before stamina starts recovering after you stop sprinting. 0 = recovers at once, 1 = vanilla, 2 = twice the wait.
+DESC	SuperAccuracy	已弃用。保留此开关是为了旧 JSON 兼容:开启时等效于 稳定瞄准+无后坐力。	Deprecated. Kept only so older JSON configs still load: turning it on is the same as Steady Aim plus No Recoil.
+DESC	TT_CapFeelsHigh	0=不限制	0 = no limit.
+DESC	TT_CapFeelsLow	0=不限制	0 = no limit.
+DESC	TT_FallDamageMult	原版=3	Vanilla = 3.
+DESC	TT_GlobalSpeedMult	修理/制作/烹饪/净水/雪屋等	Repair, crafting, cooking, water purification, snow shelters and the like.
+DESC	TT_InteractionSpeedMult	开箱/采植物/进车/开门	Opening containers, harvesting plants, entering vehicles, opening doors.
+DESC	TechBackpack	覆盖原版 30kg 背包上限为自定义值	Overrides the vanilla 30 kg carry weight limit with a value of your own.
+DESC	TechBackpackKg	替换原版 30kg 上限的目标值, 默认 30=原版	The value that replaces the vanilla 30 kg limit; 30 is vanilla (default).
+DESC	TimeScaleInfo	按住热键1/2期间游戏加速到对应倍率,松开恢复正常速度	Hold hotkey 1 or 2 to run the game at that multiplier; release it to go back to normal speed.
+DESC	TorchBurnMinutes	默认90=原版(实测GEAR_Torch原版值)。拖高=火把烧更久;90=完全原版,不挂载补丁	Default 90 is vanilla (measured from GEAR_Torch). Higher values make torches burn longer; at 90 the patch is not applied at all.
+DESC	TorchFullValue	从篝火取出的火把燃烧值为最大	Torches taken from a campfire come out with full burn time.
+DESC	TraderArrivalDays	游戏内经过该天数后商人可用。原版约25-30天。设为30及以上=完全跟随原版进度(默认),拖低=提前到货	The trader becomes available after this many in-game days have passed. Vanilla is about 25 to 30 days. Set 30 or higher to follow vanilla progression exactly (default); lower values make the trader arrive early.
+DESC	TrueInvisible	动物像看不见你一样,正常闲逛/觅食/睡觉,不扑也不逃	Animals behave as if they cannot see you and keep wandering, feeding or sleeping; they neither attack nor flee.
+DESC	UT_BreathVisibility	关闭则不显示寒冷天气下口鼻哈气特效	Off hides the visible breath effect in cold weather.
+DESC	UT_ConsistantDressingWeight	把 OldMansBeardDressing 重量改为 0.03kg	Sets the weight of OldMansBeardDressing to 0.03 kg.
+DESC	UT_FeatProgressInCustom	自定义难度也能解锁徽章进度	Feat progress also accumulates on custom difficulty.
+DESC	UT_FlashInfiniteBattery	手电筒永不耗电	The flashlight never runs out of battery.
+DESC	UT_RandomizedItemRotation	Drop 物品时朝向随机化	Dropped items land with a random rotation.
+DESC	UT_RemoveHeadacheDebuff	CookedPiePeach/RoseHip/PorridgeFruit/PancakePeach 不再头疼	CookedPiePeach, RoseHip, PorridgeFruit and PancakePeach no longer cause a headache.
+DESC	UT_RevolverImprovements	瞄准状态下也可以走动并隐藏限制 UI	You can move while aiming the revolver, and the restriction UI is hidden.
+DESC	UT_SnowShelterDecay	100=原版,0=不损耗	100 = vanilla, 0 = no Condition loss.
+DESC	UT_StewFatigueLoss	CookedStewMeat/Vegetables 的 Effect 值	Effect value used by CookedStewMeat and CookedStewVegetables.
+DESC	UT_ToiletWaterPotable	马桶水设为 Potable(无需净化)	Marks toilet water as Potable, so it needs no purification.
+DESC	VehicleFreeLook	扩大车内视角旋转范围	Widens how far you can turn the camera while inside a vehicle.
+DESC	VehicleKeepFov	进入车辆时使用当前FOV而非车辆默认FOV	Entering a vehicle keeps your current FOV instead of switching to the vehicle default.
+DESC	WellFedBuff	强制 Well Fed 状态激活。CT: WellFed.Update NOP	Forces the Well Fed status to stay active. CT: WellFed.Update NOP.
+DESC	World_BowRepair	给弓类武器添加修理/磨坊选项	Adds repair options for bows, by hand or at the milling machine.
+DESC	World_BowRepairDLC	是否允许修复DLC弓(猎弓/灌木弓)	Whether DLC bows can be repaired (sport bow, wood bow, bush bow).
+DESC	World_CaffeinatedSodas	喝苏打水获得减疲劳效果	Drinking soda reduces fatigue.
+DESC	World_CarcassMoving	可拾取鹿/狼尸体搬运到其他地方(含跨场景)	Lets you pick up deer and wolf carcasses and carry them elsewhere, including across scene transitions.
+DESC	World_CarcassMovingAll	开启后熊/驼鹿/美洲狮也可搬运	When on, bear, moose and cougar carcasses can be moved as well.
+DESC	World_ElectricTorch	极光期间可从电源插座/电线点燃火把	During an aurora you can light a torch from a powered outlet or wire.
+DESC	World_Sprainkle	启用后用下方参数替代简单的'无扭伤风险'开关	When on, the parameters below replace the simple No Sprain Risk toggle.
