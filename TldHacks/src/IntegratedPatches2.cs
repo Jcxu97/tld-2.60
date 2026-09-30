@@ -101,7 +101,10 @@ internal static class Patch_PanelMainMenu_SkipIntro
             // 2.24 无 MoviePlayer.m_HasIntroPlayedForMainMenu / Panel_MainMenu.m_PlayedIntroMovie
             // (这两个标志是 2.55 才加的)。剧情下只靠下面的 DisclaimerKiller 扫面板。
             MoviePlayer.m_HasIntroPlayedForMainMenu = true;
+#if !EP5_EDITION
+            // 2.54(第 5 章)也没有 m_PlayedIntroMovie
             __instance.m_PlayedIntroMovie = true;
+#endif
 #endif
         }
         catch { }

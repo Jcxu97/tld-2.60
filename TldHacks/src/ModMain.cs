@@ -10,6 +10,8 @@ using UnityEngine;
 //   常量拼接是编译期常量,所以 attribute 里也能用。唯一还要手动跟的是 csproj 的 <Version>。
 #if STORY_EDITION
 [assembly: MelonInfo(typeof(TldHacks.ModMain), "TldHacksStory", "1.3", "user")]
+#elif EP5_EDITION
+[assembly: MelonInfo(typeof(TldHacks.ModMain), "TldHacksEp5", "1.0", "user")]
 #else
 [assembly: MelonInfo(typeof(TldHacks.ModMain), "TldHacks", TldHacks.ModMain.VERSION + ".0", "user")]
 // 程序集版本。csproj 设了 GenerateAssemblyInfo=false,<Version> 不会进 DLL 元数据,
@@ -678,7 +680,7 @@ public class ModMain : MelonMod
         CheatState.TT_PauseOnRadial = Settings.TT_PauseOnRadial;
         CheatState.TT_RespawnPlants = Settings.TT_RespawnPlants;
         CheatState.TT_ShowTraderTrust = Settings.TT_ShowTraderTrust;
-#if STORY_EDITION
+#if STORY_GUARD
         // 剧情版:在所有 Settings→CheatState 拷贝之后强制清零被 BLOCK 的沙盒专属/传送开关。
         // 沙盒版无此符号,本调用不存在,DLL 字节不变。
         StoryGuard.Enforce();

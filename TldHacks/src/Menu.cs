@@ -1105,7 +1105,7 @@ internal static class Menu
         // 世界时钟 — 地图 + 天气(3行) + 时间(1行)合并一块
         y2 = Section(c2, y2, I18n.T("地图 / 天气 / 时间", "Map / Weather / Time"));
         if (GUI.Button(R(c2, y2, TOG_W, ROW_H), I18n.T("全开地图", "Reveal Map"))) Cheats.RevealFullMap();
-#if STORY_EDITION
+#if STORY_GUARD
         // 剧情版:地图双击传送同样属"传送",按用户决策禁用(全开地图保留)。
         bool _mtpBlocked = StoryGuard.InStory;
         if (_mtpBlocked) GUI.enabled = false;
@@ -1113,11 +1113,11 @@ internal static class Menu
         bool mtp = Ui.Toggle("MapClickTP", R(c2 + TOG2_OFF, y2, TOG_W, ROW_H), s.MapClickTP, I18n.T(" 地图双击传送", " Map Click TP"));
         // v7.7 补 RequestSave:这个开关原先改了不落盘,重启游戏后被 JSON 里的旧值覆盖
         if (mtp != s.MapClickTP) { s.MapClickTP = mtp; CheatState.MapClickTP = mtp; s.RequestSave(); }
-#if STORY_EDITION
+#if STORY_GUARD
         if (_mtpBlocked) GUI.enabled = true;
 #endif
         y2 += ROW_ADV + 2f;
-#if STORY_EDITION
+#if STORY_GUARD
         // 剧情版:天气分级 / 锁天气 / 时间跳跃都是"脚本化时间天气",可跳过或卡死任务触发,
         // 且这几个是一次性按钮(非 CheatState 门控),只能靠灰显拦住点击。全开地图保留(830 行)。
         bool _clockBlocked = StoryGuard.InStory;
@@ -1146,7 +1146,7 @@ internal static class Menu
         {
             if (GUI.Button(R(rowBtnX + i * (hW + 4f), y2, hW, ROW_H), HourLabels[i])) Cheats.SetTimeOfDay(HourPresets[i]);
         }
-#if STORY_EDITION
+#if STORY_GUARD
         if (_clockBlocked) GUI.enabled = true;
 #endif
         y2 += ROW_ADV;
@@ -1451,7 +1451,7 @@ internal static class Menu
         y = SectionWide(y, I18n.IsEnglish
             ? $"Quick Teleport ({Teleport.Destinations.Count})"
             : $"快速传送 ({Teleport.Destinations.Count} 个目的地)");
-#if STORY_EDITION
+#if STORY_GUARD
         // 剧情版:跨场景传送会软锁剧情 / 写坏脚本存档,按用户决策禁用整组目的地按钮。
         bool _tpBlocked = StoryGuard.InStory;
         if (_tpBlocked) GUI.enabled = false;
@@ -1467,7 +1467,7 @@ internal static class Menu
                 Teleport.TravelTo(d);
         }
         y += ROW_ADV * ((Teleport.Destinations.Count + teleCols - 1) / teleCols) + SECTION_END_ADV;
-#if STORY_EDITION
+#if STORY_GUARD
         if (_tpBlocked) GUI.enabled = true;   // 位置控制按钮(打印坐标等)不受影响
 #endif
 

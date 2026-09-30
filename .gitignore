@@ -17,6 +17,8 @@ tools/_*_old.cs
 
 TldHacksStory/bin/
 TldHacksStory/obj/
+TldHacksEp5/bin/
+TldHacksEp5/obj/
 tools/__pycache__/
 TraderMoving/src/bin/
 TraderMoving/src/obj/

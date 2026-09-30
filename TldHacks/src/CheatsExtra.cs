@@ -109,7 +109,7 @@ internal static class Teleport
     //   4) OnSceneWasInitialized 后再等 60 帧调 TeleportPlayer 到精确坐标
     public static void TravelTo(Waypoint w)
     {
-#if STORY_EDITION
+#if STORY_GUARD
         // 剧情版:跨场景传送会强制存档 + 覆写脚本 SceneTransitionData + LoadScene,
         // 可软锁剧情线性进度并写坏脚本场景存档(分类 workflow 确认的唯一 BLOCK 传送路径)。
         // 直接拦截,不执行。UI 侧同时灰显该 Tab 的传送按钮。

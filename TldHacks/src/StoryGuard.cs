@@ -10,7 +10,7 @@
 //
 // 分类依据:剧情安全性分类 workflow(29 agent,对抗验证)最终 BLOCK 清单 +
 //   用户锁定决策(沙盒专属→禁用灰显;传送→禁用,飞行→保留)。
-#if STORY_EDITION
+#if STORY_GUARD
 using Il2Cpp;
 
 namespace TldHacks;
@@ -75,7 +75,9 @@ internal static class StoryGuard
         // — 任务物品死锁风险 —
         CheatState.DroppableUndroppables = false;
         // — 2.24 缺 API,功能无法实现(patch 类已在编译期排除,这里同步关掉开关避免 UI 误导)—
+#if STORY_EDITION
         CheatState.Craft_MoreCookingSlots = false;
+#endif
     }
 }
 #endif

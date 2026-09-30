@@ -14,7 +14,7 @@
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Version>1.0.0</Version>
-    <DefineConstants>STORY_EDITION</DefineConstants>
+    <DefineConstants>STORY_EDITION;STORY_GUARD</DefineConstants>
 
     <!-- 关键:关闭默认 glob,手动指定源码;否则会把沙盒 src/obj 里的
          .AssemblyAttributes.cs 一并拉进来 → 重复 assembly attr 报错。 -->

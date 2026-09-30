@@ -307,7 +307,7 @@ internal static partial class MenuTweaks
 
         // —— 搬运猎物(v9.0 从「物资 & 世界」挪来,单独一块并写清怎么用) ——
         y3 = SectionCol(R, c3, y3, COL_W3, I18n.T("搬运猎物", "Carry Carcass"));
-#if STORY_EDITION
+#if STORY_GUARD
         // 剧情版:改 BodyHarvest 持久态会写坏剧情存档,整块禁用灰显
         bool _carryBlocked = StoryGuard.InStory;
         if (_carryBlocked) GUI.enabled = false;
@@ -318,7 +318,7 @@ internal static partial class MenuTweaks
         b = Ui.Toggle("World_CarcassMovingAll", R(c3Sub, y3, subTogW, ROW_H), s.World_CarcassMovingAll,
             I18n.T(" 搬运全部", " Carry All"), ToggleStyle ?? GUI.skin.toggle);
         if (b != s.World_CarcassMovingAll) { s.World_CarcassMovingAll = b; CheatState.World_CarcassMovingAll = b; changed = true; }
-#if STORY_EDITION
+#if STORY_GUARD
         if (_carryBlocked) GUI.enabled = true;
 #endif
         y3 += ROW_ADV + SECTION_END_ADV;
@@ -469,13 +469,13 @@ internal static partial class MenuTweaks
         if (skipI != s.SkipIntro) { s.SkipIntro = skipI; changed = true; }
         y2 += ROW_ADV;
         bool muteCougar = Ui.Toggle("MuteCougarMenuSound", R(c2,    y2, subTogW, ROW_H), s.MuteCougarMenuSound,  I18n.T(" 静音狮吼", " Mute Cougar"), ToggleStyle ?? GUI.skin.toggle);
-#if STORY_EDITION
+#if STORY_GUARD
         // 剧情版:任意丢弃可丢任务/剧情物品 → 死锁风险,禁用灰显(静音狮吼保留)。
         bool _dropBlocked = StoryGuard.InStory;
         if (_dropBlocked) GUI.enabled = false;
 #endif
         bool droppable  = Ui.Toggle("DroppableUndroppables", R(c2Sub, y2, subTogW, ROW_H), s.DroppableUndroppables, I18n.T(" 任意丢弃", " Drop Any"), ToggleStyle ?? GUI.skin.toggle);
-#if STORY_EDITION
+#if STORY_GUARD
         if (_dropBlocked) GUI.enabled = true;
 #endif
         if (muteCougar != s.MuteCougarMenuSound) { s.MuteCougarMenuSound = muteCougar; changed = true; }
@@ -503,13 +503,13 @@ internal static partial class MenuTweaks
         if (noSave != s.QoL_NoSaveOnSprain) { s.QoL_NoSaveOnSprain = noSave; changed = true; }
         y2 += ROW_ADV;
         bool noFallSpr = Ui.Toggle("QoL_NoSaveOnSprainFalls", R(c2,    y2, subTogW, ROW_H), s.QoL_NoSaveOnSprainFalls, I18n.T(" 含坠扭伤", " Include Falls"), ToggleStyle ?? GUI.skin.toggle);
-#if STORY_EDITION
+#if STORY_GUARD
         // 剧情版:埋葬尸体挂 SaveGameSystem.Save/LoadSceneData,写持久场景存档 → 禁用灰显。
         bool _buryBlocked = StoryGuard.InStory;
         if (_buryBlocked) GUI.enabled = false;
 #endif
         bool bury      = Ui.Toggle("QoL_BuryCorpses", R(c2Sub, y2, subTogW, ROW_H), s.QoL_BuryCorpses,         I18n.T(" 埋葬尸体", " Bury Corpses"), ToggleStyle ?? GUI.skin.toggle);
-#if STORY_EDITION
+#if STORY_GUARD
         if (_buryBlocked) GUI.enabled = true;
 #endif
         if (noFallSpr != s.QoL_NoSaveOnSprainFalls) { s.QoL_NoSaveOnSprainFalls = noFallSpr; changed = true; }
@@ -546,7 +546,7 @@ internal static partial class MenuTweaks
         // ——— Column 3: 商人 & 美洲狮 + 高级微调 ———
 
         y3 = SectionCol(R, c3, y3, COL_W3, I18n.T("商人 & 美洲狮", "Trader & Cougar"));
-#if STORY_EDITION
+#if STORY_GUARD
         // 剧情版:整套无线电商人 + 美洲狮到货是沙盒专属系统,剧情里目标对象不存在。
         // 灰显整段(仍可见,便于用户理解为何禁用),StoryGuard 已在后台强制清零对应开关。
         bool _traderBlocked = StoryGuard.InStory;
@@ -617,7 +617,7 @@ internal static partial class MenuTweaks
             CheatState.CougarInstantActivate = cia; CheatState.TT_ShowTraderTrust = stt;
             changed = true;
         }
-#if STORY_EDITION
+#if STORY_GUARD
         if (_traderBlocked) GUI.enabled = true;   // 恢复,勿影响后续控件
 #endif
 
@@ -647,13 +647,13 @@ internal static partial class MenuTweaks
         Ui.Dim(false);
         y3 += ROW_ADV;
 
-#if STORY_EDITION
+#if STORY_GUARD
         // 剧情版:植物重生挂 SaveGameSystem.Save/LoadSceneData,写持久场景存档 → 禁用灰显。
         bool _respawnBlocked = StoryGuard.InStory;
         if (_respawnBlocked) GUI.enabled = false;
 #endif
         bool respawn = Ui.Toggle("TT_RespawnPlants", R(c3, y3, COL_TOG_W3, ROW_H), s.TT_RespawnPlants, I18n.T(" 植物重生", " Respawn Plants"), ToggleStyle ?? GUI.skin.toggle);
-#if STORY_EDITION
+#if STORY_GUARD
         if (_respawnBlocked) GUI.enabled = true;
 #endif
         if (respawn != s.TT_RespawnPlants) { s.TT_RespawnPlants = respawn; CheatState.TT_RespawnPlants = respawn; changed = true; }
@@ -759,13 +759,13 @@ internal static partial class MenuTweaks
         // v9.0 搬运猎物 / 搬运全部 挪到「人物 & 操作」单独成块,极光点火补到这一行右格
         b  = Ui.Toggle("UT_ConsistantDressingWeight", R(c3,    y3, subTogW, ROW_H), s.UT_ConsistantDressingWeight, I18n.T(" 绷带统重", " Bandage Weight"), ToggleStyle ?? GUI.skin.toggle);
         if (b != s.UT_ConsistantDressingWeight) { s.UT_ConsistantDressingWeight = b; changed = true; }
-#if STORY_EDITION
+#if STORY_GUARD
         // 剧情版:极光点火挂 MissionServicesManager 任务注册 → 禁用灰显
         bool _worldBlocked = StoryGuard.InStory;
         if (_worldBlocked) GUI.enabled = false;
 #endif
         bb = Ui.Toggle("World_ElectricTorch", R(c3Sub, y3, subTogW, ROW_H), s.World_ElectricTorch, I18n.T(" 极光点火", " Aurora Torch"), ToggleStyle ?? GUI.skin.toggle);
-#if STORY_EDITION
+#if STORY_GUARD
         if (_worldBlocked) GUI.enabled = true;
 #endif
         if (bb != s.World_ElectricTorch) { s.World_ElectricTorch = bb; CheatState.World_ElectricTorch = bb; changed = true; }
