@@ -362,7 +362,11 @@ close_tab()
     try:
         while True:
             time.sleep(30)
-            got = bh(f"""
+            if time.time() > deadline:
+                sys.exit('upload timeout')
+            # 核对超时别退出:finally 会写结束标记,把还在传的标签页关掉。多半是 Chrome 又在问允许远程调试
+            try:
+                got = bh(f"""
 want = {json.dumps(want, ensure_ascii=False)}
 miss = []
 for fid, files in want.items():
@@ -370,13 +374,14 @@ for fid, files in want.items():
     miss += [n for n, s in files.items() if have.get(n) != s]
 close_tab()
 done(dict(miss=miss))
-""")
+""", timeout=120)
+            except subprocess.TimeoutExpired:
+                print('size check timed out; if Chrome asks "Allow remote debugging", click Allow')
+                continue
             if not got['miss']:
                 print('upload done, sizes match:', sum(len(v) for v in want.values()), 'files')
                 return
             print('waiting for:', got['miss'])
-            if time.time() > deadline:
-                sys.exit('upload timeout')
     finally:
         open(flag, 'w').close()
         for pr in procs:
