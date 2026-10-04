@@ -87,6 +87,9 @@ internal static class DamageFilter
         //   现在直接在 AddHealth Prefix 拦截,HP 永远不掉,TickStatus 只做兜底
         if (CheatState.GodMode) return true;
         if (CheatState.TrueInvisible) return true;  // 真隐身 = 绝对无敌
+#if !STORY_EDITION
+        if (CeX.InStruggle()) return true;
+#endif
 
         // v2.7.85:各状态 toggle 独立拦截对应伤害源 —— 修复"GodMode OFF + AlwaysWarm ON 时 HP 条闪烁"
         //   之前只在 GodMode 时拦全部,Now 每个 toggle 拦自己的源,减少 TickStatus "先掉再补"的 HUD 闪烁
@@ -110,6 +113,9 @@ internal static class DamageFilter
 #endif
                 return true;
         }
+#if !STORY_EDITION
+        if (CeX.WouldDie(hp)) { CeX.Rescue(); return true; }
+#endif
         return false;
     }
 }
@@ -2621,11 +2627,56 @@ internal static class CheatsTick
     // IL2CPP 下 Prefix return false 不可靠,Postfix 也可能在特殊时序下漏网
     // 每 60 帧(~1s)检查一次:当前 toggle 说不应有的 affliction 如果存在就清掉
     // 防止游戏内部状态因"半启动"的 affliction 而损坏(导致后续所有 affliction auto-resolve 的连锁 bug)
+    private static bool _lacerLogged;
+
     public static void TickAfflictionGuard()
     {
         bool guardBlood = CheatState.GodMode || CheatState.ImmuneAnimalDamage;
         bool guardGeneral = CheatState.GodMode;
-        if (!guardBlood && !guardGeneral) return;
+        bool guardSuffocate = CheatState.GodMode || CheatState.NoSuffocating;
+        if (!guardBlood && !guardGeneral && !guardSuffocate) return;
+
+        // v9.6 新伤病兜底:都先判断有没有再清,避免每秒空调 End 触发第三方 mod 的治愈后并发症
+        if (guardSuffocate)
+        {
+            try { var c = GameManager.GetSuffocatingComponent(); if (c != null && c.IsSuffocating()) c.ForceStopSuffocating(true); } catch { }
+        }
+#if !STORY_EDITION
+        if (guardBlood)
+        {
+            try
+            {
+                var c = GameManager.GetSevereLacerations();
+                if (c != null && (c.HasAffliction() || c.HaveAnyActiveWounds()))
+                {
+                    c.Cure((AfflictionOptions)0);
+                    // Cure 清不掉时每秒都会进来,日志只打一次
+                    if (!_lacerLogged) { _lacerLogged = true; ModMain.Log?.Msg("[AfflictionGuard] Tick cleared SevereLacerations"); }
+                }
+                else _lacerLogged = false;
+            }
+            catch { }
+        }
+#endif
+        if (guardGeneral)
+        {
+            try { var c = GameManager.GetBurnsComponent(); if (c != null && c.HasBurns()) c.BurnsEnd(true); } catch { }
+#if STORY_EDITION
+            try { var c = GameManager.GetBurnsElectricComponent(); if (c != null && c.HasBurnsElectric()) c.BurnsElectricEnd(); } catch { }
+#else
+            try { var c = GameManager.GetBurnsElectricComponent(); if (c != null && c.HasBurnsElectric()) c.BurnsElectricEnd(true); } catch { }
+            try { var c = GameManager.GetChemicalPoisoningComponent(); if (c != null && (c.HasAffliction() || c.HasRisk())) c.CureAll(); } catch { }
+            try { var c = GameManager.GetInsomniaComponent(); if (c != null && (c.HasInsomniaAffliction() || c.HasInsomniaRisk())) c.RemoveInsomniaAll(); } catch { }
+#endif
+            try { var c = GameManager.GetBrokenRibComponent(); if (c != null && c.HasBrokenRib()) for (int i = 0; i < 6; i++) try { c.BrokenRibEnd(i, true); } catch { } } catch { }
+            try { var c = GameManager.GetFrostbiteComponent(); if (c != null && c.HasFrostbite()) c.FrostbiteEnd(); } catch { }
+            try { var c = GameManager.GetCabinFeverComponent(); if (c != null && c.HasCabinFever()) c.CabinFeverEnd(); } catch { }
+            try { var c = GameManager.GetIntestinalParasitesComponent(); if (c != null && c.HasIntestinalParasites()) c.IntestinalParasitesEnd(true); } catch { }
+            try { var c = GameManager.GetInfectionRiskComponent(); if (c != null && c.HasInfectionRisk()) c.Cure(); } catch { }
+            try { var c = GameManager.GetToxicFogComponent(); if (c != null && c.HasAffliction()) c.StopAffliction(); } catch { }
+            try { var c = GameManager.GetAnxietyComponent(); if (c != null && c.HasAffliction()) c.StopAffliction(true); } catch { }
+            try { var c = GameManager.GetFearComponent(); if (c != null && c.HasAffliction()) c.StopAffliction(true); } catch { }
+        }
 
         try
         {
@@ -4048,8 +4099,27 @@ internal static class Patch_CougarManager_Update_ForceActivate
 // Harmony:Prefix return false = skip entire method
 internal static class Patch_Frostbite_DealDamage
 {
-    internal static bool Prefix() => !CheatState.NoFrostbiteRisk;
+    internal static bool Prefix() => !(CheatState.NoFrostbiteRisk || CheatState.GodMode);
 }
+
+// v9.6 无敌挡新伤病。同一个 Prefix 挂到多个 XxxStart 上(见 DynamicPatch),IL2CPP 下漏网的由 TickAfflictionGuard 每秒兜底
+internal static class Patch_GodMode_BlockAffliction
+{
+    internal static bool Prefix() => !CheatState.GodMode;
+}
+
+internal static class Patch_NoSuffocating_Start
+{
+    internal static bool Prefix() => !(CheatState.GodMode || CheatState.NoSuffocating);
+}
+
+#if !STORY_EDITION
+// 美洲狮扑击挂的严重撕裂伤,免动物伤害之前只挡了扣血和出血
+internal static class Patch_SevereLacerations_Apply
+{
+    internal static bool Prefix() => !(CheatState.GodMode || CheatState.ImmuneAnimalDamage);
+}
+#endif
 
 // —— 饱饱 buff:WellFed.Update Prefix 强制 m_Active=true ——
 // CT 做法:NOP WellFed.Update 前 2 字节(跳过退出条件),条件:饥饿不为0

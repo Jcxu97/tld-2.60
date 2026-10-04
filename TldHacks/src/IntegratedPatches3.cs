@@ -593,48 +593,76 @@ internal static class Patch_CraftAnywhere_Location
 // ═══════════════════════════════════════════════════════════════
 internal static class Patch_MapTextOutline
 {
-    internal static void Postfix(Panel_Map __instance)
+    internal static void Postfix(Panel_Map __instance) => Apply(__instance);
+
+    // 每个文字原来的样子,关掉描边时照原样还回去
+    private static readonly System.Collections.Generic.Dictionary<IntPtr, (Color c, UILabel.Effect e, Color ec, Vector2 d)> _orig = new();
+
+    // 游戏只在建地图文字池时调一次 Postfix;菜单里开关或换样式时再调这里,池里和正在显示的文字一起刷
+    internal static void Apply(Panel_Map panel = null)
     {
-        if (!CheatState.QoL_MapTextOutline) return;
         try
         {
-            int style = ModMain.Settings.QoL_MapTextOutline;
-            var parent = __instance.m_TextPoolParent;
-            for (int i = 0; i < parent.childCount; i++)
-            {
-                var label = parent.GetChild(i).GetComponent<UILabel>();
-                if (label == null) continue;
-                float a = 0.7f;
-                switch (style)
-                {
-                    case 0:
-                        ((UIWidget)label).color = new Color(0.125f, 0.094f, 0.094f, 1f);
-                        label.effectStyle = UILabel.Effect.Outline;
-                        label.effectColor = new Color(0.581f, 0.551f, 0.495f, a);
-                        label.effectDistance = new Vector2(1.2f, 0.5f);
-                        break;
-                    case 1:
-                        ((UIWidget)label).color = new Color(0.125f, 0.094f, 0.094f, 1f);
-                        label.effectStyle = UILabel.Effect.Outline;
-                        label.effectColor = new Color(1f, 1f, 1f, a);
-                        label.effectDistance = new Vector2(1.2f, 0.5f);
-                        break;
-                    case 2:
-                        ((UIWidget)label).color = new Color(0.88f, 0.83f, 0.735f, 1f);
-                        label.effectStyle = UILabel.Effect.Outline;
-                        label.effectColor = new Color(0.125f, 0.094f, 0.094f, a);
-                        label.effectDistance = new Vector2(1.2f, 0.5f);
-                        break;
-                    default:
-                        ((UIWidget)label).color = new Color(1f, 1f, 1f, 1f);
-                        label.effectStyle = UILabel.Effect.Outline;
-                        label.effectColor = new Color(0.125f, 0.094f, 0.094f, a);
-                        label.effectDistance = new Vector2(1.2f, 0.5f);
-                        break;
-                }
-            }
+            panel ??= InterfaceManager.GetPanel<Panel_Map>();
+            if (panel == null) return;
+            ApplyUnder(panel.m_TextPoolParent);
+            ApplyUnder(panel.m_TextActiveObjects);
         }
         catch { }
+    }
+
+    private static void ApplyUnder(Transform parent)
+    {
+        if (parent == null) return;
+        bool on = CheatState.QoL_MapTextOutline;
+        int style = ModMain.Settings.QoL_MapTextOutline;
+        for (int i = 0; i < parent.childCount; i++)
+        {
+            var label = parent.GetChild(i).GetComponent<UILabel>();
+            if (label == null) continue;
+            if (!_orig.TryGetValue(label.Pointer, out var o))
+            {
+                if (!on) continue;
+                o = (((UIWidget)label).color, label.effectStyle, label.effectColor, label.effectDistance);
+                _orig[label.Pointer] = o;
+            }
+            if (!on)
+            {
+                ((UIWidget)label).color = o.c;
+                label.effectStyle = o.e;
+                label.effectColor = o.ec;
+                label.effectDistance = o.d;
+                continue;
+            }
+            float a = 0.7f;
+            switch (style)
+            {
+                case 0:
+                    ((UIWidget)label).color = new Color(0.125f, 0.094f, 0.094f, 1f);
+                    label.effectStyle = UILabel.Effect.Outline;
+                    label.effectColor = new Color(0.581f, 0.551f, 0.495f, a);
+                    label.effectDistance = new Vector2(1.2f, 0.5f);
+                    break;
+                case 1:
+                    ((UIWidget)label).color = new Color(0.125f, 0.094f, 0.094f, 1f);
+                    label.effectStyle = UILabel.Effect.Outline;
+                    label.effectColor = new Color(1f, 1f, 1f, a);
+                    label.effectDistance = new Vector2(1.2f, 0.5f);
+                    break;
+                case 2:
+                    ((UIWidget)label).color = new Color(0.88f, 0.83f, 0.735f, 1f);
+                    label.effectStyle = UILabel.Effect.Outline;
+                    label.effectColor = new Color(0.125f, 0.094f, 0.094f, a);
+                    label.effectDistance = new Vector2(1.2f, 0.5f);
+                    break;
+                default:
+                    ((UIWidget)label).color = new Color(1f, 1f, 1f, 1f);
+                    label.effectStyle = UILabel.Effect.Outline;
+                    label.effectColor = new Color(0.125f, 0.094f, 0.094f, a);
+                    label.effectDistance = new Vector2(1.2f, 0.5f);
+                    break;
+            }
+        }
     }
 }
 

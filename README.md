@@ -187,11 +187,10 @@ cp    tld-自用改造2.55/ModSettingsQuickNav/ModSettingsQuickNav.dll <TLD>/Mod
 | **SafehouseCustomizationPlus.dll** | 自定义安全屋,可改室内布局/物品摆放 |
 | **Architect.dll + Architect.modcomponent** | **按 Y 搬炉子/家具**,自由建造 |
 
-## 4. 地图 / 导航 (3 项)
+## 4. 地图 / 导航 (2 项,地图管理从 v9.7 起整合进 TldHacks)
 
 | dll | 作用 |
 |---|---|
-| MapManager.dll | 玩家箭头/居中/调查范围/无宝丽来/全开/地堡热键 (TldHacks 不再整合) |
 | MotionTrackerLite.dll | 运动追踪雷达,提示附近野兽 |
 | ModSettingsQuickNav.dll | ModSettings 配置面板快速导航 |
 
@@ -341,7 +340,6 @@ ExtraGraphicsSettings / UniversalTweaks / StackManager
 ### 其他自动生成的 mod 配置
 - `Mods/AmbientLights.json` — 环境光默认值(mod 自动写的)
 - `Mods/UniversalTweaks.json` — UniversalTweaks 调参(mod 自动写的)
-- `Mods/MapManager.json` — 地图管理默认配置
 - `Mods/ImprovedTrader.json` / `SilentWalker.json` / `PrepperCache.json` — mod 默认配置
 
 ### `Mods/ModData/*.moddata`(不在仓库里,每个存档各自的)

@@ -191,18 +191,35 @@ internal static class Ui
         }
     }
 
+    // 一块横跨几列的卡片会同时关掉上面几列的卡片,那是一排结束,这几块也拉齐底边
     private static void CloseCards(float x, float w)
     {
+        float bottom = 0f;
+        int n = 0;
+        for (int i = 0; i < _cards.Count; i++)
+        {
+            var c = _cards[i];
+            if (x < c.X + c.W && c.X < x + w) { bottom = Mathf.Max(bottom, c.Bottom); n++; }
+        }
+        if (n == 0) return;
         for (int i = _cards.Count - 1; i >= 0; i--)
         {
             var c = _cards[i];
-            if (x < c.X + c.W && c.X < x + w) { Save(c); _cards.RemoveAt(i); }
+            if (x < c.X + c.W && c.X < x + w)
+            {
+                if (n > 1) c.Bottom = bottom;
+                Save(c);
+                _cards.RemoveAt(i);
+            }
         }
     }
 
+    // 这时还开着的就是每列最后一块卡片,把它们拉到同一个底边,几列下沿对齐
     internal static void EndCards()
     {
-        for (int i = 0; i < _cards.Count; i++) Save(_cards[i]);
+        float bottom = 0f;
+        for (int i = 0; i < _cards.Count; i++) bottom = Mathf.Max(bottom, _cards[i].Bottom);
+        for (int i = 0; i < _cards.Count; i++) { var c = _cards[i]; c.Bottom = bottom; Save(c); }
         _cards.Clear();
         _cardAlpha = 1f;
         GUI.color = Color.white;
@@ -253,14 +270,16 @@ internal static class Ui
         ["SpeedMultiplier"] = new[] { "整个游戏按这个倍率运行,时间、动物和天气一起变快或变慢。1.0x 是原版。", "The whole game runs at this rate. Time, animals and weather all go faster or slower. 1.0x is vanilla." },
         ["Act_GrabNow"] = new[] { "马上把半径内的物品收进背包。开着(不捡丢物)时,自己丢在地上的东西不会被收走。", "Puts all items within the radius into your backpack now. When Skip Own Drops is on, items that you dropped stay on the ground." },
         ["Stack_AddComponent"] = new[] { "给咖啡、茶、胡萝卜、土豆等物品加上堆叠功能。具体物品在 ModSettings 里设置。", "Makes items such as coffee, tea, carrots and potatoes stack. Set the item list in ModSettings." },
-        ["Act_ClearAfflictions"] = new[] { "立即治好身上所有伤病,如扭伤、失温、食物中毒、感染、流血。之后几秒内会再清一次,防止其他 mod 又加回来。", "Cures all afflictions now, for example sprains, hypothermia, food poisoning, infection and bleeding. It clears again for a few seconds, so other mods cannot add them back." },
+        ["Act_ClearMap"] = new[] { "把当前地图上所有散落物品和容器里的东西全部收进背包,点两次才开始,收的时候再点一次停。只收当前已加载的场景,室内要进去再点。尸体、保险箱、上锁的容器都收,不管超重。你自己放进箱子或丢在地上的东西不收(进过你背包的都算),任务物品和任务容器也不收,任务物品用右边的按钮。", "Moves all loose items and container contents on this map to your backpack. Click twice to start. Click again to stop. Only the loaded scene is cleared, so go inside a building to clear it. Corpses, safes and locked containers are included. Weight is not checked. Items that you put in a container or drop are not taken. This includes all items that were in your backpack before. Mission items and mission containers are not taken. Use the button on the right for mission items." },
+        ["Act_ClearMapMission"] = new[] { "慎用,可能产生 bug!把当前地图上的任务物品和任务容器里的东西收进背包,点两次才开始。你自己放进去的东西不收。容器不会标成已搜刮,之后还要自己打开一次,让任务照常推进。", "Use with care. This can cause bugs! Moves mission items and mission container contents on this map to your backpack. Items that you put in a container are not taken. Click twice to start. Containers stay unsearched, so open them once yourself to let the mission continue." },
+        ["Act_ClearAfflictions"] = new[] { "立即治好身上所有伤病,如扭伤、失温、食物中毒、感染、流血、美洲狮撕裂伤、化学中毒、毒雾、窒息。之后几秒内会再清一次,防止其他 mod 又加回来。", "Cures all afflictions now, for example sprains, hypothermia, food poisoning, infection, bleeding, cougar lacerations, chemical poisoning, toxic fog and suffocation. It clears again for a few seconds, so other mods cannot add them back." },
         ["Act_RepairHeld"] = new[] { "手上拿着的物品恢复到 100% 状态。", "Sets the item in your hands to 100% condition." },
         ["Act_RepairBag"] = new[] { "背包里的所有物品恢复到 100% 状态,包括衣物和食物。", "Sets all items in your inventory to 100% condition. This includes clothing and food." },
         ["Act_RestoreAll"] = new[] { "背包和当前场景地上的所有物品恢复到 100% 状态。", "Sets all items in your inventory and on the ground in this scene to 100% condition." },
         ["Act_UnlockFeats"] = new[] { "所有勋章进度直接完成。勋章记录在游戏档案里,所有存档共用,解锁后不能撤回。", "Completes all feats now. Feats are saved in your game profile and all saves share them. You cannot undo this." },
-        ["GodMode"] = new[] { "生命值不会下降,不会死亡。", "Health does not decrease and you cannot die." },
+        ["GodMode"] = new[] { "生命值不会下降,不会死亡,也不会得上伤病。", "Health does not decrease. You cannot die or get afflictions." },
         ["NoFallDamage"] = new[] { "从高处落下不受伤。", "Falls cause no damage." },
-        ["ImmuneAnimalDamage"] = new[] { "狼、熊、美洲狮的攻击不造成伤害。", "Wolf, bear and cougar attacks cause no damage." },
+        ["ImmuneAnimalDamage"] = new[] { "狼、熊、美洲狮的攻击不造成伤害,也不会被美洲狮扑出撕裂伤。", "Wolf, bear and cougar attacks cause no damage. Cougar attacks cause no lacerations." },
         ["ClearDeathPenalty"] = new[] { "自动治愈死里逃生后留下的虚弱状态。", "Cures the Cheated Death affliction automatically." },
         ["NoFrostbiteRisk"] = new[] { "不会得冻伤。", "You do not get frostbite." },
         ["WellFedBuff"] = new[] { "一直保持吃饱的加成。", "Keeps the Well Fed bonus active." },
@@ -383,6 +402,39 @@ internal static class Ui
         ["QoL_AutoSurvey"] = new[] { "每隔一段时间自动把周围画到地图上,不用炭笔。天气差时要开无视天气限制。", "Draws the area around you on the map at intervals. You do not need charcoal. In bad weather, turn on Ignore Weather." },
         ["QoL_AutoSurveyDelay"] = new[] { "两次自动绘图的间隔,越小越频繁。", "Interval between two automatic map updates. A lower value updates more often." },
         ["QoL_AutoSurveyRange"] = new[] { "自动绘图的范围倍率,1.0 约为 20 米。", "Range multiplier for automatic mapping. 1.0 is about 20 m." },
+        ["MapM_Enabled"] = new[] { "地图管理总开关。管下面的箭头、绘图范围、地堡这些设置。Mods 里还留着独立的 MapManager.dll 时这里不生效,要先删掉它。", "Turns the map settings below on or off. If MapManager.dll is still in the Mods folder, these settings do not work. Remove that file first." },
+        ["MapM_PlayerArrow"] = new[] { "打开地图时用红色箭头标出你的位置。", "Shows your position on the map as a red arrow." },
+        ["MapM_CenterOnPlayer"] = new[] { "打开地图时自动移到你所在的位置。", "Moves the map to your position when you open it." },
+        ["MapM_SurveyRange"] = new[] { "所有开图的范围倍率,1.0 为原版。木炭绘图、自动绘图、宝丽来和地堡热键都按这个放大。", "Multiplies the area of all map reveals. 1.0 is the original value. Charcoal, auto survey, polaroids and the bunker key all use it." },
+        ["MapM_SurveyTime"] = new[] { "用木炭绘图花掉的游戏时间倍率,1.0 为原版,越小越快。改完换个场景才对新木炭生效。", "Multiplies the game time that charcoal mapping takes. 1.0 is the original value. A lower value is faster. The change applies after you change scene." },
+        ["MapM_UnlockSurvey"] = new[] { "晚上、下雪、起雾的时候也能用木炭绘图。", "Lets you map with charcoal at night and in bad weather." },
+        ["MapM_RevealVista"] = new[] { "绘图时把范围内的远景点也标到地图上。", "Marks vista points in the mapped area on the map." },
+        ["MapM_VistaNoPolaroid"] = new[] { "到了远景点没有对应的宝丽来照片时,自动放一张进背包和收藏,绘图效果和带着照片一样。", "At a vista point, you get its polaroid if you do not have it. The polaroid goes into your backpack and your collection." },
+        ["MapM_CorpseOnMap"] = new[] { "你打死的动物(包括流血而死的)会显示在地图上。", "Animals that you kill show on the map. This includes animals that bleed out." },
+        ["MapM_HideHarvested"] = new[] { "一片植物采完以后,地图上对应的图标自动消失。", "Removes the map icon of a plant group after you harvest all of it." },
+        ["CE_SnareSure"] = new[] { "陷阱每次判定都抓到兔子,也不会坏。", "Each snare check catches a rabbit. The snare does not break." },
+        ["CE_SnareInstant"] = new[] { "陷阱放下后马上判定一次,不用等几个小时。没抓到就照原版的间隔再等。要先开陷阱必中。", "The snare checks once right after you set it. If it catches nothing, it waits the normal time. Turn on Sure Snares first." },
+        ["CE_LootNoEmpty"] = new[] { "容器生成东西时不会是空的,至少一件。只对还没打开过的容器有效。", "Containers always get at least one item. This works only on containers that you have not opened." },
+        ["CE_LootLowerTier"] = new[] { "容器里的东西按低一档难度的表生成,比如入侵者按潜行者,厄难按入侵者。只对还没打开过的容器有效。", "Containers get loot from the next easier level. For example, Interloper uses Stalker loot. This works only on containers that you have not opened." },
+        ["CE_AuroraRefill"] = new[] { "极光夜关上一个搜空的容器,它会重新生成一次东西。每次极光每个容器只刷一次,尸体和任务容器不刷。", "During an aurora, an empty container gets new loot when you close it. Each container refills one time for each aurora. Bodies and mission containers do not refill." },
+        ["CE_IceHoleNoFreeze"] = new[] { "钓鱼的冰洞不会重新结冰,已经冻上的打开就解冻。", "Fishing holes do not freeze again. A frozen hole opens when you use it." },
+        ["CE_NoMisery"] = new[] { "厄难难度的体质衰弱、心神不宁、风湿关节、冰冷刺骨、胃酸过多、残破身躯不再挂上。已经有的用清除所有负面清掉。", "Misery afflictions do not start. To remove the ones you have, use Clear All Afflictions." },
+        ["CE_NoDeath"] = new[] { "血量快归零时救回来。血量回到三成,清掉负面,饿、渴、冷补到不再掉血,存档不删。", "When your condition is about to reach zero, you survive. Condition goes back to 30%. Afflictions clear. Hunger, thirst and cold go to a safe level. The save is kept." },
+        ["CE_StruggleWin"] = new[] { "被狼或美洲狮扑倒时挣脱进度一直是满的,马上脱身。扑倒期间不掉血,熊和驼鹿的攻击也不留后续负面。", "When a wolf or cougar attacks, the struggle bar stays full and you get free at once. You take no damage during a struggle. Bear and moose attacks leave no afflictions." },
+        ["CE_NoStun"] = new[] { "被扑倒以后不躺地、不头晕、不掉东西。", "After a struggle, you do not lie on the ground, get dazed or drop items." },
+        ["CE_NoSlide"] = new[] { "陡坡也能直接走上去,不往下滑,坡上不减速。", "You can walk up steep slopes. You do not slide down or slow down on slopes." },
+        ["CE_TraderCheap"] = new[] { "交易一直用便宜价的清单,原版要信任很高才有。", "The trader always uses the low prices. Normally you need high trust for them." },
+        ["CE_AuroraLightSteady"] = new[] { "极光夜通电的灯稳定全亮,不忽明忽暗。", "During an aurora, powered lights stay fully on and do not flicker." },
+        ["CE_AuroraMute"] = new[] { "极光夜那阵嗡嗡的环境声不再播放。", "The aurora hum does not play." },
+        ["CE_TraderRefresh"] = new[] { "重新抽一遍商人这次能换的东西。要先联系过商人。", "Roll the trader goods again. You must contact the trader first." },
+        ["MapM_FillEmptyBunkers"] = new[] { "每个地堡都换成完整版,A 到 F 六种布局随机,先各出一个再重复。哪个难度、新档旧档都管用,下次进区域生效。同一个存档每次读档结果一样。关掉后重启游戏恢复原版。", "Each bunker becomes a full bunker of a random type, A to F. Each type comes once before a type repeats. This works on all difficulties, new saves and old saves. The change starts when you next enter the region. The result stays the same each time you load the save. To get the original bunkers back, turn this off and restart the game." },
+        ["MapM_InterloperBunker"] = new[] { "入侵者和厄难难度下每个区域也刷一个地堡,原版这两个难度一个都没有。", "Puts one bunker in each region on Interloper and Misery. These difficulties have no bunkers in the original game." },
+        ["Coll_Enabled"] = new[] { "打开地图时标出当前区域的石堆、纸条和拍立得,左上角显示还剩几个没收。室内的标在进门的位置(空心图标)。带问号的是随机刷新的几个可能位置,到了那个区域会自动只留真刷出来的那个。", "Marks the cairns, notes and polaroids of the shown region on the map. The top left shows how many you did not find yet. Items inside buildings show at the door with a hollow icon. A question mark shows a possible random spawn point. In that region, only the real spawn point stays on the map." },
+        ["Coll_Cairn"] = new[] { "标出石堆(三角)。", "Marks cairns with a triangle." },
+        ["Coll_Note"] = new[] { "标出纸条和日志(方块)。", "Marks notes and logs with a square." },
+        ["Coll_Polaroid"] = new[] { "标出拍立得照片(圆点),也就是游戏里的宝丽来。", "Marks polaroids with a circle." },
+        ["Coll_ShowCollected"] = new[] { "收过的也标出来,颜色变暗。默认只标没收过的。", "Also marks the items that you collected, in a dark color. By default, only the items that you did not collect show." },
+        ["QoL_MapTextOutline"] = new[] { "地图上地名文字的颜色和描边。点一下换下一种,打开的地图马上跟着变。要先打开地图描边。", "Sets the color and outline of the place names on the map. Click to go to the next style. The open map changes at once. Turn on Map Outline first." },
         ["QoL_SleepFatigueRecovery"] = new[] { "随地睡觉时疲劳恢复速度。1.0 为原版床铺的速度。", "Fatigue recovery when you sleep without a bed. 1.0 is the same as a bed." },
         ["QoL_SleepConditionRecovery"] = new[] { "随地睡觉时生命值恢复速度。1.0 为原版床铺的速度。", "Health recovery when you sleep without a bed. 1.0 is the same as a bed." },
         ["QoL_SleepFreezingScale"] = new[] { "随地睡觉时失温的速度倍率。0 为睡觉时不会失温。", "Freezing rate when you sleep without a bed. 0 stops freezing during sleep." },

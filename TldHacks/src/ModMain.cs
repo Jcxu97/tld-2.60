@@ -29,7 +29,7 @@ namespace TldHacks;
 public class ModMain : MelonMod
 {
     // 全 mod 唯一的版本号来源。MelonInfo / 程序集版本 / 菜单标题栏 / 启动日志都从这里取。
-    internal const string VERSION = "9.5";
+    internal const string VERSION = "9.7";
 
     public static MelonLogger.Instance Log;
     internal static TldHacksSettings Settings;
@@ -166,7 +166,7 @@ public class ModMain : MelonMod
     {
         "MenuHotkey", "FlyHotkey", "MenuScale", "MenuWidth", "MenuHeight", "MenuX", "MenuY",
         "LanguageMode", "QoL_DropKey", "QoL_BulkKey", "QoL_BackKey", "JumpKey",
-        "TimeScaleKey1", "TimeScaleKey2", "GrabAllKey",
+        "TimeScaleKey1", "TimeScaleKey2", "GrabAllKey", "MapM_BunkerKey", "MapM_RevealKey",
     };
 
     internal static void ClearSentinel()
@@ -854,6 +854,9 @@ public class ModMain : MelonMod
             try { SpaceFinishHandler.Tick(); } catch { }
             // v8.3 一键搜刮的逐件确认队列。队列空着时第一句 bool 判定就返回,零成本。
             try { GrabAll.TickQueue(); } catch { }
+#if !STORY_EDITION
+            try { MapClear.Tick(); } catch { }
+#endif
 
             // v2.7.75 稳定节奏:动态 patch 只在固定低频点 reconcile。
             if ((_frame % 300) == 25) DynamicPatch.Reconcile();
@@ -908,7 +911,7 @@ public class ModMain : MelonMod
             if (CheatState.NoFallDamage && (_frame % 30) == 7) CheatsTick.TickNoFallDamage();
 
             // v6.9.1 AfflictionGuard reactive tick — 防止 IL2CPP prefix 漏网导致 affliction 半启动→游戏状态损坏
-            if ((CheatState.GodMode || CheatState.ImmuneAnimalDamage) && (_frame % 60) == 37)
+            if ((CheatState.GodMode || CheatState.ImmuneAnimalDamage || CheatState.NoSuffocating) && (_frame % 60) == 37)
                 CheatsTick.TickAfflictionGuard();
 
             // v6.7.1 ClearAllAfflictions 二次扫窗口:用户点了一键清除负面之后 ~5s 内分多个 tick 扫
@@ -970,6 +973,13 @@ public class ModMain : MelonMod
 
             WakeUpCallHelper.OnUpdateTick();
             AutoSurveyHelper.OnUpdateTick();
+#if !STORY_EDITION
+            MapMKeys.Tick();
+            CeX.Tick();
+#endif
+#if !STORY_EDITION && !EP5_EDITION
+            CollMap.Tick();
+#endif
 
             // 魔法子弹:预览目标降频更新(内部 0.25s 节流,关闭时立即清空,零开销)
             if (CheatStateESP.MagicBullet) MagicBulletSystem.UpdatePreview();
@@ -1024,6 +1034,7 @@ public class ModMain : MelonMod
         //   改为:每次场景切换都重置稳定计时,由 OnUpdate 跑满 180 帧无崩才清(见 OnUpdate)。
         if (!_sentinelCleared) _stableFrames = 0;
         BreakDownCleanup.Armed = false;
+        if (sceneName != null && sceneName.Contains("MainMenu")) I18n.GameReady = true;
         Patch_GearItem_Awake_BowRepair.OnSceneInitialized();
         Teleport.OnSceneLoaded(sceneName);
         // v2.7.64 学习 scene transition 字段到 JSON,解决 DLC Tale 跨区物品丢失

@@ -99,7 +99,7 @@ internal static partial class MenuTweaks
     }
 
     // ═══════════════════════════════════════════════════════════════════════
-    // Tab 3 人物 & 操作:c1 移动/跳跃 | c2 交互&感知/QoL 快捷键/时间加速 | c3 睡觉/测绘/扭伤/空格
+    // Tab 3 人物 & 操作:c1 移动/跳跃 | c2 交互&感知/时间加速/搬运猎物 | c3 睡觉/扭伤/空格/面板快捷键
     // ═══════════════════════════════════════════════════════════════════════
     internal static float DrawCharacterAndQoLTab(Func<float, float, float, float, Rect> R, TldHacksSettings s)
     {
@@ -147,9 +147,6 @@ internal static partial class MenuTweaks
         y2 += ROW_ADV;
         bool autoExt = Ui.Toggle("AutoExtinguishOnRest", R(c2, y2, subTogW, ROW_H), s.AutoExtinguishOnRest, I18n.T(" 休息熄灯", " Auto-Extinguish"), ToggleStyle ?? GUI.skin.toggle);
         if (autoExt != s.AutoExtinguishOnRest) { s.AutoExtinguishOnRest = autoExt; CheatState.AutoExtinguishOnRest = autoExt; changed = true; }
-        bool aom = Ui.Toggle("QoL_AutoOpenMapOnExit", R(c2Sub, y2, subTogW, ROW_H), s.QoL_AutoOpenMapOnExit,
-            I18n.T(" 出门开小地图", " Minimap Outside"), ToggleStyle ?? GUI.skin.toggle);
-        if (aom != s.QoL_AutoOpenMapOnExit) { s.QoL_AutoOpenMapOnExit = aom; changed = true; }
         y2 += ROW_ADV;
         v = DrawSliderCol3(R, c2, y2, I18n.T("开门幅度", "Door Angle"), s.DoorSwingAngle, 0.03f, 0.6f, "F2", key: "DoorSwingAngle");
         if (v != s.DoorSwingAngle) { s.DoorSwingAngle = v; changed = true; }
@@ -202,12 +199,6 @@ internal static partial class MenuTweaks
         if (v != s.JumpFatigueCost) { s.JumpFatigueCost = v; changed = true; }
         y1 += ROW_ADV + SECTION_END_ADV;
 
-        y2 = SectionCol(R, c2, y2, COL_W3, I18n.T("面板快捷键", "Panel Hotkeys"), "QoL_HotkeysEnabled", ref s.QoL_HotkeysEnabled, ref changed);
-        y2 = KeyRow(R, c2, y2, I18n.T("丢弃", "Drop"), s.QoL_DropKey);
-        y2 = KeyRow(R, c2, y2, I18n.T("按住再丢弃 = 整堆", "Hold + Drop = Whole Stack"), s.QoL_BulkKey);
-        y2 = KeyRow(R, c2, y2, I18n.T("关闭面板", "Close Panel"), s.QoL_BackKey);
-        y2 += SECTION_END_ADV;
-
         y2 = SectionCol(R, c2, y2, COL_W3, I18n.T("时间加速", "Time Scale"),
             I18n.T($"按住 {s.TimeScaleKey1} / {s.TimeScaleKey2}", $"Hold {s.TimeScaleKey1} / {s.TimeScaleKey2}"));
         v = DrawSliderCol3(R, c2, y2, I18n.T("时间加速1", "TimeScale1"), s.TimeScale1, 1f, 50f, "F0", key: "TimeScale1");
@@ -217,7 +208,25 @@ internal static partial class MenuTweaks
         if (v != s.TimeScale2) { s.TimeScale2 = v; changed = true; }
         y2 += ROW_ADV + SECTION_END_ADV;
 
-        // ——— Column 3: 睡眠 + 测绘 + 扭伤 + 空格 ———
+        // —— 搬运猎物(v9.0 从「物资 & 世界」挪来,单独一块并写清怎么用) ——
+        y2 = SectionCol(R, c2, y2, COL_W3, I18n.T("搬运猎物", "Carry Carcass"));
+#if STORY_GUARD
+        // 剧情版:改 BodyHarvest 持久态会写坏剧情存档,整块禁用灰显
+        bool _carryBlocked = StoryGuard.InStory;
+        if (_carryBlocked) GUI.enabled = false;
+#endif
+        b = Ui.Toggle("World_CarcassMoving", R(c2, y2, subTogW, ROW_H), s.World_CarcassMoving,
+            I18n.T(" 搬运猎物", " Carry Carcass"), ToggleStyle ?? GUI.skin.toggle);
+        if (b != s.World_CarcassMoving) { s.World_CarcassMoving = b; CheatState.World_CarcassMoving = b; changed = true; }
+        b = Ui.Toggle("World_CarcassMovingAll", R(c2Sub, y2, subTogW, ROW_H), s.World_CarcassMovingAll,
+            I18n.T(" 搬运全部", " Carry All"), ToggleStyle ?? GUI.skin.toggle);
+        if (b != s.World_CarcassMovingAll) { s.World_CarcassMovingAll = b; CheatState.World_CarcassMovingAll = b; changed = true; }
+#if STORY_GUARD
+        if (_carryBlocked) GUI.enabled = true;
+#endif
+        y2 += ROW_ADV + SECTION_END_ADV;
+
+        // ——— Column 3: 睡眠 + 扭伤 + 空格 + 面板快捷键 ———
 
         y3 = SectionCol(R, c3, y3, COL_W3, I18n.T("随地睡觉", "Sleep Anywhere"), "QoL_SleepAnywhere", ref s.QoL_SleepAnywhere, ref changed);
         _qolSleepExpanded = Expander(R, c3, y3, _qolSleepExpanded, "睡眠参数", "Sleep Params");
@@ -244,18 +253,6 @@ internal static partial class MenuTweaks
             y3 += ROW_ADV;
         }
         y3 += SECTION_END_ADV;
-
-        y3 = SectionCol(R, c3, y3, COL_W3, I18n.T("自动测绘", "Auto Survey"), "QoL_AutoSurvey", ref s.QoL_AutoSurvey, ref changed);
-        v = DrawSliderCol3(R, c3, y3, I18n.T("绘制间隔(秒)", "Interval"), s.QoL_AutoSurveyDelay, 1f, 60f, "F0", key: "QoL_AutoSurveyDelay");
-        if (v != s.QoL_AutoSurveyDelay) { s.QoL_AutoSurveyDelay = v; changed = true; }
-        y3 += ROW_ADV;
-        v = DrawSliderCol3(R, c3, y3, I18n.T("范围倍率", "Range"), s.QoL_AutoSurveyRange, 0.1f, 10f, "F1", key: "QoL_AutoSurveyRange");
-        if (v != s.QoL_AutoSurveyRange) { s.QoL_AutoSurveyRange = v; changed = true; }
-        y3 += ROW_ADV;
-        bool unl = Ui.Toggle("QoL_AutoSurveyUnlock", R(c3, y3, COL_TOG_W3, ROW_H), s.QoL_AutoSurveyUnlock,
-            I18n.T(" 无视天气限制", " Ignore Weather"), ToggleStyle ?? GUI.skin.toggle);
-        if (unl != s.QoL_AutoSurveyUnlock) { s.QoL_AutoSurveyUnlock = unl; changed = true; }
-        y3 += ROW_ADV + SECTION_END_ADV;
 
         y3 = SectionCol(R, c3, y3, COL_W3, I18n.T("扭伤系统", "Sprain System"), "World_Sprainkle", ref s.World_Sprainkle, ref changed);
         _worldSprainkleExpanded = Expander(R, c3, y3, _worldSprainkleExpanded, "扭伤参数", "Sprain Params");
@@ -305,23 +302,11 @@ internal static partial class MenuTweaks
         if (b != s.SpaceFinish_Repair) { s.SpaceFinish_Repair = b; changed = true; }
         y3 += ROW_ADV + SECTION_END_ADV;
 
-        // —— 搬运猎物(v9.0 从「物资 & 世界」挪来,单独一块并写清怎么用) ——
-        y3 = SectionCol(R, c3, y3, COL_W3, I18n.T("搬运猎物", "Carry Carcass"));
-#if STORY_GUARD
-        // 剧情版:改 BodyHarvest 持久态会写坏剧情存档,整块禁用灰显
-        bool _carryBlocked = StoryGuard.InStory;
-        if (_carryBlocked) GUI.enabled = false;
-#endif
-        b = Ui.Toggle("World_CarcassMoving", R(c3, y3, subTogW, ROW_H), s.World_CarcassMoving,
-            I18n.T(" 搬运猎物", " Carry Carcass"), ToggleStyle ?? GUI.skin.toggle);
-        if (b != s.World_CarcassMoving) { s.World_CarcassMoving = b; CheatState.World_CarcassMoving = b; changed = true; }
-        b = Ui.Toggle("World_CarcassMovingAll", R(c3Sub, y3, subTogW, ROW_H), s.World_CarcassMovingAll,
-            I18n.T(" 搬运全部", " Carry All"), ToggleStyle ?? GUI.skin.toggle);
-        if (b != s.World_CarcassMovingAll) { s.World_CarcassMovingAll = b; CheatState.World_CarcassMovingAll = b; changed = true; }
-#if STORY_GUARD
-        if (_carryBlocked) GUI.enabled = true;
-#endif
-        y3 += ROW_ADV + SECTION_END_ADV;
+        y3 = SectionCol(R, c3, y3, COL_W3, I18n.T("面板快捷键", "Panel Hotkeys"), "QoL_HotkeysEnabled", ref s.QoL_HotkeysEnabled, ref changed);
+        y3 = KeyRow(R, c3, y3, I18n.T("丢弃", "Drop"), s.QoL_DropKey);
+        y3 = KeyRow(R, c3, y3, I18n.T("按住再丢弃 = 整堆", "Hold + Drop = Whole Stack"), s.QoL_BulkKey);
+        y3 = KeyRow(R, c3, y3, I18n.T("关闭面板", "Close Panel"), s.QoL_BackKey);
+        y3 += SECTION_END_ADV;
 
         if (changed) s.RequestSave();
         return Mathf.Max(y1, Mathf.Max(y2, y3));
@@ -464,42 +449,40 @@ internal static partial class MenuTweaks
 
         y2 = SectionCol(R, c2, y2, COL_W3, I18n.T("物品 & 界面", "Items & UI"));
         bool pauseJ = Ui.Toggle("PauseInJournal", R(c2,    y2, subTogW, ROW_H), s.PauseInJournal, I18n.T(" 日志暂停", " Pause Journal"), ToggleStyle ?? GUI.skin.toggle);
-        bool skipI  = Ui.Toggle("SkipIntro", R(c2Sub, y2, subTogW, ROW_H), s.SkipIntro,      I18n.T(" 跳过片头", " Skip Intro"), ToggleStyle ?? GUI.skin.toggle);
+        bool muteCougar = Ui.Toggle("MuteCougarMenuSound", R(c2Sub, y2, subTogW, ROW_H), s.MuteCougarMenuSound,  I18n.T(" 静音狮吼", " Mute Cougar"), ToggleStyle ?? GUI.skin.toggle);
         if (pauseJ != s.PauseInJournal) { s.PauseInJournal = pauseJ; changed = true; }
-        if (skipI != s.SkipIntro) { s.SkipIntro = skipI; changed = true; }
+        if (muteCougar != s.MuteCougarMenuSound) { s.MuteCougarMenuSound = muteCougar; changed = true; }
         y2 += ROW_ADV;
-        bool muteCougar = Ui.Toggle("MuteCougarMenuSound", R(c2,    y2, subTogW, ROW_H), s.MuteCougarMenuSound,  I18n.T(" 静音狮吼", " Mute Cougar"), ToggleStyle ?? GUI.skin.toggle);
 #if STORY_GUARD
         // 剧情版:任意丢弃可丢任务/剧情物品 → 死锁风险,禁用灰显(静音狮吼保留)。
         bool _dropBlocked = StoryGuard.InStory;
         if (_dropBlocked) GUI.enabled = false;
 #endif
-        bool droppable  = Ui.Toggle("DroppableUndroppables", R(c2Sub, y2, subTogW, ROW_H), s.DroppableUndroppables, I18n.T(" 任意丢弃", " Drop Any"), ToggleStyle ?? GUI.skin.toggle);
+        bool droppable  = Ui.Toggle("DroppableUndroppables", R(c2, y2, subTogW, ROW_H), s.DroppableUndroppables, I18n.T(" 任意丢弃", " Drop Any"), ToggleStyle ?? GUI.skin.toggle);
 #if STORY_GUARD
         if (_dropBlocked) GUI.enabled = true;
 #endif
-        if (muteCougar != s.MuteCougarMenuSound) { s.MuteCougarMenuSound = muteCougar; changed = true; }
+        bool impW    = Ui.Toggle("ImportantWeight", R(c2Sub, y2, subTogW, ROW_H), s.ImportantWeight, I18n.T(" 关键重量", " Key Weight"), ToggleStyle ?? GUI.skin.toggle);
         if (droppable != s.DroppableUndroppables) { s.DroppableUndroppables = droppable; changed = true; }
-        y2 += ROW_ADV;
-        bool impW    = Ui.Toggle("ImportantWeight", R(c2,    y2, subTogW, ROW_H), s.ImportantWeight, I18n.T(" 关键重量", " Key Weight"), ToggleStyle ?? GUI.skin.toggle);
-        bool allNote = Ui.Toggle("AllNote", R(c2Sub, y2, subTogW, ROW_H), s.AllNote,         I18n.T(" 笔记可丢", " Drop Notes"), ToggleStyle ?? GUI.skin.toggle);
         if (impW != s.ImportantWeight) { s.ImportantWeight = impW; changed = true; }
-        if (allNote != s.AllNote) { s.AllNote = allNote; changed = true; }
         y2 += ROW_ADV;
         // v9.0 随地制作挪到主页「制作 & 修理」,这里空出来的位置给更多可堆叠占上
-        bool remTool = Ui.Toggle("RememberBreakdownTool", R(c2,    y2, subTogW, ROW_H), s.RememberBreakdownTool, I18n.T(" 记忆工具", " Remember Tool"), ToggleStyle ?? GUI.skin.toggle);
-        b = Ui.Toggle("Stack_AddComponent", R(c2Sub, y2, subTogW, ROW_H), s.Stack_AddComponent, I18n.T(" 更多可堆叠", " More Stacking"), ToggleStyle ?? GUI.skin.toggle);
+        bool allNote = Ui.Toggle("AllNote", R(c2,    y2, subTogW, ROW_H), s.AllNote,         I18n.T(" 笔记可丢", " Drop Notes"), ToggleStyle ?? GUI.skin.toggle);
+        bool remTool = Ui.Toggle("RememberBreakdownTool", R(c2Sub, y2, subTogW, ROW_H), s.RememberBreakdownTool, I18n.T(" 记忆工具", " Remember Tool"), ToggleStyle ?? GUI.skin.toggle);
+        if (allNote != s.AllNote) { s.AllNote = allNote; changed = true; }
         if (remTool != s.RememberBreakdownTool) { s.RememberBreakdownTool = remTool; changed = true; }
-        if (b != s.Stack_AddComponent) { s.Stack_AddComponent = b; changed = true; }
         y2 += ROW_ADV;
-        bool maxHp = Ui.Toggle("Stack_UseMaxHP", R(c2,    y2, subTogW, ROW_H), s.Stack_UseMaxHP, I18n.T(" 合并取最高", " Merge at Max HP"), ToggleStyle ?? GUI.skin.toggle);
+        b = Ui.Toggle("Stack_AddComponent", R(c2, y2, subTogW, ROW_H), s.Stack_AddComponent, I18n.T(" 更多可堆叠", " More Stacking"), ToggleStyle ?? GUI.skin.toggle);
+        bool maxHp = Ui.Toggle("Stack_UseMaxHP", R(c2Sub, y2, subTogW, ROW_H), s.Stack_UseMaxHP, I18n.T(" 合并取最高", " Merge at Max HP"), ToggleStyle ?? GUI.skin.toggle);
+        if (b != s.Stack_AddComponent) { s.Stack_AddComponent = b; changed = true; }
         if (maxHp != s.Stack_UseMaxHP) { s.Stack_UseMaxHP = maxHp; changed = true; }
         y2 += ROW_ADV + SECTION_END_ADV;
 
+        // 地图描边挪去地图页,跳过片头从上一块挪来补位,两块各 4 行
         y2 = SectionCol(R, c2, y2, COL_W3, I18n.T("其他便利功能", "Misc QoL"));
-        bool mapOn  = Ui.Toggle("QoL_MapTextOutlineEnabled", R(c2,    y2, subTogW, ROW_H), s.QoL_MapTextOutlineEnabled, I18n.T(" 地图描边", " Map Outline"), ToggleStyle ?? GUI.skin.toggle);
-        bool noSave = Ui.Toggle("QoL_NoSaveOnSprain", R(c2Sub, y2, subTogW, ROW_H), s.QoL_NoSaveOnSprain,        I18n.T(" 扭伤不存", " No Save Sprain"), ToggleStyle ?? GUI.skin.toggle);
-        if (mapOn != s.QoL_MapTextOutlineEnabled) { s.QoL_MapTextOutlineEnabled = mapOn; changed = true; }
+        bool skipI  = Ui.Toggle("SkipIntro", R(c2, y2, subTogW, ROW_H), s.SkipIntro, I18n.T(" 跳过片头", " Skip Intro"), ToggleStyle ?? GUI.skin.toggle);
+        bool noSave = Ui.Toggle("QoL_NoSaveOnSprain", R(c2Sub, y2, subTogW, ROW_H), s.QoL_NoSaveOnSprain, I18n.T(" 扭伤不存", " No Save Sprain"), ToggleStyle ?? GUI.skin.toggle);
+        if (skipI != s.SkipIntro) { s.SkipIntro = skipI; changed = true; }
         if (noSave != s.QoL_NoSaveOnSprain) { s.QoL_NoSaveOnSprain = noSave; changed = true; }
         y2 += ROW_ADV;
         bool noFallSpr = Ui.Toggle("QoL_NoSaveOnSprainFalls", R(c2,    y2, subTogW, ROW_H), s.QoL_NoSaveOnSprainFalls, I18n.T(" 含坠扭伤", " Include Falls"), ToggleStyle ?? GUI.skin.toggle);
@@ -561,6 +544,13 @@ internal static partial class MenuTweaks
         bool cia = Ui.Toggle("CougarInstantActivate", R(c3,    y3, subTogW, ROW_H), s.CougarInstantActivate, I18n.T(" 召唤美洲狮", " Spawn Cougar"), ToggleStyle ?? GUI.skin.toggle);
         bool stt = Ui.Toggle("TT_ShowTraderTrust", R(c3Sub, y3, subTogW, ROW_H), s.TT_ShowTraderTrust,   I18n.T(" 显示信任度", " Show Trust"), ToggleStyle ?? GUI.skin.toggle);
         y3 += ROW_ADV;
+#if !STORY_EDITION
+        b = Ui.Toggle("CE_TraderCheap", R(c3, y3, subTogW, ROW_H), s.CE_TraderCheap, I18n.T(" 商人打折", " Discount"), ToggleStyle ?? GUI.skin.toggle);
+        if (b != s.CE_TraderCheap) { s.CE_TraderCheap = b; changed = true; }
+        Ui.Hover("CE_TraderRefresh", R(c3Sub, y3, subTogW, ROW_H));
+        if (GUI.Button(R(c3Sub, y3, subTogW, ROW_H), I18n.T("刷新商品", "Refresh Goods"))) CeX.RefreshTrader();
+        y3 += ROW_ADV;
+#endif
         float td = DrawSliderCol3(R, c3, y3, I18n.T("到来(天)", "Arrival"), s.TraderArrivalDays, 1f, 40f, "F0", key: "TraderArrivalDays");
         if ((int)td != (int)s.TraderArrivalDays) { s.TraderArrivalDays = (int)td; changed = true; }
         y3 += ROW_ADV;
@@ -665,7 +655,11 @@ internal static partial class MenuTweaks
         y3 += ROW_ADV + SECTION_END_ADV;
 
         if (changed) s.RequestSave();
+#if !STORY_EDITION
+        return DrawCeCards(R, s, Mathf.Max(y1, Mathf.Max(y2, y3)));
+#else
         return Mathf.Max(y1, Mathf.Max(y2, y3));
+#endif
     }
 
     // ═══════════════════════════════════════════════════════════════════════

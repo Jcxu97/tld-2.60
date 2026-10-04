@@ -65,6 +65,11 @@ internal class TldHacksSettings : JsonModSettings
     {
         foreach (var n in new[] { nameof(SuperAccuracy), nameof(TimeScaleInfo), nameof(LampBurnMultiplier) })
             try { SetFieldVisible(n, false); } catch { }
+#if STORY_EDITION
+        // 剧情 1~4 章不编译 CeFeatures,这些开关点了没反应
+        foreach (var f in GetType().GetFields())
+            if (f.Name.StartsWith("CE_")) try { SetFieldVisible(f.Name, false); } catch { }
+#endif
     }
 
     protected override void OnConfirm()
@@ -78,7 +83,7 @@ internal class TldHacksSettings : JsonModSettings
     // ——— Menu ———
     [Section("Menu")]
     [Name("Language / 语言")]
-    [Description("Auto = 按系统语言(非中文系统 → English);Chinese = 强制中文;English = 强制英文。改完需按菜单热键重开菜单生效。")]
+    [Description("Auto = 跟随游戏的语言设置(游戏不是中文 → English);Chinese = 强制中文;English = 强制英文。改完需按菜单热键重开菜单生效。")]
     [Choice("Auto", "中文 / Chinese", "English")]
     public int LanguageMode = 0;
 
@@ -439,6 +444,63 @@ internal class TldHacksSettings : JsonModSettings
     [Name("召唤美洲狮")]
     [Description("新档第一次就立即激活美洲狮")]
     public bool CougarInstantActivate = false;
+
+    [Section("野外 & 生存")]
+    [Name("陷阱必中")]
+    [Description("陷阱每次判定都抓到兔子,也不会坏")]
+    public bool CE_SnareSure = false;
+
+    [Name("放下就抓到")]
+    [Description("陷阱放下后马上判定一次,不用等几个小时。要先开陷阱必中")]
+    public bool CE_SnareInstant = false;
+
+    [Name("容器不开空")]
+    [Description("容器生成东西时不会是空的,至少一件。只对还没打开过的容器有效")]
+    public bool CE_LootNoEmpty = false;
+
+    [Name("按低一档难度出东西")]
+    [Description("容器里的东西按低一档难度的表生成,比如入侵者按潜行者。只对还没打开过的容器有效")]
+    public bool CE_LootLowerTier = false;
+
+    [Name("极光夜刷新空容器")]
+    [Description("极光夜关上一个搜空的容器,它会重新生成一次东西。每次极光每个容器只刷一次,尸体和任务容器不刷")]
+    public bool CE_AuroraRefill = false;
+
+    [Name("冰洞不冻上")]
+    [Description("钓鱼的冰洞不会重新结冰,已经冻上的打开就解冻")]
+    public bool CE_IceHoleNoFreeze = false;
+
+    [Name("厄难负面不再生成")]
+    [Description("厄难难度的体质衰弱、心神不宁、风湿关节、冰冷刺骨、胃酸过多、残破身躯不再挂上。已有的用清除所有负面清掉")]
+    public bool CE_NoMisery = false;
+
+    [Name("死亡不删档")]
+    [Description("血量快归零时救回来:血量回到三成,清掉负面,饿、渴、冷补到不再掉血。存档不删")]
+    public bool CE_NoDeath = false;
+
+    [Name("扑倒必胜")]
+    [Description("被狼或美洲狮扑倒时挣脱进度一直是满的,马上脱身;扑倒期间不掉血,熊和驼鹿的攻击也不留后续负面")]
+    public bool CE_StruggleWin = false;
+
+    [Name("扑倒后不眩晕")]
+    [Description("被扑倒以后不躺地、不头晕、不掉东西")]
+    public bool CE_NoStun = false;
+
+    [Name("坡上不打滑")]
+    [Description("陡坡也能直接走上去,不往下滑,坡上不减速")]
+    public bool CE_NoSlide = false;
+
+    [Name("商人打折")]
+    [Description("交易一直用便宜价的清单,原版要信任很高才有")]
+    public bool CE_TraderCheap = false;
+
+    [Name("极光夜电灯常亮")]
+    [Description("极光夜通电的灯稳定全亮,不忽明忽暗")]
+    public bool CE_AuroraLightSteady = false;
+
+    [Name("关掉极光音效")]
+    [Description("极光夜那阵嗡嗡的环境声不再播放")]
+    public bool CE_AuroraMute = false;
 
     [Section("与 ItemPicker mod 交互")]
     [Name("不捡丢物")]
@@ -1032,6 +1094,59 @@ internal class TldHacksSettings : JsonModSettings
     [Name("出门开小地图")]
     [Description("室内→室外场景切换后自动打开 MotionTrackerLite 小地图(需装 MotionTrackerLite mod)")]
     public bool QoL_AutoOpenMapOnExit = false;
+
+#if !STORY_EDITION
+    // v9.7 整合地图管理(MapManager 1.1.7)。默认只开箭头和居中、倍率为原版,热键避开 F9(TraderMoving 和 PrepperCache 在用)
+    [Section("地图管理")]
+    [Name("启用地图管理")]
+#if EP5_EDITION
+    public bool MapM_Enabled = false;
+#else
+    public bool MapM_Enabled = true;
+#endif
+    [Name("玩家红色箭头")]
+    public bool MapM_PlayerArrow = true;
+    [Name("打开地图时以玩家为中心")]
+    public bool MapM_CenterOnPlayer = true;
+    [Slider(1f, 25f, 49)]
+    [Name("木炭绘图范围倍率")]
+    public float MapM_SurveyRange = 1f;
+    [Slider(0.1f, 5f, 50)]
+    [Name("木炭绘图时间倍率")]
+    public float MapM_SurveyTime = 1f;
+    [Name("任何时候都能绘图")]
+    public bool MapM_UnlockSurvey = false;
+    [Name("显示远景点")]
+    public bool MapM_RevealVista = false;
+    [Name("远景点不用宝丽来")]
+    public bool MapM_VistaNoPolaroid = false;
+    [Name("动物尸体显示在地图上")]
+    public bool MapM_CorpseOnMap = false;
+    [Name("采完的植物图标自动消失")]
+    public bool MapM_HideHarvested = false;
+    [Name("地堡全换成完整版(随机类型)")]
+    public bool MapM_FillEmptyBunkers = false;
+    [Name("入侵者和厄难也刷地堡")]
+    public bool MapM_InterloperBunker = false;
+    [Name("显示地堡热键")]
+    public KeyCode MapM_BunkerKey = KeyCode.F8;
+    [Name("当前区域全开热键")]
+    // 全开撤销不了,默认不绑,免得误按
+    public KeyCode MapM_RevealKey = KeyCode.None;
+#endif
+#if !STORY_EDITION && !EP5_EDITION
+    [Section("收藏品地图")]
+    [Name("地图上标出收藏品")]
+    public bool Coll_Enabled = false;
+    [Name("石堆")]
+    public bool Coll_Cairn = true;
+    [Name("纸条和日志")]
+    public bool Coll_Note = true;
+    [Name("拍立得")]
+    public bool Coll_Polaroid = true;
+    [Name("收过的也标出来")]
+    public bool Coll_ShowCollected = false;
+#endif
 
     // ═══════════════════════════════════════════════════════════════════════════
     // v2.8.0  Tab 8: Crafting & Fire (CraftAnywhereRedux + MoreCookingSlots)

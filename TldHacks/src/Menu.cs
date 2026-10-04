@@ -115,8 +115,8 @@ internal static class Menu
     private static int    _cachedFilteredCount = -1;
 
     // 标签页
-    private static readonly string[] TabsZh = { "主页", "物品 & 传送", "饮食 & 食谱", "人物 & 操作", "物资 & 世界", "灯火 & 视觉" };
-    private static readonly string[] TabsEn = { "Main", "Items & Teleport", "Food & Recipes", "Character & Controls", "Gear & World", "Light & Visual" };
+    private static readonly string[] TabsZh = { "主页", "物品 & 传送", "饮食 & 地图", "人物 & 操作", "物资 & 世界", "灯火 & 视觉" };
+    private static readonly string[] TabsEn = { "Main", "Items & Teleport", "Food & Map", "Character & Controls", "Gear & World", "Light & Visual" };
     private static string[] Tabs => I18n.IsEnglish ? TabsEn : TabsZh;
     private static int _activeTab = 0;
 
@@ -318,8 +318,11 @@ internal static class Menu
         _windowStyle.contentOffset = Vector2.zero;
         _windowStyle.fontSize = h1;
 
+        // 标签上下居中,和同一行的滑条、按钮、数值对齐
         ConfigureLabel(_labelStyle, body, CursorText);
+        _labelStyle.alignment = TextAnchor.MiddleLeft;
         ConfigureLabel(_mutedLabelStyle, body, CursorTextMuted);
+        _mutedLabelStyle.alignment = TextAnchor.MiddleLeft;
         ConfigureLabel(_valueLabelStyle, body, CursorTextMuted);
         _valueLabelStyle.alignment = TextAnchor.MiddleRight;
         ConfigureLabel(_titleStyle, h1, CursorText);
@@ -348,7 +351,8 @@ internal static class Menu
         _buttonStyle.active = State(_accentDimTex, CursorText);
         ConfigureButton(_buttonActiveStyle, _accentTex, CursorText, body);
         ConfigureButton(_buttonDangerStyle, _dangerTex, CursorText, body);
-        ConfigureButton(_toggleStyle, _panelHiTex, CursorText, body);
+        // 开关:开着浅底蓝字,关着暗一档的底配灰字
+        ConfigureButton(_toggleStyle, _panelTex, CursorTextMuted, body);
         _toggleStyle.onNormal = State(_panelHiTex, CursorAccent);
         _toggleStyle.onHover = State(_panelHiTex, CursorAccent);
         _toggleStyle.onActive = State(_accentDimTex, CursorText);
@@ -1174,6 +1178,13 @@ internal static class Menu
         if (grabNotify != s.GrabAllNotify) { s.GrabAllNotify = grabNotify; s.RequestSave(); }
         if (Ui.Button("Act_GrabNow", R(c2 + TOG2_OFF, y2, TOG_W, ROW_H), I18n.T("立即搜刮", "Grab Now")))
             GrabAll.Trigger(s.GrabAllRadius, s.GrabAllNotify);
+#if !STORY_EDITION
+        y2 += ROW_ADV;
+        if (Ui.Button("Act_ClearMap", R(c2, y2, TOG_W, ROW_H), I18n.T("一键清图", "Clear Map")))
+            MapClear.Trigger(false);
+        if (Ui.Button("Act_ClearMapMission", R(c2 + TOG2_OFF, y2, TOG_W, ROW_H), I18n.T("清任务物品", "Mission Items")))
+            MapClear.Trigger(true);
+#endif
         y2 += ROW_ADV + SECTION_END_ADV;
 
         // ═════════ 列 3:物品 & 武器 ═════════
@@ -1286,7 +1297,7 @@ internal static class Menu
         return Mathf.Max(y1, Mathf.Max(y2, y3));
     }
 
-    // ————————————— Tab:饮食 & 食谱 —————————————
+    // ————————————— Tab:饮食 & 地图 —————————————
     // c1 汽水/出肉量/烹饪位 | c2 衰减·食物 | c3 食谱列表(RecipeBook.AllRecipes,逐个解锁写存档,靠外层 ScrollView 滚动)
     private static float DrawRecipeTab(TldHacksSettings s)
     {
@@ -1335,64 +1346,13 @@ internal static class Menu
         if (b != s.Craft_MoreSlots_Grill) { s.Craft_MoreSlots_Grill = b; changed = true; }
         y += ROW_ADV + SECTION_END_ADV;
 
-        y2 = MenuTweaks.SectionCol(RFunc, c2, y2, MenuTweaks.COL_W3, I18n.T("衰减·食物", "Decay·Food"));
-        v = MenuTweaks.DrawSliderCol3(RFunc, c2, y2, I18n.T("食物(总)", "Food Total"), s.FoodDecay, 0f, 2f, "F2", key: "FoodDecay");
-        if (v != s.FoodDecay) { s.FoodDecay = v; changed = true; }
-        y2 += ROW_ADV;
-        v = MenuTweaks.DrawSliderCol3(RFunc, c2, y2, I18n.T("生肉", "Raw Meat"), s.RawMeatDecay, 0f, 2f, "F2", key: "RawMeatDecay");
-        if (v != s.RawMeatDecay) { s.RawMeatDecay = v; changed = true; }
-        y2 += ROW_ADV;
-        v = MenuTweaks.DrawSliderCol3(RFunc, c2, y2, I18n.T("熟肉", "Cooked Meat"), s.CookedMeatDecay, 0f, 2f, "F2", key: "CookedMeatDecay");
-        if (v != s.CookedMeatDecay) { s.CookedMeatDecay = v; changed = true; }
-        y2 += ROW_ADV;
-        v = MenuTweaks.DrawSliderCol3(RFunc, c2, y2, I18n.T("饮品", "Drinks"), s.DrinksDecay, 0f, 2f, "F2", key: "DrinksDecay");
-        if (v != s.DrinksDecay) { s.DrinksDecay = v; changed = true; }
-        y2 += ROW_ADV;
-        MenuTweaks._foodDetailExpanded = MenuTweaks.Expander(RFunc, c2, y2, MenuTweaks._foodDetailExpanded, "食物细分", "Food Detail");
-        y2 += ROW_ADV;
-        if (MenuTweaks._foodDetailExpanded)
-        {
-            v = MenuTweaks.DrawSliderCol3(RFunc, c2, y2, I18n.T("腌肉", "Cured Meat"), s.CuredMeatDecay, 0f, 2f, "F2", key: "CuredMeatDecay");
-            if (v != s.CuredMeatDecay) { s.CuredMeatDecay = v; changed = true; }
-            y2 += ROW_ADV;
-            v = MenuTweaks.DrawSliderCol3(RFunc, c2, y2, I18n.T("生鱼", "Raw Fish"), s.RawFishDecay, 0f, 2f, "F2", key: "RawFishDecay");
-            if (v != s.RawFishDecay) { s.RawFishDecay = v; changed = true; }
-            y2 += ROW_ADV;
-            v = MenuTweaks.DrawSliderCol3(RFunc, c2, y2, I18n.T("熟鱼", "Cooked Fish"), s.CookedFishDecay, 0f, 2f, "F2", key: "CookedFishDecay");
-            if (v != s.CookedFishDecay) { s.CookedFishDecay = v; changed = true; }
-            y2 += ROW_ADV;
-            v = MenuTweaks.DrawSliderCol3(RFunc, c2, y2, I18n.T("罐头", "Canned"), s.CannedFoodDecay, 0f, 2f, "F2", key: "CannedFoodDecay");
-            if (v != s.CannedFoodDecay) { s.CannedFoodDecay = v; changed = true; }
-            y2 += ROW_ADV;
-            v = MenuTweaks.DrawSliderCol3(RFunc, c2, y2, I18n.T("咖啡/茶", "Coffee/Tea"), s.CoffeeTeaDecay, 0f, 2f, "F2", key: "CoffeeTeaDecay");
-            if (v != s.CoffeeTeaDecay) { s.CoffeeTeaDecay = v; changed = true; }
-            y2 += ROW_ADV;
-            v = MenuTweaks.DrawSliderCol3(RFunc, c2, y2, I18n.T("包装食品", "Packaged"), s.PackagedFoodDecay, 0f, 2f, "F2", key: "PackagedFoodDecay");
-            if (v != s.PackagedFoodDecay) { s.PackagedFoodDecay = v; changed = true; }
-            y2 += ROW_ADV;
-            v = MenuTweaks.DrawSliderCol3(RFunc, c2, y2, I18n.T("油脂", "Fat"), s.FatDecay, 0f, 2f, "F2", key: "FatDecay");
-            if (v != s.FatDecay) { s.FatDecay = v; changed = true; }
-            y2 += ROW_ADV;
-            v = MenuTweaks.DrawSliderCol3(RFunc, c2, y2, I18n.T("腌鱼", "Cured Fish"), s.CuredFishDecay, 0f, 2f, "F2", key: "CuredFishDecay");
-            if (v != s.CuredFishDecay) { s.CuredFishDecay = v; changed = true; }
-            y2 += ROW_ADV;
-            v = MenuTweaks.DrawSliderCol3(RFunc, c2, y2, I18n.T("食材", "Ingredients"), s.IngredientsDecay, 0f, 2f, "F2", key: "IngredientsDecay");
-            if (v != s.IngredientsDecay) { s.IngredientsDecay = v; changed = true; }
-            y2 += ROW_ADV;
-            v = MenuTweaks.DrawSliderCol3(RFunc, c2, y2, I18n.T("其他食品", "Other Food"), s.OtherFoodDecay, 0f, 2f, "F2", key: "OtherFoodDecay");
-            if (v != s.OtherFoodDecay) { s.OtherFoodDecay = v; changed = true; }
-            y2 += ROW_ADV;
-        }
-        y2 += SECTION_END_ADV;
-
-        if (changed) s.RequestSave();
-
 #if !STORY_EDITION
         // 2.24 无 Il2CppTLD.Cooking,整个食谱系统(Recipes/RecipeNameZh)已排除
-        y3 = MenuTweaks.SectionCol(RFunc, c3, y3, MenuTweaks.COL_W3, I18n.T("食谱 (含 DLC)", "Recipes (incl. DLC)"));
-        if (GUI.Button(R(c3, y3, MenuTweaks.HALF_W, ROW_H), I18n.T("全部解锁", "Unlock All")))
+        // 上排:左列汽水/鹿肉/烹饪位,食谱横跨第 2、3 列分两半排,两边高度差不多
+        y3 = MenuTweaks.SectionCol(RFunc, c2, y3, c3 - c2 + MenuTweaks.COL_W3, I18n.T("食谱 (含 DLC)", "Recipes (incl. DLC)"));
+        if (GUI.Button(R(c2, y3, MenuTweaks.HALF_W, ROW_H), I18n.T("全部解锁", "Unlock All")))
             Recipes.UnlockAll();
-        if (GUI.Button(R(c3 + MenuTweaks.HALF_OFF, y3, MenuTweaks.HALF_W, ROW_H), I18n.T("刷新列表", "Refresh")))
+        if (GUI.Button(R(c2 + MenuTweaks.HALF_OFF, y3, MenuTweaks.HALF_W, ROW_H), I18n.T("刷新列表", "Refresh")))
             Recipes.Refresh();
         y3 += ROW_ADV;
 
@@ -1412,7 +1372,7 @@ internal static class Menu
         }
         if (rs.Count == 0)
         {
-            GUI.Label(R(c3, y3, MenuTweaks.COL_W3, ROW_H),
+            GUI.Label(R(c2, y3, MenuTweaks.COL_W3, ROW_H),
                 I18n.T("进入存档后才能看到食谱", "Load a save to see the recipes"), _mutedLabelStyle);
             y3 += ROW_ADV;
         }
@@ -1420,21 +1380,64 @@ internal static class Menu
         {
             const float btnW = 80f;
             float nameW = MenuTweaks.COL_W3 - btnW - 6f;
-            float bx = c3 + MenuTweaks.COL_W3 - btnW;
+            int rows = (rs.Count + 1) / 2;
             for (int i = 0; i < rs.Count; i++)
             {
                 var rd = rs[i];
-                GUI.Label(R(c3, y3, nameW, ROW_H), Recipes.NameAt(i));
+                float cx = i < rows ? c2 : c3;
+                float ry = y3 + (i % rows) * ROW_ADV;
+                float bx = cx + MenuTweaks.COL_W3 - btnW;
+                GUI.Label(R(cx, ry, nameW, ROW_H), Recipes.NameAt(i), _rowLabelStyle);
                 if (Recipes.IsUnlocked(rd))
-                    GUI.Label(R(bx, y3, btnW, ROW_H), I18n.T("已解锁", "Unlocked"), _mutedLabelStyle);
-                else if (GUI.Button(R(bx, y3, btnW, ROW_H), I18n.T("解锁", "Unlock")))
+                {
+                    var prevA = _mutedLabelStyle.alignment;
+                    _mutedLabelStyle.alignment = TextAnchor.MiddleCenter;
+                    GUI.Label(R(bx, ry, btnW, ROW_H), I18n.T("已解锁", "Unlocked"), _mutedLabelStyle);
+                    _mutedLabelStyle.alignment = prevA;
+                }
+                else if (GUI.Button(R(bx, ry, btnW, ROW_H), I18n.T("解锁", "Unlock")))
                     Recipes.Unlock(rd);
-                y3 += ROW_ADV;
             }
+            y3 += rows * ROW_ADV;
         }
         y3 += SECTION_END_ADV;
 #endif
-        return Mathf.Max(y, Mathf.Max(y2, y3));
+
+        // 下排:食物衰减横跨三列,滑条按列排
+        float yr = Mathf.Max(y, y3);
+        yr = MenuTweaks.SectionCol(RFunc, c1, yr, c3 - c1 + MenuTweaks.COL_W3, I18n.T("衰减·食物", "Decay·Food"));
+        float[] cols = { c1, c2, c3 };
+        int cell = 0;
+        void Slider(string zh, string en, ref float val, string key)
+        {
+            float nv = MenuTweaks.DrawSliderCol3(RFunc, cols[cell % 3], yr + (cell / 3) * ROW_ADV, I18n.T(zh, en), val, 0f, 2f, "F2", key: key);
+            if (nv != val) { val = nv; changed = true; }
+            cell++;
+        }
+        Slider("食物(总)", "Food Total", ref s.FoodDecay, "FoodDecay");
+        Slider("生肉", "Raw Meat", ref s.RawMeatDecay, "RawMeatDecay");
+        Slider("熟肉", "Cooked Meat", ref s.CookedMeatDecay, "CookedMeatDecay");
+        Slider("饮品", "Drinks", ref s.DrinksDecay, "DrinksDecay");
+        MenuTweaks._foodDetailExpanded = MenuTweaks.Expander(RFunc, cols[cell % 3], yr + (cell / 3) * ROW_ADV, MenuTweaks._foodDetailExpanded, "食物细分", "Food Detail");
+        cell++;
+        if (MenuTweaks._foodDetailExpanded)
+        {
+            Slider("腌肉", "Cured Meat", ref s.CuredMeatDecay, "CuredMeatDecay");
+            Slider("生鱼", "Raw Fish", ref s.RawFishDecay, "RawFishDecay");
+            Slider("熟鱼", "Cooked Fish", ref s.CookedFishDecay, "CookedFishDecay");
+            Slider("罐头", "Canned", ref s.CannedFoodDecay, "CannedFoodDecay");
+            Slider("咖啡/茶", "Coffee/Tea", ref s.CoffeeTeaDecay, "CoffeeTeaDecay");
+            Slider("包装食品", "Packaged", ref s.PackagedFoodDecay, "PackagedFoodDecay");
+            Slider("油脂", "Fat", ref s.FatDecay, "FatDecay");
+            Slider("腌鱼", "Cured Fish", ref s.CuredFishDecay, "CuredFishDecay");
+            Slider("食材", "Ingredients", ref s.IngredientsDecay, "IngredientsDecay");
+            Slider("其他食品", "Other Food", ref s.OtherFoodDecay, "OtherFoodDecay");
+        }
+        yr += ((cell + 2) / 3) * ROW_ADV + SECTION_END_ADV;
+
+        if (changed) s.RequestSave();
+        yr = MenuTweaks.DrawMapCards(RFunc, s, yr);
+        return Mathf.Max(yr, Mathf.Max(y2, y3));
     }
 
     // ————————————— Tab 2:物品刷出 + 传送 —————————————

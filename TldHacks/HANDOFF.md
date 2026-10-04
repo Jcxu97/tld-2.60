@@ -1,32 +1,32 @@
 # HANDOFF: TldHacks
 
-> Last updated: 2026-10-01 00:20
+> Last updated: 2026-10-04 10:00
 
 ## 当前目标
-v9.5 / 剧情 V1.3 已发版。规矩是每次改完都部署到游戏,再重打桌面 `TLD\` 的最小包(中英两个 zip)、完整版分卷和 `游戏材质包_backup.bin`,改到剧情版就连剧情包一起打。
+v9.7(沙盒)、剧情第 5 章 V1.2、1~4 章 V1.5 已打包上传,等用户进游戏测。三份说明的"改了什么"写的是 v9.6 首发以后的全部改动(地图管理、收藏品地图、完整地堡、CE 14 项、菜单重排等)。
 
 ## 已完成(本轮)
-- 商人:信任满值和滑条走原版 `AddTrust`(第一次满格解锁 DLC 成就),`TraderTrust.HealOnce` 补旧存档;即时交易 `Patch_TraderManager_CloseTrade` 关箱后补调 `CompleteTrade` 并清冷却;商人常驻 `Patch_TraderRadio_IsTraderAvailable`。室内灯光按状态缓存(`HLSource`)。QoL 总开关接上。版本 9.5。
-- 物品生成器加 `GEAR_CougarWrap`(美洲狮皮护套),美洲狮几样的重量按资源实测改过。
-- 逐件确认跳过 `GEAR_Stick` / `GEAR_Stone`(`GrabAll.IsStickOrStone`),一次全收不变。
-- Mod Settings:删掉 `OneClickDisableAll`(pre-flight 把它列进 `RetiredSettingKeys`,老 json 里这行静默去掉、不留 broken 备份);111 个 `[Name]` 改成和游戏内菜单一样,新写的 26 条说明补了英文;`SuperAccuracy` / `TimeScaleInfo` / `LampBurnMultiplier` 用 `SetFieldVisible` 隐藏,字段保留。菜单上两个写错的标签改了(恢复延迟倍率、绘制间隔)。
-- 部署:沙盒 d258d36f,剧情 bb3ae457。回退用 `Mods\TldHacks.dll.backup-v95-2300`、`tld_dlc\wintermute\Mods\TldHacksStory.dll.backup-v13-2300`;v9.0 原版在桌面 `TLD\OLD\` 的 zip 里(之前的 `backup-20260930` 已经不在了)。
+- 完整地堡存档改名 `MapManagerPatches.FixSave`:BunkerLocationSaveData 是值类型,改完写回列表。存档补丁挂到 `RestoreDone` 把复制品全换回原版才卸,找不到原版的跳过不挡后面的
+- CE:陷阱必中先存已抓数再加回;扑倒的三个值第一次进来记原值,关开关时 `Patch_CE_StruggleUpdate.RestoreDone` 写回;放下就抓到只推一个判定间隔
+- 一键清图:容器收完一律标已搜刮(修再开多一份);剧情里不能用清任务物品(StoryGuard)
+- 清除负面也清美洲狮伤口(HaveAnyActiveWounds)和欺骗死亡;传送前存档和新场景数据都用当前的 m_SceneSaveFilenameCurrent(MoreBunkers 地堡同一内部场景各有编号)
+- 语言自动跟游戏(I18n.GameReady 后读 Localization.Language);地图管理第 5 章默认关、全开热键默认不绑;收藏品地图去掉钥匙和外域传说任务纸条(`_work/collect/gen_cs.py` 的 QUEST)
+- 部署和网盘一致:沙盒 80d1a39c、第 5 章 9d4f83a8、剧情 37d1824e
 
 ## 下一步
-- 用户进游戏确认 Mod Settings 名字和逐件确认。
+- 用户进游戏看:`[DynPatch]` 有没有挂失败;关完整地堡开关后日志 `[MapM] N bunkers set back`;CE 扑倒关开关后数值回原样;语言自动
+- 陷阱必中和放下就抓到同时开时,每进一次图已放的陷阱会再提前判定一次(`_pushed` 按实例指针记,换场景就变),要不要改看用户
 
 ## 未决问题
-- ItemPicker 查过没坏:每次按 W 都在扫,扫到 0 是 25 米内没东西(同时刻一键搜刮 50 米内只有 0 到 11 件,09-27 的 v9.0 日志也一样)。它只在按下 W 的那一下捡一次,按住不连续捡。
-- 两个诊断开关是 internal,pre-flight 只认 public 字段,所以手写进 json 也会被当孤儿清掉,等于用不了。没修。
-- 英文 Mod Settings 的名字没对齐菜单(菜单英文是缩写,Mod Settings 是全称)。
-- 关掉商人常驻或到来天数后,电台记下的(商人可用)要等挂断或换场景才重算,没修。
-- `知识库/data/配置字段默认值_TldHacks.json.csv` 是老 json 生成的,没重做。
+- 刷动物按钮缺灰狼、饥饿狼、极光狼熊美洲狮(`Menu.cs:1063`);免动物伤害不挡驼鹿;吓跑模式排除列表缺 `AiMode.Disabled`
+- 两个诊断开关是 internal,pre-flight 只认 public 字段
+- 网盘 OLD 里有两个"替换下来的"文件夹可以删(删网盘文件要先问用户)
 
 ## 关键文件
-- `src/Settings.cs`:Mod Settings 字段、名字、`HideRetiredFields`。
-- `src/ModMain.cs`:pre-flight `RetiredSettingKeys`、即时交易定时检查。
-- `src/GrabAll.cs`:一键搜刮、逐件确认。
-- `src/CheatsPatches.cs`:商人补丁、`TraderTrust`。
-- `src/IntegratedPatches9.cs`:室内灯光 `HLSource`。
-- `src/ModSettingsEnData.cs`:英文名字和说明。
-- `src/DynamicPatch.cs`:补丁挂载与收尾。
+- `src/MapManagerPatches.cs`:地图管理和完整地堡
+- `src/CeFeatures.cs`、`src/MenuTweaks.Ce.cs`:CE 14 项
+- `src/MapClear.cs`:一键清图
+- `src/Cheats.cs`、`src/CheatsPatches.cs`:清除负面、伤病守卫
+- `src/CheatsExtra.cs`:快速传送
+- `src/DynamicPatch.cs`:补丁挂载表
+- `../_tools/release/release.py`、`bh_quark.py`:发版脚本和网盘接口

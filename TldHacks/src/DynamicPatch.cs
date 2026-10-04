@@ -43,6 +43,11 @@ internal static class DynamicPatch
 #endif
     private static readonly Type[] AnimStateArgs = { typeof(UnityEngine.Animator), typeof(UnityEngine.AnimatorStateInfo), typeof(int) };
     private static readonly Type[] OneString = { typeof(string) };
+#if !STORY_EDITION
+    private static bool CeDamageWanted => CeX.NoDeath || CeX.StruggleWin;
+#else
+    private static bool CeDamageWanted => false;
+#endif
     private static readonly Type[] TwoBool = { typeof(bool), typeof(bool) };
     private static readonly Type[] GameObjectFloat = { typeof(UnityEngine.GameObject), typeof(float) };
     private static readonly Type[] RTPCArgs = { typeof(uint), typeof(float), typeof(UnityEngine.GameObject) };
@@ -95,13 +100,16 @@ internal static class DynamicPatch
     private static readonly PatchSpec[] Specs =
     {
         Spec(typeof(Condition), "AddHealth", typeof(Patch_Condition_AddHealth_2),
-            "Prefix", null, () => CheatState.GodMode || CheatState.TrueInvisible || CheatState.NoFallDamage || CheatState.NoSuffocating || CheatState.ImmuneAnimalDamage || CheatState.NoFrostbiteRisk,
+            "Prefix", null, () => CheatState.GodMode || CheatState.TrueInvisible || CheatState.NoFallDamage || CheatState.NoSuffocating || CheatState.ImmuneAnimalDamage || CheatState.NoFrostbiteRisk
+                || CheatState.AlwaysWarm || CheatState.NoHunger || CheatState.NoThirst || CheatState.NoFatigue || CeDamageWanted,
             null, HealthDamageArgs),
         Spec(typeof(Condition), "AddHealth", typeof(Patch_Condition_AddHealth_3),
-            "Prefix", null, () => CheatState.GodMode || CheatState.TrueInvisible || CheatState.NoFallDamage || CheatState.NoSuffocating || CheatState.ImmuneAnimalDamage || CheatState.NoFrostbiteRisk,
+            "Prefix", null, () => CheatState.GodMode || CheatState.TrueInvisible || CheatState.NoFallDamage || CheatState.NoSuffocating || CheatState.ImmuneAnimalDamage || CheatState.NoFrostbiteRisk
+                || CheatState.AlwaysWarm || CheatState.NoHunger || CheatState.NoThirst || CheatState.NoFatigue || CeDamageWanted,
             null, HealthDamageBoolArgs),
         Spec(typeof(Condition), "AddHealthWithNoHudNotification", typeof(Patch_Condition_AddHealthNoHud),
-            "Prefix", null, () => CheatState.GodMode || CheatState.TrueInvisible || CheatState.NoFallDamage || CheatState.NoSuffocating || CheatState.ImmuneAnimalDamage || CheatState.NoFrostbiteRisk,
+            "Prefix", null, () => CheatState.GodMode || CheatState.TrueInvisible || CheatState.NoFallDamage || CheatState.NoSuffocating || CheatState.ImmuneAnimalDamage || CheatState.NoFrostbiteRisk
+                || CheatState.AlwaysWarm || CheatState.NoHunger || CheatState.NoThirst || CheatState.NoFatigue || CeDamageWanted,
             null, HealthDamageArgs),
 
         Spec(typeof(EvolveItem), "Update", typeof(Patch_EvolveItem_Update),
@@ -343,11 +351,33 @@ internal static class DynamicPatch
 
         // CT 复刻:无冻伤/饱饱/温度/疲劳
         Spec(typeof(Frostbite), "DealFrostbiteDamageToLocation", typeof(Patch_Frostbite_DealDamage),
-            "Prefix", null, () => CheatState.NoFrostbiteRisk),
+            "Prefix", null, () => CheatState.NoFrostbiteRisk || CheatState.GodMode),
         Spec(typeof(Frostbite), "DealFrostbiteDamageToRegion", typeof(Patch_Frostbite_DealDamage),
-            "Prefix", null, () => CheatState.NoFrostbiteRisk),
+            "Prefix", null, () => CheatState.NoFrostbiteRisk || CheatState.GodMode),
         Spec(typeof(Frostbite), "FrostbiteStart", typeof(Patch_Frostbite_DealDamage),
-            "Prefix", null, () => CheatState.NoFrostbiteRisk),
+            "Prefix", null, () => CheatState.NoFrostbiteRisk || CheatState.GodMode),
+
+        // v9.6 无敌之前只拦了失温、扭伤、出血、感染,其余伤病照样会挂上(扣血被总闸挡了,但降血量上限、减负重、画面特效照常)
+        Spec(typeof(Burns), "BurnsStart", typeof(Patch_GodMode_BlockAffliction), "Prefix", null, () => CheatState.GodMode),
+        Spec(typeof(BurnsElectric), "BurnsElectricStart", typeof(Patch_GodMode_BlockAffliction), "Prefix", null, () => CheatState.GodMode),
+        Spec(typeof(BrokenRib), "BrokenRibStart", typeof(Patch_GodMode_BlockAffliction), "Prefix", null, () => CheatState.GodMode),
+        Spec(typeof(CabinFever), "CabinFeverStart", typeof(Patch_GodMode_BlockAffliction), "Prefix", null, () => CheatState.GodMode),
+        Spec(typeof(IntestinalParasites), "IntestinalParasitesStart", typeof(Patch_GodMode_BlockAffliction), "Prefix", null, () => CheatState.GodMode),
+        Spec(typeof(InfectionRisk), "InfectionRiskStart", typeof(Patch_GodMode_BlockAffliction), "Prefix", null, () => CheatState.GodMode),
+        Spec(typeof(InfectionRisk), "ConstantInfectionRiskStart", typeof(Patch_GodMode_BlockAffliction), "Prefix", null, () => CheatState.GodMode),
+        Spec(typeof(FoodPoisoning), "FoodPoisoningStart", typeof(Patch_GodMode_BlockAffliction), "Prefix", null, () => CheatState.GodMode),
+        Spec(typeof(Dysentery), "DysenteryStart", typeof(Patch_GodMode_BlockAffliction), "Prefix", null, () => CheatState.GodMode),
+        Spec(typeof(ToxicFog), "StartAffliction", typeof(Patch_GodMode_BlockAffliction), "Prefix", null, () => CheatState.GodMode),
+        Spec(typeof(Anxiety), "StartAffliction", typeof(Patch_GodMode_BlockAffliction), "Prefix", null, () => CheatState.GodMode),
+        Spec(typeof(Fear), "StartAffliction", typeof(Patch_GodMode_BlockAffliction), "Prefix", null, () => CheatState.GodMode),
+        Spec(typeof(Suffocating), "StartSuffocating", typeof(Patch_NoSuffocating_Start), "Prefix", null, () => CheatState.GodMode || CheatState.NoSuffocating),
+#if !STORY_EDITION
+        // 2.24 没有撕裂伤、化学中毒、失眠
+        Spec(typeof(SevereLacerations), "ApplySevereLacerations", typeof(Patch_SevereLacerations_Apply), "Prefix", null, () => CheatState.GodMode || CheatState.ImmuneAnimalDamage),
+        Spec(typeof(ChemicalPoisoning), "AddToxicity", typeof(Patch_GodMode_BlockAffliction), "Prefix", null, () => CheatState.GodMode),
+        Spec(typeof(ChemicalPoisoning), "SpawnAfflictionInstance", typeof(Patch_GodMode_BlockAffliction), "Prefix", null, () => CheatState.GodMode),
+        Spec(typeof(Il2CppTLD.Gameplay.Condition.InsomniaManager), "ApplyInsomniaAffliction", typeof(Patch_GodMode_BlockAffliction), "Prefix", null, () => CheatState.GodMode),
+#endif
         Spec(typeof(WellFed), "Update", typeof(Patch_WellFed_Update),
             "Prefix", null, () => CheatState.WellFedBuff),
         Spec(typeof(PlayerManager), "FreezingBuffActive", typeof(Patch_PlayerManager_FreezingBuffActive),
@@ -501,6 +531,68 @@ internal static class DynamicPatch
         // 整合 MapTextOutline: 地图文字描边
         Spec(typeof(Panel_Map), "CreateObjectPools", typeof(Patch_MapTextOutline),
             null, "Postfix", () => CheatState.QoL_MapTextOutline),
+#if !STORY_EDITION
+        // v9.7 整合地图管理(MapManagerPatches.cs)
+        Spec(typeof(Panel_Map), "Enable", typeof(Patch_MapM_MapEnable),
+            null, "Postfix", () => MapM.MapOpen, null, new[] { typeof(bool), typeof(bool) }),
+        Spec(typeof(Panel_Map), "DoNearbyDetailsCheck", typeof(Patch_MapM_NearbyCheck),
+            "Prefix", null, () => MapM.Survey),
+        Spec(typeof(CharcoalItem), "Awake", typeof(Patch_MapM_SurveyMinutes),
+            null, "Postfix", () => MapM.SurveyTime),
+        Spec(typeof(CharcoalItem), "HasSurveyVisibility", typeof(Patch_MapM_SurveyVisibility),
+            null, "Postfix", () => MapM.UnlockSurvey),
+        Spec(typeof(VistaLocation), "HasRequiredGearItem", typeof(Patch_MapM_VistaPolaroid),
+            null, "Postfix", () => MapM.VistaNoPolaroid),
+        Spec(typeof(Panel_Map), "RevealOnPolaroidDiscovery", typeof(Patch_MapM_PolaroidReveal),
+            "Prefix", null, () => MapM.VistaNoPolaroid),
+        Spec(typeof(BaseAi), "EnterDead", typeof(Patch_MapM_CorpseOnMap),
+            null, "Postfix", () => MapM.Corpse),
+        Spec(typeof(MapDetail), "Surveyed", typeof(Patch_MapM_DetailSurveyed),
+            null, "Postfix", () => MapM.HideHarvested),
+        Spec(typeof(MapDetail), "Unlock", typeof(Patch_MapM_DetailUnlock),
+            null, "Postfix", () => MapM.HideHarvested),
+        Spec(typeof(Il2CppTLD.Gameplay.BunkerDistributor), "DistributeBunkerInteriors", typeof(Patch_MapM_BunkerDistribute),
+            null, "Postfix", () => MapM.FillBunkers),
+        Spec(typeof(Il2CppTLD.Gameplay.BunkerDistributor), "Deserialize", typeof(Patch_MapM_BunkerDeserialize),
+            null, "Postfix", () => MapM.FillBunkers),
+        Spec(typeof(Il2CppTLD.Gameplay.BunkerDistributor), "Serialize", typeof(Patch_MapM_BunkerSerialize),
+            null, "Postfix", () => MapM.FillBunkers, cleanupDone: Patch_MapM_BunkerDistribute.RestoreDone),
+        Spec(typeof(RandomSpawnObject), "ActivateRandomObject", typeof(Patch_MapM_InterloperHatch),
+            "Prefix", null, () => MapM.InterloperBunker),
+        Spec(typeof(SnareItem), "DoRoll", typeof(Patch_CE_SnareRoll), "Prefix", "Postfix", () => CeX.SnareSure),
+        Spec(typeof(SnareItem), "Update", typeof(Patch_CE_SnareUpdate), "Prefix", null, () => CeX.SnareInstant),
+        Spec(typeof(SnareItem), "SkipCheckDueToPlayerProximity", typeof(Patch_CE_SnareProximity), null, "Postfix", () => CeX.SnareInstant),
+        Spec(typeof(IceFishingHole), "SetNormalizedFrozen", typeof(Patch_CE_IceHoleFrozen), "Prefix", null, () => CeX.IceHoleNoFreeze, null, OneFloat),
+        Spec(typeof(IceFishingHole), "PerformInteraction", typeof(Patch_CE_IceHoleInteract), "Prefix", null, () => CeX.IceHoleNoFreeze),
+        Spec(typeof(Il2CppTLD.Gameplay.MiseryManager), "ApplyMiseryAffliction", typeof(Patch_CE_MiseryBlock), "Prefix", null, () => CeX.NoMisery),
+        Spec(typeof(WeakConstitution), "ApplyWeakConstitution", typeof(Patch_CE_MiseryBlock), "Prefix", null, () => CeX.NoMisery),
+        Spec(typeof(UnsettledSleep), "ApplyUnsettledSleep", typeof(Patch_CE_MiseryBlock), "Prefix", null, () => CeX.NoMisery),
+        Spec(typeof(WeakJoints), "ApplyWeakJoints", typeof(Patch_CE_MiseryBlock), "Prefix", null, () => CeX.NoMisery),
+        Spec(typeof(PoorCirculation), "ApplyPoorCirculation", typeof(Patch_CE_MiseryBlock), "Prefix", null, () => CeX.NoMisery),
+        Spec(typeof(SourStomach), "ApplySourStomach", typeof(Patch_CE_MiseryBlock), "Prefix", null, () => CeX.NoMisery),
+        Spec(typeof(BrokenBody), "ApplyBrokenBody", typeof(Patch_CE_MiseryBlock), "Prefix", null, () => CeX.NoMisery),
+        Spec(typeof(Condition), "PlayerDeath", typeof(Patch_CE_DeathEntry), "Prefix", null, () => CeX.NoDeath, null, OneString),
+        Spec(typeof(GameManager), "HandlePlayerDeath", typeof(Patch_CE_DeathEntry), "Prefix", null, () => CeX.NoDeath, null, OneString),
+        Spec(typeof(PlayerStruggle), "Update", typeof(Patch_CE_StruggleUpdate), null, "Postfix", () => CeX.StruggleWin || CeX.NoStun, cleanupDone: Patch_CE_StruggleUpdate.RestoreDone),
+        Spec(typeof(PlayerStruggle), "ApplyBearDamageAfflictions", typeof(Patch_CE_StruggleSkip), "Prefix", null, () => CeX.StruggleWin),
+        Spec(typeof(PlayerStruggle), "ApplyCougarDamageAfflictions", typeof(Patch_CE_StruggleSkip), "Prefix", null, () => CeX.StruggleWin),
+        Spec(typeof(PlayerStruggle), "ApplyDamageAfterMooseAttack", typeof(Patch_CE_StruggleSkip), "Prefix", null, () => CeX.StruggleWin, null, OneString),
+        Spec(typeof(PlayerStruggle), "OnPlayerDazed", typeof(Patch_CE_NoStunSkip), "Prefix", null, () => CeX.NoStun),
+        Spec(typeof(PlayerStruggle), "GetStunnedDurationFromParter", typeof(Patch_CE_StunDuration), null, "Postfix", () => CeX.NoStun),
+        Spec(typeof(PlayerStruggle), "CanBeStunned", typeof(Patch_CE_CanBeStunned), null, "Postfix", () => CeX.NoStun),
+        Spec(typeof(vp_FPSController), "GetSlopeMultiplier", typeof(Patch_CE_SlopeMult), null, "Postfix", () => CeX.NoSlide),
+        Spec(typeof(Container), "PopulateWithRandomGear", typeof(Patch_CE_LootRandomGear), "Prefix", "Postfix", () => CeX.LootNoEmpty || CeX.LootLowerTier),
+        Spec(typeof(Container), "BeginContainerClose", typeof(Patch_CE_AuroraRefill), null, "Postfix", () => CeX.AuroraRefill),
+        Spec(typeof(Il2CppTLD.Trader.TraderManager), "get_UseCheapPrices", typeof(Patch_CE_TraderCheap), null, "Postfix", () => CeX.TraderCheap),
+        Spec(typeof(Il2CppTLD.ModularElectrolizer.AuroraModularElectrolizer), "UpdateIntensity", typeof(Patch_CE_AuroraLight), "Prefix", null, () => CeX.AuroraLightSteady, null, TwoCookingFloats),
+        Spec(typeof(AuroraManager), "UpdateAuroraAudio", typeof(Patch_CE_AuroraAudio), "Prefix", null, () => CeX.AuroraMute),
+#if !EP5_EDITION
+        Spec(typeof(Panel_Map), "Enable", typeof(Patch_Coll_MapEnable),
+            null, "Postfix", () => CollMap.On, null, new[] { typeof(bool), typeof(bool) }),
+        Spec(typeof(Panel_Map), "LoadMapElementsForScene", typeof(Patch_Coll_LoadElements),
+            null, "Postfix", () => CollMap.On),
+#endif
+#endif
 
         // 整合 WakeUpCall: 睡眠唤醒+极光+时间+微光
         Spec(typeof(Rest), "BeginSleeping", typeof(Patch_WakeUpCall_BeginSleeping),

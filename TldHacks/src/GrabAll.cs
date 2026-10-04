@@ -44,6 +44,10 @@ internal static class GrabAll
 
     internal static bool InGrab => _gate > 0;
 
+    // 一键清图分帧收,每帧进出一次闸门(见 MapClear.Tick)
+    internal static void PushGate() { GrabAllQuietPickup.EnsureAttached(); _gate++; }
+    internal static void PopGate() { _gate--; }
+
     // 闸门判定,由 GrabAllQuietPickup.Prefix 调,只读不写。
     internal static bool ShouldShowMessage() => _gate <= 0;
 
@@ -187,7 +191,7 @@ internal static class GrabAll
     private static Type _travoisType;
     private static bool _travoisResolved;
 
-    private static bool IsTravois(GameObject go)
+    internal static bool IsTravois(GameObject go)
     {
         try
         {
@@ -207,7 +211,7 @@ internal static class GrabAll
     //   一次全收那条路照旧全收。场景里的物体名会带 "(Clone)" 或 " (3)" 这类后缀,截掉再比。
     private static readonly char[] NameSuffixStart = { '(', ' ' };
 
-    private static bool IsStickOrStone(GearItem gi)
+    internal static bool IsStickOrStone(GearItem gi)
     {
         try
         {

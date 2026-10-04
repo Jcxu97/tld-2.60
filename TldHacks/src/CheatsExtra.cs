@@ -23,7 +23,7 @@ internal class Waypoint
 
 internal static class Teleport
 {
-    // 已知可用坐标(BunkerDefaults 搬来的 5 个地堡) + 全部 15 个 region 的场景名。
+    // 已知可用坐标(BunkerDefaults 搬来的 5 个地堡) + 各 region 和 v9.7 补的中转通道、蜿蜒河流。
     // v2.7.55 按用户实测打印的坐标更新 —— 修了 8 个原 Pos=0 的地图掉入地底问题
     //   区域中文名按 2.55 官方本地化:林狼雪岭/宜人山谷/孤寂沼地/荒芜据点/断开的铁路/破碎山道
     //   Pos == Vector3.zero 才走"只 LoadScene,不 TeleportPlayer"路径
@@ -35,6 +35,7 @@ internal static class Teleport
         // A —— AirfieldRegion(废弃机场)
         new Waypoint("废弃机场·控制塔",    "AirfieldRegion",            81.90f, 160.30f, -455.30f, "Forsaken Airfield · Tower"),
         new Waypoint("废弃机场·应急舱",    "AirfieldRegion",          1209.80f, 304.71f, -726.11f, "Forsaken Airfield · Pod"),
+        new Waypoint("废弃机场·雇佣兵地堡", "AirfieldRegion",           76.34f, 182.02f, -818.52f, "Forsaken Airfield · Merc Bunker"),
         // A —— AshCanyonRegion(灰烬峡谷)
         new Waypoint("灰烬峡谷·地堡",      "AshCanyonRegion",          -42.12f, 172.95f, -796.68f, "Ash Canyon · Bunker"),
         // B —— BlackrockRegion(黑岩监狱)
@@ -45,17 +46,23 @@ internal static class Teleport
         // C —— CoastalRegion(沿海公路)
         new Waypoint("沿海公路·加油站",    "CoastalRegion",            760.51f,  24.00f,  645.93f, "Coastal Hwy · Gas Station"),
         new Waypoint("沿海公路·交易地点",  "CoastalRegion",            325.76f,  26.22f,  118.83f, "Coastal Hwy · Trader Spot"),
+        new Waypoint("沿海公路·囤货地堡",  "CoastalRegion",            445.14f,  50.54f, -571.02f, "Coastal Hwy · Stock Bunker"),
         // C —— CrashMountainRegion(林狼雪岭)
         new Waypoint("林狼雪岭·机舱",      "CrashMountainRegion",      934.50f, 470.10f, 1174.40f, "Timberwolf Mtn · Plane"),
         new Waypoint("林狼雪岭·地堡",      "CrashMountainRegion",     1675.41f, 207.32f,  968.21f, "Timberwolf Mtn · Bunker"),
+        // D —— DamRiverTransitionZoneB(蜿蜒河流)
+        // v9.7 这条和下面中转通道的坐标取自游戏场景资源里的 DefaultSpawnPoint(游戏默认出生点),不是实测
+        new Waypoint("蜿蜒河流·卡特大坝",  "DamRiverTransitionZoneB",  774.76f,  15.40f,  663.91f, "Winding River · Carter Dam"),
+        // H —— HubRegion(中转通道)
+        new Waypoint("中转通道",           "HubRegion",                175.20f, 250.08f, -392.18f, "Transfer Pass"),
         // L —— LakeRegion(神秘湖)
         new Waypoint("神秘湖·营地办公室",  "LakeRegion",              1015.87f,  25.91f,  450.86f, "Mystery Lake · Camp Office"),
         new Waypoint("神秘湖·地堡",        "LakeRegion",              1029.06f,  91.99f,  -52.52f, "Mystery Lake · Bunker"),
+        new Waypoint("神秘湖·工匠地堡",    "LakeRegion",               722.67f,  92.27f,  489.79f, "Mystery Lake · Craft Bunker"),
         // M —— MarshRegion(孤寂沼地)
-        new Waypoint("孤寂沼地",           "MarshRegion",             1116.10f,-130.60f,  969.10f, "Forlorn Muskeg"),
         new Waypoint("孤寂沼地·地堡",      "MarshRegion",              593.07f, -83.38f, -104.89f, "Forlorn Muskeg · Bunker"),
         // M —— MiningRegion(污染区)
-        new Waypoint("污染区·井架",        "MiningRegion",            -169.20f, 201.80f,  231.70f, "Blackrock Mine · Rig"),
+        new Waypoint("污染区·井架",        "MiningRegion",            -169.20f, 201.80f,  231.70f, "Zone of Contamination · Rig"),
         // M —— MountainPassRegion(破碎山道)
         new Waypoint("破碎山道·气象站",    "MountainPassRegion",       532.10f, 592.10f, -601.20f, "Mountain Pass · Weather"),
         // M —— MountainTownRegion(山间小镇)
@@ -138,6 +145,10 @@ internal static class Teleport
                 ? $"[TP] Cross-scene → {w.LabelEn} ({w.Scene}), saving + loading..."
                 : $"[TP] 跨场景 → {w.Label} ({w.Scene}),开始保存 + 加载...");
 
+            // 场景存档名;带编号的内部(比如 MoreBunkers 的地堡)和场景名不一样,同一内部场景的几个地堡也各不相同
+            string curSave = null;
+            try { curSave = GameManager.m_SceneTransitionData?.m_SceneSaveFilenameCurrent; } catch { }
+
             // 1) 存当前档 —— FastTravel 用的是 SaveGameSystem.SaveGame("autosave", currentSceneName) 有参版本
             //    反射先试 (string, string) 再 fallback 无参
             try
@@ -147,7 +158,7 @@ internal static class Teleport
                     null, new[] { typeof(string), typeof(string) }, null);
                 if (saveTwoArg != null)
                 {
-                    saveTwoArg.Invoke(null, new object[] { "autosave", activeScene.name });
+                    saveTwoArg.Invoke(null, new object[] { "autosave", string.IsNullOrEmpty(curSave) ? activeScene.name : curSave });
                 }
                 else
                 {
@@ -166,7 +177,8 @@ internal static class Teleport
                 var snapFrom = TransitionRecorder.Lookup(activeScene.name); // 当前
 
                 var std = new SceneTransitionData();
-                std.m_SceneSaveFilenameCurrent  = (snapFrom != null && !string.IsNullOrEmpty(snapFrom.ToSaveId))
+                std.m_SceneSaveFilenameCurrent  = !string.IsNullOrEmpty(curSave) ? curSave
+                                                  : (snapFrom != null && !string.IsNullOrEmpty(snapFrom.ToSaveId))
                                                       ? snapFrom.ToSaveId : activeScene.name;
                 std.m_SceneSaveFilenameNextLoad = (snapTo != null && !string.IsNullOrEmpty(snapTo.ToSaveId))
                                                       ? snapTo.ToSaveId : w.Scene;

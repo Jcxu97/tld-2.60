@@ -1,39 +1,34 @@
 # HANDOFF — tld--2.55
 
-> Last updated: 2026-10-01 03:25
+> Last updated: 2026-10-04 10:00
 
 ## 当前目标
 
-TraderMoving v1.0(跨场景搬无线电和交易箱,搬过去功能完整)已部署,等用户进游戏测。TldHacks v9.5 和剧情版 V1.3 已发版,细节见 `TldHacks/HANDOFF.md`。
+TldHacks v9.7、剧情第 5 章 V1.2、1~4 章 V1.5、MoreBunkers v1.1 发版,等用户进游戏测。
 
 ## 已完成(本轮)
 
-- TraderMoving 重写成 v1.0,旧版源码在 `TraderMoving/backup_v0.2.1/`
-- 交易箱照 ImprovedTrader 现搭,下单送货改到搬过的箱子
-- 无线电原屋子用原件,别处用原件复制的模板,读档后后台加载 DLC 场景取模板,失败退随身无线电
-- 两轮代码审查共 15 处问题已修,编译 0 警告 0 错误
-- 已部署到 Mods,旧 DLL 和设置备份为 `.backup-v021`,存档备份在 `Survival.backup-traderMoving-20261001`
-
-- 01:40 后加了放下时的蓝色虚影(游戏自带摆放,`Placement.cs`)、交易箱底面对齐、装修模式里"拿起"接管(`ScPlusPickup.cs`),审查九条修了七条,已部署(备份 `.backup-v100-0140`)
-- 02:30 用户实测放不下、读档后没复制到无线电:改成按场景名加载 DLC 场景,虚影整棵设忽略射线层,已部署(备份 `.backup-v100-0233`)
-- TldHacks 修了设置读取崩溃(`TimeScaleInfo` 缺 `[Name]`)和信任满值不即时生效,全部包已重打
+- MoreBunkers 数量按"朝圣者下一个人过半年"重算,架子也算进总量:`design/totals.py` 对目标(囤货 450000 千卡、300 升水、300 柴),热量单位数从 `design/gear_stats.json` 读;`check.py` 和 `totals.py` 都是 problems: 0。难度比例 朝圣者 1、旅行者 1/2、潜行者 1/3、入侵者 0.65/3、厄难 0.25/3
+- 能叠的一件一件摆(Stock.IsBundled 只有箭、火绒、树枝、弹壳、信号弹壳十根一捆),一件里的单位数取预制件默认值(Stock.Pack)
+- 签名(Layouts.Sig)只算摆件不算数量,前缀 v2|;1.0 存档进地堡走 Stock.FromV1,按序号把 station / handed / moved / boxes 改名,不重摆(三个地堡 1.0 和现在摆件顺序核过一致)
+- 出舱口挪位改成看 Bunkers.LeftAt(门钩子记时间),不看出生点名字:日志证明正常出舱口时户外已经清空,TldHacks 传送反倒带着舱口名字
+- 回主菜单清 JustEntered;进原版地堡、改设置(OnSettingsChanged)、剧情模式都处理了;ModData 存失败报一次,读坏了另存 `_broken`
 
 ## 下一步
 
-- 用户 02:37 到 02:52 实测:摆放、跨场景、读档复制、交易送到搬过的箱子都通了
-- 已单独出包 `Desktop\TLD\TraderMoving-v1.0_搬运商人无线电和交易箱_解压到游戏根目录.zip`(DLL 5f1649fd + ModSettings + ModData + 使用说明);完整版包暂不动,用户多玩几天再决定换掉 ImprovedTrader
-- 第 5 章版 TldHacksEp5 V1.0(工程 `TldHacksEp5/`,编译用 episode5 的 2.54 文件)已部署到 `tld_dlc\episode5\Mods` 并打包到 `Desktop\TLD\The Long dark 故事剧情模式_可能有bug没测试\剧情模式第五章\`,用户不测,没进过游戏
+- 用户新档和 1.0 老档各进一次地堡,看日志 `[MoreBunkers]`:`stocked`、`kept the 1.0 layout as it is`、`cleared N loose items (kept M)`(M 很大说明刷出来的东西也带了玩家标记,重摆会重复)、`went in`(箱子装不下)
+- 从地堡正常走出去应被挪到门口;在地堡里用 TldHacks 传送到同一张图别的点,不应被拉回门口
 
 ## 未决问题
 
-- 待用户拍板:即时交易要不要跳过任务单;到来天数在入侵难度 30 到 39 不生效要不要改
-- 没实测的风险见 memory `project_tld_tradermoving_v1`
+- 游戏里没有军用兴奋剂和霰弹枪,雇佣兵地堡用强心针代替
+- 同一存档不回主菜单直接读档时,ModData 不重读,摆没摆过的记录可能和场景对不上
 
 ## 关键文件
 
-- TraderMoving/src/RadioClone.cs — 无线电模板复制和后台加载
-- TraderMoving/src/World.cs — 每个场景摆放、藏原件、搭交易箱
-- TraderMoving/src/CarryState.cs — 抱起和放下
-- TraderMoving/src/TradeGuard.cs — 交易跟着箱子改送货地点
-- TraderMoving/src/RemoteTrade.cs — 随身无线电下单
-- TldHacks/HANDOFF.md — TldHacks v9.5 明细
+- MoreBunkers/design/layouts.py — 三个地堡的布置和数量(唯一来源),改完跑 check.py、totals.py、design.py
+- MoreBunkers/src/Stock.cs — 摆家具、排物品、装箱子、1.0 迁移
+- MoreBunkers/src/Bunkers.cs — 地堡定义、舱口、出口挪位
+- MoreBunkers/src/ModMain.cs — 场景切换时的状态
+- _work/release/morebunkers/ — MoreBunkers 包的说明和 Mods(打包手动,见 memory 发版流程)
+- TldHacks/HANDOFF.md — TldHacks 明细

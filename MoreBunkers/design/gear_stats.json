@@ -1,0 +1,359 @@
+{
+"Accelerant": {
+"units": 1
+},
+"AirlineFoodChick": {
+"kcal": 620.0
+},
+"AirlineFoodVeg": {
+"kcal": 560.0
+},
+"ArrowManufactured": {},
+"ArrowManufacturedHead": {},
+"ArrowManufacturedShaft": {
+"units": 1
+},
+"Balaclava": {},
+"BallisticVest": {},
+"BarkTinder": {
+"units": 1
+},
+"BasicGloves": {},
+"BearHideDried": {
+"units": 1
+},
+"BedRoll": {},
+"BeefJerky": {
+"kcal": 350.0
+},
+"BirchbarkPrepared": {
+"units": 1
+},
+"BlueFlare": {},
+"BookA": {
+"units": 1
+},
+"BookArchery": {},
+"BookB": {
+"units": 1
+},
+"BookC": {
+"units": 1
+},
+"BookCarcassHarvesting": {},
+"BookCooking": {},
+"BookD": {
+"units": 1
+},
+"BookE": {
+"units": 1
+},
+"BookF": {
+"units": 1
+},
+"BookFireStarting": {},
+"BookG": {
+"units": 1
+},
+"BookGunsmithing": {},
+"BookH": {
+"units": 1
+},
+"BookI": {
+"units": 1
+},
+"BookIceFishing": {},
+"BookMending": {},
+"BookRevolverFirearm": {},
+"BookRifleFirearm": {},
+"BookRifleFirearmAdvanced": {},
+"BottleAntibiotics": {
+"units": 6
+},
+"BottleHydrogenPeroxide": {
+"liters": 0.5
+},
+"BottlePainKillers": {
+"units": 6
+},
+"BottleVitaminC": {
+"kcal": 5.0,
+"units": 5
+},
+"Bow": {},
+"Bow_Bushcraft": {},
+"Bow_Manufactured": {},
+"Bow_Woodwrights": {},
+"CanOpener": {},
+"CandyBar": {
+"kcal": 250.0
+},
+"CannedBeans": {
+"kcal": 600.0
+},
+"CannedCorn": {
+"kcal": 295.0
+},
+"CannedHam": {
+"kcal": 550.0
+},
+"CannedPineapple": {
+"kcal": 295.0
+},
+"CannedSardines": {
+"kcal": 300.0
+},
+"CargoPants": {},
+"Charcoal": {
+"units": 1
+},
+"Cloth": {
+"units": 1
+},
+"Coal": {
+"units": 1
+},
+"CoffeeTin": {
+"units": 5
+},
+"CombatBoots": {},
+"CombatPants": {},
+"CondensedMilk": {
+"kcal": 750.0
+},
+"CookingOil": {
+"liters": 0.75
+},
+"CookingPot": {},
+"CottonSocks": {},
+"CougarClawKnife": {},
+"CowichanSweater": {},
+"Crackers": {
+"kcal": 600.0
+},
+"Crampons": {},
+"DownParka": {},
+"DriedApples": {
+"kcal": 400.0
+},
+"EmergencyStim": {},
+"EnergyBar": {
+"kcal": 500.0
+},
+"Firelog": {
+"units": 1
+},
+"Firestriker": {},
+"FishingBaitA": {
+"units": 1
+},
+"FishingLine": {
+"units": 1
+},
+"FishingLureA": {},
+"FishingLureB": {},
+"FishingLureC": {},
+"FlareA": {},
+"FlareGun": {},
+"FlareGunAmmoSingle": {
+"units": 1
+},
+"Flashlight": {},
+"Flashlight_LongLasting": {},
+"FleeceMittens": {},
+"FleeceSweater": {},
+"Flour": {},
+"GranolaBar": {
+"kcal": 300.0
+},
+"GreenTeaPackage": {
+"units": 5
+},
+"GunpowderCan": {},
+"Gut": {
+"units": 1
+},
+"Hacksaw": {},
+"Hammer": {},
+"Hardwood": {
+"units": 1
+},
+"Hatchet": {},
+"HeatPad": {},
+"HeavyBandage": {
+"units": 1
+},
+"HeavyWoolSweater": {},
+"HighQualityTools": {},
+"Hook": {
+"units": 1
+},
+"HookAndLine": {},
+"InsulatedPants": {},
+"Jeans": {},
+"JerrycanRusty": {
+"liters": 4.0
+},
+"KeroseneLampB": {},
+"KetchupChips": {
+"kcal": 300.0
+},
+"Knife": {},
+"LampFuelFull": {
+"liters": 0.5
+},
+"Leather": {
+"units": 1
+},
+"LeatherDried": {
+"units": 1
+},
+"Line": {
+"units": 1
+},
+"LongUnderwear": {},
+"LongUnderwearWool": {},
+"MRE": {
+"kcal": 1750.0
+},
+"MackinawJacket": {},
+"MagnifyingLens": {},
+"MapleSyrup": {
+"kcal": 850.0
+},
+"MilitaryParka": {},
+"Mittens": {},
+"MooseHideDried": {
+"units": 1
+},
+"NewsprintRoll": {
+"units": 1
+},
+"OatsTin": {},
+"OldMansBeardDressing": {
+"units": 1
+},
+"PackMatches": {
+"units": 20
+},
+"PaperStack": {
+"units": 1
+},
+"PeanutButter": {
+"kcal": 900.0
+},
+"PinnacleCanPeaches": {
+"kcal": 450.0
+},
+"PlaidShirt": {},
+"Prybar": {},
+"RabbitPeltDried": {
+"units": 1
+},
+"ReclaimedWoodB": {
+"units": 1
+},
+"RecycledCan": {},
+"ReishiPrepared": {
+"units": 1
+},
+"ReishiTea": {
+"kcal": 100.0
+},
+"Revolver": {},
+"RevolverAmmoBox": {
+"units": 10
+},
+"RevolverAmmoCasing": {
+"units": 1
+},
+"RevolverFancy": {},
+"RevolverGreen": {},
+"RevolverStubNosed": {},
+"Rifle": {},
+"RifleAmmoBox": {
+"units": 5
+},
+"RifleAmmoCasing": {
+"units": 1
+},
+"RifleCleaningKit": {},
+"Rifle_Barbs": {},
+"Rifle_Curators": {},
+"Rifle_Trader": {},
+"Rifle_Vaughns": {},
+"Rope": {
+"units": 1
+},
+"RoseHipTea": {
+"kcal": 100.0
+},
+"RosehipsPrepared": {
+"units": 1
+},
+"Salt": {},
+"ScrapLead": {
+"units": 1
+},
+"ScrapMetal": {
+"units": 1
+},
+"SewingKit": {},
+"SharpeningStone": {},
+"SimpleTools": {},
+"SkiGloves": {},
+"Skillet": {},
+"Snare": {},
+"Soda": {
+"kcal": 250.0
+},
+"SodaEnergy": {
+"kcal": 100.0
+},
+"SodaGrape": {
+"kcal": 250.0
+},
+"SodaOrange": {
+"kcal": 250.0
+},
+"Softwood": {
+"units": 1
+},
+"SprayPaintCan": {},
+"Stick": {
+"units": 1
+},
+"SurvivalKnife": {},
+"TacticalGloves": {},
+"TacticalJacket": {},
+"TeeShirt": {},
+"Tinder": {
+"units": 1
+},
+"TomatoSoupCan": {
+"kcal": 300.0
+},
+"Toque": {},
+"Torch": {},
+"Water1000ml": {
+"liters": 1.0
+},
+"WaterPurificationTablets": {
+"units": 4
+},
+"WireBundle": {
+"units": 1
+},
+"WolfPeltDried": {
+"units": 1
+},
+"WoodMatches": {
+"units": 12
+},
+"WoolShirt": {},
+"WoolSocks": {},
+"WoolWrap": {},
+"WorkBoots": {},
+"WorkGloves": {},
+"WorkPants": {}
+}

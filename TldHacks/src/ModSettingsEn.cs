@@ -88,7 +88,7 @@ internal static class ModSettingsEn
         _english = false;
     }
 
-    // ModMain.Settings 尚未构造 → 复刻 I18n 的判定:1=强制中文 2=强制英文 其它=按系统语言
+    // ModMain.Settings 尚未构造 → 复刻 I18n 的判定:1=强制中文 2=强制英文 其它=按游戏语言
     private static bool ResolveEnglishFromDisk(string jsonPath)
     {
         int mode = I18n.MODE_AUTO;
@@ -104,12 +104,7 @@ internal static class ModSettingsEn
         catch { }
         if (mode == I18n.MODE_ZH) return false;
         if (mode == I18n.MODE_EN) return true;
-        try
-        {
-            string culture = CultureInfo.CurrentUICulture?.Name;
-            return !string.IsNullOrEmpty(culture) && !culture.StartsWith("zh", StringComparison.OrdinalIgnoreCase);
-        }
-        catch { return false; }
+        return I18n.GameIsEnglish();
     }
 
     // ─────────────────────────── Harmony postfix ───────────────────────────

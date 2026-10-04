@@ -234,6 +234,25 @@ internal static class ModSettingsEnData
         "QoL_AutoSurveyRange", "Survey range multiplier",   // 绘制范围倍率
         "QoL_AutoSurveyUnlock", "Ignore weather restrictions",   // 解除天气限制
         "QoL_AutoOpenMapOnExit", "Auto-open minimap when going outside (MotionTrackerLite)",   // 出门自动开小地图(MotionTrackerLite)
+        "MapM_Enabled", "Enable Map Manager",
+        "MapM_PlayerArrow", "Red player arrow",
+        "MapM_CenterOnPlayer", "Center the map on the player",
+        "MapM_SurveyRange", "Charcoal mapping range multiplier",
+        "MapM_SurveyTime", "Charcoal mapping time multiplier",
+        "MapM_UnlockSurvey", "Map at any time",
+        "MapM_RevealVista", "Show vista points",
+        "MapM_VistaNoPolaroid", "Vista points without polaroids",
+        "MapM_CorpseOnMap", "Show animal corpses on the map",
+        "MapM_HideHarvested", "Hide icons of harvested plants",
+        "MapM_FillEmptyBunkers", "Make all bunkers full (random type)",
+        "MapM_InterloperBunker", "Bunkers on Interloper and Misery",
+        "MapM_BunkerKey", "Show bunkers hotkey",
+        "MapM_RevealKey", "Reveal region hotkey",
+        "Coll_Enabled", "Show collectibles on the map",
+        "Coll_Cairn", "Cairns",
+        "Coll_Note", "Notes and logs",
+        "Coll_Polaroid", "Polaroids",
+        "Coll_ShowCollected", "Also show collected ones",
         "Craft_Anywhere", "Enable Craft Anywhere",   // 启用随意制作
         "Craft_DefaultLocation", "Default location (new blueprints)",   // 默认位置(新蓝图)
         "Craft_MoreCookingSlots", "Enable extra cooking slots",   // 启用额外烹饪位
@@ -336,6 +355,20 @@ internal static class ModSettingsEnData
         "TT_RespawnPlants", "Enable plant respawn",   // 启用植物重生
         "TT_ShowTraderTrust", "Show trader trust",   // 显示商人信任度
         "TraderArrivalDays", "Trader arrival day",   // 商人到来天数
+        "CE_SnareSure", "Sure Snares",
+        "CE_SnareInstant", "Catch at once",
+        "CE_LootNoEmpty", "No empty containers",
+        "CE_LootLowerTier", "Loot one level easier",
+        "CE_AuroraRefill", "Aurora refills containers",
+        "CE_IceHoleNoFreeze", "Ice holes stay open",
+        "CE_NoMisery", "No Misery afflictions",
+        "CE_NoDeath", "No death",
+        "CE_StruggleWin", "Win struggles",
+        "CE_NoStun", "No daze after struggles",
+        "CE_NoSlide", "No slope slide",
+        "CE_TraderCheap", "Trader discount",
+        "CE_AuroraLightSteady", "Steady aurora lights",
+        "CE_AuroraMute", "Mute aurora sound",
     };
 
     // ─── Description(悬停说明)。翻译 agent 从 _tools/missing_en.tsv 的 DESC 行填这里 ───
@@ -343,7 +376,7 @@ internal static class ModSettingsEnData
     {
         "DiagPauseRuntime", "Diagnostic. When on, ModMain stops running any per-frame tick, Stacking OnLateUpdate or Menu UI. Harmony patches stay applied (static patching is not affected by this toggle). If the stutter is still there with this on, it comes from the patches themselves.",   // 诊断用。开了 ModMain 不再跑任何 per-frame tick / Stacking OnLateUpdate / Menu UI。Harmony patch 仍挂着(静态挂载不受此开关影响)。若开了仍卡 → 卡在 patch 本身
         "DiagUnpatchAll", "Runs UnpatchAll at startup and skips Reconcile, so none of the TldHacks [HarmonyPatch] classes are applied. Requires a game restart. Still stuttering with this on means TldHacks is definitely not the cause; no stutter means the total patch count is the problem, and the next step is moving everything to DynamicPatch.",   // 启动时立即 UnpatchAll + skip Reconcile,TldHacks 的所有 [HarmonyPatch] 零挂载。需重启游戏生效。开了仍卡 = 100% 不是 TldHacks;开了不卡 = 是 patch 总数问题,下一步全迁 DynamicPatch
-        "LanguageMode", "Auto follows the system language (English on any non-Chinese system); Chinese forces Chinese; English forces English. Press the menu hotkey to close and reopen the menu for the change to take effect.",   // Auto = 按系统语言(非中文系统 → English);Chinese = 强制中文;English = 强制英文。改完需按菜单热键重开菜单生效。
+        "LanguageMode", "Auto follows the game language (English when the game is not in Chinese); Chinese forces Chinese; English forces English. Press the menu hotkey to close and reopen the menu for the change to take effect.",   // Auto = 跟随游戏的语言设置(游戏不是中文 → English);Chinese = 强制中文;English = 强制英文。改完需按菜单热键重开菜单生效。
         "MenuHotkey", "Press this key to open or close the TldHacks menu. The default Tab clashes with the in-game journal key, so F1 or \\ is a better choice.",   // 按此键呼出/关闭 TldHacks 菜单。默认 Tab 会和游戏日志键冲突,建议改成 F1 / \ 等。
         "FlyHotkey", "Press this key to toggle the uConsole fly command. Requires DeveloperConsole.dll to be enabled.",   // 按此键切换 uConsole fly 命令。需要 DeveloperConsole.dll 启用。
         "TrueInvisible", "Animals behave as if they cannot see you and keep wandering, feeding or sleeping; they neither attack nor flee.",   // 动物像看不见你一样,正常闲逛/觅食/睡觉,不扑也不逃
@@ -492,6 +525,20 @@ internal static class ModSettingsEnData
         "CougarInstantActivate", "Activate the cougar at once on a new save.",   // 新档第一次就立即激活美洲狮
         "UT_TravoisOverrideMovement", "Remove the travois movement zone limits.",   // 解除雪橇的移动区域限制
         "UT_TravoisOverrideInteraction", "Remove the travois interaction limits.",   // 解除雪橇的互动限制
+        "CE_SnareSure", "Each snare check catches a rabbit. The snare does not break.",
+        "CE_SnareInstant", "The snare checks once right after you set it. If it catches nothing, it waits the normal time. Turn on Sure Snares first.",
+        "CE_LootNoEmpty", "Containers always get at least one item. This works only on containers that you have not opened.",
+        "CE_LootLowerTier", "Containers get loot from the next easier level. For example, Interloper uses Stalker loot. This works only on containers that you have not opened.",
+        "CE_AuroraRefill", "During an aurora, an empty container gets new loot when you close it. Each container refills one time for each aurora. Bodies and mission containers do not refill.",
+        "CE_IceHoleNoFreeze", "Fishing holes do not freeze again. A frozen hole opens when you use it.",
+        "CE_NoMisery", "Misery afflictions do not start. To remove the ones you have, use Clear All Afflictions.",
+        "CE_NoDeath", "When your condition is about to reach zero, you survive. Condition goes back to 30%. Afflictions clear. Hunger, thirst and cold go to a safe level. The save is kept.",
+        "CE_StruggleWin", "When a wolf or cougar attacks, the struggle bar stays full and you get free at once. You take no damage during a struggle. Bear and moose attacks leave no afflictions.",
+        "CE_NoStun", "After a struggle, you do not lie on the ground, get dazed or drop items.",
+        "CE_NoSlide", "You can walk up steep slopes. You do not slide down or slow down on slopes.",
+        "CE_TraderCheap", "The trader always uses the low prices. Normally you need high trust for them.",
+        "CE_AuroraLightSteady", "During an aurora, powered lights stay fully on and do not flicker.",
+        "CE_AuroraMute", "The aurora hum does not play.",
     };
 
     // ─── Section(分组标题) ───
@@ -522,6 +569,8 @@ internal static class ModSettingsEnData
         "QoL_NoSaveOnSprain", "QoL: TinyTweaks",   // QoL: TinyTweaks / 小改动
         "QoL_SleepAnywhere", "QoL: Sleep Anywhere",   // QoL: Sleep Anywhere / 随地睡
         "QoL_AutoSurvey", "QoL: AutoSurvey",   // QoL: AutoSurvey / 自动绘图
+        "MapM_Enabled", "Map Manager",   // 地图管理
+        "Coll_Enabled", "Collectibles Map",   // 收藏品地图
         "Craft_Anywhere", "Craft Anywhere",   // Craft Anywhere / 随意制作
         "Craft_MoreCookingSlots", "More Cooking Slots",   // More Cooking Slots / 更多烹饪位
         "World_Sprainkle", "Sprainkle (Sprain System)",   // Sprainkle / 扭伤系统
@@ -537,6 +586,7 @@ internal static class ModSettingsEnData
         "World_CaffeinatedSodas", "Caffeinated Sodas",   // Caffeinated Sodas / 苏打提神
         "World_CarcassMoving", "Carcass Moving & Aurora Torch",   // RnStripped / 尸骸搬运&极光点火
         "TT_CapFeelsHigh", "TinyTweaks",   // TinyTweaks / 微调合集
+        "CE_SnareSure", "Outdoors & Survival",
     };
 
     // ─── Choice(下拉项,'|' 分隔,段数必须与原数组一致) ───

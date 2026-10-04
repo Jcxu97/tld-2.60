@@ -342,6 +342,20 @@ internal static class Cheats
             s.TraderAlwaysAvailable = false;
             s.CougarInstantActivate = false;
             s.BlockAutoPickupOwnDrops = false;
+            s.CE_SnareSure = false;
+            s.CE_SnareInstant = false;
+            s.CE_LootNoEmpty = false;
+            s.CE_LootLowerTier = false;
+            s.CE_AuroraRefill = false;
+            s.CE_IceHoleNoFreeze = false;
+            s.CE_NoMisery = false;
+            s.CE_NoDeath = false;
+            s.CE_StruggleWin = false;
+            s.CE_NoStun = false;
+            s.CE_NoSlide = false;
+            s.CE_TraderCheap = false;
+            s.CE_AuroraLightSteady = false;
+            s.CE_AuroraMute = false;
 
 
             // ═══ Movement Detail ═══
@@ -772,6 +786,24 @@ internal static class Cheats
             if (had) { cleared++; log.Append(I18n.T("扭踝; ", "Sprained Ankle; ")); }
         }} catch (Exception ex) { log.Append(I18n.T($"扭踝-err:{ex.Message}; ", $"Ankle-err:{ex.Message}; ")); }
 
+#if !STORY_EDITION
+        // —— SevereLacerations (严重撕裂伤,美洲虎扑击) —— v9.6 新增;放在出血前,Cure 后残留伤口由下面出血清理兜底
+        // 伤口(ApplyWound / ApplyChestWound)可能单独挂着,HasAffliction 看不到,两样都查
+        try { var c = GameManager.GetSevereLacerations(); if (c != null) {
+            bool had = c.HasAffliction() || c.HaveAnyActiveWounds();
+            if (had) {
+                try { c.Cure((AfflictionOptions)0); } catch { }
+                cleared++; log.Append(I18n.T("严重撕裂伤; ", "Severe Lacerations; "));
+            }
+        }} catch (Exception ex) { log.Append(I18n.T($"严重撕裂伤-err:{ex.Message}; ", $"Lacerations-err:{ex.Message}; ")); }
+
+        // —— 欺骗死亡(自定义难度死后复活留下的负面)——
+        try { var c = GameManager.GetCheatDeathAffliction(); if (c != null && c.HasAffliction) {
+            try { c.Cure((AfflictionOptions)0); } catch { }
+            cleared++; log.Append(I18n.T("欺骗死亡; ", "Cheat Death; "));
+        }} catch (Exception ex) { log.Append(I18n.T($"欺骗死亡-err:{ex.Message}; ", $"CheatDeath-err:{ex.Message}; ")); }
+#endif
+
         // —— BloodLoss ——
         try { var c = GameManager.GetBloodLossComponent(); if (c != null) {
             bool had = c.HasBloodLoss();
@@ -834,6 +866,71 @@ internal static class Cheats
             if (had) { cleared++; log.Append(I18n.T("坏血病; ", "Scurvy; ")); }
         }} catch (Exception ex) { log.Append(I18n.T($"坏血病-err:{ex.Message}; ", $"Scurvy-err:{ex.Message}; ")); }
 #endif
+
+        // v9.6 新增:以下几项之前清单里没有。毒雾/窒息/恐惧这类环境触发的,人还在原地会被游戏重新挂上,ReSweep 窗口内会再清
+        try { var c = GameManager.GetBurnsElectricComponent(); if (c != null && c.HasBurnsElectric()) {
+#if STORY_EDITION
+            try { c.BurnsElectricEnd(); } catch { }
+#else
+            try { c.BurnsElectricEnd(true); } catch { }
+#endif
+            cleared++; log.Append(I18n.T("电击烧伤; ", "Electric Burns; "));
+        }} catch (Exception ex) { log.Append(I18n.T($"电击烧伤-err:{ex.Message}; ", $"BurnsElectric-err:{ex.Message}; ")); }
+
+#if !STORY_EDITION
+        // 2.24 没有化学中毒和失眠
+        try { var c = GameManager.GetChemicalPoisoningComponent(); if (c != null) {
+            bool had = false;
+            try { had = c.HasAffliction() || c.HasRisk(); } catch { }
+            if (had) {
+                try { c.CureAll(); } catch { }
+                cleared++; log.Append(I18n.T("化学中毒; ", "Chemical Poisoning; "));
+            }
+        }} catch (Exception ex) { log.Append(I18n.T($"化学中毒-err:{ex.Message}; ", $"ChemPoison-err:{ex.Message}; ")); }
+
+        try { var c = GameManager.GetInsomniaComponent(); if (c != null) {
+            bool had = false;
+            try { had = c.HasInsomniaAffliction() || c.HasInsomniaRisk(); } catch { }
+            if (had) {
+                try { c.RemoveInsomniaAll(); } catch { }
+                cleared++; log.Append(I18n.T("失眠; ", "Insomnia; "));
+            }
+        }} catch (Exception ex) { log.Append(I18n.T($"失眠-err:{ex.Message}; ", $"Insomnia-err:{ex.Message}; ")); }
+#endif
+
+#if !STORY_EDITION
+        CeX.CureMisery(log, ref cleared);
+#endif
+
+        try { var c = GameManager.GetThirstComponent(); if (c != null && c.IsDehydrated()) {
+            try { c.m_CurrentThirst = 0f; } catch { }
+            cleared++; log.Append(I18n.T("脱水; ", "Dehydration; "));
+        }} catch (Exception ex) { log.Append(I18n.T($"脱水-err:{ex.Message}; ", $"Dehydration-err:{ex.Message}; ")); }
+
+        try { var c = GameManager.GetAnxietyComponent(); if (c != null && c.HasAffliction()) {
+            try { c.StopAffliction(true); } catch { }
+            cleared++; log.Append(I18n.T("焦虑; ", "Anxiety; "));
+        }} catch (Exception ex) { log.Append(I18n.T($"焦虑-err:{ex.Message}; ", $"Anxiety-err:{ex.Message}; ")); }
+
+        try { var c = GameManager.GetFearComponent(); if (c != null && c.HasAffliction()) {
+            try { c.StopAffliction(true); } catch { }
+            cleared++; log.Append(I18n.T("恐惧; ", "Fear; "));
+        }} catch (Exception ex) { log.Append(I18n.T($"恐惧-err:{ex.Message}; ", $"Fear-err:{ex.Message}; ")); }
+
+        try { var c = GameManager.GetToxicFogComponent(); if (c != null && c.HasAffliction()) {
+            try { c.StopAffliction(); } catch { }
+            cleared++; log.Append(I18n.T("毒雾; ", "Toxic Fog; "));
+        }} catch (Exception ex) { log.Append(I18n.T($"毒雾-err:{ex.Message}; ", $"ToxicFog-err:{ex.Message}; ")); }
+
+        try { var c = GameManager.GetSuffocatingComponent(); if (c != null && c.IsSuffocating()) {
+            try { c.ForceStopSuffocating(true); } catch { }
+            cleared++; log.Append(I18n.T("窒息; ", "Suffocating; "));
+        }} catch (Exception ex) { log.Append(I18n.T($"窒息-err:{ex.Message}; ", $"Suffocating-err:{ex.Message}; ")); }
+
+        try { var c = GameManager.GetInfectionRiskComponent(); if (c != null && c.HasInfectionRisk()) {
+            try { c.Cure(); } catch { }
+            cleared++; log.Append(I18n.T("感染风险; ", "Infection Risk; "));
+        }} catch (Exception ex) { log.Append(I18n.T($"感染风险-err:{ex.Message}; ", $"InfectionRisk-err:{ex.Message}; ")); }
 
         // —— 第三方 mod 通过 AfflictionComponent 框架追加的 CustomAffliction —— v6.9.1 新增
         // 用户报告:OxygenLevels(高原反应)、Minor Miseries、TLDev(肺炎)等用 AfflictionComponent 框架挂在
@@ -1206,12 +1303,12 @@ internal static class Patch_PM_FlushDamage
 [HarmonyPatch(typeof(Hypothermia), "HypothermiaStart")]
 internal static class Patch_Hypothermia_Start
 {
-    private static bool Prefix() => !CheatState.GodMode;
+    private static bool Prefix() => !(CheatState.GodMode || CheatState.AlwaysWarm);
 
     // v6.9.1 IL2CPP double-insurance
     private static void Postfix(Hypothermia __instance)
     {
-        if (!CheatState.GodMode) return;
+        if (!(CheatState.GodMode || CheatState.AlwaysWarm)) return;
         try
         {
             if (__instance.HasHypothermia())
