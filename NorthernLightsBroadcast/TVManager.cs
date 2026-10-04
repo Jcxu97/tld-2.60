@@ -99,6 +99,14 @@ public class TVManager : MonoBehaviour
 		{
 			screenObject = Object.Instantiate<GameObject>(NorthernLightsBroadcastMain.NLB_TV_WALL, ((Component)this).transform);
 		}
+		// v2.1.1: 三个名字都不匹配、或者资源包没加载成功时 screenObject 是 null,原先下一行直接用 → NRE。
+		// 拿不到就不装这台电视,别把异常抛回 GearItem.Awake。
+		if ((Object)(object)screenObject == (Object)null)
+		{
+			MelonLogger.Warning("[NLB] 电视模型没加载出来,跳过: " + ((Object)((Component)this).gameObject).name);
+			isSetup = true;
+			return;
+		}
 		((Object)screenObject).name = "NLB_TV";
 		objectRenderer = ((Component)this).gameObject.GetComponent<MeshRenderer>();
 		if (((Object)((Component)this).gameObject).name.Contains("GEAR_TV_CRT"))
@@ -243,7 +251,7 @@ public class TVManager : MonoBehaviour
 			videoPlayer.Stop();
 			wasapiPlayer.Stop();
 			staticAudio.Play();
-			((TMP_Text)ui.playingNowText).text = "Stopped";
+			((TMP_Text)ui.playingNowText).text = "已停止";
 			redbutton.Glow(enabled: true);
 			((Behaviour)ambilight).enabled = false;
 			break;
@@ -253,7 +261,7 @@ public class TVManager : MonoBehaviour
 			ui.screenError.SetActive(false);
 			ui.screenLoading.SetActive(false);
 			ui.screenPlayback.SetActive(true);
-			((TMP_Text)ui.playingNowText).text = "Paused";
+			((TMP_Text)ui.playingNowText).text = "已暂停";
 			((Component)ui.playButton).gameObject.SetActive(true);
 			((Component)ui.pauseButton).gameObject.SetActive(false);
 			videoPlayer.Pause();
@@ -294,7 +302,7 @@ public class TVManager : MonoBehaviour
 			ui.osdButtons.SetActive(false);
 			ui.osdFileMenu.SetActive(false);
 			redbutton.Glow(enabled: true);
-			((TMP_Text)ui.playingNowText).text = "Error";
+			((TMP_Text)ui.playingNowText).text = "出错了";
 			staticAudio.Play();
 			videoPlayer.Stop();
 			wasapiPlayer.Close();
@@ -307,7 +315,7 @@ public class TVManager : MonoBehaviour
 			ui.screenLoading.SetActive(true);
 			ui.screenPlayback.SetActive(true);
 			redbutton.Glow(enabled: true);
-			((TMP_Text)ui.playingNowText).text = "Loading";
+			((TMP_Text)ui.playingNowText).text = "加载中";
 			ui.osdAudio.SetActive(false);
 			ui.osdButtons.SetActive(false);
 			ui.osdFileMenu.SetActive(false);

@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.IO;
 using MelonLoader;
 using ModData;
@@ -75,25 +76,32 @@ public static class SaveLoad
 
 	public static float GetVolume(string TVID)
 	{
-		if (TVID == null || !thisIniData[TVID].ContainsKey("volume"))
+		// v2.1.1: 补 thisIniData null 判断(同文件 GetFolder 一直有,这三个漏了)。
+		// 手搓的电视走 GearItem.Awake 那条路进来时可能还没人调过 LoadTheTVs → NRE,这台电视废掉。
+		// 数字也按固定区域解析,免得德语系统上 "0,5" 解析失败。
+		if (thisIniData == null || TVID == null || !thisIniData[TVID].ContainsKey("volume"))
 		{
 			return 0.5f;
 		}
-		return float.Parse(thisIniData[TVID]["volume"]);
+		if (!float.TryParse(thisIniData[TVID]["volume"], NumberStyles.Float, CultureInfo.InvariantCulture, out float v))
+		{
+			return 0.5f;
+		}
+		return Mathf.Clamp01(v);
 	}
 
 	public static void SetVolume(string TVID, float volume)
 	{
-		if (thisIniData != null && TVID != "")
+		if (thisIniData != null && !string.IsNullOrEmpty(TVID))
 		{
 			thisIniData[TVID].AddKey("volume");
-			thisIniData[TVID]["volume"] = volume.ToString();
+			thisIniData[TVID]["volume"] = volume.ToString(CultureInfo.InvariantCulture);
 		}
 	}
 
 	public static string GetLastPlayed(string TVID)
 	{
-		if (TVID == null || !thisIniData[TVID].ContainsKey("lastPlayed"))
+		if (thisIniData == null || TVID == null || !thisIniData[TVID].ContainsKey("lastPlayed"))
 		{
 			return "";
 		}
@@ -111,16 +119,21 @@ public static class SaveLoad
 
 	public static TVManager.TVState GetState(string TVID)
 	{
-		if (TVID == null || !thisIniData[TVID].ContainsKey("state"))
+		// v2.1.1: 补 null 判断 + Enum.Parse 换 TryParse(存档里的脏字符串会让 Parse 抛,认不出就当关机)
+		if (thisIniData == null || TVID == null || !thisIniData[TVID].ContainsKey("state"))
 		{
 			return TVManager.TVState.Off;
 		}
-		return (TVManager.TVState)Enum.Parse(typeof(TVManager.TVState), thisIniData[TVID]["state"]);
+		if (!Enum.TryParse<TVManager.TVState>(thisIniData[TVID]["state"], out var state))
+		{
+			return TVManager.TVState.Off;
+		}
+		return state;
 	}
 
 	public static void SetState(string TVID, TVManager.TVState state)
 	{
-		if (thisIniData != null && TVID != "")
+		if (thisIniData != null && !string.IsNullOrEmpty(TVID))
 		{
 			thisIniData[TVID].AddKey("state");
 			thisIniData[TVID]["state"] = state.ToString();
@@ -129,6 +142,16 @@ public static class SaveLoad
 
 	public static void SaveTheTVs()
 	{
-		dataManager.Save(thisIniData.ToString());
+		// v2.1.1: 这个挂在 SaveGameSystem.SaveSceneData 的后置补丁上,抛了就是在存档路径上抛。
+		// 主菜单存档等还没进过场景的情况下这俩是 null。
+		if (dataManager == null || thisIniData == null) return;
+		try
+		{
+			dataManager.Save(thisIniData.ToString());
+		}
+		catch (Exception ex)
+		{
+			MelonLogger.Warning("[NLB] 保存电视数据失败: " + ex.Message);
+		}
 	}
 }
