@@ -2768,7 +2768,8 @@ internal static class Patch_CookingPot_Update
             if (state == CookingPotItem.CookingState.Cooking)
             {
                 // 只有 QuickCook 才推(防烤焦单开不秒熟,需要正常等熟)
-                if (CheatState.QuickCook)
+                // 原版放上去就是 Cooking 状态,火没点只是不涨进度,不查火就会冷灶秒熟
+                if (CheatState.QuickCook && __instance.AttachedFireIsBurning())
                 {
                     if (!_logged)
                     {
