@@ -349,29 +349,36 @@ internal static class Stock
                 if (p.Station != null) Stations.Wire(b, p.Station, gos[i]);
                 if (IsMovable(p) && ScpNames.Contains(gos[i].name)) ScpMakeMovable(gos[i]);
                 if (p.Theme == null) continue;
-                var c = gos[i].GetComponentInChildren<Container>(true);
-                if (c == null) continue;
-                c.m_GearToInstantiate?.Clear();
-                c.DestroyAllGear();
-                // 箱子按序号和家具存,布置改了位置也接着用
-                string key = BoxKey(b, i, p);
-                if (SaveData.Current.boxes.TryGetValue(key, out var text) && text != null)
+                // 双门铁柜、工具柜有好几格,每格都要存;物资只装第一格
+                var cs = gos[i].GetComponentsInChildren<Container>(true);
+                bool anyRestored = false;
+                for (int k = 0; cs != null && k < cs.Count; k++)
                 {
-                    c.Deserialize(text, new Il2CppSystem.Collections.Generic.List<GearItem>());
-                    restored++;
-                    inBox.Add(Inside(gos[i]));
+                    var c = cs[k];
+                    if (c == null) continue;
+                    c.m_GearToInstantiate?.Clear();
+                    c.DestroyAllGear();
+                    // 箱子按序号和家具存,布置改了位置也接着用
+                    string key = k == 0 ? BoxKey(b, i, p) : BoxKey(b, i, p) + "/" + k;
+                    if (SaveData.Current.boxes.TryGetValue(key, out var text) && text != null)
+                    {
+                        c.Deserialize(text, new Il2CppSystem.Collections.Generic.List<GearItem>());
+                        restored++;
+                        anyRestored = true;
+                    }
+                    else
+                    {
+                        if (k == 0) foreach (var g in p.Theme) AddToBox(c, g.Gear, Amount(rnd, g, plenty));
+                        SaveData.Current.boxes[key] = c.Serialize() ?? "";
+                        filled++;
+                    }
+                    // 打开就能看到东西,像自己整理过的箱子,不用再搜
+                    try { c.MarkAsInspected(); } catch { }
+                    c.m_Inspected = true;
+                    Boxes.Add((key, c));
+                    spare ??= c;
                 }
-                else
-                {
-                    foreach (var g in p.Theme) AddToBox(c, g.Gear, Amount(rnd, g, plenty));
-                    SaveData.Current.boxes[key] = c.Serialize() ?? "";
-                    filled++;
-                }
-                // 打开就能看到东西,像自己整理过的箱子,不用再搜
-                try { c.MarkAsInspected(); } catch { }
-                c.m_Inspected = true;
-                Boxes.Add((key, c));
-                spare ??= c;
+                if (anyRestored) inBox.Add(Inside(gos[i]));
             }
             catch (Exception ex) { ModMain.Log?.Warning($"[MoreBunkers] piece {i} setup {ex.Message}"); }
         }

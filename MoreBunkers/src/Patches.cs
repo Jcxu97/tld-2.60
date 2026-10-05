@@ -21,6 +21,8 @@ internal static class DoorHook
                 Bunkers.JustEnteredAt = UnityEngine.Time.realtimeSinceStartup;
                 return;
             }
+            // 走了别的门,刚才进舱口那一下作废,免得把同一张图上的原版地堡认成新地堡
+            Bunkers.JustEntered = null;
             var inside = Bunkers.Inside;
             // 出地堡前先记下箱子里的东西,不靠游戏换场景时有没有存档
             if (inside != null) { try { Stock.SaveBoxes(); } catch { } }
