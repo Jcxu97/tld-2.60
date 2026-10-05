@@ -1,21 +1,20 @@
 # HANDOFF: TldHacks
 
-> Last updated: 2026-10-04 10:00
+> Last updated: 2026-10-05 22:40
 
 ## 当前目标
-v9.7(沙盒)、剧情第 5 章 V1.2、1~4 章 V1.5 已打包上传,等用户进游戏测。三份说明的"改了什么"写的是 v9.6 首发以后的全部改动(地图管理、收藏品地图、完整地堡、CE 14 项、菜单重排等)。
+v9.7、第 5 章 V1.2、1~4 章 V1.5 于 10-05 修三个群友报的 bug 后重打上传(版本号不变),没进游戏实测。
 
 ## 已完成(本轮)
-- 完整地堡存档改名 `MapManagerPatches.FixSave`:BunkerLocationSaveData 是值类型,改完写回列表。存档补丁挂到 `RestoreDone` 把复制品全换回原版才卸,找不到原版的跳过不挡后面的
-- CE:陷阱必中先存已抓数再加回;扑倒的三个值第一次进来记原值,关开关时 `Patch_CE_StruggleUpdate.RestoreDone` 写回;放下就抓到只推一个判定间隔
-- 一键清图:容器收完一律标已搜刮(修再开多一份);剧情里不能用清任务物品(StoryGuard)
-- 清除负面也清美洲狮伤口(HaveAnyActiveWounds)和欺骗死亡;传送前存档和新场景数据都用当前的 m_SceneSaveFilenameCurrent(MoreBunkers 地堡同一内部场景各有编号)
-- 语言自动跟游戏(I18n.GameReady 后读 Localization.Language);地图管理第 5 章默认关、全开热键默认不绑;收藏品地图去掉钥匙和外域传说任务纸条(`_work/collect/gen_cs.py` 的 QUEST)
-- 部署和网盘一致:沙盒 80d1a39c、第 5 章 9d4f83a8、剧情 37d1824e
+- 取炭不戴:原 Postfix 查手上时木炭还在 m_QueuedEquipItem 排队。改成 OnCharcoalHarvest / Panel_ActionPicker.TakeCharcoalCallback 开 2 秒窗口,PlayerManager.EquipItem Prefix 挡 m_CharcoalItem
+- 尸骸地图图标:`MapMCorpse` 搬起删、室外放下按新位置标、BodyHarvest.BodyHarvestDestroy 前删
+- 快速风干:没进过背包的(m_InPlayerInventory / m_BeenInPlayerInventory 都假)不秒,修采树苗检视时临时那根被秒干掉地上
+- 部署和网盘一致:沙盒 e9117a73、第 5 章 ab9d892d、剧情 7cb69024
 
 ## 下一步
-- 用户进游戏看:`[DynPatch]` 有没有挂失败;关完整地堡开关后日志 `[MapM] N bunkers set back`;CE 扑倒关开关后数值回原样;语言自动
-- 陷阱必中和放下就抓到同时开时,每进一次图已放的陷阱会再提前判定一次(`_pushed` 按实例指针记,换场景就变),要不要改看用户
+- 群友回话:采树苗多出来那根是风干的还是绿的。绿的就是操作加速(Patch_TimedHold_UpdateHoldInteraction_QuickSearch)让长按二次触发,要对已采的 Harvestable 早退
+- 干肉条(GEAR_CookedBarPemmican)刷出来吃不了,要问清症状和有没有开无饥饿
+- 进游戏验:取炭两条路、搬鹿后图标、地上鲜皮照常秒干
 
 ## 未决问题
 - 刷动物按钮缺灰狼、饥饿狼、极光狼熊美洲狮(`Menu.cs:1063`);免动物伤害不挡驼鹿;吓跑模式排除列表缺 `AiMode.Disabled`
