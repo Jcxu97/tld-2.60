@@ -69,13 +69,38 @@ internal static class Stations
             p.Enable(mm);
             // 身上没有能修复的东西时,面板会显示一套占位内容;这时关掉面板只给提示
             int n = p.m_Millables != null ? p.m_Millables.Count : 0;
+            // 群友报身上有东西也提示没东西修:面板刚打开时清单可能还没填,先让它重算一次,再自己数背包确认
             if (n == 0)
+            {
+                try { p.DetermineRepairables(); p.RefreshAll(); } catch { }
+                n = p.m_Millables != null ? p.m_Millables.Count : 0;
+            }
+            int mine = MillablesInInventory();
+            ModMain.Log?.Msg($"[MoreBunkers] mill open: panel {n}, inventory {mine}");
+            if (n == 0 && mine == 0)
             {
                 p.Disable();
                 HUDMessage.AddMessage(NothingText(), 3f, false, false);
             }
         }
         catch (Exception ex) { ModMain.Log?.Warning($"[MoreBunkers] open mill {ex.Message}"); }
+    }
+
+    private static int MillablesInInventory()
+    {
+        int n = 0;
+        try
+        {
+            var inv = GameManager.GetInventoryComponent();
+            if (inv == null || inv.m_Items == null) return 0;
+            for (int i = 0; i < inv.m_Items.Count; i++)
+            {
+                var gi = inv.m_Items[i]?.m_GearItem;
+                if (gi != null && gi.m_Millable != null) n++;
+            }
+        }
+        catch { }
+        return n;
     }
 
     internal static void Wire(BunkerDef b, string id, GameObject go)
