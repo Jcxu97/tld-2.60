@@ -1,4 +1,4 @@
-#if !STORY_EDITION
+﻿#if !STORY_EDITION
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -171,6 +171,51 @@ internal static class Patch_MapM_CorpseOnMap
             if (md != null) md.ShowOnMap(true);
         }
         catch { }
+    }
+}
+
+// 尸骸标记是按位置写进地图存档的,不跟着尸骸走。搬起、采完、烂掉都要自己删,室外放下再按新位置标
+internal static class MapMCorpse
+{
+    private static MapDetail Find(GameObject go)
+    {
+        if (go == null) return null;
+        var md = go.GetComponent<MapDetail>();
+        return md != null ? md : go.GetComponentInParent<MapDetail>();
+    }
+
+    internal static void Remove(GameObject go)
+    {
+        if (!MapM.Corpse || MapM.Loading()) return;
+        try
+        {
+            var md = Find(go);
+            if (md == null) return;
+            var panel = InterfaceManager.GetPanel<Panel_Map>();
+            if (panel != null) { panel.RemoveMapDetailFromMap(md, 0f); panel.RefreshIconVisibility(); }
+            else md.ShowOnMap(false);
+        }
+        catch (Exception ex) { ModMain.Log?.Warning($"[MapM] corpse remove {ex.Message}"); }
+    }
+
+    internal static void Show(GameObject go)
+    {
+        if (!MapM.Corpse) return;
+        try
+        {
+            var panel = InterfaceManager.GetPanel<Panel_Map>();
+            if (panel == null || !panel.SceneCanBeMapped(panel.GetMapNameOfCurrentScene())) return;
+            Find(go)?.ShowOnMap(true);
+        }
+        catch (Exception ex) { ModMain.Log?.Warning($"[MapM] corpse show {ex.Message}"); }
+    }
+}
+
+internal static class Patch_MapM_CorpseDestroy
+{
+    private static void Prefix(BodyHarvest __instance)
+    {
+        if (__instance != null) MapMCorpse.Remove(((Component)__instance).gameObject);
     }
 }
 

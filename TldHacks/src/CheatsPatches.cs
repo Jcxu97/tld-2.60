@@ -3602,6 +3602,10 @@ internal static class Patch_EvolveItem_Update
             }
             if (!isCureTarget) return;  // 非白名单 — 默认放行 vanilla(保守不秒,不主动伤未知 mod)
 
+            // 采树苗时原版先在世界里生成一根放进检视,这根被秒干就会在原地掉出一根风干的。没进过背包的不秒
+            var gi = __instance.m_GearItem;
+            if (gi == null || (!gi.m_InPlayerInventory && !gi.m_BeenInPlayerInventory)) return;
+
             __instance.m_TimeToEvolveGameDays = 0f;
             __instance.m_TimeSpentEvolvingGameHours = 1f;
         }
@@ -4276,20 +4280,25 @@ internal static class Patch_ObjectAnim_Play
 //   整合 DisableAutoEquipCharcoal:取炭不自动装备
 // ═══════════════════════════════════════════════════════════════════
 
+// 原版取炭后是排队、下一帧才装上,取完再卸那时手上还不是木炭。改成取炭时开 2 秒窗口,窗口内装备木炭直接挡掉
 internal static class Patch_CharcoalHarvest_NoEquip
 {
-    internal static void Postfix()
+    internal static float BlockUntil = -1f;
+
+    internal static void Prefix()
     {
-        if (!CheatState.NoAutoEquipCharcoal) return;
-        try
-        {
-            var pm = GameManager.GetPlayerManagerComponent();
-            if (pm == null || pm.m_ItemInHands == null) return;
-            var name = ((UnityEngine.Object)pm.m_ItemInHands).name;
-            if (name != null && name.Contains("Charcoal"))
-                pm.UnequipItemInHands();
-        }
-        catch { }
+        BlockUntil = UnityEngine.Time.realtimeSinceStartup + 2f;
+    }
+}
+
+internal static class Patch_Charcoal_BlockEquip
+{
+    internal static bool Prefix(GearItem gi)
+    {
+        if (!CheatState.NoAutoEquipCharcoal || gi == null) return true;
+        if (UnityEngine.Time.realtimeSinceStartup > Patch_CharcoalHarvest_NoEquip.BlockUntil) return true;
+        try { return gi.m_CharcoalItem == null; }
+        catch { return true; }
     }
 }
 

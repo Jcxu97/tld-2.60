@@ -82,6 +82,9 @@ internal static class CarcassMovingState
         Weight = ((ItemWeight)mw).ToQuantity(1f) + ((ItemWeight)gw).ToQuantity(1f) + ((ItemWeight)hw).ToQuantity(1f);
 #endif
         OriginalScene = GameManager.m_ActiveScene;
+#if !STORY_EDITION
+        MapMCorpse.Remove(CarcassObj);
+#endif
         if (CarcassObj.GetComponent<CarcassMovingBehaviour>() == null)
             CarcassObj.AddComponent<CarcassMovingBehaviour>();
         GameManager.GetPlayerManagerComponent().UnequipItemInHands();
@@ -104,6 +107,9 @@ internal static class CarcassMovingState
             if (Harvest != null) BodyHarvestManager.AddBodyHarvest(Harvest);
         }
         GameAudioManager.PlaySound(EVENTS.PLAY_BODYFALLLARGE, InterfaceManager.GetSoundEmitter());
+#if !STORY_EDITION
+        MapMCorpse.Show(CarcassObj);
+#endif
         var cmb = CarcassObj.GetComponent<CarcassMovingBehaviour>();
         if (cmb != null) UnityEngine.Object.Destroy(cmb);
         Harvest = null;

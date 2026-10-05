@@ -475,7 +475,11 @@ internal static class DynamicPatch
 
         // 整合 DisableAutoEquipCharcoal:取炭不装备
         Spec(typeof(Panel_FireStart), "OnCharcoalHarvest", typeof(Patch_CharcoalHarvest_NoEquip),
-            null, "Postfix", () => CheatState.NoAutoEquipCharcoal),
+            "Prefix", null, () => CheatState.NoAutoEquipCharcoal),
+        Spec(typeof(Panel_ActionPicker), "TakeCharcoalCallback", typeof(Patch_CharcoalHarvest_NoEquip),
+            "Prefix", null, () => CheatState.NoAutoEquipCharcoal),
+        Spec(typeof(PlayerManager), "EquipItem", typeof(Patch_Charcoal_BlockEquip),
+            "Prefix", null, () => CheatState.NoAutoEquipCharcoal, null, GearItemBool),
 
         // 整合 AutoToggleLights:休息自动熄灯
         Spec(typeof(PassTime), "Begin", typeof(Patch_AutoExtinguish_PassTime),
@@ -547,6 +551,8 @@ internal static class DynamicPatch
             "Prefix", null, () => MapM.VistaNoPolaroid),
         Spec(typeof(BaseAi), "EnterDead", typeof(Patch_MapM_CorpseOnMap),
             null, "Postfix", () => MapM.Corpse),
+        Spec(typeof(BodyHarvest), "BodyHarvestDestroy", typeof(Patch_MapM_CorpseDestroy),
+            "Prefix", null, () => MapM.Corpse),
         Spec(typeof(MapDetail), "Surveyed", typeof(Patch_MapM_DetailSurveyed),
             null, "Postfix", () => MapM.HideHarvested),
         Spec(typeof(MapDetail), "Unlock", typeof(Patch_MapM_DetailUnlock),
