@@ -3,6 +3,7 @@
 #   python release.py pack [sb e5 st] build + deploy + pack + verify (no args = packages whose DLL changed)
 #   python release.py upload [sb e5 st] move old network files to OLD, upload, check sizes
 # Readme text stays manual: desktop outer readmes, and the readmes inside staging.
+# SCPlusFix (fixed SafehouseCustomizationPlus) is built and packed with sb automatically.
 import glob, hashlib, json, os, re, shutil, subprocess, sys, tempfile, time, zipfile
 
 REPO = r'D:\Github\tld--2.55'
@@ -27,6 +28,10 @@ PKGS = {
                dir=os.path.join(STORY_DIR, '剧情模式第一章到第四章'), bin='剧情材质包.bin',
                vol='剧情材质包备份', readme='剧情模式_解压说明.txt', root='wintermute'),
 }
+
+# Fixed Chinese build of SafehouseCustomizationPlus 1.9.4. It ships only inside the sandbox full package.
+SCP = dict(csproj=r'SCPlusFix\SafehouseCustomizationPlus.csproj', out=r'SCPlusFix\bin\Release\SafehouseCustomizationPlus.dll',
+           game=r'Mods\SafehouseCustomizationPlus.dll', stage=os.path.join('sb_full', 'Mods', 'SafehouseCustomizationPlus.dll'))
 
 
 def sb_names(v):
@@ -134,8 +139,8 @@ def build(k):
     return os.path.join(REPO, PKGS[k]['out'])
 
 
-def deploy(k, dll):
-    dst = os.path.join(GAME, PKGS[k]['game'])
+def deploy(k, dll, spec=None):
+    dst = os.path.join(GAME, (spec or PKGS[k])['game'])
     if os.path.exists(dst) and md5(dst) == md5(dll):
         return
     if os.path.exists(dst):
@@ -242,14 +247,22 @@ def pack(keys):
         sys.exit('game is running: close it first (DLLs are locked)')
     man = load_manifest()
     built = {k: build(k) for k in (keys or PKGS)}
+    run(['dotnet', 'build', os.path.join(REPO, SCP['csproj']), '-c', 'Release', '-nologo', '-v', 'q'])
+    scp_dll = os.path.join(REPO, SCP['out'])
     if not keys:
         keys = [k for k, d in built.items() if md5(d) != man.get(k)]
+        if 'sb' not in keys and md5(scp_dll) != man.get('scp'):
+            keys.append('sb')
         if not keys:
             print('no DLL changed since last pack')
             return
     for k in keys:
-        dll = built[k]
+        dll = built[k] if k in built else build(k)
         deploy(k, dll)
+        if k == 'sb':
+            deploy('sb', scp_dll, SCP)
+            shutil.copy2(scp_dll, os.path.join(STAGE, SCP['stage']))
+            man['scp'] = md5(scp_dll)
         for s in stage_dll(k):
             shutil.copy2(dll, s)
         pack_sb(dll) if k == 'sb' else pack_story(k)

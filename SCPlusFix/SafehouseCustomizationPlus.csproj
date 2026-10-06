@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>SafehouseCustomizationPlus</AssemblyName>
+    <TargetFramework>net6.0</TargetFramework>
+    <LangVersion>12.0</LangVersion>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+    <RootNamespace />
+    <Nullable>disable</Nullable>
+    <DebugType>none</DebugType>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <NoWarn>$(NoWarn);CS8632;CS0108;CS0114;CS0649;CS0169;CS0414;CS0162;CS8981</NoWarn>
+    <TldRoot>D:\Steam\steamapps\common\TheLongDark</TldRoot>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Remove="SafehouseCustomizationPlus.Resources.*" />
+    <EmbeddedResource Include="SafehouseCustomizationPlus.Resources.DumbShield.Icons.catalog_SCPlusIcons.json" LogicalName="SafehouseCustomizationPlus.Resources.DumbShield.Icons.catalog_SCPlusIcons.json" />
+    <EmbeddedResource Include="SafehouseCustomizationPlus.Resources.Localization.json" LogicalName="SafehouseCustomizationPlus.Resources.Localization.json" />
+    <EmbeddedResource Include="SafehouseCustomizationPlus.Resources.DumbShield.Icons.scplusicons_assets_all.bundle" LogicalName="SafehouseCustomizationPlus.Resources.DumbShield.Icons.scplusicons_assets_all.bundle" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="$(TldRoot)\MelonLoader\Il2CppAssemblies\*.dll" Private="false" />
+    <Reference Include="$(TldRoot)\MelonLoader\net6\MelonLoader.dll;$(TldRoot)\MelonLoader\net6\0Harmony.dll;$(TldRoot)\MelonLoader\net6\Il2CppInterop.Runtime.dll;$(TldRoot)\MelonLoader\net6\Il2CppInterop.Common.dll" Private="false" />
+    <Reference Include="$(TldRoot)\Mods\ModSettings.dll;$(TldRoot)\Mods\ModData.dll;$(TldRoot)\Mods\ModComponent.dll" Private="false" />
+  </ItemGroup>
+</Project>
