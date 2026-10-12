@@ -981,13 +981,11 @@ internal static class Patch_FPSWeapon_PlayFireAnimation
         bool fullSuppress = CheatState.NoRecoil || CheatState.SuperAccuracy;
         bool partialSuppress = CheatStateESP.RecoilScale < 0.99f;
         if (!fullSuppress && !partialSuppress) return true;
-        Patch_FPSCamera_LateUpdate.LastFireTime = Time.time;
         _gun = null;
         try
         {
-            var pm = GameManager.GetPlayerManagerComponent();
-            var gi = pm?.m_ItemInHands;
-            var gun = gi?.GetComponent<GunItem>();
+            // 反编译确认:PlayFireAnimation 读的就是 vp_FPSWeapon.m_GunItem(+0x210)的后坐字段
+            var gun = __instance.m_GunItem;
             if (gun != null)
             {
                 _gun = gun;
@@ -1030,73 +1028,35 @@ internal static class Patch_FPSWeapon_PlayFireAnimation
 //   → 即便挂上也永远直接 return true。无后坐力实际由 PlayFireAnimation 前后零化/还原
 //   GunItem 的 recoil 字段实现(见上),与这两个类无关。
 
-// v2.7.89 Camera.Update: Prefix 仍尝试归零弹簧参数(阻止弹簧物理运动)
-// 如果归零无效(IL2Cpp struct 限制),LateUpdate Postfix 的 transform 补偿兜底
+// 相机只处理晃动。后坐力在源头(PlayFireAnimation 前后零化 GunItem 后坐字段)就没有了,
+//   游戏里没有第二个后坐入口(反编译确认 SetTarget 只被 PlayFireAnimation 调用),这里不再碰弹簧。
 internal static class Patch_FPSCamera_ClearRecoil
 {
     private static bool _logged;
-    // 帧级缓存：Prefix 计算一次，Postfix 直接复用，避免重复 CheatState 读取
-    private static bool _recoilOn;
     private static bool _swayOn;
     private static bool _gunHeld;
 
     internal static void Prefix(vp_FPSCamera __instance)
     {
-        _recoilOn = CheatState.NoRecoil || CheatState.SuperAccuracy || CheatStateESP.RecoilScale < 0.99f;
-        _swayOn = CheatState.NoAimSway;
-        bool recoilOn = _recoilOn;
-        bool swayOn = _swayOn;
-        if (!recoilOn && !swayOn) { _gunHeld = false; return; }
+        _swayOn = CheatState.NoAimSway || CheatState.SuperAccuracy;
+        if (!_swayOn) { _gunHeld = false; return; }
         _gunHeld = WeaponCache.IsHoldingGun();
         if (!_gunHeld) return;
 
-        if (recoilOn)
-        {
-            try
-            {
-                var spring = __instance.m_RecoilSpring;
-                spring.m_Current = UnityEngine.Vector2.zero;
-                spring.m_Target = UnityEngine.Vector2.zero;
-                spring.m_Velocity = UnityEngine.Vector2.zero;
-                __instance.m_RecoilSpring = spring;
-            }
-            catch { }
-            try { __instance.RecoilPitchStiffness = 0f; } catch { }
-            try { __instance.RecoilYawStiffness = 0f; } catch { }
-            try { __instance.RecoilPitchDamping = 1f; } catch { }
-            try { __instance.RecoilYawDamping = 1f; } catch { }
-        }
-
-        if (swayOn)
-        {
-            try { __instance.m_MaxAmbientSwayAngleDegreesA = 0f; } catch { }
-            try { __instance.m_MaxAmbientAimingSwayAngleDegreesA = 0f; } catch { }
-            try { __instance.m_AmbientSwaySpeedA = 0f; } catch { }
-            try { __instance.m_AmbientAimingSwaySpeedA = 0f; } catch { }
-            try { __instance.m_CurrentMaxAmbientSwayAngle = 0f; } catch { }
-            try { __instance.m_CurrentAmbientSwaySpeed = 0f; } catch { }
-            try { __instance.ShakeAmplitude = UnityEngine.Vector3.zero; } catch { }
-            try { __instance.ShakeSpeed = 0f; } catch { }
-            try { __instance.BobAmplitude = UnityEngine.Vector4.zero; } catch { }
-        }
+        try { __instance.m_MaxAmbientSwayAngleDegreesA = 0f; } catch { }
+        try { __instance.m_MaxAmbientAimingSwayAngleDegreesA = 0f; } catch { }
+        try { __instance.m_AmbientSwaySpeedA = 0f; } catch { }
+        try { __instance.m_AmbientAimingSwaySpeedA = 0f; } catch { }
+        try { __instance.m_CurrentMaxAmbientSwayAngle = 0f; } catch { }
+        try { __instance.m_CurrentAmbientSwaySpeed = 0f; } catch { }
+        try { __instance.ShakeAmplitude = UnityEngine.Vector3.zero; } catch { }
+        try { __instance.ShakeSpeed = 0f; } catch { }
+        try { __instance.BobAmplitude = UnityEngine.Vector4.zero; } catch { }
     }
 
     internal static void Postfix(vp_FPSCamera __instance)
     {
-        // 直接复用 Prefix 缓存的结果，不重复读取 CheatState / WeaponCache
-        if (_recoilOn && _gunHeld)
-        {
-            try
-            {
-                var spring = __instance.m_RecoilSpring;
-                __instance.m_Pitch -= spring.m_Current.x;
-                __instance.m_Yaw -= spring.m_Current.y;
-                __instance.ShakeAmplitude = UnityEngine.Vector3.zero;
-                __instance.ShakeSpeed = 0f;
-            }
-            catch { }
-        }
-        if ((_swayOn || CheatState.SuperAccuracy) && _gunHeld)
+        if (_swayOn && _gunHeld)
         {
             try
             {
@@ -1119,55 +1079,21 @@ internal static class Patch_FPSCamera_ClearRecoil
             }
             catch { }
         }
-        if (!_logged && (CheatState.NoRecoil || CheatState.NoAimSway))
+        if (!_logged && _swayOn)
         {
             _logged = true;
-            try { ModMain.Log?.Msg($"[Aim] Camera Update Postfix active (recoil={CheatState.NoRecoil} sway={CheatState.NoAimSway})"); } catch { }
+            try { ModMain.Log?.Msg("[Aim] Camera Update Postfix active (steady aim)"); } catch { }
         }
     }
 }
 
-// v2.7.90 无后坐力核心:只在开枪后短时间窗口内覆盖 transform,防止全局鼠标反转
-// 方案:Prefix 记录 transform + m_Pitch/m_Yaw,Postfix 仅保留鼠标 delta、剥离弹簧贡献
+// LateUpdate 只剩晃动清零和 GunZoom。原先开枪后 0.5 秒把相机旋转锁回上一帧的补偿已删除
+//   (它丢掉当帧鼠标位移,开枪后视角会卡住再跳一下)。
 internal static class Patch_FPSCamera_LateUpdate
 {
-    internal static float LastFireTime;
-    private const float RecoilWindow = 0.5f;
-    private static Quaternion _preRot;
-    private static float _prePitch, _preYaw;
-    // 帧级缓存：Prefix 判断一次，Postfix 复用，避免重复读 CheatState
-    private static bool _activeThisFrame;
-
-    private static bool ShouldActivate()
-    {
-        return CheatState.NoRecoil || CheatState.SuperAccuracy || CheatStateESP.RecoilScale < 0.99f;
-    }
-
-    internal static void Prefix(vp_FPSCamera __instance)
-    {
-        bool inWindow = ShouldActivate() && Time.time - LastFireTime <= RecoilWindow;
-        _activeThisFrame = inWindow;
-        if (!inWindow) return;
-        _preRot = __instance.transform.rotation;
-        _prePitch = __instance.m_Pitch;
-        _preYaw = __instance.m_Yaw;
-    }
-
     internal static void Postfix(vp_FPSCamera __instance)
     {
-        if (_activeThisFrame)
-        {
-            try
-            {
-                float dPitch = __instance.m_Pitch - _prePitch;
-                float dYaw = __instance.m_Yaw - _preYaw;
-                var noRecoilRot = _preRot * Quaternion.Euler(dPitch, dYaw, 0f);
-                __instance.transform.rotation = Quaternion.Slerp(
-                    __instance.transform.rotation, noRecoilRot, 1f);
-            }
-            catch { }
-        }
-        if (CheatState.NoAimSway && WeaponCache.IsHoldingGun())
+        if ((CheatState.NoAimSway || CheatState.SuperAccuracy) && WeaponCache.IsHoldingGun())
         {
             try
             {
@@ -1181,6 +1107,40 @@ internal static class Patch_FPSCamera_LateUpdate
         }
         // GunZoom:瞄准时滚轮缩放 FOV
         GunZoomState.ApplyZoom(__instance);
+    }
+}
+
+// —— 超级精准:子弹在 vp_FPSShooter.Fire 里以相机朝向生成,再随机偏转 ProjectileSpread 度。
+//   开枪前把散布置 0,子弹就沿准星射出;开枪后还原。 ——
+internal static class Patch_FPSShooter_Fire
+{
+    private static vp_FPSShooter _shooter;
+    private static float _spread;
+    private static bool _logged;
+
+    internal static void Prefix(vp_FPSShooter __instance)
+    {
+        _shooter = null;
+        if (!CheatState.SuperAccuracy) return;
+        try
+        {
+            _spread = __instance.ProjectileSpread;
+            __instance.ProjectileSpread = 0f;
+            _shooter = __instance;
+            if (!_logged)
+            {
+                _logged = true;
+                ModMain.Log?.Msg($"[Aim] SuperAccuracy: spread {_spread} -> 0");
+            }
+        }
+        catch { }
+    }
+
+    internal static void Postfix()
+    {
+        if (_shooter == null) return;
+        try { _shooter.ProjectileSpread = _spread; } catch { }
+        _shooter = null;
     }
 }
 
@@ -1813,7 +1773,7 @@ internal static class CheatsTick
     // v2.7.92 性能:InfiniteAmmo/NoJam 需扫全场景;其余只需手持武器,避免 FindObjectsOfType
     public static void TickGuns()
     {
-        if (!CheatState.InfiniteAmmo && !CheatState.NoJam && !CheatState.NoRecoil && !CheatState.SuperAccuracy && !CheatState.NoAimSway) return;
+        if (!CheatState.InfiniteAmmo && !CheatState.NoJam && !CheatState.SuperAccuracy && !CheatState.NoAimSway) return;
         try
         {
             if (CheatState.NoJam)
@@ -1839,27 +1799,14 @@ internal static class CheatsTick
                 }
             }
 
-            if (CheatState.NoRecoil || CheatState.SuperAccuracy || CheatState.NoAimSway)
+            if (CheatState.SuperAccuracy || CheatState.NoAimSway)
             {
                 var pm = GameManager.GetPlayerManagerComponent();
                 var gi = pm?.m_ItemInHands;
                 var g = gi != null ? gi.GetComponent<GunItem>() : null;
                 if (g != null)
                 {
-                    if (CheatState.NoRecoil || CheatState.SuperAccuracy)
-                    {
-                        try { g.m_PitchRecoilMin = 0f; } catch { }
-                        try { g.m_PitchRecoilMax = 0f; } catch { }
-                        try { g.m_YawRecoilMin = 0f; } catch { }
-                        try { g.m_YawRecoilMax = 0f; } catch { }
-                        try { g.m_SwayValueZeroFatigue = 0f; } catch { }
-                        try { g.m_SwayValueMaxFatigue = 0f; } catch { }
-                    }
-                    if (CheatState.SuperAccuracy)
-                    {
-                        try { g.m_SwayValue = 0f; } catch { }
-                    }
-                    if (CheatState.NoAimSway)
+                    if (CheatState.NoAimSway || CheatState.SuperAccuracy)
                     {
                         try { g.m_SwayValueZeroFatigue = 0f; } catch { }
                         try { g.m_SwayValueMaxFatigue = 0f; } catch { }
@@ -2043,7 +1990,7 @@ internal static class CheatsTick
     //   不再需要实例反射。camera float 字段直接写实例属性。只剩 m_RecoilSpring(struct) 需要 FieldInfo。
     public static void TickCamera()
     {
-        bool anyOn = CheatState.NoAimSway || CheatState.NoAimStamina || CheatState.NoRecoil || CheatState.SuperAccuracy;
+        bool anyOn = CheatState.NoAimSway || CheatState.NoAimStamina || CheatState.SuperAccuracy;
         // 全关 AND 上次也全关 → 零开销早退
         if (!anyOn && !_lastAnyAimToggle) return;
         if (GameManager.IsMainMenuActive()) return;
@@ -2150,11 +2097,11 @@ internal static class CheatsTick
             // 反编译确认:vp_FPSWeapon.m_DisableAimSway 等是 static bool,Set* 是 static 方法
             // 空 weapon 不影响 —— static 字段全局生效,不依赖实例
             // v2.7.84:NoAimSway 合并了 sway+shake+breath 三个 toggle
-            try { vp_FPSWeapon.m_DisableAimSway      = CheatState.NoAimSway;    } catch (Exception ex) { ModMain.Log?.Warning($"[Aim] SetAimSway: {ex.Message}"); }
-            try { vp_FPSWeapon.m_DisableAimShake     = CheatState.NoAimSway;    } catch (Exception ex) { ModMain.Log?.Warning($"[Aim] SetAimShake: {ex.Message}"); }
-            try { vp_FPSWeapon.m_DisableAimBreathing  = CheatState.NoAimSway;    } catch (Exception ex) { ModMain.Log?.Warning($"[Aim] SetAimBreath: {ex.Message}"); }
+            try { vp_FPSWeapon.m_DisableAimSway      = CheatState.NoAimSway || CheatState.SuperAccuracy;    } catch (Exception ex) { ModMain.Log?.Warning($"[Aim] SetAimSway: {ex.Message}"); }
+            try { vp_FPSWeapon.m_DisableAimShake     = CheatState.NoAimSway || CheatState.SuperAccuracy;    } catch (Exception ex) { ModMain.Log?.Warning($"[Aim] SetAimShake: {ex.Message}"); }
+            try { vp_FPSWeapon.m_DisableAimBreathing  = CheatState.NoAimSway || CheatState.SuperAccuracy;    } catch (Exception ex) { ModMain.Log?.Warning($"[Aim] SetAimBreath: {ex.Message}"); }
             try { vp_FPSWeapon.m_DisableAimStamina   = CheatState.NoAimStamina; } catch (Exception ex) { ModMain.Log?.Warning($"[Aim] SetAimStamina: {ex.Message}"); }
-            try { vp_FPSCamera.m_DisableAmbientSway   = CheatState.NoAimSway;    } catch (Exception ex) { ModMain.Log?.Warning($"[Aim] m_DisableAmbientSway: {ex.Message}"); }
+            try { vp_FPSCamera.m_DisableAmbientSway   = CheatState.NoAimSway || CheatState.SuperAccuracy;    } catch (Exception ex) { ModMain.Log?.Warning($"[Aim] m_DisableAmbientSway: {ex.Message}"); }
 
             // v2.7.92 性能:camera sway + recoil spring 清零已由 DynamicPatch 每帧 Prefix 覆盖,
             //   此处只保留 weapon 实例反射(DynamicPatch 的 SteadyAim 也做,但这里是兜底)
@@ -2164,7 +2111,7 @@ internal static class CheatsTick
                 return;
             }
 
-            if (CheatState.NoAimSway && weapon != null)
+            if ((CheatState.NoAimSway || CheatState.SuperAccuracy) && weapon != null)
             {
                 // v8.0.1: 原先 wType.GetField("BobAmplitude"/"ShakeAmplitude"/"ShakeSpeed"),
                 //   三个在 interop 上都是 property → FieldInfo 恒 null,`?.SetValue` 静默跳过,

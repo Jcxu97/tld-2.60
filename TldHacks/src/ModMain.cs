@@ -29,7 +29,7 @@ namespace TldHacks;
 public class ModMain : MelonMod
 {
     // 全 mod 唯一的版本号来源。MelonInfo / 程序集版本 / 菜单标题栏 / 启动日志都从这里取。
-    internal const string VERSION = "9.7";
+    internal const string VERSION = "9.8";
 
     public static MelonLogger.Instance Log;
     internal static TldHacksSettings Settings;
@@ -40,6 +40,7 @@ public class ModMain : MelonMod
     // v6.9.6 崩溃哨兵延后清除:确认稳定进入游戏后才清,使"加载存档即崩"能被下次启动的安全模式接住
     private bool _sentinelCleared = false;
     private int _stableFrames = 0;
+    private static bool _gameSceneEntered = false;
 
     public override void OnInitializeMelon()
     {
@@ -694,7 +695,8 @@ public class ModMain : MelonMod
     {
         // v7.7 退出兜底:把延迟落盘的脏数据写掉(正常退出路径必到,硬崩溃时丢的只是 ≤0.5s 内的设置改动)
         try { Settings?.FlushPendingSave(); } catch { }
-        ClearSentinel();
+        // 载入存档卡住后玩家点叉关游戏也走这里,那时不能清,否则下次启动接不住
+        if (!_gameSceneEntered) ClearSentinel();
     }
 
     public override void OnLateInitializeMelon()
@@ -739,17 +741,24 @@ public class ModMain : MelonMod
             if (Settings.DiagPauseRuntime) return;  // v2.7.75 诊断开关
             if (Settings.DiagUnpatchAll) return;    // v2.7.79 UnpatchAll 模式下也停掉 tick / Reconcile
 
-            // v6.9.6 崩溃哨兵延后清除:在真正可玩的游戏场景中稳定运行 ~3s(180 帧)后才清。
+            // v6.9.6 崩溃哨兵延后清除:在真正可玩的游戏场景中稳定运行 ~10s(600 帧)后才清。
             //   "更新后存档进不去"的崩溃多发生在存档数据加载/应用阶段(场景 init 之后),
             //   若像旧版那样在场景 init 时立即清,这类崩溃就逃过了下次启动的安全模式 → 玩家只能删 JSON。
             //   延后到稳定运行后清,可让"加载即崩"被下次启动接住(安全模式关所有 bool 开关)。
             if (!_sentinelCleared)
             {
                 bool inGameplay = false;
-                try { inGameplay = !Il2Cpp.GameManager.IsMainMenuActive() && !Il2Cpp.GameManager.IsEmptySceneActive(); } catch { }
+                // 卡在载入画面时帧还在跑,不能算稳定;窗口放宽到约 10 秒,盖住进图后头几秒的卡死
+                try
+                {
+                    bool inScene = !Il2Cpp.GameManager.IsMainMenuActive() && !Il2Cpp.GameManager.IsEmptySceneActive();
+                    _gameSceneEntered |= inScene;
+                    inGameplay = inScene && !Il2Cpp.InterfaceManager.IsPanelEnabled<Il2Cpp.Panel_Loading>();
+                }
+                catch { }
                 if (inGameplay)
                 {
-                    if (++_stableFrames >= 180) { ClearSentinel(); _sentinelCleared = true; }
+                    if (++_stableFrames >= 600) { ClearSentinel(); _sentinelCleared = true; }
                 }
                 else _stableFrames = 0;
             }
@@ -856,6 +865,7 @@ public class ModMain : MelonMod
             try { GrabAll.TickQueue(); } catch { }
 #if !STORY_EDITION
             try { MapClear.Tick(); } catch { }
+            try { TalesComplete.Tick(); TalesComplete.TickSceneFix(); } catch { }
 #endif
 
             // v2.7.75 稳定节奏:动态 patch 只在固定低频点 reconcile。
@@ -1034,11 +1044,14 @@ public class ModMain : MelonMod
         //   改为:每次场景切换都重置稳定计时,由 OnUpdate 跑满 180 帧无崩才清(见 OnUpdate)。
         if (!_sentinelCleared) _stableFrames = 0;
         BreakDownCleanup.Armed = false;
-        if (sceneName != null && sceneName.Contains("MainMenu")) I18n.GameReady = true;
+        if (sceneName != null && sceneName.Contains("MainMenu")) I18n.MarkGameReady();
         Patch_GearItem_Awake_BowRepair.OnSceneInitialized();
         Teleport.OnSceneLoaded(sceneName);
         // v2.7.64 学习 scene transition 字段到 JSON,解决 DLC Tale 跨区物品丢失
         TransitionRecorder.OnSceneInitialized(sceneName);
+#if !STORY_EDITION
+        TalesComplete.OnSceneInitialized(sceneName);
+#endif
         // v2.7.29 关键修:跨场景时清 BaseAi HashSet,避免 stale wrapper 残留 → AccessViolation
         try { BaseAiRegistry.Known.Clear(); } catch { }
         // v2.7.93 同理:4 个新注册表也跨场景清

@@ -43,10 +43,10 @@ internal static class CheatState
     public static bool InfiniteAmmo;
     public static bool NoJam;
     public static bool NoRecoil;
-    // Aiming (v2.7.84 合并:NoAimSway = 晃动+抖动+呼吸,SuperAccuracy = 精准+零散布)
+    // Aiming (v2.7.84 合并:NoAimSway = 晃动+抖动+呼吸,SuperAccuracy = 零散布+关晃动)
     public static bool NoAimSway;      // 稳定瞄准(合并 sway+shake+breath)
     public static bool NoAimStamina;
-    public static bool SuperAccuracy;  // 超级精准(散布归零 + 后坐归零)
+    public static bool SuperAccuracy;  // 超级精准(散布归零 + 关晃动)
     // Environment / body
     public static bool NoSprainRisk;
     public static bool ImmuneAnimalDamage; // Wolf/Bear/Cougar 攻击不扣血

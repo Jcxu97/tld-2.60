@@ -66,8 +66,12 @@ def tree_hashes(root):
     return out
 
 
+# 从没有控制台的父进程起 dotnet/7z/browser-harness 时,每个子进程都会弹一个黑窗
+NO_WINDOW = getattr(subprocess, 'CREATE_NO_WINDOW', 0)
+
+
 def run(cmd, **kw):
-    r = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8', errors='replace', **kw)
+    r = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8', errors='replace', creationflags=NO_WINDOW, **kw)
     if r.returncode != 0:
         sys.exit(f'FAILED: {cmd}\n{r.stdout[-2000:]}\n{r.stderr[-2000:]}')
     return r.stdout
@@ -282,7 +286,7 @@ def bh(code, timeout=600):
     src = open(os.path.join(HERE, 'bh_quark.py'), encoding='utf-8').read()
     src += "\ngoto('https://pan.quark.cn/list#/list/all')\ntime.sleep(2)\n" + code
     r = subprocess.run(['browser-harness'], input=src, capture_output=True, text=True,
-                       encoding='utf-8', errors='replace', timeout=timeout)
+                       encoding='utf-8', errors='replace', timeout=timeout, creationflags=NO_WINDOW)
     for line in r.stdout.splitlines():
         if line.startswith('RESULT:'):
             return json.loads(line[7:])
@@ -363,7 +367,7 @@ while time.time() < end and not os.path.exists({json.dumps(flag)}):
 close_tab()
 """
         pr = subprocess.Popen(['browser-harness'], stdin=subprocess.PIPE, stdout=subprocess.DEVNULL,
-                              stderr=subprocess.DEVNULL, text=True, encoding='utf-8')
+                              stderr=subprocess.DEVNULL, text=True, encoding='utf-8', creationflags=NO_WINDOW)
         pr.stdin.write(code)
         pr.stdin.close()
         procs.append(pr)

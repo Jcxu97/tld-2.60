@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 namespace TldHacks;
 
@@ -12,6 +12,8 @@ internal static class I18n
     private static int _autoAt = int.MinValue;
     // 主菜单加载过以后才能读 Localization.Language
     internal static bool GameReady;
+
+    internal static void MarkGameReady() { GameReady = true; _autoAt = int.MinValue; }
 
     public static bool IsEnglish
     {
@@ -36,9 +38,25 @@ internal static class I18n
             string l = UnityEngine.PlayerPrefs.GetString("Language", "");
             // 从没在游戏里选过语言时 PlayerPrefs 是空的,等游戏进了主菜单再问它当前用的语言
             if (string.IsNullOrEmpty(l) && GameReady) { try { l = Il2Cpp.Localization.Language; } catch { } }
-            return !string.IsNullOrEmpty(l) && !l.ToLowerInvariant().Contains("chinese");
+            // 还问不到游戏语言(启动时、主菜单前)就看 Windows 界面语言,不再一律当中文
+            if (string.IsNullOrEmpty(l)) return !WindowsIsChinese();
+            return !l.ToLowerInvariant().Contains("chinese");
         }
         catch { return false; }
+    }
+
+    [System.Runtime.InteropServices.DllImport("kernel32.dll")]
+    private static extern ushort GetUserDefaultUILanguage();
+
+    private static int _winZh = -1;
+    private static bool WindowsIsChinese()
+    {
+        if (_winZh < 0)
+        {
+            try { _winZh = (GetUserDefaultUILanguage() & 0x3FF) == 0x04 ? 1 : 0; }
+            catch { _winZh = 1; }
+        }
+        return _winZh == 1;
     }
 
     public static string T(string zh, string en) => IsEnglish ? en : zh;

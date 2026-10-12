@@ -323,9 +323,11 @@ internal static class DynamicPatch
             "Prefix", "Postfix", () => CheatState.NoRecoil || CheatState.SuperAccuracy || CheatStateESP.RecoilScale < 0.99f || CheatStateESP.MagicBullet),
         // Phase 2 NativeDetour pending — keep Harmony for now
         Spec(typeof(vp_FPSCamera), "Update", typeof(Patch_FPSCamera_ClearRecoil),
-            "Prefix", "Postfix", () => CheatState.NoRecoil || CheatState.SuperAccuracy || CheatStateESP.RecoilScale < 0.99f || CheatState.NoAimSway),
+            "Prefix", "Postfix", () => CheatState.SuperAccuracy || CheatState.NoAimSway),
         Spec(typeof(vp_FPSCamera), "LateUpdate", typeof(Patch_FPSCamera_LateUpdate),
-            "Prefix", "Postfix", () => CheatState.NoRecoil || CheatState.SuperAccuracy || CheatStateESP.RecoilScale < 0.99f || CheatState.NoAimSway || (ModMain.Settings != null && ModMain.Settings.GunZoomEnabled)),
+            null, "Postfix", () => CheatState.SuperAccuracy || CheatState.NoAimSway || (ModMain.Settings != null && ModMain.Settings.GunZoomEnabled)),
+        Spec(typeof(vp_FPSShooter), "Fire", typeof(Patch_FPSShooter_Fire),
+            "Prefix", "Postfix", () => CheatState.SuperAccuracy),
         Spec(typeof(vp_FPSWeapon), "Update", typeof(Patch_FPSWeapon_SteadyAim),
             "Prefix", "Postfix", () => CheatState.NoAimSway || CheatState.SuperAccuracy),
         // vp_FPSWeapon.LateUpdate 在 IL2CPP 中不存在,已移除

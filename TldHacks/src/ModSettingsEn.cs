@@ -32,9 +32,11 @@ internal static class ModSettingsEn
     private static MethodInfo _target;
     private static MethodInfo _postfix;
 
-    // 启动时一次性定的语言。false → 根本不挂 patch(中文用户零 Harmony bridge)。
+    // 启动时按磁盘 JSON 定的语言,只在 ModMain.Settings 还没构造好时用;建面板时按 I18n.IsEnglish 当场判
     private static bool _english;
     private static bool _applied;
+    private static bool _broken;
+    private static bool _loggedBuild;
 
     private static Dictionary<string, string> _names;
     private static Dictionary<string, string> _descs;
@@ -53,12 +55,8 @@ internal static class ModSettingsEn
         _applied = true;
         try
         {
+            // 不再按启动时的语言决定挂不挂:启动时游戏语言表还没加载,没在游戏里选过语言的英文玩家会被判成中文
             _english = ResolveEnglishFromDisk(jsonPath);
-            if (!_english)
-            {
-                ModMain.Log?.Msg("[ModSettingsEn] 语言=中文 → 不挂载英文化 patch(零开销)");
-                return;
-            }
 
             var attrsType = typeof(NameAttribute).Assembly.GetType("ModSettings.Attributes");
             if (attrsType == null) throw new MissingMemberException("ModSettings.Attributes not found");
@@ -68,12 +66,12 @@ internal static class ModSettingsEn
 
             _harmony = new HarmonyLib.Harmony("TldHacks.ModSettingsEn");
             _harmony.Patch(_target, postfix: new HarmonyMethod(_postfix));
-            ModMain.Log?.Msg("[ModSettingsEn] 语言=English → Mod Options 面板英文化已挂载");
+            ModMain.Log?.Msg($"[ModSettingsEn] patch 已挂载,启动时语言={(_english ? "English" : "中文")}");
         }
         catch (Exception ex)
         {
             // 失败就退化成中文面板(= 现状,无害)
-            _english = false;
+            _broken = true;
             ModMain.Log?.Warning($"[ModSettingsEn] 挂载失败,Mod Options 面板保持中文: {ex.Message}");
         }
     }
@@ -85,7 +83,7 @@ internal static class ModSettingsEn
         try { _harmony.Unpatch(_target, _postfix); }
         catch (Exception ex) { ModMain.Log?.Warning($"[ModSettingsEn] Unpatch: {ex.Message}"); }
         _harmony = null;
-        _english = false;
+        _broken = true;
     }
 
     // ModMain.Settings 尚未构造 → 复刻 I18n 的判定:1=强制中文 2=强制英文 其它=按游戏语言
@@ -115,12 +113,22 @@ internal static class ModSettingsEn
         ref SectionAttribute section, ref NameAttribute name,
         ref DescriptionAttribute description, ref ChoiceAttribute choice)
     {
-        if (!_english) return;
+        if (_broken) return;
         if (field == null || field.DeclaringType != typeof(TldHacksSettings)) return;   // 别人的 mod 一律不碰
         try
         {
-            // 运行时切回中文(玩家在 TldHacks 菜单里改了 Language)→ 下次面板重建就是中文
-            if (ModMain.Settings != null && !I18n.IsEnglish) return;
+            // Settings 构造好以后只有建面板会调到这里,游戏的选项面板已经在初始化,语言表肯定加载好了
+            if (ModMain.Settings != null && !I18n.GameReady) I18n.MarkGameReady();
+            bool useEn = ModMain.Settings != null ? I18n.IsEnglish : _english;
+            if (ModMain.Settings != null && !_loggedBuild)
+            {
+                _loggedBuild = true;
+                string pref = "", game = "";
+                try { pref = UnityEngine.PlayerPrefs.GetString("Language", ""); } catch { }
+                try { game = Il2Cpp.Localization.Language; } catch { }
+                ModMain.Log?.Msg($"[ModSettingsEn] Mod Settings 面板语言={(useEn ? "English" : "中文")}(存档里的语言='{pref}',游戏当前语言='{game}')");
+            }
+            if (!useEn) return;
 
             EnsureTables();
             string key = field.Name;
@@ -151,7 +159,7 @@ internal static class ModSettingsEn
         catch (Exception ex)
         {
             // 绝不让异常穿出去:ValidateFields / BuildGUI 任一处抛 = 整个 Mod Settings 面板挂掉
-            _english = false;
+            _broken = true;
             ModMain.Log?.Warning($"[ModSettingsEn] postfix 异常,已停用英文化: {ex.Message}");
         }
     }

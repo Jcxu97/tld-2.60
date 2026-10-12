@@ -60,10 +60,10 @@ internal class TldHacksSettings : JsonModSettings
     internal bool DiagPauseRuntime = false;   // 开了 OnUpdate/OnLateUpdate/OnGUI 全 skip,保留 Harmony patch
     internal bool DiagUnpatchAll = false;     // 启动时 UnpatchAll + skip Reconcile,需重启游戏生效
 
-    // 已弃用、只是说明用的三项不在 Mod Settings 里露面(游戏内菜单也没有)。字段留着,老 JSON 照旧能读
+    // 已弃用、只是说明用的两项不在 Mod Settings 里露面(游戏内菜单也没有)。字段留着,老 JSON 照旧能读
     internal void HideRetiredFields()
     {
-        foreach (var n in new[] { nameof(SuperAccuracy), nameof(TimeScaleInfo), nameof(LampBurnMultiplier) })
+        foreach (var n in new[] { nameof(TimeScaleInfo), nameof(LampBurnMultiplier) })
             try { SetFieldVisible(n, false); } catch { }
 #if STORY_EDITION
         // 剧情 1~4 章不编译 CeFeatures,这些开关点了没反应
@@ -83,7 +83,7 @@ internal class TldHacksSettings : JsonModSettings
     // ——— Menu ———
     [Section("Menu")]
     [Name("Language / 语言")]
-    [Description("Auto = 跟随游戏的语言设置(游戏不是中文 → English);Chinese = 强制中文;English = 强制英文。改完需按菜单热键重开菜单生效。")]
+    [Description("Auto = 跟随游戏的语言设置(游戏不是中文 → English);Chinese = 强制中文;English = 强制英文。改完按菜单热键重开 TldHacks 菜单生效;这一页 Mod Settings 要重启游戏才换语言。")]
     [Choice("Auto", "中文 / Chinese", "English")]
     public int LanguageMode = 0;
 
@@ -225,8 +225,8 @@ internal class TldHacksSettings : JsonModSettings
     [Name("No Aim Stamina(瞄准不耗体力)")]
     public bool NoAimStamina = false;
 
-    [Name("Super Accuracy(已弃用,保留兼容)")]
-    [Description("已弃用。保留此开关是为了旧 JSON 兼容:开启时等效于 稳定瞄准+无后坐力。")]
+    [Name("Super Accuracy(超级精准)")]
+    [Description("子弹散布归零,同时关闭瞄准晃动,子弹沿准星射出。后坐力另由 无后坐力 控制")]
     public bool SuperAccuracy = false;
 
 

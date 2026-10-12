@@ -43,7 +43,7 @@ internal static class ModSettingsEnData
         "NoRecoil", "No Recoil",   // No Recoil(无后坐力)
         "NoAimSway", "Steady Aim (no sway / jitter / breathing)",   // Steady Aim(稳定瞄准,关闭晃动+抖动+呼吸)
         "NoAimStamina", "No Aim Stamina",   // No Aim Stamina(瞄准不耗体力)
-        "SuperAccuracy", "Super Accuracy (deprecated, kept for compatibility)",   // Super Accuracy(已弃用,保留兼容)
+        "SuperAccuracy", "Super Accuracy",   // Super Accuracy(超级精准)
         "NoSprainRisk", "No Sprain Risk",   // No Sprain Risk(免扭伤风险)
         "ImmuneAnimalDamage", "Immune Animal Damage",   // Immune Animal Damage(免疫狼/熊/美洲狮伤害)
         "NoSuffocating", "No Suffocating",   // No Suffocating(不会窒息)
@@ -376,12 +376,12 @@ internal static class ModSettingsEnData
     {
         "DiagPauseRuntime", "Diagnostic. When on, ModMain stops running any per-frame tick, Stacking OnLateUpdate or Menu UI. Harmony patches stay applied (static patching is not affected by this toggle). If the stutter is still there with this on, it comes from the patches themselves.",   // 诊断用。开了 ModMain 不再跑任何 per-frame tick / Stacking OnLateUpdate / Menu UI。Harmony patch 仍挂着(静态挂载不受此开关影响)。若开了仍卡 → 卡在 patch 本身
         "DiagUnpatchAll", "Runs UnpatchAll at startup and skips Reconcile, so none of the TldHacks [HarmonyPatch] classes are applied. Requires a game restart. Still stuttering with this on means TldHacks is definitely not the cause; no stutter means the total patch count is the problem, and the next step is moving everything to DynamicPatch.",   // 启动时立即 UnpatchAll + skip Reconcile,TldHacks 的所有 [HarmonyPatch] 零挂载。需重启游戏生效。开了仍卡 = 100% 不是 TldHacks;开了不卡 = 是 patch 总数问题,下一步全迁 DynamicPatch
-        "LanguageMode", "Auto follows the game language (English when the game is not in Chinese); Chinese forces Chinese; English forces English. Press the menu hotkey to close and reopen the menu for the change to take effect.",   // Auto = 跟随游戏的语言设置(游戏不是中文 → English);Chinese = 强制中文;English = 强制英文。改完需按菜单热键重开菜单生效。
+        "LanguageMode", "Auto follows the game language (English when the game is not in Chinese); Chinese forces Chinese; English forces English. Press the menu hotkey to close and reopen the TldHacks menu for the change to take effect. Restart the game to change the language of this Mod Settings page.",   // Auto = 跟随游戏的语言设置(游戏不是中文 → English);Chinese = 强制中文;English = 强制英文。改完需按菜单热键重开菜单生效。
         "MenuHotkey", "Press this key to open or close the TldHacks menu. The default Tab clashes with the in-game journal key, so F1 or \\ is a better choice.",   // 按此键呼出/关闭 TldHacks 菜单。默认 Tab 会和游戏日志键冲突,建议改成 F1 / \ 等。
         "FlyHotkey", "Press this key to toggle the uConsole fly command. Requires DeveloperConsole.dll to be enabled.",   // 按此键切换 uConsole fly 命令。需要 DeveloperConsole.dll 启用。
         "TrueInvisible", "Animals behave as if they cannot see you and keep wandering, feeding or sleeping; they neither attack nor flee.",   // 动物像看不见你一样,正常闲逛/觅食/睡觉,不扑也不逃
         "NoAimSway", "Combines aim sway, jitter and breathing sway into one toggle. The crosshair holds still, the weapon does not drift and the aiming view does not shake.",   // 合并瞄准晃动/抖动/呼吸晃动。开枪准星不动、武器不晃、瞄准画面不抖
-        "SuperAccuracy", "Deprecated. Kept only so older JSON configs still load: turning it on is the same as Steady Aim plus No Recoil.",   // 已弃用。保留此开关是为了旧 JSON 兼容:开启时等效于 稳定瞄准+无后坐力。
+        "SuperAccuracy", "Bullets have no spread and aim sway is off, so every shot leaves along the crosshair. Recoil is set by No Recoil.",   // 子弹散布归零并关闭瞄准晃动,子弹沿准星射出。后坐力另由 无后坐力 控制
         "QuickAction", "Harvesting a carcass, repairing a tool and breaking down an item finish at once. You do not have to hold the button. Repairs always succeed.",   // 采集尸骸、修理工具、拆解物品时直接完成,不用按住按钮。修理必定成功。
         "GrabAllKey", "Press this key to move every item on the ground or in the scene within range straight into your backpack (range is set by the slider below). The default is a mouse side button, which the game does not use, so it works without any setup. Set a keyboard key here to change it. Set None to disable the hotkey. Items you dropped yourself are skipped by default. See Skip own drops below.",   // 按此键把玩家半径内地上/场景里的全部物品直接收进背包(搜刮距离见下方滑块)。默认 G。设 None 关闭热键。
         "GrabAllRadius", "Radius used by Grab All, default 15 m. A larger radius makes each scan take longer.",   // 一键搜刮的作用半径,默认 15 米。半径越大单次扫描越久。

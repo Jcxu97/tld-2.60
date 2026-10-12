@@ -1184,6 +1184,11 @@ internal static class Menu
             MapClear.Trigger(false);
         if (Ui.Button("Act_ClearMapMission", R(c2 + TOG2_OFF, y2, TOG_W, ROW_H), I18n.T("清任务物品", "Mission Items")))
             MapClear.Trigger(true);
+        y2 += ROW_ADV;
+        if (Ui.Button("Act_TalesFinish", R(c2, y2, TOG_W, ROW_H), I18n.T("完成DLC任务", "Finish DLC Tales")))
+            TalesComplete.Trigger();
+        if (Ui.Button("Act_TalesRewards", R(c2 + TOG2_OFF, y2, TOG_W, ROW_H), I18n.T("任务奖励", "Tale Rewards")))
+            TalesComplete.GiveRewards();
 #endif
         y2 += ROW_ADV + SECTION_END_ADV;
 
@@ -1271,13 +1276,15 @@ internal static class Menu
         y3 += ROW_ADV;
         bool sway = Ui.Toggle("NoAimSway", R(c3,            y3, TOG_W, ROW_H), s.NoAimSway,      I18n.T(" 稳定瞄准", " Steady Aim"));
         bool magic= Ui.Toggle("MagicBullet", R(c3 + TOG2_OFF, y3, TOG_W, ROW_H), s.MagicBullet,    I18n.T(" 魔法子弹", " Magic Bullet"));
+        y3 += ROW_ADV;
+        bool sacc = Ui.Toggle("SuperAccuracy", R(c3, y3, TOG_W, ROW_H), s.SuperAccuracy, I18n.T(" 超级精准", " Super Accuracy"));
         y3 += ROW_ADV + SECTION_END_ADV;
-        if (amm != s.InfiniteAmmo || jam != s.NoJam || rec != s.NoRecoil
+        if (amm != s.InfiniteAmmo || jam != s.NoJam || rec != s.NoRecoil || sacc != s.SuperAccuracy
             || sway != s.NoAimSway || nstam != s.NoAimStamina || magic != s.MagicBullet)
         {
-            s.InfiniteAmmo = amm; s.NoJam = jam; s.NoRecoil = rec;
+            s.InfiniteAmmo = amm; s.NoJam = jam; s.NoRecoil = rec; s.SuperAccuracy = sacc;
             s.NoAimSway = sway; s.NoAimStamina = nstam; s.MagicBullet = magic;
-            CheatState.InfiniteAmmo = amm; CheatState.NoJam = jam; CheatState.NoRecoil = rec;
+            CheatState.InfiniteAmmo = amm; CheatState.NoJam = jam; CheatState.NoRecoil = rec; CheatState.SuperAccuracy = sacc;
             CheatState.NoAimSway = sway; CheatState.NoAimStamina = nstam;
             CheatStateESP.MagicBullet = magic;
             s.RequestSave();
