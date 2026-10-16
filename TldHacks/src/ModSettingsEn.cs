@@ -117,16 +117,15 @@ internal static class ModSettingsEn
         if (field == null || field.DeclaringType != typeof(TldHacksSettings)) return;   // 别人的 mod 一律不碰
         try
         {
-            // Settings 构造好以后只有建面板会调到这里,游戏的选项面板已经在初始化,语言表肯定加载好了
-            if (ModMain.Settings != null && !I18n.GameReady) I18n.MarkGameReady();
+            // AddToModSettings 在 OnInitializeMelon 里就会调到这里,早于 GameManager.Awake。
+            // 这时读 Localization.Language 会用空的 bundle 路径加载语言表,失败后游戏整个本地化表为空、进不去(9.8 实测)
             bool useEn = ModMain.Settings != null ? I18n.IsEnglish : _english;
             if (ModMain.Settings != null && !_loggedBuild)
             {
                 _loggedBuild = true;
-                string pref = "", game = "";
+                string pref = "";
                 try { pref = UnityEngine.PlayerPrefs.GetString("Language", ""); } catch { }
-                try { game = Il2Cpp.Localization.Language; } catch { }
-                ModMain.Log?.Msg($"[ModSettingsEn] Mod Settings 面板语言={(useEn ? "English" : "中文")}(存档里的语言='{pref}',游戏当前语言='{game}')");
+                ModMain.Log?.Msg($"[ModSettingsEn] Mod Settings 面板语言={(useEn ? "English" : "中文")}(存档里的语言='{pref}')");
             }
             if (!useEn) return;
 
