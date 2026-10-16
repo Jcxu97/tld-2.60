@@ -16,8 +16,8 @@ using UnityEngine;
 [assembly: MelonInfo(typeof(TldHacks.ModMain), "TldHacks", TldHacks.ModMain.VERSION + ".0", "user")]
 // 程序集版本。csproj 设了 GenerateAssemblyInfo=false,<Version> 不会进 DLL 元数据,
 //   右键看属性一直是 0.0.0.0,玩家对不上自己装的是哪一版,所以这里显式写。
-[assembly: AssemblyVersion(TldHacks.ModMain.VERSION + ".0.0")]
-[assembly: AssemblyFileVersion(TldHacks.ModMain.VERSION + ".0.0")]
+[assembly: AssemblyVersion(TldHacks.ModMain.VERSION + ".0")]
+[assembly: AssemblyFileVersion(TldHacks.ModMain.VERSION + ".0")]
 [assembly: AssemblyInformationalVersion(TldHacks.ModMain.VERSION)]
 #endif
 [assembly: MelonGame("Hinterland", "TheLongDark")]
