@@ -978,9 +978,11 @@ internal static class Patch_FPSWeapon_PlayFireAnimation
 
     internal static bool Prefix(vp_FPSWeapon __instance)
     {
-        bool fullSuppress = CheatState.NoRecoil || CheatState.SuperAccuracy;
+        // 超级精准不管后坐力,它的悬停说明写的就是后坐力另由无后坐力控制
+        bool fullSuppress = CheatState.NoRecoil;
         bool partialSuppress = CheatStateESP.RecoilScale < 0.99f;
         if (!fullSuppress && !partialSuppress) return true;
+        Patch_CameraAnim_NoRecoil.OnFire();
         _gun = null;
         try
         {
@@ -1019,6 +1021,85 @@ internal static class Patch_FPSWeapon_PlayFireAnimation
         }
         catch { }
         _gun = null;
+    }
+}
+
+// 开枪时镜头上跳主要不是后坐弹簧:开枪动画把镜头骨骼往上甩约 11 度再回来,
+//   PlayerCameraAnim.UpdateMainCamera 每帧把骨骼的位移和转角加到镜头上(下一帧开头再把位移减回去)。
+//   开枪后在它读骨骼前,把骨骼偏离开枪前姿势的部分按后坐力强度缩小,读完还原,游戏自己记的偏移就对得上。
+//   开枪 0.25 秒后骨骼回到开枪前姿势并稳住 0.1 秒就放手;最长管 2 秒,到点 0.2 秒渐变放手,镜头不会一下跳回去。
+internal static class Patch_CameraAnim_NoRecoil
+{
+    private const float HoldMax = 2f, FadeTime = 0.2f;
+    internal static int Phase;   // 0 不管,1 压住,2 渐变放手
+    private static float _fireTime, _stableSince, _fadeStart;
+    private static Vector3 _restE, _restP, _realPos;
+    private static Quaternion _realRot;
+    private static Transform _bone;
+
+    internal static void OnFire()
+    {
+        try
+        {
+            if (Phase == 0)
+            {
+                var go = GameManager.GetNewPlayerCameraAnim()?.m_CameraBone;
+                if (go == null) return;
+                _restE = go.transform.localEulerAngles;
+                _restP = go.transform.localPosition;
+            }
+            Phase = 1;
+            _fireTime = Time.time;
+            _stableSince = -1f;
+        }
+        catch { Phase = 0; }
+    }
+
+    internal static void Prefix(PlayerCameraAnim __instance)
+    {
+        _bone = null;
+        if (Phase == 0) return;
+        try
+        {
+            var go = __instance.m_CameraBone;
+            if (go == null) { Phase = 0; return; }
+            var t = go.transform;
+            Vector3 e = t.localEulerAngles, p = t.localPosition;
+            var d = new Vector3(Mathf.DeltaAngle(_restE.x, e.x), Mathf.DeltaAngle(_restE.y, e.y), Mathf.DeltaAngle(_restE.z, e.z));
+            var dp = p - _restP;
+            float now = Time.time;
+            if (Phase == 1)
+            {
+                if (d.sqrMagnitude < 0.01f && dp.sqrMagnitude < 1e-5f)
+                {
+                    if (_stableSince < 0f) _stableSince = now;
+                    else if (now - _stableSince >= 0.1f && now - _fireTime >= 0.25f) { Phase = 0; return; }
+                }
+                else _stableSince = -1f;
+                if (now - _fireTime > HoldMax) { Phase = 2; _fadeStart = _fireTime + HoldMax; }
+            }
+            float w = Phase == 1 ? 1f : 1f - (now - _fadeStart) / FadeTime;
+            if (w <= 0f) { Phase = 0; return; }
+            float keep = 1f - (CheatState.NoRecoil ? 1f : 1f - CheatStateESP.RecoilScale) * w;
+            _realRot = t.localRotation;
+            _realPos = p;
+            _bone = t;
+            t.localRotation = Quaternion.Euler(_restE + d * keep);
+            t.localPosition = _restP + dp * keep;
+        }
+        catch { Phase = 0; _bone = null; }
+    }
+
+    internal static void Postfix()
+    {
+        if (_bone == null) return;
+        try
+        {
+            _bone.localRotation = _realRot;
+            _bone.localPosition = _realPos;
+        }
+        catch { }
+        _bone = null;
     }
 }
 

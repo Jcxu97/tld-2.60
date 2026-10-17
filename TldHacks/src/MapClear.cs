@@ -28,6 +28,8 @@ internal static class MapClear
     private static string _scene;
     private static int _grabbed, _fromContainers, _failed, _contSearched, _contSkipped, _contLogged;
 
+    internal static bool IsArmed(bool missionOnly) => _armedMission == missionOnly && Time.realtimeSinceStartup <= _armedUntil;
+
     public static void Trigger(bool missionOnly)
     {
         try

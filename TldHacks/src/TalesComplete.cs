@@ -139,6 +139,8 @@ internal static class TalesComplete
 
     private static float _armedUntil;
 
+    internal static bool IsArmed() => Time.realtimeSinceStartup <= _armedUntil;
+
     public static void Trigger()
     {
         try

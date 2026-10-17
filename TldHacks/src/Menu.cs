@@ -132,6 +132,8 @@ internal static class Menu
     private static readonly Color CursorPanelHi = new Color32(0x35, 0x37, 0x3C, 0xFF);
     private static readonly Color CursorAccent = new Color32(0x59, 0x9C, 0xFF, 0xFF);
     private static readonly Color CursorAccentDim = new Color(0.35f, 0.61f, 1f, 0.25f);
+    // 开着的开关字色。CursorAccent 在亮面板上只有 4.3:1,这个是 4.9:1
+    private static readonly Color CursorAccentText = new Color32(0x6A, 0xA8, 0xFF, 0xFF);
     private static readonly Color CursorText = new Color32(0xF2, 0xF3, 0xF5, 0xFF);
     private static readonly Color CursorTextMuted = new Color32(0x9B, 0xA1, 0xAB, 0xFF);
     private static readonly Color CursorDanger = new Color32(0xFA, 0x79, 0x70, 0xFF);
@@ -160,6 +162,7 @@ internal static class Menu
     private static Texture2D _cardTex;
     private static Texture2D _lineTex, _trackTex, _thumbTex, _thumbHotTex, _outlineTex, _outlineHotTex;
     private static Texture2D _scrollTrackTex, _scrollThumbTex, _scrollThumbHotTex, _winTex;
+    private static Texture2D _toggleOnTex;
     private static GUIStyle _tabStyle, _tabActiveStyle, _expanderStyle, _metaStyle;
     private static GUIStyle _sliderStyle, _thumbStyle, _vScrollStyle, _vScrollThumbStyle;
     private static float _titleW = 120f;
@@ -175,6 +178,7 @@ internal static class Menu
     private static GUIStyle _buttonStyle;
     private static GUIStyle _buttonActiveStyle;
     private static GUIStyle _buttonDangerStyle;
+    private static GUIStyle _buttonConfirmStyle;   // 点两次才执行的按钮在等第二下时用,红底深字
     private static GUIStyle _toggleStyle;
     private static GUIStyle _statusStyle;
     private static GUIStyle _rowLabelStyle;       // v4.0 物品生成器行 Label 垂直居中,与按钮基线对齐
@@ -231,6 +235,19 @@ internal static class Menu
         return tex;
     }
 
+    // 开着的开关底图:左边 bar 列是强调色,最后一列是面板色。样式的 border.left = bar,
+    //   画的时候只拉伸最后一列,所以蓝条宽度不随按钮宽度变
+    private static Texture2D BarTex(int bar, Color edge, Color fill)
+    {
+        var tex = new Texture2D(bar + 1, 1, TextureFormat.RGBA32, false);
+        tex.hideFlags = HideFlags.HideAndDontSave;
+        tex.filterMode = FilterMode.Point;
+        tex.wrapMode = TextureWrapMode.Clamp;
+        for (int x = 0; x <= bar; x++) tex.SetPixel(x, 0, x < bar ? edge : fill);
+        tex.Apply();
+        return tex;
+    }
+
     private static void InitStyles()
     {
         // v2.7.73 兜底:即使加了 HideAndDontSave,某些 Il2Cpp 下的 texture 仍可能失效。
@@ -280,6 +297,7 @@ internal static class Menu
             _buttonStyle = new GUIStyle(GUI.skin.button);
             _buttonActiveStyle = new GUIStyle(GUI.skin.button);
             _buttonDangerStyle = new GUIStyle(GUI.skin.button);
+            _buttonConfirmStyle = new GUIStyle(GUI.skin.button);
             _toggleStyle = new GUIStyle(GUI.skin.button);
             _statusStyle = new GUIStyle(GUI.skin.label);
             _rowLabelStyle = new GUIStyle(GUI.skin.label);
@@ -349,14 +367,24 @@ internal static class Menu
         ConfigureButton(_buttonStyle, _outlineTex, CursorText, body);
         _buttonStyle.hover = State(_outlineHotTex, CursorText);
         _buttonStyle.active = State(_accentDimTex, CursorText);
-        ConfigureButton(_buttonActiveStyle, _accentTex, CursorText, body);
+        // 选中档位和待确认按钮用深色字:白字在蓝底上只有 2.5:1、红底上 2.4:1,深色字是 6.0 和 6.3
+        ConfigureButton(_buttonActiveStyle, _accentTex, CursorBG, body);
         ConfigureButton(_buttonDangerStyle, _dangerTex, CursorText, body);
-        // 开关:开着浅底蓝字,关着暗一档的底配灰字
+        ConfigureButton(_buttonConfirmStyle, _dangerTex, CursorBG, body);
+        // 开关:开着亮面板蓝字,左边再加一道蓝条,转成灰度也分得清开关;关着暗一档的底配灰字
         ConfigureButton(_toggleStyle, _panelTex, CursorTextMuted, body);
-        _toggleStyle.onNormal = State(_panelHiTex, CursorAccent);
-        _toggleStyle.onHover = State(_panelHiTex, CursorAccent);
+        int bar = Mathf.Max(2, Mathf.RoundToInt(3f * _scale));
+        if (_toggleOnTex == null || _toggleOnTex.width != bar + 1)
+        {
+            if (_toggleOnTex != null) UnityEngine.Object.Destroy(_toggleOnTex);
+            _toggleOnTex = BarTex(bar, CursorAccent, CursorPanelHi);
+        }
+        // 其他状态的底图都是 1x1 纯色,border 改大了照样铺满
+        _toggleStyle.border = new RectOffset(bar, 0, 0, 0);
+        _toggleStyle.onNormal = State(_toggleOnTex, CursorAccentText);
+        _toggleStyle.onHover = State(_toggleOnTex, CursorAccentText);
         _toggleStyle.onActive = State(_accentDimTex, CursorText);
-        _toggleStyle.onFocused = State(_panelHiTex, CursorAccent);
+        _toggleStyle.onFocused = State(_toggleOnTex, CursorAccentText);
 
         // 标签页:未选中只有灰字,悬停和选中垫一层面板色,选中项下方再画蓝色下划线(见 DrawContents)
         ConfigureButton(_tabStyle, null, CursorTextMuted, body);
@@ -494,8 +522,9 @@ internal static class Menu
     {
         style.fontSize = size;
         style.normal = State(bg, text);
-        style.hover = State(bg == _accentTex || bg == _dangerTex ? bg : _accentDimTex, CursorText);
-        style.active = State(bg == _accentTex || bg == _dangerTex ? bg : _accentDimTex, CursorText);
+        bool solid = bg == _accentTex || bg == _dangerTex;
+        style.hover = State(solid ? bg : _accentDimTex, solid ? text : CursorText);
+        style.active = State(solid ? bg : _accentDimTex, solid ? text : CursorText);
         style.focused = State(bg, text);
         style.padding = new RectOffset(8, 8, 0, 0);
         style.border = new RectOffset(1, 1, 1, 1);
@@ -1180,12 +1209,19 @@ internal static class Menu
             GrabAll.Trigger(s.GrabAllRadius, s.GrabAllNotify);
 #if !STORY_EDITION
         y2 += ROW_ADV;
-        if (Ui.Button("Act_ClearMap", R(c2, y2, TOG_W, ROW_H), I18n.T("一键清图", "Clear Map")))
+        // 点两次才执行的按钮:等第二下的 4 秒里按钮变红、换成确认字样
+        string confirm = I18n.T("再点一次确认", "Click to confirm");
+        bool armMap = MapClear.IsArmed(false), armMis = MapClear.IsArmed(true);
+        if (Ui.Button("Act_ClearMap", R(c2, y2, TOG_W, ROW_H), armMap ? confirm : I18n.T("一键清图", "Clear Map"),
+                armMap ? _buttonConfirmStyle : null))
             MapClear.Trigger(false);
-        if (Ui.Button("Act_ClearMapMission", R(c2 + TOG2_OFF, y2, TOG_W, ROW_H), I18n.T("清任务物品", "Mission Items")))
+        if (Ui.Button("Act_ClearMapMission", R(c2 + TOG2_OFF, y2, TOG_W, ROW_H), armMis ? confirm : I18n.T("清任务物品", "Mission Items"),
+                armMis ? _buttonConfirmStyle : null))
             MapClear.Trigger(true);
         y2 += ROW_ADV;
-        if (Ui.Button("Act_TalesFinish", R(c2, y2, TOG_W, ROW_H), I18n.T("完成DLC任务", "Finish DLC Tales")))
+        bool armTales = TalesComplete.IsArmed();
+        if (Ui.Button("Act_TalesFinish", R(c2, y2, TOG_W, ROW_H), armTales ? confirm : I18n.T("完成DLC任务", "Finish DLC Tales"),
+                armTales ? _buttonConfirmStyle : null))
             TalesComplete.Trigger();
         if (Ui.Button("Act_TalesRewards", R(c2 + TOG2_OFF, y2, TOG_W, ROW_H), I18n.T("任务奖励", "Tale Rewards")))
             TalesComplete.GiveRewards();

@@ -320,7 +320,10 @@ internal static class DynamicPatch
 
         // v2.7.89 无后坐力:零化 GunItem 后坐参数(Prefix 归零 + Postfix 恢复)
         Spec(typeof(vp_FPSWeapon), "PlayFireAnimation", typeof(Patch_FPSWeapon_PlayFireAnimation),
-            "Prefix", "Postfix", () => CheatState.NoRecoil || CheatState.SuperAccuracy || CheatStateESP.RecoilScale < 0.99f || CheatStateESP.MagicBullet),
+            "Prefix", "Postfix", () => CheatState.NoRecoil || CheatStateESP.RecoilScale < 0.99f || CheatStateESP.MagicBullet),
+        // 开枪动画甩镜头骨骼的那部分上跳,见 Patch_CameraAnim_NoRecoil
+        Spec(typeof(PlayerCameraAnim), "UpdateMainCamera", typeof(Patch_CameraAnim_NoRecoil),
+            "Prefix", "Postfix", () => CheatState.NoRecoil || CheatStateESP.RecoilScale < 0.99f),
         // Phase 2 NativeDetour pending — keep Harmony for now
         Spec(typeof(vp_FPSCamera), "Update", typeof(Patch_FPSCamera_ClearRecoil),
             "Prefix", "Postfix", () => CheatState.SuperAccuracy || CheatState.NoAimSway),
