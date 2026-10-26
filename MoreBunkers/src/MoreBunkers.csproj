@@ -8,7 +8,7 @@
     <RootNamespace>MoreBunkers</RootNamespace>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <Version>1.2.0</Version>
+    <Version>1.3.0</Version>
 
     <TldRoot>D:\Steam\steamapps\common\TheLongDark</TldRoot>
     <TldMlNet6>$(TldRoot)\MelonLoader\net6</TldMlNet6>

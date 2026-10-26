@@ -3,7 +3,7 @@
 #   python release.py pack [sb e5 st] build + deploy + pack + verify (no args = packages whose DLL changed)
 #   python release.py upload [sb e5 st] move old network files to OLD, upload, check sizes
 # Readme text stays manual: desktop outer readmes, and the readmes inside staging.
-# SCPlusFix (fixed SafehouseCustomizationPlus) is built and packed with sb automatically.
+# SCPlusFix (fixed SafehouseCustomizationPlus) and MoreBunkers are built and packed with sb automatically.
 import glob, hashlib, json, os, re, shutil, subprocess, sys, tempfile, time, zipfile
 
 REPO = r'D:\Github\tld--2.55'
@@ -32,6 +32,10 @@ PKGS = {
 # Fixed Chinese build of SafehouseCustomizationPlus 1.9.4. It ships only inside the sandbox full package.
 SCP = dict(csproj=r'SCPlusFix\SafehouseCustomizationPlus.csproj', out=r'SCPlusFix\bin\Release\SafehouseCustomizationPlus.dll',
            game=r'Mods\SafehouseCustomizationPlus.dll', stage=os.path.join('sb_full', 'Mods', 'SafehouseCustomizationPlus.dll'))
+# MoreBunkers ships inside the sandbox full package since 2026-10-26 (still also a separate zip in 零散MODS)
+MB = dict(csproj=r'MoreBunkers\src\MoreBunkers.csproj', out=r'MoreBunkers\src\bin\Release\MoreBunkers.dll',
+          game=r'Mods\MoreBunkers.dll', stage=os.path.join('sb_full', 'Mods', 'MoreBunkers.dll'))
+EXTRAS = {'scp': SCP, 'mb': MB}
 
 
 def sb_names(v):
@@ -251,11 +255,13 @@ def pack(keys):
         sys.exit('game is running: close it first (DLLs are locked)')
     man = load_manifest()
     built = {k: build(k) for k in (keys or PKGS)}
-    run(['dotnet', 'build', os.path.join(REPO, SCP['csproj']), '-c', 'Release', '-nologo', '-v', 'q'])
-    scp_dll = os.path.join(REPO, SCP['out'])
+    extra = {}
+    for e, spec in EXTRAS.items():
+        run(['dotnet', 'build', os.path.join(REPO, spec['csproj']), '-c', 'Release', '-nologo', '-v', 'q', '-p:NoDeploy=true'])
+        extra[e] = os.path.join(REPO, spec['out'])
     if not keys:
         keys = [k for k, d in built.items() if md5(d) != man.get(k)]
-        if 'sb' not in keys and md5(scp_dll) != man.get('scp'):
+        if 'sb' not in keys and any(md5(d) != man.get(e) for e, d in extra.items()):
             keys.append('sb')
         if not keys:
             print('no DLL changed since last pack')
@@ -264,9 +270,10 @@ def pack(keys):
         dll = built[k] if k in built else build(k)
         deploy(k, dll)
         if k == 'sb':
-            deploy('sb', scp_dll, SCP)
-            shutil.copy2(scp_dll, os.path.join(STAGE, SCP['stage']))
-            man['scp'] = md5(scp_dll)
+            for e, d in extra.items():
+                deploy('sb', d, EXTRAS[e])
+                shutil.copy2(d, os.path.join(STAGE, EXTRAS[e]['stage']))
+                man[e] = md5(d)
         for s in stage_dll(k):
             shutil.copy2(dll, s)
         pack_sb(dll) if k == 'sb' else pack_story(k)

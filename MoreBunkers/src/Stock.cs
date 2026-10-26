@@ -76,6 +76,9 @@ internal static class Stock
             try
             {
                 bool alive = m.Go != null;
+                // 收不进背包的(床、炉子)还在我们根物体下、只是被藏起来(比如安全屋清理杂物)的不算拿走,下次进来照样摆
+                if (alive && !m.Go.activeSelf && m.Go.transform.IsChildOf(_root.transform)
+                    && m.Go.GetComponentInChildren<DecorationItem>(true) == null) continue;
                 bool ours = alive && m.Go.activeInHierarchy && m.Go.transform.IsChildOf(_root.transform);
                 if (!ours)
                 {
@@ -348,6 +351,8 @@ internal static class Stock
             {
                 if (p.Station != null) Stations.Wire(b, p.Station, gos[i]);
                 if (IsMovable(p) && ScpNames.Contains(gos[i].name)) ScpMakeMovable(gos[i]);
+                // 激活后锁可能按存档里的状态又锁上了,再开一次
+                Unlock(gos[i]);
                 if (p.Theme == null) continue;
                 // 双门铁柜、工具柜有好几格,每格都要存;物资只装第一格
                 var cs = gos[i].GetComponentsInChildren<Container>(true);
@@ -413,6 +418,18 @@ internal static class Stock
     }
 
     internal static string BoxKey(BunkerDef b, int i, Piece p) => $"{b.Id}/box/{i}/{p.F}";
+
+    // 原版铁柜带锁,会按几率锁上,锁的状态还跟着我们固定的 GUID 进存档;我们摆的柜子一律开着
+    private static void Unlock(GameObject go)
+    {
+        foreach (var l in go.GetComponentsInChildren<Lock>(true))
+        {
+            if (l == null) continue;
+            l.m_ChanceLocked = 0f;
+            l.m_LockStateRolled = true;
+            l.m_LockState = LockState.Unlocked;
+        }
+    }
 
     // 1.0 的签名把数量也算进去了,1.1 只算摆件。两版摆件顺序一样,记录按序号改名接着用,地堡不重摆
     private static void FromV1(BunkerDef b, string oldSig, string sig, Layout L)
@@ -628,6 +645,13 @@ internal static class Stock
         string key = $"{b.Id}/{sig}/{i}";
         bool movable = IsMovable(p);
         string pname = PrefabName(p, f);
+        // 床拿不进背包也拆不掉,记成"拿走了"是以前被藏起来时误记的,删掉记录照常摆
+        if (movable && p.Station == "bed" && SaveData.Current.handed.TryGetValue(key, out var bv) && !HandedPose(bv, out _, out _, out _))
+        {
+            SaveData.Current.handed.Remove(key);
+            saved = true;
+            ModMain.Log?.Warning($"[MoreBunkers] {key} {p.F}: was marked as taken, putting the bed back");
+        }
         if (movable && SaveData.Current.handed.TryGetValue(key, out var hv))
         {
             // 拿进背包或拆掉了,或者游戏已经按它的存档放回来了:都不再摆
@@ -667,8 +691,11 @@ internal static class Stock
             string n = m.GetIl2CppType().Name;
             bool keep = movable ? (keepAll ? true : Array.IndexOf(KeepMovable, n) >= 0)
                                 : (Array.IndexOf(StripAlways, n) < 0 && (keepAll || n == "GearPlacePoint" || n == "ObjectGuid"));
+            // 带 JunkTag 的会被安全屋"清理杂物"藏掉
+            if (n == "JunkTag") keep = false;
             if (!keep) UnityEngine.Object.DestroyImmediate(m);
         }
+        Unlock(root);
         if (movable && root.GetComponent<ObjectGuid>() == null) ObjectGuid.MaybeAttachObjectGuidAddOrReplace(root, Stations.MakeGuid($"{b.Guid}/{i}/root"));
         var guids = root.GetComponentsInChildren<ObjectGuid>(true);
         for (int k = 0; guids != null && k < guids.Count; k++)

@@ -3,7 +3,7 @@ using Il2Cpp;
 using MelonLoader;
 using UnityEngine;
 
-[assembly: MelonInfo(typeof(MoreBunkers.ModMain), "MoreBunkers", "1.2.0", "user")]
+[assembly: MelonInfo(typeof(MoreBunkers.ModMain), "MoreBunkers", "1.3.0", "user")]
 [assembly: MelonGame("Hinterland", "TheLongDark")]
 [assembly: MelonAdditionalDependencies("ModSettings", "ModData")]
 
@@ -24,7 +24,7 @@ public class ModMain : MelonMod
         Log = LoggerInstance;
         Settings = new Settings();
         Settings.AddToModSettings("更多地堡");
-        Log.Msg($"MoreBunkers 1.2.0 loaded | enabled {Settings.Enabled} | hard modes {Settings.OnHardModes} | info key {Settings.InfoKey}");
+        Log.Msg($"MoreBunkers 1.3.0 loaded | enabled {Settings.Enabled} | hard modes {Settings.OnHardModes} | info key {Settings.InfoKey}");
     }
 
     // 在户外改了"启用":打开马上摆出这张图上的舱口,关掉马上拿走
