@@ -283,7 +283,10 @@ def pack(keys):
 
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-NET_ROOT = '1811aa2992d54afb9febfd56dd12a301'
+# 2026-10-28 the user moved everything into TLD V2.58 Hack. Sandbox packages go to both roots (TLD_NET_ROOT=v255 for the old one).
+NET_ROOTS = {'v258': ('0a583d04bfed47cd9c7ce2235c20e7d5', 'TLD V2.58 Hack'),
+             'v255': ('1811aa2992d54afb9febfd56dd12a301', 'TLD V2.55 HACK')}
+NET_ROOT, NET_ROOT_NAME = NET_ROOTS[os.environ.get('TLD_NET_ROOT', 'v258')]
 NET_OLD = '6636f71049c9406fbe95a8b5c410763d'
 NET_STORY = 'c4a2c414862a42e08adf5b8fdef57596'
 NET_SUB = {'e5': 'e5a5e3c68b584e298da17a8799830a94', 'st': '1cef7e23cdcd45a9b6a6b6f1c3a25a89'}
@@ -300,17 +303,38 @@ def bh(code, timeout=600):
     sys.exit(f'browser-harness failed:\n{r.stdout[-3000:]}\n{r.stderr[-3000:]}')
 
 
+# 2026-10-29 the user fixed the V2.58 layout: numbered folders with stable fids. A new version renames them.
+#   key: (fid, folder name, prefixes of old package files to retire)
+def net_folders(v):
+    return {
+        'min': ('3d6edcfec0e34dfe925f7bd2df94a407', f'1_TldHacks-v{v}最小安装包_只有修改器', ['TldHacks-v']),
+        'full': ('b54013b80c034854963a6c6fd99bd694', f'1_TldHacks-v{v}完整版_带其他mods例如地图', ['材质包备份.']),
+        'ul': ('7fef6059be0f4e719d484a4aaaed0736', f'2_TldHacks-v{v}终极版_更多MOD食物衣服_ZHAOCHUN授权同款适配最新铁路DLC',
+               ['TldHacks-v', '终极版材质包备份.']),
+    }
+
+
+def ul_dir(v):
+    return os.path.join(DESK, f'V{v}终极版_我自己在用的全部mods')
+
+
 def upload_targets(keys):
     # [(folder key, [local files]), ...]; folder key is resolved to a fid inside the browser
     out = []
+    v = sb_version()
     for k in keys:
         if k == 'sb':
-            n = sb_names(sb_version())
-            out.append(('root', [os.path.join(DESK, n['min_cn'])]))
-            out.append(('full:' + n['net_full'], sorted(glob.glob(os.path.join(n['full_dir'], '材质包备份.0*')))))
+            n = sb_names(v)
+            out.append(('min', [os.path.join(DESK, n['min_cn'])]))
+            out.append(('full', sorted(glob.glob(os.path.join(n['full_dir'], '材质包备份.0*')))))
+        elif k == 'ul':
+            d = ul_dir(v)
+            out.append(('ul', sorted(glob.glob(os.path.join(d, '终极版材质包备份.0*'))) + [os.path.join(d, '终极版_安装说明.txt')]))
         else:
             p = PKGS[k]
-            out.append((k, [os.path.join(p['dir'], p['bin']), os.path.join(p['dir'], p['readme'])]))
+            # 2026-10-28 夸克转存时把整个 剧情材质包.bin 过滤掉了,分卷没事,所以只传分卷
+            vols = sorted(glob.glob(os.path.join(p['dir'], p['vol'] + '.0*')))
+            out.append((k, vols + [os.path.join(p['dir'], p['readme'])]))
     return out
 
 
@@ -324,31 +348,27 @@ def upload(keys):
 plan = {json.dumps(plan, ensure_ascii=False)}
 root = ls('{NET_ROOT}')
 story = ls('{NET_STORY}')
-names = {{'{NET_ROOT}': 'TLD V2.55 HACK'}}
+names = {{'{NET_ROOT}': {json.dumps(NET_ROOT_NAME, ensure_ascii=False)}}}
 for i in root + story: names[i['fid']] = i['name']
 oldbox, moved, res = None, [], {{}}
 def box():
     global oldbox
     if oldbox is None: oldbox = mkdir('{NET_OLD}', {json.dumps(stamp, ensure_ascii=False)})
     return oldbox
+folders = {json.dumps(net_folders(sb_version()), ensure_ascii=False)}
 for key, files in plan:
-    if key == 'root':
-        chain = ['{NET_ROOT}']
-        stale = [i for i in root if not i['dir'] and (i['name'] in files or '最小安装包' in i['name'])]
-    elif key.startswith('full:'):
-        want = key[5:]
-        hit = [i for i in root if i['dir'] and i['name'] == want]
-        fid = hit[0]['fid'] if hit else mkdir('{NET_ROOT}', want)
+    if key in folders:
+        fid, want, prefixes = folders[key]
+        if names.get(fid) != want:
+            rename(fid, want); moved.append('rename ' + str(names.get(fid)) + ' -> ' + want)
         names[fid] = want
-        olddirs = [i for i in root if i['dir'] and '完整版' in i['name'] and i['name'] != want]
-        mv([i['fid'] for i in olddirs], box()); moved += [i['name'] for i in olddirs]
         chain = ['{NET_ROOT}', fid]
         # 分卷数可能变少,同名的之外旧分卷也挪走,免得新旧分卷混在一起
-        stale = [i for i in ls(fid) if not i['dir'] and (i['name'] in files or i['name'].startswith('材质包备份.'))]
+        stale = [i for i in ls(fid) if not i['dir'] and (i['name'] in files or any(i['name'].startswith(p) for p in prefixes))]
     else:
         sub = {json.dumps(NET_SUB)}[key]
         chain = ['{NET_ROOT}', '{NET_STORY}', sub]
-        stale = [i for i in ls(sub) if not i['dir'] and i['name'] in files]
+        stale = [i for i in ls(sub) if not i['dir'] and (i['name'] in files or i['name'].endswith('.bin'))]
     mv([i['fid'] for i in stale], box() if stale else None); moved += [i['name'] for i in stale]
     res[key] = dict(fid=chain[-1], url=url_for([(f, names[f]) for f in chain]))
 close_tab()

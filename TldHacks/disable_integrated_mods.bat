@@ -73,6 +73,8 @@ call :mv StackManager
 call :mv GfxBoost
 call :mv LightCull
 call :mv DarkerNights
+call :mv FeatSettings
+call :mv ItemRarities
 
 echo.
 echo ================================================

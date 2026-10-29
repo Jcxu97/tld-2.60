@@ -191,7 +191,16 @@ internal static class Ui
         }
     }
 
-    // 一块横跨几列的卡片会同时关掉上面几列的卡片,那是一排结束,这几块也拉齐底边
+    // 几列底边差不到一行时拉齐;差一行以上就不拉,免得卡片底下撑出一截空框
+    private const float ALIGN_MAX = 32f;
+
+    private static void Align(ref OpenCard c, float bottom)
+    {
+        float gap = bottom - c.Bottom;
+        if (gap > 0f && gap <= Mathf.Min(ALIGN_MAX, 0.5f * (c.Bottom - c.Top))) c.Bottom = bottom;
+    }
+
+    // 一块横跨几列的卡片会同时关掉上面几列的卡片,那是一排结束
     private static void CloseCards(float x, float w)
     {
         float bottom = 0f;
@@ -201,25 +210,24 @@ internal static class Ui
             var c = _cards[i];
             if (x < c.X + c.W && c.X < x + w) { bottom = Mathf.Max(bottom, c.Bottom); n++; }
         }
-        if (n == 0) return;
         for (int i = _cards.Count - 1; i >= 0; i--)
         {
             var c = _cards[i];
             if (x < c.X + c.W && c.X < x + w)
             {
-                if (n > 1) c.Bottom = bottom;
+                if (n > 1) Align(ref c, bottom);
                 Save(c);
                 _cards.RemoveAt(i);
             }
         }
     }
 
-    // 这时还开着的就是每列最后一块卡片,把它们拉到同一个底边,几列下沿对齐
+    // 这时还开着的就是每列最后一块卡片
     internal static void EndCards()
     {
         float bottom = 0f;
         for (int i = 0; i < _cards.Count; i++) bottom = Mathf.Max(bottom, _cards[i].Bottom);
-        for (int i = 0; i < _cards.Count; i++) { var c = _cards[i]; c.Bottom = bottom; Save(c); }
+        for (int i = 0; i < _cards.Count; i++) { var c = _cards[i]; Align(ref c, bottom); Save(c); }
         _cards.Clear();
         _cardAlpha = 1f;
         GUI.color = Color.white;
@@ -270,7 +278,9 @@ internal static class Ui
         ["SpeedMultiplier"] = new[] { "整个游戏按这个倍率运行,时间、动物和天气一起变快或变慢。1.0x 是原版。", "The whole game runs at this rate. Time, animals and weather all go faster or slower. 1.0x is vanilla." },
         ["Act_GrabNow"] = new[] { "马上把半径内的物品收进背包。开着(不捡丢物)时,自己丢在地上的东西不会被收走。", "Puts all items within the radius into your backpack now. When Skip Own Drops is on, items that you dropped stay on the ground." },
         ["Stack_AddComponent"] = new[] { "给咖啡、茶、胡萝卜、土豆等物品加上堆叠功能。具体物品在 ModSettings 里设置。", "Makes items such as coffee, tea, carrots and potatoes stack. Set the item list in ModSettings." },
-        ["Act_ClearMap"] = new[] { "把当前地图上所有散落物品和容器里的东西全部收进背包,点两次才开始,收的时候再点一次停。只收当前已加载的场景,室内要进去再点。尸体、保险箱、上锁的容器都收,不管超重。你自己放进箱子或丢在地上的东西不收(进过你背包的都算),任务物品和任务容器也不收,任务物品用右边的按钮。", "Moves all loose items and container contents on this map to your backpack. Click twice to start. Click again to stop. Only the loaded scene is cleared, so go inside a building to clear it. Corpses, safes and locked containers are included. Weight is not checked. Items that you put in a container or drop are not taken. This includes all items that were in your backpack before. Mission items and mission containers are not taken. Use the button on the right for mission items." },
+        ["Act_HarvestCarcasses"] = new[] { "把当前地图上所有动物尸体的肉、皮、内脏全部收进背包,重量和状态按原版算。任务尸体不碰,不管超重。只管当前已加载的场景,采集时再点一次停。", "Puts the meat, hide and guts of all animal carcasses on this map into your backpack. Weight and condition follow the game rules. Mission carcasses are not touched. Weight is not checked. Only the loaded scene is used. Click again to stop." },
+        ["Act_HarvestPlants"] = new[] { "把当前地图上所有能采的植物采完收进背包,和手动采集一样。只管当前已加载的场景,采集时再点一次停。", "Harvests all plants on this map into your backpack, the same as a manual harvest. Only the loaded scene is used. Click again to stop." },
+        ["Act_ClearMap"] =new[] { "把当前地图上所有散落物品和容器里的东西全部收进背包,点两次才开始,收的时候再点一次停。只收当前已加载的场景,室内要进去再点。尸体、保险箱、上锁的容器都收,不管超重。你自己放进箱子或丢在地上的东西不收(进过你背包的都算),任务物品和任务容器也不收,任务物品用右边的按钮。", "Moves all loose items and container contents on this map to your backpack. Click twice to start. Click again to stop. Only the loaded scene is cleared, so go inside a building to clear it. Corpses, safes and locked containers are included. Weight is not checked. Items that you put in a container or drop are not taken. This includes all items that were in your backpack before. Mission items and mission containers are not taken. Use the button on the right for mission items." },
         ["Act_ClearMapMission"] = new[] { "慎用,可能产生 bug!把当前地图上的任务物品和任务容器里的东西收进背包,点两次才开始。你自己放进去的东西不收。容器不会标成已搜刮,之后还要自己打开一次,让任务照常推进。", "Use with care. This can cause bugs! Moves mission items and mission container contents on this map to your backpack. Items that you put in a container are not taken. Click twice to start. Containers stay unsearched, so open them once yourself to let the mission continue." },
         ["Act_TalesFinish"] = new[] { "生存模式专用,要装外域传说 DLC。把三个外域传说任务一次做完:六座发射塔全部修好通电,隐藏地堡和补给点全部显示出来,任务道具发进背包,任务门打开,徽章和专长照常解锁。地堡里的物资不发,留在原地自己去拿。点两次才开始,开始前自动备份当前存档,大约要一分钟,期间可以照常走动、切图。还没加载的地图要走进去才会显示出来。结束时任务状态会写进日志,搜 [Tales]。", "Survival only. Needs the Far Territory DLC. Finishes all three Tales at once. All six transmitters are repaired and switched on. All hidden bunkers and caches are uncovered. Tale items go into your backpack. Tale doors are unlocked. Badges and feats unlock as usual. Bunker loot stays where it is, so go and get it. Click twice to start. The current save is backed up first. Maps that are not loaded update when you go there." },
         ["Act_TalesRewards"] = new[] { "把三个外域传说任务路线上固定能拿到的装备发进背包,箱子里随机刷的不算。Tale 1:手持短波,Alpha 地堡的手电和睡袋,Gamma 地堡抽屉里的 6 发步枪子弹,Omega 地堡的优质冬季外套、面罩、3 支应急兴奋剂和烹饪书。Tale 2:选矿厂的呼吸面罩和 6 个滤罐、断线钳、2 个长效手电和木工工具,矿洞里的矿工裤、2 捆现金、金块和两盒子弹。Tale 3:Omega 隐藏房间的战术夹克、保安队长证件、鲁迪格的手表,工头避难所的三盒胶卷。另外按任务主题加送:战术手套、羽绒睡袋、矿工头盔夹克和靴子、探洞者煤油灯、工头工具腰带、相机、保温杯。背包里已经够数的不再发,不管超重。", "Puts the fixed gear from the three Tales into your backpack. Random container loot is not included. Tale 1: handheld shortwave, flashlight and bedroll from Bunker Alpha, 6 rifle rounds from Bunker Gamma, and the quality winter coat, balaclava, 3 emergency stims and cooking book from Bunker Omega. Tale 2: respirator with 6 canisters, bolt cutters, 2 long-lasting flashlights and woodworking tools from the concentrator, and miner's pants, 2 cash bundles, a gold nugget and two ammo boxes from the mine. Tale 3: tactical jacket, security chief ID and Rudiger's watch from the hidden room in Bunker Omega, and three film boxes from the foreman's refuge. Extra items that match the Tales are also added: tactical gloves, down bedroll, miner's helmet, jacket and boots, spelunker's lamp, foreman's tool belt, camera and insulated flask. Items that you already have enough of are skipped. Weight is not checked." },
@@ -291,6 +301,9 @@ internal static class Ui
         ["InfiniteDurability"] = new[] { "物品和衣物不掉耐久。", "Items and clothing do not lose condition." },
         ["NoWetClothes"] = new[] { "衣物不会变湿。", "Clothing does not get wet." },
         ["LampFuelNoDrain"] = new[] { "油灯不消耗燃油。", "The lantern uses no fuel." },
+        ["Train_NoBreak"] = new[] { "火车各部件不掉状态,已经坏了的直接修满,锅炉不会爆炸。", "Train parts do not lose condition. Damaged parts are repaired to full. The boiler does not explode." },
+        ["Train_KeepHighGear"] = new[] { "锅炉点着时蒸汽压力一直满,二档一直能用,不会掉速。刹车和下车仍然会回空挡。", "Steam pressure stays full while the boiler is lit, so second gear always works at full speed. The brake and leaving the train still set neutral." },
+        ["Train_FullFuel"] = new[] { "火车的鲸油和水一直是满的。", "The train whale oil and water tanks stay full." },
         ["FlaskNoHeatLoss"] = new[] { "保温瓶里的饮品不会变凉。", "Drinks in the flask do not cool down." },
         ["FlaskInfiniteVol"] = new[] { "保温瓶没有容量上限。", "The flask has no capacity limit." },
         ["FlaskAnyItem"] = new[] { "保温瓶可以装所有饮品。", "The flask accepts all drinks." },
@@ -354,6 +367,7 @@ internal static class Ui
         ["UT_GlowingDecals"] = new[] { "喷漆标记在黑暗中发光。", "Spray paint marks glow in the dark." },
         ["UT_TravoisOverrideMovement"] = new[] { "雪橇可以拖进平时不让进的区域。", "You can pull the travois into areas that usually block it." },
         ["UT_TravoisOverrideInteraction"] = new[] { "拖着雪橇时也能和物体互动。", "You can interact with objects while you pull the travois." },
+        ["Spawner_Splitter"] = new[] { "按住上下拖,调整快速传送和物品生成器各占多高。传送列表里用滚轮翻。", "Hold and drag up or down to change the height of Quick Teleport and Item Spawner. Use the mouse wheel to scroll the teleport list." },
         ["UT_ToiletWaterPotable"] = new[] { "马桶里的水可以直接喝,不用烧开。", "Toilet water is safe to drink. You do not have to boil it." },
         ["UT_ConsistantDressingWeight"] = new[] { "老人须地衣绷带的重量统一为 0.03 kg。", "Sets the weight of Old Man's Beard dressings to 0.03 kg." },
         ["UT_RemoveHeadacheDebuff"] = new[] { "桃子派、玫瑰果派、水果粥、桃子煎饼吃完不再头疼。", "Peach pie, rose hip pie, fruit porridge and peach pancakes no longer cause a headache." },
@@ -368,6 +382,14 @@ internal static class Ui
         ["SodaOn"] = new[] { "这种汽水是否减少疲劳。", "Sets whether this soda reduces fatigue." },
         ["SodaPct"] = new[] { "喝下后立即减少的疲劳百分比。", "The fatigue percentage that one soda removes at once." },
         ["SodaDur"] = new[] { "提神效果持续的分钟数(游戏内时间)。", "The duration of the effect in game minutes." },
+        // 物品刷出页按 prefab 名取说明
+        ["GEAR_TechnicalBackpack"] = new[] { "原版高科技背包。穿上后提高负重上限。", "The vanilla Technical Backpack. Wear it to carry more weight." },
+        ["GEAR_SatchelM"] = new[] { "CampingTools 模组的巡游者背包,装在配饰栏。穿上后负重上限加 30 kg。", "Satchel from the CampingTools mod. It goes in the accessory slot. Wear it to carry 30 kg more." },
+        ["Feat_Enable"] = new[] { "勾上就是当前存档启用这个勋章,立即生效,随存档保存。没解锁的会先解锁。", "Select to use this feat in the current save. It applies at once and stays in the save. A locked feat is unlocked first." },
+        ["Feat_EnableAll"] = new[] { "当前存档启用全部 13 个勋章。", "Use all 13 feats in the current save." },
+        ["Feat_DisableAll"] = new[] { "当前存档取消全部勋章,解锁进度不受影响。", "Remove all feats from the current save. Unlock progress does not change." },
+        ["Feat_Bonus"] = new[] { "勋章启用后的加成数值。拖动后立即生效,所有存档通用。", "Sets the bonus that the feat gives when it is in use. It applies at once to all saves." },
+        ["Feat_BonusReset"] = new[] { "所有加成数值改回原版。", "Sets all bonus values back to vanilla." },
         ["DeerMeatMultMin"] = new[] { "新打的鹿在下限和上限之间随机取一个出肉倍率。原版鹿出肉 6-9 kg,真实鹿约 18-25 kg。熊、驼鹿等不受影响。", "Each new deer gets a random meat multiplier between Min and Max. A vanilla deer gives 6-9 kg. A real deer gives about 18-25 kg. Bear, moose and other animals do not change." },
         ["DeerMeatMultMax"] = new[] { "新打的鹿在下限和上限之间随机取一个出肉倍率。已有的鹿尸体不变。", "Each new deer gets a random meat multiplier between Min and Max. Carcasses that exist now do not change." },
         ["AlwaysWarm"] = new[] { "体温一直保持满值,不会失温。", "Your body temperature stays full. You do not freeze." },
@@ -387,6 +409,7 @@ internal static class Ui
         ["CrosshairStone"] = new[] { "拿石头准备投掷时显示准星。", "Shows the crosshair when you aim a stone." },
         ["CrosshairRifle"] = new[] { "步枪瞄准时显示准星。", "Shows the crosshair when you aim a rifle." },
         ["CrosshairBow"] = new[] { "弓瞄准时显示准星。", "Shows the crosshair when you aim a bow." },
+        ["CrosshairAlways"] = new[] { "不瞄准也一直显示准星。", "Shows the crosshair at all times, also when you do not aim." },
         ["WalkSpeed"] = new[] { "步行速度倍率。1.0 为原版。", "Walk speed multiplier. 1.0 is vanilla." },
         ["SprintSpeed"] = new[] { "冲刺速度倍率。1.0 为原版。", "Sprint speed multiplier. 1.0 is vanilla." },
         ["CrouchSpeed"] = new[] { "蹲行速度倍率。1.0 为原版。", "Crouch speed multiplier. 1.0 is vanilla." },

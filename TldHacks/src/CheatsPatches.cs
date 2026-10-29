@@ -552,6 +552,12 @@ internal static class Patch_RecipeBook_IsRecipeUnlocked
         if (CheatState.FreeCraft) __result = true;
     }
 }
+
+[HarmonyPatch(typeof(Il2CppTLD.Gear.CausesHeadacheDebuff), "Apply")]
+internal static class Patch_UT_RemoveHeadacheDebuff
+{
+    private static bool Prefix() => !(ModMain.Settings != null && ModMain.Settings.UT_RemoveHeadacheDebuff);
+}
 #endif
 
 // ——— 免费制作扩展:Panel_Crafting 内部材料检查(mod 物品路径) ———
@@ -4467,7 +4473,7 @@ internal static class Patch_GearItem_Awake_CaffeinatedSodas
                 buff.m_DurationHours = DurationHours(s.World_SodaGrapeDuration);
             }
             else if (objName.Contains("GEAR_Soda") && !objName.Contains("GEAR_SodaOrange")
-                     && !objName.Contains("GEAR_SodaGrape") && s.World_SodaSummitEnabled)
+                     && !objName.Contains("GEAR_SodaGrape") && !objName.Contains("GEAR_SodaEnergy") && s.World_SodaSummitEnabled)
             {
                 var buff = ((Component)__instance).gameObject.AddComponent<FatigueBuff>();
                 __instance.m_FatigueBuff = buff;

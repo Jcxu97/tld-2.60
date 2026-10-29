@@ -78,6 +78,18 @@ internal static class Teleport
         new Waypoint("断开的铁路·维修站",  "TracksRegion",             588.20f, 199.00f,  565.50f, "Broken Railroad · Maint."),
         // W —— WhalingStationRegion(荒芜据点)
         new Waypoint("荒芜据点·孤寂灯塔",  "WhalingStationRegion",     728.00f,  46.80f,  766.60f, "Desolation Point · Lighthouse"),
+        // 2026-10 铁路 DLC(用户实测),DLC 的点一律排在原版后面
+        // I —— IslandATrackSection1 到 6(安娜岛轨道段)
+        new Waypoint("安娜岛第一轨道段·铁路站场", "IslandATrackSection1", -1434.77f, 120.10f,  517.89f, "Anna Island Track 1 · Rail Yard"),
+        new Waypoint("安娜岛第二轨道段·补给站",   "IslandATrackSection2", -1210.57f, 126.35f,  690.39f, "Anna Island Track 2 · Supply Depot"),
+        new Waypoint("安娜岛第二轨道段·交错路段", "IslandATrackSection2",   611.74f, 114.28f,  569.40f, "Anna Island Track 2 · Crossing"),
+        new Waypoint("安娜岛第三轨道段·补给站",   "IslandATrackSection3",   616.40f, 123.31f,  680.68f, "Anna Island Track 3 · Supply Depot"),
+        new Waypoint("安娜岛第四轨道段·铁路站场", "IslandATrackSection4",  -214.98f, 109.46f,  538.14f, "Anna Island Track 4 · Rail Yard"),
+        new Waypoint("安娜岛第五轨道段·铁路站场", "IslandATrackSection5", -1064.65f, 114.05f,  511.35f, "Anna Island Track 5 · Rail Yard"),
+        new Waypoint("安娜岛第六轨道段·火车候车亭", "IslandATrackSection6",   474.62f, 114.73f,  285.85f, "Anna Island Track 6 · Train Shelter"),
+        // P —— PortRemnantRegion(遗迹港)
+        new Waypoint("遗迹港·灯塔",        "PortRemnantRegion",        250.75f,  29.91f,  673.68f, "Port Remnant · Lighthouse"),
+        new Waypoint("遗迹港·小屋",        "PortRemnantRegion",         85.85f,  12.73f, -301.38f, "Port Remnant · Cabin"),
     };
 
     // 正解:PlayerManager.TeleportPlayer(Vector3, Quaternion) 是公开方法。

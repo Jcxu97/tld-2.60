@@ -109,7 +109,7 @@ internal static class Patch_DroppedObjectOrientation
 #if STORY_EDITION
                 var gi = StoryShim.LoadGearItemPrefab(name);
 #else
-                var gi = GearItem.LoadGearItemPrefab(name);
+                var gi = GearPrefab.Load(name);
 #endif
                 if (gi == null) continue;
                 var posDummy = gi.gameObject.transform.FindChild("DropDummy");
@@ -118,7 +118,7 @@ internal static class Patch_DroppedObjectOrientation
 #if STORY_EDITION
             var matches = StoryShim.LoadGearItemPrefab("GEAR_WoodMatches");
 #else
-            var matches = GearItem.LoadGearItemPrefab("GEAR_WoodMatches");
+            var matches = GearPrefab.Load("GEAR_WoodMatches");
 #endif
             if (matches != null)
             {

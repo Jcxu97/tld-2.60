@@ -5,7 +5,7 @@ namespace TldHacks;
 
 internal static partial class MenuTweaks
 {
-    // 灯火 & 视觉 tab 的视觉部分:ca 列放室内灯光 + 准星,cb 列放视角 & FOV。
+    // 地图 & 界面页的视觉部分:ca 列放室内灯光 + 准星,cb 列放视角 & FOV。
     internal static bool DrawVisualCards(Func<float, float, float, float, Rect> R, TldHacksSettings s,
         float ca, float cb, ref float ya, ref float yb)
     {
@@ -53,6 +53,9 @@ internal static partial class MenuTweaks
         if (csStone != s.CrosshairStone) { s.CrosshairStone = csStone; changed = true; }
         if (csRifle != s.CrosshairRifle) { s.CrosshairRifle = csRifle; changed = true; }
         if (csBow != s.CrosshairBow) { s.CrosshairBow = csBow; changed = true; }
+        ya += ROW_ADV;
+        bool csAlways = Ui.Toggle("CrosshairAlways", R(ca, ya, COL_TOG_W3, ROW_H), s.CrosshairAlways, I18n.T(" 永久准星", " Always Show"), ToggleStyle ?? GUI.skin.toggle);
+        if (csAlways != s.CrosshairAlways) { s.CrosshairAlways = csAlways; changed = true; }
         ya += ROW_ADV + SECTION_END_ADV;
 
         yb = SectionCol(R, cb, yb, COL_W3, I18n.T("视角 & FOV", "View & FOV"));

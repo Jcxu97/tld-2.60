@@ -44,6 +44,10 @@ def mv(fids, to):
         q('file/move', dict(action_type=1, to_pdir_fid=to, filelist=fids, exclude_fids=[]))
 
 
+def rename(fid, name):
+    q('file/rename', dict(fid=fid, file_name=name))
+
+
 def url_for(chain):
     # chain: [(fid, name), ...] from the top HACK folder down
     return 'https://pan.quark.cn/list#/list/all/' + '/'.join(f'{f}-{n}' for f, n in chain)

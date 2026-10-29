@@ -12,13 +12,16 @@ internal static class ModSettingsEnData
     internal static readonly string[] Names =
     {
         "LanguageMode", "Language",   // Language / 语言
+        "StackingEnabled", "UI stacking",   // UI 堆叠
         "FlyHotkey", "Fly toggle hotkey",   // Fly toggle hotkey(飞行)
+        "MenuPauseGame", "Pause game when menu opens",   // Pause game when menu opens(开修改器时自动暂停)
         "MenuScale", "Menu UI Scale (2-3 for 4K)",   // Menu UI Scale(菜单缩放,4K 可设 2-3)
         "MenuAutoScaled", "Menu auto-scaled once",   // Menu auto-scaled once(已按屏幕自动定过缩放)
         "MenuWidth", "Menu Width (drag right edge)",   // Menu Width(菜单宽度,拖拽右边缘调整)
         "MenuHeight", "Menu Height (drag bottom edge)",   // Menu Height(菜单高度,拖拽下边缘调整)
         "MenuX", "Menu X Position (auto-saved on drag)",   // Menu X Position(窗口 X,拖动自动存)
         "MenuY", "Menu Y Position (auto-saved on drag)",   // Menu Y Position(窗口 Y,拖动自动存)
+        "SpawnerTeleportH", "Teleport List Height (drag the splitter)",   // Teleport List Height(快速传送列表高度,拖分割栏调整)
         "GodMode", "God Mode",   // God Mode(无敌模式)
         "NoFallDamage", "No Fall Damage",   // No Fall Damage(无坠落伤害)
         "AlwaysWarm", "Always Warm",   // Always Warm(始终温暖)
@@ -205,6 +208,7 @@ internal static class ModSettingsEnData
         "CrosshairStone", "Stone crosshair",   // 石块准星
         "CrosshairRifle", "Rifle crosshair",   // 步枪准星
         "CrosshairBow", "Bow crosshair",   // 弓箭准星
+        "CrosshairAlways", "Permanent crosshair",   // 永久准星
         "QoL_Enabled", "QoL master switch",   // QoL 总开关
         "QoL_NoSaveOnSprain", "No autosave on sprain",   // 扭伤不自动存档
         "QoL_NoSaveOnSprainFalls", "No autosave on fall sprains",   // 坠落扭伤也不存档
@@ -311,6 +315,9 @@ internal static class ModSettingsEnData
         "UT_TravoisOverrideMovement", "Remove movement zone restrictions",   // 解除移动区域限制
         "UT_TravoisOverrideInteraction", "Remove interaction restrictions",   // 解除互动限制
         "UT_FlashInfiniteBattery", "Infinite battery",   // 无限电量
+        "Train_NoBreak", "Train never breaks",   // 火车不会坏
+        "Train_KeepHighGear", "Keep second gear",   // 保持二档
+        "Train_FullFuel", "Fuel and water always full",   // 燃料和水一直满
         "Stack_AddComponent", "Add stackable component",   // 启用堆叠组件添加
         "Stack_UseMaxHP", "Merge using best condition",   // 使用最大状态合并
         "World_BowRepair", "Allow bow repair",   // 允许修复弓
@@ -369,6 +376,7 @@ internal static class ModSettingsEnData
         "CE_TraderCheap", "Trader discount",
         "CE_AuroraLightSteady", "Steady aurora lights",
         "CE_AuroraMute", "Mute aurora sound",
+        "Feat_AllAtNewGame", "Fill all feat slots in a new game",
     };
 
     // ─── Description(悬停说明)。翻译 agent 从 _tools/missing_en.tsv 的 DESC 行填这里 ───
@@ -378,6 +386,7 @@ internal static class ModSettingsEnData
         "DiagUnpatchAll", "Runs UnpatchAll at startup and skips Reconcile, so none of the TldHacks [HarmonyPatch] classes are applied. Requires a game restart. Still stuttering with this on means TldHacks is definitely not the cause; no stutter means the total patch count is the problem, and the next step is moving everything to DynamicPatch.",   // 启动时立即 UnpatchAll + skip Reconcile,TldHacks 的所有 [HarmonyPatch] 零挂载。需重启游戏生效。开了仍卡 = 100% 不是 TldHacks;开了不卡 = 是 patch 总数问题,下一步全迁 DynamicPatch
         "LanguageMode", "Auto follows the game language (English when the game is not in Chinese); Chinese forces Chinese; English forces English. Press the menu hotkey to close and reopen the TldHacks menu for the change to take effect. Restart the game to change the language of this Mod Settings page.",   // Auto = 跟随游戏的语言设置(游戏不是中文 → English);Chinese = 强制中文;English = 强制英文。改完需按菜单热键重开菜单生效。
         "MenuHotkey", "Press this key to open or close the TldHacks menu. The default Tab clashes with the in-game journal key, so F1 or \\ is a better choice.",   // 按此键呼出/关闭 TldHacks 菜单。默认 Tab 会和游戏日志键冲突,建议改成 F1 / \ 等。
+        "MenuPauseGame", "When you open the TldHacks menu with the hotkey, the game opens its ESC pause menu for you. When you close TldHacks, the pause menu closes and the game continues. If you pressed ESC yourself first, TldHacks does not change it.",   // 开修改器时先打开 ESC 暂停菜单,关修改器时一起关掉
         "FlyHotkey", "Press this key to toggle the uConsole fly command. Requires DeveloperConsole.dll to be enabled.",   // 按此键切换 uConsole fly 命令。需要 DeveloperConsole.dll 启用。
         "TrueInvisible", "Animals behave as if they cannot see you and keep wandering, feeding or sleeping; they neither attack nor flee.",   // 动物像看不见你一样,正常闲逛/觅食/睡觉,不扑也不逃
         "NoAimSway", "Combines aim sway, jitter and breathing sway into one toggle. The crosshair holds still, the weapon does not drift and the aiming view does not shake.",   // 合并瞄准晃动/抖动/呼吸晃动。开枪准星不动、武器不晃、瞄准画面不抖
@@ -464,6 +473,7 @@ internal static class ModSettingsEnData
         "RememberBreakdownTool", "The break-down panel preselects the tool you used last time.",   // 拆解面板自动选中上次使用的工具
         "VehicleFreeLook", "Widens how far you can turn the camera while inside a vehicle.",   // 扩大车内视角旋转范围
         "CrosshairEnabled", "Shows an extra crosshair while aiming (stone, rifle, bow).",   // 瞄准时显示额外准星(石头/步枪/弓)
+        "CrosshairAlways", "Shows the crosshair at all times, also when you do not aim.",   // 不瞄准也一直显示准星
         "QoL_NoSaveOnSprainFalls", "Sprains caused by falls also skip the autosave.",   // 坠落引起的扭伤同样不触发自动存档
         "QoL_WakeUpCall", "Adds a wake-up option to the pause menu while you sleep.",   // 暂停菜单里可以选择醒来
         "QoL_BuryCorpses", "Press Alt plus fire on a human body or an animal carcass to bury it.",   // 对人类/动物尸体按 Alt+Fire 埋葬
@@ -483,6 +493,9 @@ internal static class ModSettingsEnData
         "UT_RemoveHeadacheDebuff", "CookedPiePeach, RoseHip, PorridgeFruit and PancakePeach no longer cause a headache.",   // CookedPiePeach/RoseHip/PorridgeFruit/PancakePeach 不再头疼
         "UT_StewFatigueLoss", "Effect value used by CookedStewMeat and CookedStewVegetables.",   // CookedStewMeat/Vegetables 的 Effect 值
         "UT_FlashInfiniteBattery", "The flashlight never runs out of battery.",   // 手电筒永不耗电
+        "Train_NoBreak", "Train parts do not lose condition. The boiler does not explode.",   // 火车各部件不掉状态,锅炉不会爆炸
+        "Train_KeepHighGear", "Steam pressure stays full while the boiler is lit, so second gear always works at full speed.",   // 锅炉点着时蒸汽压力一直满,二档一直能用,不会掉速
+        "Train_FullFuel", "The train whale oil and water tanks stay full.",   // 火车的鲸油和水一直是满的
         "Stack_AddComponent", "Adds a stackable component to selected items such as coffee, tea, carrots and potatoes.",   // 给 Coffee/茶/胡萝卜/土豆等指定物品添加可堆叠
         "Stack_UseMaxHP", "Merged stacks take the higher Condition (eight deer hides all use the best one).",   // 堆叠时按更高 HP 计算(8 张鹿皮按最佳那张)
         "World_BowRepair", "Adds repair options for bows, by hand or at the milling machine.",   // 给弓类武器添加修理/磨坊选项
@@ -539,6 +552,7 @@ internal static class ModSettingsEnData
         "CE_TraderCheap", "The trader always uses the low prices. Normally you need high trust for them.",
         "CE_AuroraLightSteady", "During an aurora, powered lights stay fully on and do not flicker.",
         "CE_AuroraMute", "The aurora hum does not play.",
+        "Feat_AllAtNewGame", "When you start a new game, you can fill all feat slots. The vanilla game sets the limit by difficulty.",
     };
 
     // ─── Section(分组标题) ───
@@ -581,12 +595,14 @@ internal static class ModSettingsEnData
         "UT_DecalOverlap", "UniversalTweaks / Decals",   // UT / 喷漆
         "UT_TravoisDecayBlizzard", "UniversalTweaks / Travois",   // UT / 雪橇
         "UT_FlashInfiniteBattery", "UniversalTweaks / Flashlight",   // UT / 手电筒
+        "Train_NoBreak", "Iron Road DLC / Steam Train",   // 铁路 DLC / 蒸汽火车
         "Stack_AddComponent", "StackManager v1.0.6",   // StackManager / 堆叠管理 v1.0.6
         "World_BowRepair", "Bow Repair",   // Bow Repair / 弓修复
         "World_CaffeinatedSodas", "Caffeinated Sodas",   // Caffeinated Sodas / 苏打提神
         "World_CarcassMoving", "Carcass Moving & Aurora Torch",   // RnStripped / 尸骸搬运&极光点火
         "TT_CapFeelsHigh", "TinyTweaks",   // TinyTweaks / 微调合集
         "CE_SnareSure", "Outdoors & Survival",
+        "Feat_AllAtNewGame", "Feats",
     };
 
     // ─── Choice(下拉项,'|' 分隔,段数必须与原数组一致) ───

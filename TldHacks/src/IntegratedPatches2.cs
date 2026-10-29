@@ -359,14 +359,17 @@ internal static class Patch_Crosshair_Show
             var s = ModMain.Settings;
             if (s == null || !s.CrosshairEnabled) return;
             var pm = GameManager.GetPlayerManagerComponent();
-            if (pm == null || !pm.PlayerIsZooming()) return;
-            var item = pm.m_ItemInHands;
-            if (item == null) return;
+            if (pm == null) return;
 
-            bool show = false;
-            if (s.CrosshairStone && item.m_StoneItem != null) show = true;
-            if (s.CrosshairRifle && item.m_GunItem != null) show = true;
-            if (s.CrosshairBow && item.m_BowItem != null) show = true;
+            bool show = s.CrosshairAlways;
+            if (!show && pm.PlayerIsZooming())
+            {
+                var item = pm.m_ItemInHands;
+                if (item == null) return;
+                if (s.CrosshairStone && item.m_StoneItem != null) show = true;
+                if (s.CrosshairRifle && item.m_GunItem != null) show = true;
+                if (s.CrosshairBow && item.m_BowItem != null) show = true;
+            }
 
             if (show)
             {

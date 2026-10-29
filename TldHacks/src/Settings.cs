@@ -1,4 +1,4 @@
-using ModSettings;
+﻿using ModSettings;
 using UnityEngine;
 
 namespace TldHacks;
@@ -91,6 +91,10 @@ internal class TldHacksSettings : JsonModSettings
     [Description("按此键呼出/关闭 TldHacks 菜单。默认 Tab 会和游戏日志键冲突,建议改成 F1 / \\ 等。")]
     public KeyCode MenuHotkey = KeyCode.Tab;
 
+    [Name("Pause game when menu opens(开修改器时自动暂停)")]
+    [Description("按热键开 TldHacks 菜单时,先替你打开游戏的 ESC 暂停菜单;关修改器时一起关掉,游戏继续。你自己先按过 ESC 的话不会动它。")]
+    public bool MenuPauseGame = true;
+
     [Name("Fly toggle hotkey(飞行)")]
     [Description("按此键切换 uConsole fly 命令。需要 DeveloperConsole.dll 启用。")]
     public KeyCode FlyHotkey = KeyCode.F1;
@@ -122,6 +126,10 @@ internal class TldHacksSettings : JsonModSettings
 
     [Name("Menu Y Position(窗口 Y,拖动自动存)")]
     public float MenuY = 30f;
+
+    [Slider(30f, 600f, 19)]
+    [Name("Teleport List Height(快速传送列表高度,拖分割栏调整)")]
+    public float SpawnerTeleportH = 120f;
 
     // ——— Stacking ———
     [Section("Stacking")]
@@ -998,6 +1006,10 @@ internal class TldHacksSettings : JsonModSettings
     [Name("弓箭瞄准准星")]
     public bool CrosshairBow = false;
 
+    [Name("永久准星")]
+    [Description("不瞄准也一直显示准星")]
+    public bool CrosshairAlways = false;
+
     // ═══════════════════════════════════════════════════════════════════════════
     // v2.8.0  Tab 6: QoL (移植自 QoL.dll + TinyTweaks + SleepWithoutABed + AutoSurvey)
     // ═══════════════════════════════════════════════════════════════════════════
@@ -1348,6 +1360,17 @@ internal class TldHacksSettings : JsonModSettings
     [Description("手电筒永不耗电")]
     public bool UT_FlashInfiniteBattery = false;
 
+    [Section("铁路 DLC / 蒸汽火车")]
+    [Name("火车不会坏")]
+    [Description("火车各部件不掉状态,锅炉不会爆炸")]
+    public bool Train_NoBreak = false;
+    [Name("保持二档")]
+    [Description("锅炉点着时蒸汽压力一直满,二档一直能用,不会掉速")]
+    public bool Train_KeepHighGear = false;
+    [Name("燃料和水一直满")]
+    [Description("火车的鲸油和水一直是满的")]
+    public bool Train_FullFuel = false;
+
     [Section("StackManager / 堆叠管理 v1.0.6")]
     [Name("更多可堆叠")]
     [Description("给 Coffee/茶/胡萝卜/土豆等指定物品添加可堆叠")]
@@ -1401,13 +1424,13 @@ internal class TldHacksSettings : JsonModSettings
     [Choice("5分钟", "10分钟", "15分钟", "30分钟")]
     [Name("橙味持续")]
     public int World_SodaOrangeDuration = 1;
-    [Name("Summit启用")]
+    [Name("尖峰苏打启用")]
     public bool World_SodaSummitEnabled = true;
     [Slider(1f, 15f, 14)]
-    [Name("Summit减疲劳%")]
+    [Name("尖峰苏打减疲劳%")]
     public float World_SodaSummitInitial = 3f;
     [Choice("5分钟", "10分钟", "15分钟", "30分钟")]
-    [Name("Summit持续")]
+    [Name("尖峰苏打持续")]
     public int World_SodaSummitDuration = 0;
     [Name("葡萄味启用")]
     public bool World_SodaGrapeEnabled = true;
@@ -1496,5 +1519,28 @@ internal class TldHacksSettings : JsonModSettings
     [Description("游戏内经过该天数后商人可用。原版天数随难度不同。设为30及以上=完全跟随原版进度(默认),拖低只会让商人提前来,不会推迟")]
     [Slider(1f, 40f, 40)]
     public float TraderArrivalDays = 30f;
+
+    [Section("Feats / 勋章")]
+    [Name("新档可选全部勋章")]
+    [Description("开新档选勋章时把槽位选满(原版按难度限制数量)")]
+    public bool Feat_AllAtNewGame = false;
+
+    // 勋章加成数值,-1 = 不改(用原版值)。只在游戏内菜单调,不进 Mod Settings
+    internal float FeatV_BookSmarts = -1f;
+    internal float FeatV_ColdFusion = -1f;
+    internal float FeatV_EfficientMachine = -1f;
+    internal float FeatV_FireMaster = -1f;
+    internal float FeatV_FreeRunner = -1f;
+    internal float FeatV_SnowWalker = -1f;
+    internal float FeatV_ExpertTrapper = -1f;
+    internal float FeatV_StraightToHeart = -1f;
+    internal float FeatV_BlizzardWalker = -1f;
+    internal float FeatV_NightWalkerDay = -1f;
+    internal float FeatV_NightWalkerNight = -1f;
+    internal float FeatV_MasterHunterSight = -1f;
+    internal float FeatV_MasterHunterSmell = -1f;
+    internal float FeatV_MasterHunterSound = -1f;
+    internal float FeatV_SettledMind = -1f;
+    internal float FeatV_CelestialNavigator = -1f;
 
 }

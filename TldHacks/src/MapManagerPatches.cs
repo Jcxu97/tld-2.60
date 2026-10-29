@@ -76,12 +76,34 @@ internal static class Patch_MapM_MapEnable
                 int opts = 1;
                 if (s.MapM_PlayerArrow) opts |= 4;
                 if (s.MapM_CenterOnPlayer) opts |= 2;
+                // 2026-10 更新新加的开关,原版默认不显示玩家图标
+                if (s.MapM_PlayerArrow) Panel_Map.s_ForceShowPlayerIcon = true;
                 __instance.ResetToNormal((Panel_Map.ResetOpts)opts);
-                if (s.MapM_PlayerArrow) MelonCoroutines.Start(TintNextFrame(__instance));
+                MelonCoroutines.Start(TintNextFrame(__instance));
             }
         }
         catch (Exception ex) { ModMain.Log?.Warning($"[MapM] map open {ex.Message}"); }
         if (s.MapM_HideHarvested) MapMHarvest.Cleanup(__instance);
+    }
+
+    private static bool _forcedLogged;
+    private static UIAtlas _arrowAtlas;
+
+    // 2026-10 更新后玩家图标挂的图集里没有它要的图(ico_map_directional),图标开着也画不出来;
+    // 换成内存里含这张图的图集(实测是 Base Atlas)
+    private static void FixAtlas(UISprite sp)
+    {
+        if (sp == null || sp.GetAtlasSprite() != null) return;
+        if (_arrowAtlas == null || _arrowAtlas.GetSprite(sp.spriteName) == null)
+        {
+            _arrowAtlas = null;
+            foreach (var a in Resources.FindObjectsOfTypeAll<UIAtlas>())
+                if (a != null && a.GetSprite(sp.spriteName) != null) { _arrowAtlas = a; break; }
+            ModMain.Log?.Msg($"[MapM] 玩家图标图集缺 {sp.spriteName},改用 {(_arrowAtlas != null ? _arrowAtlas.name : "none")}");
+        }
+        if (_arrowAtlas == null) return;
+        sp.atlas = _arrowAtlas;
+        sp.MarkAsChanged();
     }
 
     private static IEnumerator TintNextFrame(Panel_Map map)
@@ -91,14 +113,32 @@ internal static class Patch_MapM_MapEnable
         {
             var icon = map?.m_PlayerIcon;
             if (icon == null) yield break;
+            var s = ModMain.Settings;
+            // 2026-10 游戏更新后 ResetToNormal 有条件分支会藏掉玩家图标,图标位置留在旧坐标,居中也跟着偏。
+            // 这里照原版算法(地区名 + 世界坐标换地图坐标)补一次
+            if (!icon.gameObject.activeSelf)
+            {
+                var player = GameManager.GetPlayerTransform();
+                string region = map.GetMapNameOfCurrentScene();
+                if (player != null && !string.IsNullOrEmpty(region))
+                {
+                    icon.localPosition = map.WorldPositionToMapPosition(region, player.position);
+                    icon.localRotation = map.WorldRotationToMapRotation(region, player.rotation);
+                    if (s.MapM_PlayerArrow) icon.gameObject.SetActive(true);
+                    if (s.MapM_CenterOnPlayer) map.CenterOnPoint(icon.localPosition);
+                    if (!_forcedLogged) { _forcedLogged = true; ModMain.Log?.Msg($"[MapM] 原版藏了玩家图标,已补上 region={region} pos={icon.localPosition}"); }
+                }
+            }
+            if (!s.MapM_PlayerArrow) yield break;
             var sp = icon.GetComponent<UISprite>();
+            FixAtlas(sp);
             if (sp != null) sp.color = Color.red;
             var tx = icon.GetComponent<UITexture>();
             if (tx != null) tx.color = Color.red;
             var sr = icon.GetComponent<SpriteRenderer>();
             if (sr != null) sr.color = Color.red;
         }
-        catch { }
+        catch (Exception ex) { ModMain.Log?.Warning($"[MapM] coroutine {ex.Message}"); }
     }
 }
 
@@ -312,12 +352,17 @@ internal static class Patch_MapM_BunkerDistribute
         foreach (var t in Types)
         {
             Il2CppTLD.Scenes.SceneSet ss = null;
-            try
+            // 2026-10 游戏更新后地址从完整路径改成了短名字,两个都试
+            foreach (var key in new[] { $"PrepperCache{t}", $"Assets/ScriptableObjects/Scenes/Sets/Interiors/PrepperCache{t}.asset" })
             {
-                ss = UnityEngine.AddressableAssets.Addressables.LoadAssetAsync<Il2CppTLD.Scenes.SceneSet>(
-                    (Il2CppSystem.Object)$"Assets/ScriptableObjects/Scenes/Sets/Interiors/PrepperCache{t}.asset").WaitForCompletion();
+                try
+                {
+                    ss = UnityEngine.AddressableAssets.Addressables.LoadAssetAsync<Il2CppTLD.Scenes.SceneSet>(
+                        (Il2CppSystem.Object)key).WaitForCompletion();
+                }
+                catch (Exception ex) { ModMain.Log?.Warning($"[MapM] load {key}: {ex.GetType().Name} {ex.Message}"); }
+                if (ss != null) break;
             }
-            catch { }
             if (ss == null) { ModMain.Log?.Warning($"[MapM] no scene set PrepperCache{t}"); continue; }
             var c = UnityEngine.Object.Instantiate(tpl);
             c.name = ClonePrefix + t;

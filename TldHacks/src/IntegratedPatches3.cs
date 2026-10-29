@@ -1051,7 +1051,7 @@ internal static class Patch_SleepAnywhere_RestEnable
 #if STORY_EDITION
                 GearItem prefab = StoryShim.LoadGearItemPrefab("GEAR_BedRoll");
 #else
-                GearItem prefab = GearItem.LoadGearItemPrefab("GEAR_BedRoll");
+                GearItem prefab = GearPrefab.Load("GEAR_BedRoll");
 #endif
                 if (prefab == null) return;
                 GearItem item = GearItem.InstantiateDepletedGearPrefab(((Component)prefab).gameObject).GetComponent<GearItem>();

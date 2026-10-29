@@ -562,7 +562,6 @@ internal static class ItemDatabaseMod
     new ItemEntry("GEAR_PillowDZ12", "垫子 [Cushion]", "工具", "", 0.1f),
     new ItemEntry("GEAR_PillowDZ13", "垫子 [Cushion]", "工具", "", 0.1f),
     new ItemEntry("GEAR_PillowDZ14", "垫子 [Cushion]", "工具", "", 0.1f),
-    new ItemEntry("GEAR_TechnicalBackpack", "高科技背包", "衣物", "", 1.5f),
     new ItemEntry("GEAR_BackPack_A", "背包", "衣物", "", 1f),
     new ItemEntry("GEAR_BackPackForestTalker_A", "森林之语背包", "衣物", "", 1f),
     new ItemEntry("GEAR_BackPackForestTalker_A01", "森林之语背包 01", "衣物", "", 1f),

@@ -416,6 +416,11 @@ internal static class Cheats
             // ═══ UT 手电筒 ═══
             s.UT_FlashInfiniteBattery = false;
 
+            // ═══ 铁路 DLC 蒸汽火车 ═══
+            s.Train_NoBreak = false;
+            s.Train_KeepHighGear = false;
+            s.Train_FullFuel = false;
+
             // ═══ StackManager ═══
             // Stack_AddComponent 不关(见 OneClickSkip):关了读档后已经堆起来的那几样会塌成 1 个
             s.Stack_UseMaxHP = false;
@@ -639,7 +644,7 @@ internal static class Cheats
             if (pm == null) { ModMain.Log?.Warning("[Spawn] PlayerManager not ready"); return; }
 
             GearItem prefab = null;
-            try { prefab = GearItem.LoadGearItemPrefab(prefabName); } catch { }
+            try { prefab = GearPrefab.Load(prefabName); } catch { }
 
             if (prefab == null)
             {

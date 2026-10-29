@@ -29,7 +29,7 @@ namespace TldHacks;
 public class ModMain : MelonMod
 {
     // 全 mod 唯一的版本号来源。MelonInfo / 程序集版本 / 菜单标题栏 / 启动日志都从这里取。
-    internal const string VERSION = "9.9";
+    internal const string VERSION = "10.3";
 
     public static MelonLogger.Instance Log;
     internal static TldHacksSettings Settings;
@@ -165,7 +165,7 @@ public class ModMain : MelonMod
     //   保住它们玩家就不用重绑热键、重摆菜单(直击"得重新设置了"的痛点)。
     private static readonly System.Collections.Generic.HashSet<string> _preserveOnReset = new()
     {
-        "MenuHotkey", "FlyHotkey", "MenuScale", "MenuWidth", "MenuHeight", "MenuX", "MenuY",
+        "MenuHotkey", "FlyHotkey", "MenuScale", "MenuWidth", "MenuHeight", "MenuX", "MenuY", "MenuPauseGame", "SpawnerTeleportH",
         "LanguageMode", "QoL_DropKey", "QoL_BulkKey", "QoL_BackKey", "JumpKey",
         "TimeScaleKey1", "TimeScaleKey2", "GrabAllKey", "MapM_BunkerKey", "MapM_RevealKey",
     };
@@ -865,6 +865,9 @@ public class ModMain : MelonMod
             try { GrabAll.TickQueue(); } catch { }
 #if !STORY_EDITION
             try { MapClear.Tick(); } catch { }
+#if !EP5_EDITION
+            try { MapHarvest.Tick(); } catch { }
+#endif
             try { TalesComplete.Tick(); TalesComplete.TickSceneFix(); } catch { }
 #endif
 
@@ -1091,6 +1094,9 @@ public class ModMain : MelonMod
         try { RespawnablePlantsState.OnSceneLoaded(); } catch { }
 #if !STORY_EDITION
         try { ShowTraderTrustHelper.OnSceneChange(); } catch { }
+#endif
+#if !STORY_EDITION && !EP5_EDITION
+        FeatsSandbox.OnSceneInitialized(Settings);
 #endif
         // v2.7.64 清 BreakDown snapshot —— 跨 scene 后 BreakDown 组件重新 spawn,stale ptr
         try { Patch_BreakDown_UpdateDuration.Snapshots.Clear(); } catch { }

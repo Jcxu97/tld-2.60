@@ -9,7 +9,7 @@
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Version>9.9</Version>
+    <Version>10.3</Version>
 
     <TldRoot>D:\Steam\steamapps\common\TheLongDark</TldRoot>
     <TldMlNet6>$(TldRoot)\MelonLoader\net6</TldMlNet6>
