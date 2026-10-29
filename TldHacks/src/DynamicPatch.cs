@@ -815,6 +815,12 @@ internal static class DynamicPatch
             null, "Postfix", () => CheatState.TT_RespawnPlants),
         Spec(typeof(SaveGameSystem), "LoadSceneData", typeof(Patch_RespawnPlants_Load),
             null, "Postfix", () => CheatState.TT_RespawnPlants),
+#if !STORY_GUARD
+        Spec(typeof(SaveGameSystem), "SaveSceneData", typeof(Patch_OwnDrops_SaveScene),
+            null, "Postfix", () => CheatState.BlockAutoPickupOwnDrops),
+        Spec(typeof(SaveGameSystem), "LoadSceneData", typeof(Patch_OwnDrops_LoadScene),
+            null, "Postfix", () => CheatState.BlockAutoPickupOwnDrops),
+#endif
 
         // HouseLights
         Spec(typeof(GameManager), "InstantiatePlayerObject", typeof(Patch_HL_GameManager_InstantiatePlayer),

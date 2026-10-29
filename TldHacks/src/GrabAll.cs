@@ -265,7 +265,7 @@ internal static class GrabAll
                 //   注意判据用玩家丢弃记录,不是 m_BeenInPlayerInventory,后者对"捡过又丢"
                 //   的东西永久为真,会让这些物资从此再也搜不起来。
                 if (CheatState.BlockAutoPickupOwnDrops
-                    && AutoPickupGuard.DroppedAt.ContainsKey(gi.Pointer)) { skippedDrops++; continue; }
+                    && AutoPickupGuard.IsOwnDrop(gi)) { skippedDrops++; continue; }
 
                 list.Add(gi);
             }

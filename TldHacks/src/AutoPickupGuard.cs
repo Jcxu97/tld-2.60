@@ -20,6 +20,87 @@ internal static class AutoPickupGuard
     public static readonly Dictionary<IntPtr, float> DroppedAt = new Dictionary<IntPtr, float>();
     public static bool InAutoPickup;
 
+#if !STORY_GUARD
+    // DroppedAt 按 Pointer 记,换图或读档就全失效:之前摆好的东西(墙上的火把)读档后
+    //   又被一键搜刮收走。这里再按 ObjectGuid 记一份,跟存档走(ModData 键 ownDrops)。
+    //   丢的那一刻可能还没分到 guid,先挂在 _noGuid 里,存档时再取一次。
+    private static HashSet<string> _guids = new HashSet<string>();
+    private static readonly List<GearItem> _noGuid = new List<GearItem>();
+    private const string DataKey = "ownDrops";
+
+    private static string GuidOf(GearItem gi)
+    {
+        try { return ObjectGuid.MaybeGetGuidFromGameObject(gi.gameObject); } catch { return null; }
+    }
+#endif
+
+    public static void MarkDropped(GearItem gi, float t)
+    {
+        if (gi == null) return;
+        DroppedAt[gi.Pointer] = t;
+#if !STORY_GUARD
+        string g = GuidOf(gi);
+        if (!string.IsNullOrEmpty(g)) _guids.Add(g);
+        else _noGuid.Add(gi);
+#endif
+    }
+
+    public static bool IsOwnDrop(GearItem gi)
+    {
+        if (gi == null) return false;
+        if (DroppedAt.ContainsKey(gi.Pointer)) return true;
+#if !STORY_GUARD
+        if (_guids.Count == 0) return false;
+        string g = GuidOf(gi);
+        return !string.IsNullOrEmpty(g) && _guids.Contains(g);
+#else
+        return false;
+#endif
+    }
+
+    // 捡回背包就不再算丢物:不然捡起来再扔出去的石头,一键搜刮也会跳过。
+    public static void Forget(GearItem gi)
+    {
+        if (gi == null) return;
+        DroppedAt.Remove(gi.Pointer);
+#if !STORY_GUARD
+        string g = GuidOf(gi);
+        if (!string.IsNullOrEmpty(g)) _guids.Remove(g);
+#endif
+    }
+
+#if !STORY_GUARD
+    public static void SaveGuids()
+    {
+        try
+        {
+            for (int i = 0; i < _noGuid.Count; i++)
+            {
+                var gi = _noGuid[i];
+                if (gi == null || gi.m_InPlayerInventory) continue;
+                string g = GuidOf(gi);
+                if (!string.IsNullOrEmpty(g)) _guids.Add(g);
+            }
+            _noGuid.Clear();
+            RespawnablePlantsState.DataManager.Save(string.Join("\n", _guids), DataKey);
+        }
+        catch (Exception ex) { ModMain.Log?.Warning($"[AutoPickupGuard.Save] {ex.Message}"); }
+    }
+
+    public static void LoadGuids()
+    {
+        try
+        {
+            string data = RespawnablePlantsState.DataManager.Load(DataKey);
+            _guids = string.IsNullOrEmpty(data)
+                ? new HashSet<string>()
+                : new HashSet<string>(data.Split('\n', StringSplitOptions.RemoveEmptyEntries));
+            _noGuid.Clear();
+        }
+        catch (Exception ex) { ModMain.Log?.Warning($"[AutoPickupGuard.Load] {ex.Message}"); }
+    }
+#endif
+
     // v7.7 给 DroppedAt 加上界。原先只在场景切换/开关关掉时整体 Clear,单场景内一直丢东西
     //   就一直涨(记录了时间戳却从没读过 → 条目永久有效)。
     //   注意:这里不能改成"超时自动过期",那会让"丢过的东西过一阵子又被自动捡走",是行为变更。
@@ -98,8 +179,8 @@ internal static class Patch_GearItem_Drop_Track
         {
             if (!CheatState.BlockAutoPickupOwnDrops) return;
             float t = Time.time;
-            if (__instance != null) AutoPickupGuard.DroppedAt[__instance.Pointer] = t;
-            if (__result != null)   AutoPickupGuard.DroppedAt[__result.Pointer]   = t;
+            AutoPickupGuard.MarkDropped(__instance, t);
+            if (__result != __instance) AutoPickupGuard.MarkDropped(__result, t);
             AutoPickupGuard.PruneDroppedAt();
             if (!AutoPickupGuard._logDrop)
             {
@@ -123,7 +204,7 @@ internal static class Patch_PlayerManager_Drop_Track
             if (go == null) return;
             var gi = go.GetComponent<GearItem>();
             if (gi == null) return;
-            AutoPickupGuard.DroppedAt[gi.Pointer] = Time.time;
+            AutoPickupGuard.MarkDropped(gi, Time.time);
             AutoPickupGuard.PruneDroppedAt();
             if (!AutoPickupGuard._logDropPM)
             {
@@ -152,27 +233,26 @@ internal static class Patch_PlayerManager_PlaceMesh_Track
         return gi;
     }
 
-    private static void Prefix(PlayerManager __instance, out IntPtr __state)
+    private static void Prefix(PlayerManager __instance, out GearItem __state)
     {
-        __state = IntPtr.Zero;
+        __state = null;
         try
         {
             if (!CheatState.BlockAutoPickupOwnDrops || __instance == null) return;
-            var gi = Placing(__instance);
-            if (gi != null) __state = gi.Pointer;
+            __state = Placing(__instance);
         }
         catch (Exception ex) { ModMain.Log?.Warning($"[AutoPickupGuard.Place] {ex.Message}"); }
     }
 
-    private static void Postfix(PlayerManager __instance, IntPtr __state)
+    private static void Postfix(PlayerManager __instance, GearItem __state)
     {
         try
         {
             if (!CheatState.BlockAutoPickupOwnDrops) return;
             float t = Time.time;
-            if (__state != IntPtr.Zero) AutoPickupGuard.DroppedAt[__state] = t;
+            AutoPickupGuard.MarkDropped(__state, t);
             var gi = __instance != null ? Placing(__instance) : null;
-            if (gi != null) AutoPickupGuard.DroppedAt[gi.Pointer] = t;
+            if (gi != null && gi != __state) AutoPickupGuard.MarkDropped(gi, t);
             AutoPickupGuard.PruneDroppedAt();
         }
         catch (Exception ex) { ModMain.Log?.Warning($"[AutoPickupGuard.Place] {ex.Message}"); }
@@ -243,7 +323,7 @@ internal static class Patch_PlayerManager_ProcessPickup_BlockOwnDrops
             if (!CheatState.BlockAutoPickupOwnDrops) return true;
             if (!AutoPickupGuard.InAutoPickup)      return true;
             if (item == null)                       return true;
-            if (AutoPickupGuard.DroppedAt.ContainsKey(item.Pointer))
+            if (AutoPickupGuard.IsOwnDrop(item))
             {
                 if (!AutoPickupGuard._logSkip)
                 {
@@ -256,4 +336,23 @@ internal static class Patch_PlayerManager_ProcessPickup_BlockOwnDrops
         catch (Exception ex) { ModMain.Log?.Warning($"[AutoPickupGuard.Skip] {ex.Message}"); }
         return true;
     }
+
+    private static void Postfix(GearItem item, bool __result)
+    {
+        try { if (__result && CheatState.BlockAutoPickupOwnDrops) AutoPickupGuard.Forget(item); }
+        catch { }
+    }
 }
+
+#if !STORY_GUARD
+// ——— 5) 丢物 guid 跟存档走,DynamicPatch 按开关挂 ———
+internal static class Patch_OwnDrops_SaveScene
+{
+    internal static void Postfix() => AutoPickupGuard.SaveGuids();
+}
+
+internal static class Patch_OwnDrops_LoadScene
+{
+    internal static void Postfix() => AutoPickupGuard.LoadGuids();
+}
+#endif
