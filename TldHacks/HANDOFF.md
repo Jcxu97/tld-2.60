@@ -1,9 +1,9 @@
 # HANDOFF: TldHacks
 
-> Last updated: 2026-10-31
+> Last updated: 2026-10-31 (v10.7)
 
 ## 当前目标
-TldHacks v10.6 已打包并传完夸克 TLD V2.59 Hack 和百度 TLD HACK V2.59(最小包、完整版 4 分卷、终极版 64 分卷,两边按大小核对一致)。腾讯文档和群资料库这次用户自己改,我没动。之后修了跨场景传送回档(只在本机,没发版)。
+TldHacks v10.7(v10.6 + 跨场景传送回档修复)已打包并传完夸克 TLD V2.59 Hack 和百度 TLD HACK V2.59(最小包、完整版 4 分卷、终极版 64 分卷,两边按大小核对一致)。腾讯文档和群资料库用户自己改,我没动。传送修复没在游戏里实测,用户说直接发。
 
 ## 已完成(10-31 v10.6)
 1. 勋章加成数值重进游戏就重置:16 个 `FeatV_*` 是 internal,TinyJSON 只存 public 或带 `[Include]` 的字段,所以从没写进 TldHacks.json。加了 `[Include]`(Diag 两个字段同理);ModMain 的预检清理、rescue、Newtonsoft 重写三处原来把非 public 键当孤儿删掉,改用 `PersistedSettingFields()` 统一判断
@@ -12,11 +12,13 @@ TldHacks v10.6 已打包并传完夸克 TLD V2.59 Hack 和百度 TLD HACK V2.59(
 4. 终极版 release.py 不管:把新 TldHacks.dll 拷进 `staging\ultimate\Mods`,在 staging\ultimate 里对全部条目 `bz c -fmt:7z -l:9 -p:tld2026`(包根目录无顶层文件夹),切 20MB 分卷进 `Desktop\TLD\V10.6终极版_我自己在用的全部mods\`,解压比对 + 分卷拼回比 MD5;旧 V10.5 文件夹挪 `OLD\v10.5`
 5. 上传:夸克 `release.py upload sb ul` 同时起三个 browser-harness,第三个(ul)没连上,标签页根本没开,核对一直卡在 65 个缺;停掉后单独 `upload ul` 传完。百度先挪旧文件(v10.3 的 70 个进 OLD 下 10-31 新建的 `替换下来的` 文件夹)、三个文件夹改名 v10.6,再按 sb、ul 两次跑 baidu_upload.py。两边都按大小核对一致(5 + 65)
 
-## 已完成(10-31 跨场景传送回档,代码已改,未发版)
+## 已完成(10-31 v10.7:跨场景传送回档)
 1. 原因(反汇编 2.59 GameAssembly 确认):原版 `GameManager.LoadScene` 里只有 `AllowedToSave(SaveState.InMemory)` 通过才 `SaveGame("autosave", 场景存档名)` + `ConfigureRestoreFromSlot("autosave")`;不通过(玩家在移动/下落、控制模式不对等)两件都不做,`m_SlotToLoadOnStart` 为空,新场景不走 `LoadSlotOnStart → RestoreGame`,玩家/全局状态是旧数据 → 回档。偶发,和传送时状态有关
 2. 第二个参数也传错了:原版 `Action_LoadScene` 传 `m_SceneTransitionData.m_SceneSaveFilenameCurrent`,我们(照抄 FastTravel)传 `GetCurrentSaveName()` = 存档槽名(sandbox4),场景数据和我们的 SaveSceneData 补丁都存到错 key。v9.7 只改了手动存档的场景名,两处都没碰
 3. 改法(`CheatsExtra.TravelTo`):先算 curSave(transition 数据 → TransitionRecorder → 场景名)并建好 SceneTransitionData;`AllowedToSave(InMemory)` 通过就交给原版 LoadScene 存(不再存两遍),不通过就自己 `SaveGame(autosave, curSave)` + `ConfigureRestoreFromSlot(autosave)`;LoadScene 第二参数改成 curSave。全走反射,剧情版两个工程也编过
-4. 只部署到本机游戏 Mods,v10.6 的包里还是旧逻辑
+4. 发版 v10.7(先打了一半 10.6.1,用户改主意要 10.7):ModMain VERSION、两个 staging 使用说明.txt(完整版加了【v10.7 有哪些变化】一节)改版本号;`pack(['sb'])` 同样带 `EXTRAS={'scp':SCP}`;终极版照 v10.6 手工流程(64 分卷),旧 V10.6 终极版文件夹挪 `OLD\v10.6`
+5. 坑:pack 中途被停,sb_full 会留在 `staging\_named\<完整版名>` 下,下次 pack 找不到 sb_full。要挪回 `staging\sb_full` 并删掉空的 `_named`
+6. 上传:夸克 sb、ul 分开跑。ul 头两次报 browser-harness `Runtime.evaluate timed out ... waiting for the daemon`(同时有另一个会话在用浏览器),第三次正常,中途没传完的旧文件已被挪进 OLD,不影响。百度先 goto pan.baidu.com 再拿 token(不然 fetch 相对路径报 Failed to parse URL),v10.6 的 70 个文件挪进 OLD 下新的 `替换下来的` 文件夹,三个文件夹改名 v10.7,再分 sb、ul 两次跑 baidu_upload.py。两边都 5 + 65 按大小核对一致
 
 ## 已完成(10-29 v10.3)
 1. 物品生成器删掉 29 种原版食谱未烹饪半成品(`GEAR_Uncooked*`,刷出来用不了,显示名又和熟的一样)
@@ -27,7 +29,7 @@ TldHacks v10.6 已打包并传完夸克 TLD V2.59 Hack 和百度 TLD HACK V2.59(
 
 ## 下一步
 1. v10.6 两个勋章修复等用户实测:改加成数值重启游戏还在;启用几个勋章、存档、回主菜单再读档还在
-2. 跨场景传送回档修复等用户实测(飞行/下落中传送、跑动中传送、进 MoreBunkers 地堡),日志看 `[TP.Save]`;没问题再打 v10.6.1 重新打包上传
+2. v10.7 传送回档修复等玩家反馈(飞行/下落中传送、跑动中传送、进 MoreBunkers 地堡),有问题看日志 `[TP.Save]`
 2. MoreBunkers 工作区改动没做完(m_Guid、LoadGearItemPrefab、InstantiateItemAtLocation 参数类型),修好前 `release.py pack sb` 会编译失败,要么修完要么照上面跳过
 3. 火车加注加不进去,还在等用户日志
 2. 百度分享链接拿到后补进腾讯文档和资料库(现在两边都没写百度链接)
