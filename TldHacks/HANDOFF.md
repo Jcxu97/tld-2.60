@@ -3,13 +3,14 @@
 > Last updated: 2026-10-31
 
 ## 当前目标
-TldHacks v10.6 打包完成,上传夸克 TLD V2.59 Hack 和百度 TLD HACK V2.59(最小包、完整版 4 分卷、终极版 64 分卷)。腾讯文档和群资料库这次用户自己改,我没动。
+TldHacks v10.6 已打包并传完夸克 TLD V2.59 Hack 和百度 TLD HACK V2.59(最小包、完整版 4 分卷、终极版 64 分卷,两边按大小核对一致)。腾讯文档和群资料库这次用户自己改,我没动。之后修了跨场景传送回档(只在本机,没发版)。
 
 ## 已完成(10-31 v10.6)
 1. 勋章加成数值重进游戏就重置:16 个 `FeatV_*` 是 internal,TinyJSON 只存 public 或带 `[Include]` 的字段,所以从没写进 TldHacks.json。加了 `[Include]`(Diag 两个字段同理);ModMain 的预检清理、rescue、Newtonsoft 重写三处原来把非 public 键当孤儿删掉,改用 `PersistedSettingFields()` 统一判断
 2. 勋章启用列表读档后丢:FeatsSandbox 在 SaveSceneData 后把启用列表写进 ModData(键 `featsEnabled`,格式 `v1:` + 逗号分隔 FeatType 名),LoadSceneData 和进场景时按存档槽恢复;DynamicPatch 加两条 Spec(只沙盒版)。旧档要先存一次才有备份
 3. 打包:MoreBunkers 工作区有一半的改动(调 2.59 已删的 API,编译不过),这次用 `release.EXTRAS = {'scp': release.SCP}` 跳过它重编,包里 MoreBunkers.dll 还是 10.5 那份。三个 staging 的 MelonLoader Il2CppAssemblies、cpp2il_out、Config.cfg 已从 2.59 游戏同步
 4. 终极版 release.py 不管:把新 TldHacks.dll 拷进 `staging\ultimate\Mods`,在 staging\ultimate 里对全部条目 `bz c -fmt:7z -l:9 -p:tld2026`(包根目录无顶层文件夹),切 20MB 分卷进 `Desktop\TLD\V10.6终极版_我自己在用的全部mods\`,解压比对 + 分卷拼回比 MD5;旧 V10.5 文件夹挪 `OLD\v10.5`
+5. 上传:夸克 `release.py upload sb ul` 同时起三个 browser-harness,第三个(ul)没连上,标签页根本没开,核对一直卡在 65 个缺;停掉后单独 `upload ul` 传完。百度先挪旧文件(v10.3 的 70 个进 OLD 下 10-31 新建的 `替换下来的` 文件夹)、三个文件夹改名 v10.6,再按 sb、ul 两次跑 baidu_upload.py。两边都按大小核对一致(5 + 65)
 
 ## 已完成(10-31 跨场景传送回档,代码已改,未发版)
 1. 原因(反汇编 2.59 GameAssembly 确认):原版 `GameManager.LoadScene` 里只有 `AllowedToSave(SaveState.InMemory)` 通过才 `SaveGame("autosave", 场景存档名)` + `ConfigureRestoreFromSlot("autosave")`;不通过(玩家在移动/下落、控制模式不对等)两件都不做,`m_SlotToLoadOnStart` 为空,新场景不走 `LoadSlotOnStart → RestoreGame`,玩家/全局状态是旧数据 → 回档。偶发,和传送时状态有关
