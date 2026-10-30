@@ -1,0 +1,385 @@
+当前网盘上是 TldHacks v10.5，适配游戏 2.58 版（10 月 28 日铁路 DLC 更新后的版本）。下载、安装、功能、按键都在这一份文档里。
+找某个 mod 或某个按键，按 Ctrl+F 搜名字最快。电脑上点页面左边的“大纲”，能直接跳到各章。
+! 嫌麻烦、装不上、装完进不去游戏的，直接找群主远程安装，30 元一次，见第一章。
+
+## 目录
+一、下载和付费服务（网盘链接、解压密码、视频教程）
+二、选哪个包（最小包、完整版、终极版、剧情包、选装 mod）
+三、安装步骤
+四、装完先做这一步（停用旧 mod 的 bat）
+五、TldHacks 功能介绍（七个页签、按功能找）
+六、完整版和终极版带的其他 mod
+七、按键指南（完整版、终极版）
+八、合并和修过的 mod 清单
+九、剧情模式
+十、常见问题
+
+## 一、下载和付费服务
+### 付费服务
+远程安装服务 30 元一次，不包售后，只做一次。这里不在群里回答任何安装的问题了。
+终极版在网盘 2_ 开头的那个文件夹里，自己装不好就找群主远程安装。
+有定制需求的可以私我。
+### 网盘下载
+群文件和老网盘都被墙了，用下面的新链接下载。
+适配最新 DLC 的 MOD 下载链接，必须更新，不然出现 bug 自负。我用夸克网盘给你分享了「TLD V2.58 Hack」，点击链接或复制整段内容，打开「夸克APP」即可获取。
+链接：[https://pan.quark.cn/s/2c4b69052db3?pwd=x8yQ](https://pan.quark.cn/s/2c4b69052db3?pwd=x8yQ)
+提取码：x8yQ
+完整版、终极版和剧情包的解压密码都是 tld2026。最小包和选装 mod 的 zip 没有密码。
+### 视频教程
+安装前一定要看安装教程视频，跟着视频装最省事。
+| 视频 | 链接 |
+| 安装教程和使用说明 | [https://www.bilibili.com/video/BV1FkTT6VES4](https://www.bilibili.com/video/BV1FkTT6VES4) |
+| v10.0 更新介绍 | [https://www.bilibili.com/video/BV1XfxV68EVN](https://www.bilibili.com/video/BV1XfxV68EVN) |
+| 一键清图 | [https://www.bilibili.com/video/BV1QiH66xEpi](https://www.bilibili.com/video/BV1QiH66xEpi) |
+| 更多地堡 MoreBunkers | [https://www.bilibili.com/video/BV1u6H669EYH](https://www.bilibili.com/video/BV1u6H669EYH) |
+| 搬运商人 TraderMoving | [https://www.bilibili.com/video/BV1GeYc6yE9g](https://www.bilibili.com/video/BV1GeYc6yE9g) |
+
+## 二、选哪个包
+沙盒模式的三个包选一个装就行。完整版已经包含最小包。终极版是群主自己在玩的整套，完整版的 mod 都在里面。
+剧情包和沙盒包各装各的，互不影响，可以都装。
+装 mod 之前，先装网盘根目录的 .NET 运行库（前置！必须下载安装！Downloading the. NETRuntime.exe），装过就跳过。
+| 包 | 里面有什么 | 适合谁 | 在网盘哪里 |
+| 最小包 | 只有 TldHacks 修改器和它要用的几个前置 | 只要修改器菜单，别的 mod 自己配 | 1_TldHacks-v10.5最小安装包_只有修改器 文件夹里的 TldHacks-v10.5-最小安装包_只带修改mod！解压到游戏根目录.zip |
+| 完整版 | TldHacks 加十几个常用 mod 和它们要用的前置，建造、摆放、存档、雷达、更多地堡这些（见第六章） | 想一次装好，开箱就能玩 | 1_TldHacks-v10.5完整版_带其他mods例如地图 文件夹，四个分卷 材质包备份.001 到 .004 |
+| 终极版 | 群主自己在玩的整套，游戏 Mods 文件夹里在用的 mod 全都在。食物、衣服、装饰、配方、材质（TheLongDevelopment）这些完整版没带的也有，mod 设置也是群主调好的 | 想要群主同款 | 2_TldHacks-v10.5终极版_更多MOD食物衣服_ZHAOCHUN授权同款适配最新铁路DLC 文件夹，64 个分卷 终极版材质包备份.001 到 .064 |
+| 剧情包 | 剧情模式专用的 TldHacks 和 mod 加载器，第 1 到 4 章一个包，第 5 章一个包 | 玩剧情模式 | 4_The Long dark 故事剧情模式_可能有bug没测试 文件夹 |
+| 选装 mod | 单个功能的 mod | 只想加某一个功能 | 3_功能mods 选装 文件夹 |
+### 选装 mod
+| 网盘里的文件 | 是什么 | 怎么装 |
+| MoreBunkers-v1.3_更多地堡三个新地堡_适配2.58_解压到游戏根目录.zip | 每个沙盒存档多出三个布置好的地堡（神秘湖工匠地堡、沿海公路囤货地堡、废弃机场雇佣兵地堡），里面有床、炉子、工作台和大量囤货。按 F10 提示地堡在哪。完整版和终极版已经带了 | 解压到游戏根目录 |
+| TraderMoving-v1.0.1_搬运商人无线电和交易箱_解压到游戏根目录.zip | 把远疆 DLC 商人的无线电和交易箱搬到你想要的地方，可以跨场景搬。要有远疆 DLC。不要和 ImprovedTrader 一起装。终极版已经带了 | 解压到游戏根目录 |
+| 可以看电视了！NorthernLightsBroadcast_v2.1.1_修好不显示文字_全部放入Mods文件夹.zip | 游戏里的电视能放自己电脑上的视频（mp4、mkv、avi、wmv 这些），修好了电视菜单不显示文字。终极版已经带了 | 8 个 dll 和 modcomponent 文件全部放进 Mods 文件夹，说明文件不用放 |
+| PastimeReading_DLL放Mods文件夹放根目录1.zip | 游戏里看书，能换成自己的小说。这一份修好了中文越往后方框越多的问题 | PastimeReading.dll 和 pastimeReading 整个文件夹都放进 Mods 文件夹 |
+
+## 三、安装步骤
+### 装之前
++ 嫌麻烦或者怕装错的，直接找群主远程安装，30 元一次，见第一章。
++ 先装网盘根目录的 .NET 运行库（前置！必须下载安装！那个 exe），装过就跳过。
++ 游戏要是 2.58 版。
++ 解压用 7-Zip（WinRAR 新版、Bandizip 也行）。Windows 自带的解压不认分卷和带密码的 7z。
++ 以前装过别的 mod 或别人整合包的，建议先把游戏根目录的 Mods、MelonLoader、UserData、UserLibs、Plugins 这几个文件夹和 version.dll、winhttp.dll 挪走或删掉，再装，免得新旧混在一起。
+### 游戏根目录在哪
+游戏根目录就是有 tld.exe 的那个文件夹。在 Steam 库里右键 The Long Dark，管理，浏览本地文件，打开的就是。
+Steam 默认在 D:\Steam\steamapps\common\TheLongDark\（或 C 盘，看你 Steam 装在哪）。
+### 最小包
++ 解压 TldHacks-v10.5-最小安装包_只带修改mod！解压到游戏根目录.zip，里面是 version.dll、MelonLoader、Mods 三样。
++ 把这三样拖进游戏根目录，和 tld.exe 同一层，提示重名就选覆盖。
++ 以前单独装过被整合的 mod，或者装过别人整合包的，按第四章跑一次 bat。
++ 启动游戏，进存档后按 Tab 打开 TldHacks 菜单。
+### 完整版
++ 下载完整版文件夹里的四个分卷 材质包备份.001、.002、.003、.004，放在同一个文件夹里。四个缺一个都会报“无法打开为压缩文件”。
++ 右键 材质包备份.001，用 7-Zip 打开，输入密码 tld2026。只点 .001 就行，它会自动把四个分卷合起来。
++ 解压出来是一个长名字的文件夹。打开它，把里面的 version.dll、MelonLoader、Mods 三样拖进游戏根目录，选覆盖。拖的是里面的东西，不要把那个长名字文件夹本身拖进去。
++ 进游戏根目录的 Mods 文件夹，双击 disable_integrated_mods.bat（见第四章）。
++ 启动游戏，进存档后按 Tab 打开 TldHacks 菜单。
+要改按键和其他设置，进游戏后在 Mod Settings 里改。包里带的是我自己的 mod 设置，大家按自己的习惯重新设一遍。
+### 终极版 - 找群主远程才能解锁
++ 下载终极版文件夹里的全部 64 个分卷 终极版材质包备份.001 到 .064，放在同一个文件夹里，缺一个都解不开。
++ 右键 终极版材质包备份.001，用 7-Zip 打开，输入密码 tld2026。只点 .001 就行，它会自动把后面的分卷接上。
++ 把解压出来的 winhttp.dll、MelonLoader、Mods、UserData、UserLibs、Plugins 全部放进游戏根目录，直接和 tld.exe 同一层，不要多套一层文件夹。有重名就覆盖。
++ 启动游戏。第一次启动会多等一会儿，黑框里刷字是正常的。
++ 进存档后按 ` 键（Esc 下面、数字 1 左边那个键）打开 TldHacks 菜单。终极版的按键和完整版不一样，见第七章。
+旧完整版用的是 version.dll，终极版用的是 winhttp.dll，两个只留一个。
+### 剧情包
+剧情包装在别的文件夹，不是游戏根目录，见第九章。
+
+## 四、装完先做这一步
+装完完整版，第一件事是进游戏根目录的 Mods 文件夹，双击 disable_integrated_mods.bat。游戏开着的时候它会提示先关游戏。
+它会把已经整合进 TldHacks 的旧 mod 挪进 Mods\_disabled 文件夹。不停用的话，同一个功能被两个 mod 同时改，会冲突或者叠在一起。停用哪些 mod 见第八章。
+最小包里没有这个 bat，用网盘根目录那份（如果装了别人的整合包需要放到mods文件夹双击运行.bat），放进 Mods 文件夹再双击。
+装过别人整合包的，或者以前单独装过第八章那些 mod 的，一定要跑一次。
+
+## 五、TldHacks 功能介绍
+TldHacks 是内置修改器，三个沙盒包都带，用在沙盒模式。剧情模式用第九章的剧情包，里面是剧情专用的一份。
+### 打开菜单
++ 进存档后按 Tab 打开菜单，再按一次关上。终极版是 ` 键。
++ 开菜单时会自动打开游戏的 ESC 暂停菜单，游戏停住，鼠标能直接点菜单，不用再先按 ESC。关菜单时暂停菜单一起关掉，游戏接着走。不想要就在 Mod Settings 里关掉“开修改器时自动暂停”。
++ 热键和数值也能在游戏设置的 Mod Settings 里 TldHacks 那一页改，两边各项的名字是一样的。
++ 菜单默认按屏幕分辨率定大小。觉得不合适，在菜单里点加号、减号调。
++ 开着的开关左边有一道蓝条，关着的是灰字。
++ 一键清图、清任务物品、完成DLC任务这几个按钮要点两次。点第一下变红，字换成“再点一次确认”。
++ 菜单语言在 Mod Settings 里 TldHacks 那一页最上面的“Language / 语言”选，有 Auto、中文、English 三个。Auto 跟着游戏的语言走，游戏不是中文就显示英文。
++ 改完语言，按菜单热键重开菜单就换过来。Mod Settings 这一页要重启游戏才换。
+### 七个页签里有什么
+| 页签 | 功能卡 |
+| 主页 | 生存、温饱、增益、死亡 & 扑倒、一键搜刮、动物、环境 / 篝火、地图 / 天气 / 时间、快速操作、制作 & 修理、锁 & 容器、武器 & 瞄准 |
+| 存档修改 | 技能、一次性操作、清图 & 任务、食谱（含 DLC）、勋章（当前存档） |
+| 物品 & 传送 | 快速传送、物品生成器 |
+| 人物 & 操作 | 交互 & 感知、移动速度、跳跃、空格代替左键、时间加速、搬运猎物、体力、随地睡觉、扭伤系统、面板快捷键 |
+| 装备 & 衰减 | 衰减·通用、衰减·装备、衰减·食物、物品 & 界面、交互速度、保温杯 & 衣物、弓修理、火把 & 手电、煤油灯、蒸汽火车 |
+| 世界 & 饮食 | 含咖啡因汽水、鹿肉出肉量、野外、商人 & 美洲狮、容器 & 极光、高级微调、烹饪位扩展 |
+| 地图 & 界面 | 地图管理、地堡、其他便利功能、地图显示、木炭绘图、自动测绘、收藏品地图、室内灯光、准星、视角 & FOV、杂项开关 |
+### 按功能找
+| 想做什么 | 在哪 | 有哪些开关 |
+| 不死、不冷、不饿 | 主页的生存、温饱 | 无敌模式、无坠落伤害、始终温暖、无饥饿、无口渴、无疲劳、不会窒息、免扭伤风险、免动物伤害 |
+| 死了不删档 | 主页的死亡 & 扑倒 | 死亡不删档、扑倒必胜 |
+| 一键拿走附近的东西 | 主页的一键搜刮 | 一键搜刮（完整版默认鼠标侧键 Mouse4）、立即搜刮、采集全图尸体、采集全图植物 |
+| 清空整张地图 | 存档修改的清图 & 任务 | 一键清图把当前地图上散落的物品和容器里的东西一次收进背包。清任务物品慎用，可能卡住任务。完成DLC任务一次做完三个外域传说任务，任务奖励发任务路线上的装备 |
+| 技能、勋章、食谱 | 存档修改 | 技能全部满级，一键解锁勋章，食谱全部解锁（含 DLC）。勋章的启用和加成数值在勋章卡里改 |
+| 修东西、清负面 | 存档修改的一次性操作 | 清除所有负面、修复手持、修复背包、恢复全部耐久、全开地图 |
+| 秒采集、秒拆解 | 主页的快速操作 | 快速拆解、操作加速、快速搜刮 |
+| 免费制作和修理 | 主页的制作 & 修理 | 免费制作、快速制作、免费修理、随地制作 |
+| 开锁和容器 | 主页的锁 & 容器 | 忽略上锁、无限容量 |
+| 枪和弓 | 主页的武器 & 瞄准 | 无限弹药、永不卡壳、无后坐力、稳定瞄准、魔法子弹、超级精准 |
+| 动物 | 主页的动物 | 一击必杀 |
+| 生火 | 主页的环境 / 篝火 | 随意生火、篝火永不熄灭 |
+| 传送 | 物品 & 传送的快速传送 | 一键去各地图的预设地点，含铁路 DLC 的地点和 MoreBunkers 的三个地堡。列表用滚轮翻，它和物品生成器中间有一道分割栏，按住上下拖能调两块各占多高。按 M 打开地图，双击图标也能传送（同一张图里） |
+| 刷物品 | 物品 & 传送的物品生成器 | 按分类刷任意物品，含 DLC 和 mod 物品。右上角搜索框能搜拼音首字母（xs）、完整拼音（xiangshi）、英文原名（acorn），也能直接粘中文名 |
+| 跑得快、跳、飞 | 人物 & 操作 | 移动速度、跳跃、无限体力。F1 飞行要有 DeveloperConsole，最小包没带 |
+| 时间加速 | 人物 & 操作的时间加速 | 两个热键各绑一个倍率，按住就加速 |
+| 搬猎物 | 人物 & 操作的搬运猎物 | 搬运猎物、搬运全部 |
+| 随地睡觉 | 人物 & 操作的随地睡觉 | 不用床也能睡 |
+| 面板里按空格直接完成 | 人物 & 操作的空格代替左键 | 拆解、采集、制作、修理四个面板各一个开关，完整版默认关 |
+| 东西不坏 | 装备 & 衰减 | 衰减倍率分通用、装备、食物三类，30 多种物品各自能调 |
+| 火车 | 装备 & 衰减的蒸汽火车 | 火车不坏、保持二档、燃料和水一直满，默认关 |
+| 火把、手电、油灯 | 装备 & 衰减的火把 & 手电、煤油灯 | 火把满值和燃烧时长，手电电池续航，煤油灯油量不减和燃烧倍率 |
+| 商人 | 世界 & 饮食的商人 & 美洲狮 | 即时交易、商人常驻、信任满值、交易扩充、显示信任度、商人打折、刷新商品 |
+| 野外更好活 | 世界 & 饮食的野外、容器 & 极光 | 陷阱必中、放下就抓到、容器不开空、按低一档难度出东西、极光夜刷新空容器、冰洞不冻上、坡上不打滑，默认全关 |
+| 汽水和出肉量 | 世界 & 饮食 | 含咖啡因汽水的提神效果和时长，鹿肉出肉量倍率（只影响新打死的鹿） |
+| 地图 | 地图 & 界面的地图管理、地图显示、木炭绘图 | 玩家红色箭头、打开地图以玩家为中心、木炭绘图范围和时间倍率、任何时候都能绘图、显示远景点、动物尸体显示在地图上、采完的植物图标自动消失 |
+| 地堡 | 地图 & 界面的地堡 | 按热键显示地堡（完整版 F8）。完整地堡让每个地堡随机变成六种完整版里的一种。入侵者和厄难也刷地堡 |
+| 收藏品 | 地图 & 界面的收藏品地图 | 地图上标出石堆、纸条和日志、拍立得，默认关 |
+| 室内灯光 | 地图 & 界面的室内灯光 | 室内灯光、投射阴影 |
+| 准星 | 地图 & 界面的准星 | 准星样式和透明度，永久准星（不瞄准时也显示） |
+### 存档和性能
++ 不掉帧。高频的改动按开关挂上和卸下，没开的功能完全不参与每一帧的计算。
++ 不坏存档。新加的设置都有默认值，读设置出错时用默认值顶上。出肉量这类只影响新生成的东西，旧存档里的不变。
++ 读档卡住会自动保护。载入存档卡住后关掉游戏，下次启动自动进安全模式，所有开关关掉，数值和热键保留。
+
+## 六、完整版和终极版带的其他 mod
+### 完整版
+| mod | 是什么 |
+| Architect | 自由建造。按 B 打开建造菜单放建筑结构，方向键和 PageUp、PageDown 微调位置。可选免材料、调建造耗时 |
+| PlacingAnywhere | 物品放在哪都行，能转、能上下挪、能贴着鼠标指的平面放 |
+| PerfectPlacement | 完美摆放（已汉化）。放下物品时自动贴齐旁边的物品、墙和墙角，摆正朝向。罐头能叠着放，木柴能码成一垛 |
+| SafehouseCustomizationPlus | 自定义安全屋，能搬、摆、复制家具。已修好新版游戏读档后家具和灶炉消失 |
+| ObjectSinkFix | 家具下沉修复。回到去过的地点时，家具不再沉进地板，保险箱、储物箱这类容器不再整个消失。已经沉下去的家具进地点时自动抬回原位 |
+| MoreBunkers | 更多地堡 v1.3。神秘湖工匠地堡、沿海公路囤货地堡、废弃机场雇佣兵地堡，入口是地上的旧舱口，按 Home 键看在哪 |
+| MotionTrackerLite | 动物雷达，屏幕上用图标提示附近动物的方位，按 U 开关 |
+| RarityRework | 物品稀有度。物品名字按档位上色，普通、优秀、精良、史诗、传说、神话六档。随机词条模式默认关，在 Mod Settings 里打开 |
+| SaveManager | 存档管理。F5 存档，F6 读档（F5 快速保存的注意事项见第十章） |
+| BlueprintCleaner | 整理制作界面的蓝图清单，按 H 在原版和整理后的界面之间切换 |
+| GearInfo | 检查物品时显示完整的属性数据 |
+| GearToolbox | 调整拆解产出（布、电池、陶瓷、枪械部件、骨头这些）和燧石、石块的掉率 |
+| InventoryReassignments | 背包整理，把水壶、茶、助燃剂这些归到指定的分类页 |
+| ImprovedFirstAidPanel | 急救面板更清楚好用 |
+| BricklayersDoorFix、RavineBridgeFix | 原版 bug 修复 |
+| DeveloperConsole | 开发者控制台，F2 打开。TldHacks 的 F1 飞行要靠它 |
+| ItemPicker | 默认停用，放在 Mods\_disabled 里，想用就挪回 Mods |
+| 前置（别删） | ModSettings、ModData、ModComponent、ComplexLogger、AudioManager、AfflictionComponent、ExamineActionsAPI、KeyboardUtilities。这些是别的 mod 要用的库，删了别的 mod 会报错或失效 |
+### 终极版多出来的 mod
+终极版有完整版的所有 mod，ItemPicker 是开着的。另外还有这些（按字母排）。
+AfflictionsAndBuffs、AlcoholMod、Better-Night-Sky、BetterCamera、BiggerTrappers、Bountiful_Foraging、CampingTools、Candlelight、ClothingExpanded、ClothingTweaker2、CookWhileFishingReborn、CougarSoundBegone、CozyBlankets、CozyCushions、ExtremeTempDrop、FPSBooster、FiligranisSkills、FoodPackByTKG、FoodsByCalorieWaltz、Forager.s.Delight、IndoorCampfires、IndoorsGreenery、InterloperHudPro、InterloperRegionSelection、ItemScanner、LitharsRidge、MapIconTracker、MehToolBox、Minor_Miseries、MiseryModePlus、ModSettingsQuickNav、MoreCameraSpawns、MoreWood、NorthernLightsBroadcast、PauseInJournal、PickWaterFromFishingHoles、PineNeedleTea、PredatorSpawnSelector、PrepperCache、Ranger_Recipes、RecipeRequirements、ResearchBookTweaker、RestandReadMod、ScaledFishMod、SeasonedInterloping、Shortcuts、SillyMod、StalkerAidsAndSupplements、SurvivorsLegacy、TheLongDevelopment、ThrowPower、TraderMoving、WildFire。
+物品包（.modcomponent 文件，加新物品、衣服、装饰、配方）有这些。AHandyToolbox、ClothingPackByTKG、Collector.Cards、FishingLine、HomeMadeBrewery、ItemPiles、Lich.s.Decorations.Plushie、Lich.s.Decorations.Stack、NorthfolkClothingPack、Rare-ExclusiveLoot、SnowmensTales、StorymodeCollectibles、Watches、WolfskinScarf，还有 ZC8787 开头的七个配方包。
+
+## 七、按键指南
+### 先看这几条
++ 所有按键都能在游戏设置的 Mod Settings 里改，每个 mod 一页。
++ Mouse2 是鼠标中键（按下滚轮）。Mouse3 和 Mouse4 是鼠标侧面拇指位置的两个键。
++ 写“数字 5”的是字母上面那一排数字键，写“小键盘 1”的是键盘右边的数字小键盘。
++ 最小包只有 TldHacks，按键看下面 TldHacks 表里完整版那一列。最小包没带 DeveloperConsole，F1 飞行用不了。
++ 完整版和终极版有不少按键不一样，下面分开写。
+### TldHacks
+| 作用 | 完整版和最小包 | 终极版 |
+| 打开或关闭 TldHacks 菜单 | Tab | ` 键 |
+| 飞行开关（要有 DeveloperConsole） | F1 | F1 |
+| 一键搜刮，搜的时候按 Esc 停 | Mouse4 | Mouse4 |
+| 跳跃 | 空格 | 左 Alt |
+| 时间加速一档（按住） | 小键盘 1 | F |
+| 时间加速二档（按住） | 小键盘 2 | E |
+| 地图上显示地堡 | F8 | F9 |
+| 当前区域地图全开 | 默认不绑。全开以后撤销不了，要用就自己设一个键 | ` 键 |
+| 背包里丢弃鼠标指着的物品，一次丢 1 个 | Q | Q |
+| 按住它再按丢弃键是丢整堆，按住它再拾取或转移是批量操作 | 左 Shift | 左 Shift |
+| 在面板里关掉面板返回，等于按 Esc | Mouse3 | Mouse3 |
+| 拆解、采集、制作、修理面板里直接完成 | 空格（默认关，在人物 & 操作页的空格代替左键里打开） | 空格（已打开） |
+| 背包或衣物面板里右键物品，直接进放置模式 | 右键 | 右键 |
+| 选数量的面板里按住，整堆丢出 | Ctrl | Ctrl |
+| 按 M 打开地图，双击图标传送过去（同一张图里） | 双击 | 双击 |
+### 完整版其他 mod 的按键
+| 按键 | 作用 | mod |
+| B | 打开建造菜单 | Architect |
+| 方向键、PageUp、PageDown | 建造时微调位置（左右、前后、上下） | Architect |
+| 鼠标中键 | 准星对着建筑构件按，复制一个 | Architect |
+| 按住冲刺键（左 Shift）再按鼠标中键 | 准星对着还没建完的构件按，删掉它 | Architect |
+| T、U | 摆放物品时绕 X 轴转（减、加） | PlacingAnywhere |
+| G、H | 摆放物品时绕 Z 轴转（减、加） | PlacingAnywhere |
+| B、N | 摆放物品时下移、上移 | PlacingAnywhere |
+| K | 摆放物品时旋转复位，摆回鼠标指的水平面 | PlacingAnywhere |
+| X | 摆放物品时让物体贴合鼠标指的方向 | PlacingAnywhere |
+| Z | 摆放物品时切换默认位置和贴住鼠标指的平面 | PlacingAnywhere |
+| 按住左 Alt | 摆放物品时用鼠标转物体 | PlacingAnywhere |
+| H | 制作界面里切换原版和整理后的蓝图清单 | BlueprintCleaner |
+| 左 Alt + 鼠标左键 | 制作界面里隐藏或恢复某个蓝图。隐藏的蓝图要按 H 才看得到，显示成红色 | BlueprintCleaner |
+| 方向键左、右 | 蓝图叠在一起时切换上一个、下一个 | BlueprintCleaner |
+| U | 开关动物雷达 | MotionTrackerLite |
+| Home | 屏幕上提示这个存档的三个新地堡分别在哪张图 | MoreBunkers |
+| 小键盘 8 | 准星对着装饰物按，复制一个 | SafehouseCustomizationPlus |
+| F5、F6 | 存档、读档 | SaveManager |
+| F2 | 打开或关闭开发者控制台 | DeveloperConsole |
+### 完美摆放 PerfectPlacement
+完整版和终极版的按键一样。手上拿着物品准备放下时这些键才生效，End 什么时候都能按。拿着物品时屏幕右侧有按键提示。
+| 按键 | 游戏里的名字 | 作用 |
+| End | 模组开关 | 开关整个 mod，关掉后照原版摆放 |
+| 数字 5 | 摆放姿势 | 换到下一个姿势，正放、平躺、立起来 |
+| 数字 6 | 成组拿起 | 拿起一件后按，紧挨着的同种物品一起拿起 |
+| 数字 7 | 码成一垛 | 1 米内的同种物品码成整齐的一垛 |
+| 数字 8 | 换码放形状 | 在最佳的十种码放形状里轮换 |
+| 数字 9 | 吸附别种物品 | 开关对别种物品的吸附 |
+| 数字 0 | 吸附开关 | 开关吸附 |
+| F2 | 记住形状 | 开关记住你换过的码放形状 |
+| F3 | 旋转方式 | 在滚轮每次转 90 度和原版自由旋转之间切换 |
+| F4 | 更多形状 | 轮换十种最佳形状以外的码放形状 |
+| F7 | 连上面的一起拿 | 开关这个功能，开着时上面压着的东西跟着一起走 |
+| F11 | 逐件旋转 | 开关这个功能，开着时组里每一件各转各的 |
+| R | 收进背包 | 拿起一件后按，它和紧挨着的同种物品一起收进背包 |
+| L | 空间检查 | 开关空间检查，开着时不会放进顶到架子或天花板的位置 |
+### 终极版其他 mod 的按键
+Architect、PlacingAnywhere、PerfectPlacement、BlueprintCleaner、MotionTrackerLite、MoreBunkers、SafehouseCustomizationPlus、SaveManager、DeveloperConsole 的按键和完整版一样，看上面的表。下面是终极版不一样的和多出来的。
+| 按键 | 作用 | mod |
+| F9 | 手动查看当前存档的地堡分布 | PrepperCache |
+| Y | 看着无线电或交易箱按一下选中，再点右键抱起。抱着东西时按 Y 或右键放下。看着随身无线电选中后再按一下是呼叫商人 | TraderMoving |
+| F9 | 把无线电和交易箱在哪、交易状态写进 MelonLoader 日志。出问题时按一下，把日志发给作者 | TraderMoving |
+| 数字 0 | 半径范围内自动拾取 | ItemPicker |
+| G | 显示或隐藏附近的物品标记 | ItemScanner |
+| 按住 V，再左键点钓鱼冰洞 | 打开取水面板 | PickWaterFromFishingHoles |
+| O | 准星对着物品按，缩放物品 | SillyMod |
+| P | 保存照片 | BetterCamera |
+| 等号键、减号键 | 开着动态缩放时放大、缩小，滚轮也行 | BetterCamera |
+| 鼠标中键 | 点燃或熄灭蜡烛 | Candlelight |
+| 鼠标中键 | 对着坐垫、床铺、铺盖卷、长凳、椅子这些坐下，再按一次起立 | CozyCushions |
+| 鼠标中键 | 开关电视。看电视的时候按 Esc 退出 | NorthernLightsBroadcast |
+### 一个键管几样的地方
++ U 在两个包里都管两样。动物雷达（MotionTrackerLite）什么时候按都开关，摆放物品时 U 又是转物体（PlacingAnywhere），所以摆放时按 U 雷达也会跟着开关。
++ 完整版的 F2 管两样。DeveloperConsole 用它打开控制台，完美摆放拿着物品时用它切换记住形状。拿着物品按 F2，两样会一起动。
++ 终极版的 F9 同时管三样，显示地堡（TldHacks）、查看地堡分布（PrepperCache）、写诊断日志（TraderMoving）。
++ 终极版的左 Alt 平时是跳跃，摆放物品时是用鼠标转物体，制作界面里配合左键隐藏蓝图。
++ 鼠标中键对着不同的东西干不同的事。对着建筑构件是复制（Architect），终极版里对着蜡烛是点灯，对着坐垫椅子是坐下，对着电视是开关。
++ B 和 H 在摆放物品时另有用处。B 平时打开建造菜单，摆放时是下移。H 在制作界面切换蓝图清单，摆放时是转物体。
+
+## 八、合并和修过的 mod 清单
+### 已经合并进 TldHacks 的 mod
+下面这些 mod 的功能都在 TldHacks 里了，不用再单独装。单独装了会和 TldHacks 冲突，跑一次第四章的 bat 就会把它们停用。
+| 原来的 mod | 在 TldHacks 里对应的功能 |
+| SonicMode | 移动速度（细分速度） |
+| Jump | 跳跃 |
+| GunZoom | 瞄准放大 |
+| VehicleFov | 车内保持 FOV、车内自由视角 |
+| FastTravel | 快速传送 |
+| StretchArmstrong | 交互距离 |
+| TorchTweaker | 火把数值，防止左键误灭火把 |
+| KeroseneLampTweaks | 煤油灯数值 |
+| AutoToggleLights | 休息时熄灯 |
+| GearDecayModifier | 衰减倍率 |
+| BowRepair | 弓修理 |
+| DisableAutoEquipCharcoal | 取木炭后不拿在手上 |
+| RememberBreakDownItem | 拆解面板自动选中上次用的工具 |
+| DroppableUndroppables | 任意丢弃，相机、对讲机、断线钳这些原本丢不掉的东西能丢 |
+| CraftAnywhereRedux | 随地制作 |
+| MoreCookingSlots | 烹饪位扩展 |
+| TimeScaleHotkey | 时间加速热键 |
+| FullSwing | 开门幅度和开门速度 |
+| SilentWalker | 脚步静音 |
+| QoL | 各种小便利和面板快捷键 |
+| AutoSurvey | 自动测绘 |
+| MapManager | 地图管理 |
+| TinyTweaks-MapTextOuline | 地图文字描边 |
+| TinyTweaks-NoSaveOnSprain | 扭伤时不自动存档 |
+| TinyTweaks-WakeUpCall | 睡着时能随时醒来 |
+| TinyTweaks-BuryHumanCorpses | 埋葬尸体 |
+| TinyTweaks-RunWithLantern | 拿着油灯也能跑 |
+| SleepWithoutABed | 随地睡觉 |
+| SkipIntroRedux | 跳过片头 |
+| PlaceFromInventory | 背包里右键放置 |
+| CaffeinatedSodas | 含咖啡因汽水 |
+| Sprainkle | 扭伤系统 |
+| RnStripped | 搬运尸骸（鹿、狼尸体能搬到别处，能跨场景）、极光点火 |
+| ExtraGraphicsSettings | 准星 |
+| UniversalTweaks | 高级微调里的常用修改 |
+| StackManager | 物品堆叠 |
+| HouseLights | 室内灯光 |
+| ShowTraderTrust | 屏幕上显示商人信任度 |
+| FeatSettings | 勋章（当前存档） |
+### bat 也会停用、但没有合并的 mod
+| mod | 为什么停用 |
+| GfxBoost、LightCull | 山洞里和夜里会变得一片漆黑 |
+| DarkerNights | 会卡住游戏启动 |
+| ImprovedFlasks | 游戏 2.55 以后保温杯喝东西会出问题 |
+| ImprovedTrader | 调用了新版游戏删掉的方法，已经从完整版里拿掉 |
+| ItemRarities | 换成了我们做的 RarityRework |
+### 我们自己做的 mod
+| mod | 是什么 | 在哪个包 |
+| TldHacks | 内置修改器，见第五章 | 三个沙盒包和剧情包 |
+| MoreBunkers | 更多地堡，三个布置好的新地堡 | 完整版、终极版、选装 |
+| TraderMoving | 搬运商人的无线电和交易箱 | 终极版、选装 |
+| RarityRework | 物品稀有度，替换原来的 ItemRarities | 完整版、终极版 |
+| ModSettingsQuickNav | Mod Settings 里快速跳到某个 mod 的设置页 | 终极版 |
+### 10 月 28 日游戏更新后修好的 mod
+| mod | 修了什么 |
+| Architect、Bountiful_Foraging、ClothingExpanded、ClothingTweaker2、ComplexLogger、ExamineActionsAPI、FoodPackByTKG、FoodsByCalorieWaltz、GearInfo、IndoorsGreenery、PickWaterFromFishingHoles、PineNeedleTea、ResearchBookTweaker、StalkerAidsAndSupplements | 游戏删了这些 mod 用来读物品的一个方法，一用到就报错。已经改成调新方法。ExamineActionsAPI 还升到了 2.0.8 |
+| BlueprintCleaner | 新版游戏里判断启动场景出错，已修 |
+| MiseryModePlus | 随机出生地区出错，已修 |
+| FiligranisSkills | 游戏新加了霰弹枪技能，技能编号对不上，连带 AlcoholMod 往日志里刷错误。已修 |
+| PrepperCache | 新的世界地图上有的点越界报错，所有地堡标记都不显示。现在跳过出错的点 |
+| CampingTools | 原来的 2.2.1 本身就是坏的，换成 2.2.3，配上汉化 |
+| TheLongDevelopment、PredatorSpawnSelector | 游戏删了原来的刷怪表，两个都修好了。PredatorSpawnSelector 保留汉化版 1.3.1，TheLongDevelopment 会补上空的刷怪列表 |
+| ItemPicker | 按交互键报错，已修（完整版里默认停用） |
+| ItemRarities | 检查物品界面报错。修好后换成了 RarityRework |
+| PerfectPlacement 0.39.1 | 新加进完整版和终极版。修了两处新版报错，149 条文字汉化，默认键 F1 改成 F7、F5 改成 F11，避开 TldHacks 飞行和 SaveManager 存档 |
+| TldHacks、MoreBunkers、SafehouseCustomizationPlus、TraderMoving | 我们自己的 mod，都适配了新版 |
+### 更早修过的 mod
+| mod | 修了什么 |
+| SafehouseCustomizationPlus（汉化 1.9.4） | 读档后家具和灶炉消失，10 月 6 日修好。10 月 28 日更新后又修了一次 |
+| NorthernLightsBroadcast v2.1.1 | 电视菜单一个字都不显示。现在改用游戏自带的中文字体，中文文件名也能显示 |
+| PastimeReading | 中文小说越往后方框越多。中文字体图集从 1024 x 1024 放大到 4096 x 4096 |
+
+## 九、剧情模式
+剧情模式是独立的游戏程序，和沙盒不是同一个 exe，所以 mod 要单独装一遍。剧情包自带 mod 加载器（MelonLoader），一拖就能用，不用从沙盒目录拷任何东西。
+装它不影响沙盒版，各有各的 Mods 文件夹，互不干扰。
+剧情包可能有 bug，第 5 章这一版还没有进游戏实测过。
+| 项目 | 第 1 到 4 章 | 第 5 章 |
+| 网盘位置 | The Long dark 故事剧情模式_可能有bug没测试 文件夹里的 剧情模式第一章到第四章 | 同一个文件夹里的 剧情模式第五章 |
+| 下载哪个 | 剧情材质包备份.001、.002 两个分卷 | 第五章剧情材质包备份.001、.002、.003 三个分卷 |
+| 解出来是 | wintermute 文件夹 | episode5 文件夹 |
+| 装到哪 | 游戏根目录\tld_dlc\wintermute\ | 游戏根目录\tld_dlc\episode5\ |
+| 怎么进 | 游戏主菜单点剧情，进存档后按 Tab 打开菜单 | 游戏主菜单进第 5 章，读档后按 Tab 打开菜单 |
+### 怎么装
++ 把分卷全部下载到同一个文件夹里，缺一个都打不开。
++ 右键 .001，用 7-Zip 打开，密码 tld2026。只点 .001 就行，它会自动把几个分卷合起来。
++ 两种装法选一种。省事的装法是把解出来的 wintermute（或 episode5）文件夹直接拖进 游戏根目录\tld_dlc\，选覆盖。稳妥的装法是进解出来的文件夹，把里面的 winhttp.dll、MelonLoader、Mods 三样拖进 游戏根目录\tld_dlc\wintermute\（或 episode5\），选覆盖。
++ 装完检查。tld_dlc\wintermute\（或 episode5\）里应该同时有原来的 tld.exe 和刚放进去的 winhttp.dll，两个在同一层。winhttp.dll 放进 MelonLoader 里面等于没装。
++ 按键在设置里的 Mod Settings 改。第一次启动慢一点，之后正常。
+### 注意
++ 剧情目录里只放包里这三样，不要把沙盒的 mod 复制过去。剧情和沙盒的游戏版本不一样，复制过去会崩。
++ 包里那份 安装说明_必看.txt 有更细的排错步骤，装不上就看它。
++ 第 5 章读到剧情存档后，商人、美洲狮、传送、锁天气和调时间、极光点火、埋尸体、植物重生、搬猎物、任意丢弃会自动关掉并灰显，其余功能照常。第 5 章里也不能用清任务物品，免得卡住任务。
+
+## 十、常见问题
+! 装不上或者嫌麻烦
+直接找群主远程安装，30 元一次，见第一章。
+! 游戏能启动，但 mod 没加载
+游戏能启动但 mod 管理器没起来，把游戏根目录的 version.dll 改名成 winhttp.dll 试试。还不行就找群主远程安装。
+! 启动报 Runtime config not found
+报 Runtime config not found 之类找不到 MelonLoader 文件的，多半是杀毒软件删了文件，或者解压时多套了一层文件夹。关掉杀毒软件（或者把游戏目录加白名单），重新解压覆盖一遍。还不行就找群主远程安装。
+! 第一次启动很慢，黑框一直刷字
+第一次启动会多等一会儿，黑框里刷字是正常的。
+! 卡在加载画面
+载入存档卡住后关掉游戏，下次启动会自动进安全模式，所有开关关掉，数值和热键保留。还是卡在加载，就删掉 Mods 文件夹里的 TldHacks.json，多半是配了非法的参数数值。
+! 游戏设置界面打不开
+包里这份 ModSettings.dll 是跟游戏版本配套的，请不要单独去更新它。如果装了别的 mod 把它覆盖成别的版本，游戏的设置界面可能打不开（日志里会看到 ModSettings 抛 MissingMethodException），从包里把 Mods\ModSettings.dll 还原回去就好。
+! 解压报“无法打开为压缩文件”
+要用 7-Zip（WinRAR 新版、Bandizip 也行），Windows 自带的解压不认这个格式。分卷的几个文件缺一不可，少一个也会报这个错。
+! 只想更新 TldHacks
+老用户只想换本体，解出来只拿 Mods\TldHacks.dll 覆盖就行，别的都不用动。10 月 28 日游戏更新后包里好几个别的 mod 也修了，从旧版升上来的建议整包重新装一遍。
+! 菜单太大或太小
+菜单默认按屏幕分辨率定大小，觉得不合适在菜单里点加号、减号调。
+! 钓鱼的时候自动烤鱼
+不想钓鱼的时候自动烤鱼，删掉 Mods 文件夹里的 CookWhileFishingReborn.dll。现在只有终极版带它。
+! 体感变卡
+体感变卡没办法，这个 b 游戏就是这么烂，要求高的开个 Lossless Scaling 就行。
+! F5 快速保存
+装了完整版的不要用 F5 快速保存，有可能坏档。存档的事拿不准，去群里问。
+! 宝丽来
+地图管理（现在在 TldHacks 的地图 & 界面页）里和宝丽来有关的功能不要用，比如“远景点不用宝丽来”，也可能坏档，默认关着。
+! 中途加了别的 mod
+如果在玩的过程中加了别的模组，推荐新开存档。
