@@ -1,7 +1,7 @@
 # Prepended to browser-harness scripts for the Baidu netdisk web API. Uses the user's logged-in Chrome.
 import json, time
 
-ROOT = '/TLD HACK V2.58'
+ROOT = '/TLD HACK V2.59'
 OLD = ROOT + '/OLD文件，不用管，V2.55老版本的东西在里面'
 
 
