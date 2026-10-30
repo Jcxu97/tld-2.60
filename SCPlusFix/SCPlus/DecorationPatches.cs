@@ -214,7 +214,7 @@ internal class DecorationPatches
 				if (string.IsNullOrEmpty(__instance.m_Guid) && !Utility.WithinDistance(__instance.transform.position, Vector3.zero))
 				{
 					Guid guid = Utility.GenerateSeededGuid(Utility.SeedFromCoords(__instance.transform.position));
-					Utility.Log(PdidTable.GetGameObject(orAddComponent.m_Guid) ? ConsoleColor.Green : ConsoleColor.Gray, $"name {__instance.name} | PDID {orAddComponent.m_RuntimeCachedPdid} | seed {Utility.SeedFromCoords(__instance.transform.position)} | coords {__instance.transform.position.ToString("F4")}");
+					Utility.Log(PdidTable.GetGameObject(orAddComponent.m_RuntimeCachedPdid) ? ConsoleColor.Green : ConsoleColor.Gray, $"name {__instance.name} | PDID {orAddComponent.m_RuntimeCachedPdid} | seed {Utility.SeedFromCoords(__instance.transform.position)} | coords {__instance.transform.position.ToString("F4")}");
 					PdidTable.RuntimeAddOrReplace(orAddComponent, guid.ToString());
 				}
 			}

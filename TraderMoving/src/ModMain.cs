@@ -4,7 +4,7 @@ using Il2CppTLD.Trader;
 using MelonLoader;
 using UnityEngine;
 
-[assembly: MelonInfo(typeof(TraderMoving.ModMain), "TraderMoving", "1.0.0", "user")]
+[assembly: MelonInfo(typeof(TraderMoving.ModMain), "TraderMoving", "1.0.1", "user")]
 [assembly: MelonGame("Hinterland", "TheLongDark")]
 [assembly: MelonAdditionalDependencies("ModSettings", "ModData")]
 

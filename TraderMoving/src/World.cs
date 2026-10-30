@@ -258,8 +258,8 @@ internal static class World
             ex.m_BoxOpenEvent = WwiseEvent(1041331915, "19EA54D7-E211-48C7-9D17-E39C26C6BDB0", "play_Trader_Interaction_ExchangeBox_Open");
             ex.m_BoxCloseEvent = WwiseEvent(4238822553, "4293A7A6-54A9-4CB0-8816-3850ED5E8752", "play_Trader_Interaction_ExchangeBox_Close");
 
-            var potable = GearItem.LoadGearItemPrefab("GEAR_WaterSupplyPotable");
-            var nonPotable = GearItem.LoadGearItemPrefab("GEAR_WaterSupplyNotPotable");
+            var potable = UnityEngine.AddressableAssets.Addressables.LoadAssetAsync<GameObject>((Il2CppSystem.Object)"GEAR_WaterSupplyPotable").WaitForCompletion()?.GetComponent<GearItem>();
+            var nonPotable = UnityEngine.AddressableAssets.Addressables.LoadAssetAsync<GameObject>((Il2CppSystem.Object)"GEAR_WaterSupplyNotPotable").WaitForCompletion()?.GetComponent<GearItem>();
             if (potable != null) ex.m_PotableWaterSupply = potable.m_GearItemData;
             if (nonPotable != null) ex.m_NonPotableWaterSupply = nonPotable.m_GearItemData;
 

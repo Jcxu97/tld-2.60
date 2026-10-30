@@ -827,7 +827,7 @@ internal static class Stock
         for (int hop = 0; hop < 4 && n != null; hop++)
         {
             GearItem pf = null;
-            try { pf = GearItem.LoadGearItemPrefab("GEAR_" + n); } catch { }
+            try { pf = UnityEngine.AddressableAssets.Addressables.LoadAssetAsync<GameObject>((Il2CppSystem.Object)("GEAR_" + n)).WaitForCompletion()?.GetComponent<GearItem>(); } catch { }
             if (pf != null)
             {
                 if (n != name && _warned.Add(name)) ModMain.Log?.Warning($"[MoreBunkers] no GEAR_{name}, using GEAR_{n}");
@@ -1014,7 +1014,7 @@ internal static class Stock
 
     private static GearItem Spawn(PlayerManager pm, GearItem pf, int units, Vector3 pos, Quaternion rot)
     {
-        var gi = pm.InstantiateItemAtLocation(pf, units, pos, false);
+        var gi = pm.InstantiateItemAtLocation(pf.name, units, pos, false);
         if (gi == null) return null;
         gi.transform.SetPositionAndRotation(pos, rot);
         Fresh(gi, units);
@@ -1040,7 +1040,7 @@ internal static class Stock
             c.GetItems(before);
             var seen = new HashSet<IntPtr>();
             for (int i = 0; i < before.Count; i++) if (before[i] != null) seen.Add(before[i].Pointer);
-            c.InstantiateGearPrefabInContainer(pf.gameObject);
+            c.InstantiateGearPrefabInContainer(pf.name);
             var after = new Il2CppSystem.Collections.Generic.List<GearItem>();
             c.GetItems(after);
             for (int i = 0; i < after.Count; i++)

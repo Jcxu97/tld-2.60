@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <TldRoot>D:\Steam\steamapps\common\TheLongDark</TldRoot>
+    <NoWarn>$(NoWarn);CS8632</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="$(TldRoot)\MelonLoader\net6\AsmResolver.dll;$(TldRoot)\MelonLoader\net6\AsmResolver.PE.File.dll;$(TldRoot)\MelonLoader\net6\AsmResolver.PE.dll;$(TldRoot)\MelonLoader\net6\AsmResolver.DotNet.dll" />
+    <Reference Include="$(TldRoot)\MelonLoader\Il2CppAssemblies\Assembly-CSharp.dll;$(TldRoot)\MelonLoader\Il2CppAssemblies\Il2Cppmscorlib.dll;$(TldRoot)\MelonLoader\Il2CppAssemblies\UnityEngine.CoreModule.dll;$(TldRoot)\MelonLoader\Il2CppAssemblies\Unity.Addressables.dll;$(TldRoot)\MelonLoader\Il2CppAssemblies\Unity.ResourceManager.dll;$(TldRoot)\MelonLoader\net6\Il2CppInterop.Runtime.dll;$(TldRoot)\MelonLoader\net6\Il2CppInterop.Common.dll" Private="false" />
+  </ItemGroup>
+</Project>
