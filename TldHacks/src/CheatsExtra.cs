@@ -122,9 +122,9 @@ internal static class Teleport
     private static int _pendingFrames = 0;
 
     // 正式的跨场景传送 —— 参考 FastTravel.dll 流程:
-    //   1) SaveGameSystem.SaveGame() 保存当前 state
-    //   2) 构造 SceneTransitionData 填 from/to scene 名
-    //   3) GameManager.LoadScene(sceneName, saveName) 触发场景切换
+    //   1) 构造 SceneTransitionData 填 from/to 场景存档名
+    //   2) 原版 LoadScene 不肯存档时(AllowedToSave 不过)自己存档 + ConfigureRestoreFromSlot
+    //   3) GameManager.LoadScene(sceneName, 当前场景存档名) 触发场景切换
     //   4) OnSceneWasInitialized 后再等 60 帧调 TeleportPlayer 到精确坐标
     public static void TravelTo(Waypoint w)
     {
@@ -160,38 +160,25 @@ internal static class Teleport
             // 场景存档名;带编号的内部(比如 MoreBunkers 的地堡)和场景名不一样,同一内部场景的几个地堡也各不相同
             string curSave = null;
             try { curSave = GameManager.m_SceneTransitionData?.m_SceneSaveFilenameCurrent; } catch { }
-
-            // 1) 存当前档 —— FastTravel 用的是 SaveGameSystem.SaveGame("autosave", currentSceneName) 有参版本
-            //    反射先试 (string, string) 再 fallback 无参
-            try
+            if (string.IsNullOrEmpty(curSave))
             {
-                var sgt = typeof(SaveGameSystem);
-                var saveTwoArg = sgt.GetMethod("SaveGame", BindingFlags.Static | BindingFlags.Public,
-                    null, new[] { typeof(string), typeof(string) }, null);
-                if (saveTwoArg != null)
+                try
                 {
-                    saveTwoArg.Invoke(null, new object[] { "autosave", string.IsNullOrEmpty(curSave) ? activeScene.name : curSave });
+                    var snapFrom = TransitionRecorder.Lookup(activeScene.name);
+                    if (snapFrom != null && !string.IsNullOrEmpty(snapFrom.ToSaveId)) curSave = snapFrom.ToSaveId;
                 }
-                else
-                {
-                    var saveNoArg = sgt.GetMethod("SaveGame", BindingFlags.Static | BindingFlags.Public, null, System.Type.EmptyTypes, null)
-                                 ?? sgt.GetMethod("ForceSaveGame", BindingFlags.Static | BindingFlags.Public, null, System.Type.EmptyTypes, null);
-                    saveNoArg?.Invoke(null, null);
-                }
+                catch { }
             }
-            catch (Exception ex) { Log($"[TP.Save] {ex.Message}"); }
+            if (string.IsNullOrEmpty(curSave)) curSave = activeScene.name;
 
-            // 2) 构造 SceneTransitionData —— 优先用 TransitionRecorder 记录的真实 save slot id
+            // 1) 构造 SceneTransitionData —— 优先用 TransitionRecorder 记录的真实 save slot id
             //    DLC Tale scene 的 save slot id ≠ Unity scene 名,硬猜会让游戏把玩家 re-init 丢物品
             try
             {
                 var snapTo   = TransitionRecorder.Lookup(w.Scene);         // 目标
-                var snapFrom = TransitionRecorder.Lookup(activeScene.name); // 当前
 
                 var std = new SceneTransitionData();
-                std.m_SceneSaveFilenameCurrent  = !string.IsNullOrEmpty(curSave) ? curSave
-                                                  : (snapFrom != null && !string.IsNullOrEmpty(snapFrom.ToSaveId))
-                                                      ? snapFrom.ToSaveId : activeScene.name;
+                std.m_SceneSaveFilenameCurrent  = curSave;
                 std.m_SceneSaveFilenameNextLoad = (snapTo != null && !string.IsNullOrEmpty(snapTo.ToSaveId))
                                                       ? snapTo.ToSaveId : w.Scene;
                 std.m_TeleportPlayerSaveGamePosition = true;
@@ -223,14 +210,33 @@ internal static class Teleport
             }
             catch (Exception ex) { Log($"[TP.Std] {ex.Message}"); }
 
+            // 2) 存档 + 指定加载后恢复槽。
+            //    原版 LoadScene 里只有 AllowedToSave(InMemory) 通过才会 SaveGame("autosave", 场景存档名)
+            //    + ConfigureRestoreFromSlot("autosave");不通过(玩家还在下落/移动、控制模式不对等)就两件都不做,
+            //    新场景加载完不 RestoreGame,玩家/全局状态停在旧数据 → 看起来回档。v9.7 只改了手动存档的场景名,没修到这里。
+            //    所以:原版会自己存就交给它(免得存两遍);不会存的时候我们自己补齐这一对。
+            bool vanillaWillSave = AllowedToSaveForTransition();
+            if (!vanillaWillSave)
+            {
+                try
+                {
+                    SaveForTransition(curSave);
+                    ConfigureRestoreFromAutosave();
+                    Log(I18n.IsEnglish
+                        ? "[TP.Save] Game refused the transition save; saved + set restore slot manually"
+                        : "[TP.Save] 游戏这次不让切场景存档,已手动存档并指定恢复槽");
+                }
+                catch (Exception ex) { Log($"[TP.Save] {ex.Message}"); }
+            }
+
             // 3) 标记 pending,让 OnSceneWasInitialized 在加载完后精确定位
             _pendingWaypoint = w;
 
-            // 4) LoadScene
+            // 4) LoadScene —— 第二个参数是"当前场景的存档名",原版 Action_LoadScene 传的就是 m_SceneSaveFilenameCurrent。
+            //    以前传 GetCurrentSaveName()(存档槽名,比如 sandbox4),场景数据被存到错的 key 下。
             try
             {
-                string saveName = GetCurrentSaveName();
-                GameManager.LoadScene(w.Scene, saveName);
+                GameManager.LoadScene(w.Scene, curSave);
             }
             catch (Exception ex)
             {
@@ -241,15 +247,53 @@ internal static class Teleport
         catch (Exception ex) { Log($"[TP] {ex.Message}"); }
     }
 
-    private static string GetCurrentSaveName()
+    // 下面几个用反射:剧情版(2.24)的 interop 不一定有同名/同签名的成员,直接调用会编不过
+    private static bool AllowedToSaveForTransition()
     {
         try
         {
-            var m = typeof(SaveGameSystem).GetMethod("GetCurrentSaveName", BindingFlags.Static | BindingFlags.Public);
-            if (m != null) { var r = m.Invoke(null, null); if (r is string s) return s; }
+            var m = typeof(GameManager).GetMethod("AllowedToSave", BindingFlags.Static | BindingFlags.Public);
+            if (m == null) return false;
+            var pt = m.GetParameters();
+            if (pt.Length != 1 || !pt[0].ParameterType.IsEnum) return false;
+            var names = System.Enum.GetNames(pt[0].ParameterType);
+            if (System.Array.IndexOf(names, "InMemory") < 0) return false;
+            var state = System.Enum.Parse(pt[0].ParameterType, "InMemory");
+            return m.Invoke(null, new[] { state }) is bool b && b;
+        }
+        catch { return false; }
+    }
+
+    private static void SaveForTransition(string sceneSave)
+    {
+        var sgt = typeof(SaveGameSystem);
+        var two = sgt.GetMethod("SaveGame", BindingFlags.Static | BindingFlags.Public,
+            null, new[] { typeof(string), typeof(string) }, null);
+        if (two != null) { two.Invoke(null, new object[] { AutosaveSlotName(), sceneSave }); return; }
+        var none = sgt.GetMethod("SaveGame", BindingFlags.Static | BindingFlags.Public, null, System.Type.EmptyTypes, null)
+                ?? sgt.GetMethod("ForceSaveGame", BindingFlags.Static | BindingFlags.Public, null, System.Type.EmptyTypes, null);
+        none?.Invoke(null, null);
+    }
+
+    private static string AutosaveSlotName()
+    {
+        try
+        {
+            var f = typeof(SaveGameSlots).GetProperty("AUTOSAVE_SLOT_NAME", BindingFlags.Static | BindingFlags.Public);
+            if (f?.GetValue(null) is string s && !string.IsNullOrEmpty(s)) return s;
+            var fi = typeof(SaveGameSlots).GetField("AUTOSAVE_SLOT_NAME", BindingFlags.Static | BindingFlags.Public);
+            if (fi?.GetValue(null) is string s2 && !string.IsNullOrEmpty(s2)) return s2;
         }
         catch { }
         return "autosave";
+    }
+
+    private static void ConfigureRestoreFromAutosave()
+    {
+        var m = typeof(SaveGameSystem).GetMethod("ConfigureRestoreFromSlot", BindingFlags.Static | BindingFlags.Public,
+            null, new[] { typeof(string) }, null);
+        if (m == null) throw new MissingMethodException("SaveGameSystem.ConfigureRestoreFromSlot");
+        m.Invoke(null, new object[] { AutosaveSlotName() });
     }
 
     // ModMain.OnSceneWasInitialized 会调这个

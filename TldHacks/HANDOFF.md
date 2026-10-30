@@ -11,6 +11,12 @@ TldHacks v10.6 打包完成,上传夸克 TLD V2.59 Hack 和百度 TLD HACK V2.59
 3. 打包:MoreBunkers 工作区有一半的改动(调 2.59 已删的 API,编译不过),这次用 `release.EXTRAS = {'scp': release.SCP}` 跳过它重编,包里 MoreBunkers.dll 还是 10.5 那份。三个 staging 的 MelonLoader Il2CppAssemblies、cpp2il_out、Config.cfg 已从 2.59 游戏同步
 4. 终极版 release.py 不管:把新 TldHacks.dll 拷进 `staging\ultimate\Mods`,在 staging\ultimate 里对全部条目 `bz c -fmt:7z -l:9 -p:tld2026`(包根目录无顶层文件夹),切 20MB 分卷进 `Desktop\TLD\V10.6终极版_我自己在用的全部mods\`,解压比对 + 分卷拼回比 MD5;旧 V10.5 文件夹挪 `OLD\v10.5`
 
+## 已完成(10-31 跨场景传送回档,代码已改,未发版)
+1. 原因(反汇编 2.59 GameAssembly 确认):原版 `GameManager.LoadScene` 里只有 `AllowedToSave(SaveState.InMemory)` 通过才 `SaveGame("autosave", 场景存档名)` + `ConfigureRestoreFromSlot("autosave")`;不通过(玩家在移动/下落、控制模式不对等)两件都不做,`m_SlotToLoadOnStart` 为空,新场景不走 `LoadSlotOnStart → RestoreGame`,玩家/全局状态是旧数据 → 回档。偶发,和传送时状态有关
+2. 第二个参数也传错了:原版 `Action_LoadScene` 传 `m_SceneTransitionData.m_SceneSaveFilenameCurrent`,我们(照抄 FastTravel)传 `GetCurrentSaveName()` = 存档槽名(sandbox4),场景数据和我们的 SaveSceneData 补丁都存到错 key。v9.7 只改了手动存档的场景名,两处都没碰
+3. 改法(`CheatsExtra.TravelTo`):先算 curSave(transition 数据 → TransitionRecorder → 场景名)并建好 SceneTransitionData;`AllowedToSave(InMemory)` 通过就交给原版 LoadScene 存(不再存两遍),不通过就自己 `SaveGame(autosave, curSave)` + `ConfigureRestoreFromSlot(autosave)`;LoadScene 第二参数改成 curSave。全走反射,剧情版两个工程也编过
+4. 只部署到本机游戏 Mods,v10.6 的包里还是旧逻辑
+
 ## 已完成(10-29 v10.3)
 1. 物品生成器删掉 29 种原版食谱未烹饪半成品(`GEAR_Uncooked*`,刷出来用不了,显示名又和熟的一样)
 2. 免甜点疼真正生效:`CausesHeadacheDebuff.Apply` 前缀跳过(以前只有开关没有补丁)
@@ -20,6 +26,7 @@ TldHacks v10.6 打包完成,上传夸克 TLD V2.59 Hack 和百度 TLD HACK V2.59
 
 ## 下一步
 1. v10.6 两个勋章修复等用户实测:改加成数值重启游戏还在;启用几个勋章、存档、回主菜单再读档还在
+2. 跨场景传送回档修复等用户实测(飞行/下落中传送、跑动中传送、进 MoreBunkers 地堡),日志看 `[TP.Save]`;没问题再打 v10.6.1 重新打包上传
 2. MoreBunkers 工作区改动没做完(m_Guid、LoadGearItemPrefab、InstantiateItemAtLocation 参数类型),修好前 `release.py pack sb` 会编译失败,要么修完要么照上面跳过
 3. 火车加注加不进去,还在等用户日志
 2. 百度分享链接拿到后补进腾讯文档和资料库(现在两边都没写百度链接)
