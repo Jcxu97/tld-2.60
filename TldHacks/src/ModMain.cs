@@ -29,7 +29,7 @@ namespace TldHacks;
 public class ModMain : MelonMod
 {
     // 全 mod 唯一的版本号来源。MelonInfo / 程序集版本 / 菜单标题栏 / 启动日志都从这里取。
-    internal const string VERSION = "10.5";
+    internal const string VERSION = "10.6";
 
     public static MelonLogger.Instance Log;
     internal static TldHacksSettings Settings;
@@ -192,6 +192,14 @@ public class ModMain : MelonMod
     //   slider 越界钳到边界,丢弃不兼容字段与孤儿字段;有变更先备份再写回。
     private static readonly string[] RetiredSettingKeys = { "OneClickDisableAll" };
 
+    // 跟库(TinyJSON)落盘的字段集合一致:public 字段 + 带 [Include] 的 internal 字段(勋章数值、诊断开关)。
+    //   只认 public 会把 [Include] 字段当孤儿删掉,改过的值每次重开游戏都被清回默认。
+    private static System.Collections.Generic.IEnumerable<FieldInfo> PersistedSettingFields()
+    {
+        foreach (var f in typeof(TldHacksSettings).GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
+            if (f.IsPublic || f.IsDefined(typeof(TLD.TinyJSON.Include), true)) yield return f;
+    }
+
     private static void PreflightSanitizeJson(string path)
     {
         try
@@ -210,7 +218,7 @@ public class ModMain : MelonMod
                 return;
             }
 
-            var fields = typeof(TldHacksSettings).GetFields(BindingFlags.Public | BindingFlags.Instance);
+            var fields = PersistedSettingFields();
             var validNames = new System.Collections.Generic.HashSet<string>();
             var clean = new Newtonsoft.Json.Linq.JObject();
             int kept = 0, dropped = 0, clamped = 0;
@@ -362,8 +370,7 @@ public class ModMain : MelonMod
             var jobj = Newtonsoft.Json.Linq.JObject.Parse(raw);
 
             int ok = 0, dropped = 0, orphans = 0, clamped = 0;
-            var fields = typeof(TldHacksSettings).GetFields(
-                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+            var fields = PersistedSettingFields();
             var validNames = new System.Collections.Generic.HashSet<string>();
             foreach (var f in fields)
             {
@@ -478,7 +485,11 @@ public class ModMain : MelonMod
         {
             try
             {
-                string clean = Newtonsoft.Json.JsonConvert.SerializeObject(Settings, Newtonsoft.Json.Formatting.Indented);
+                var jo = Newtonsoft.Json.Linq.JObject.FromObject(Settings);
+                // Newtonsoft 只写 public,把 [Include] 的 internal 字段补上,否则这里一写就丢勋章数值
+                foreach (var f in PersistedSettingFields())
+                    if (!f.IsPublic) jo[f.Name] = Newtonsoft.Json.Linq.JToken.FromObject(f.GetValue(Settings));
+                string clean = jo.ToString(Newtonsoft.Json.Formatting.Indented);
                 System.IO.File.WriteAllText(path, clean);
             }
             catch (Exception ex) { Log?.Warning($"[Settings] 写净化 JSON 失败: {ex.Message}"); }

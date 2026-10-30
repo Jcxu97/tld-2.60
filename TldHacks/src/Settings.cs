@@ -1,4 +1,5 @@
 ﻿using ModSettings;
+using TLD.TinyJSON;
 using UnityEngine;
 
 namespace TldHacks;
@@ -55,10 +56,10 @@ internal class TldHacksSettings : JsonModSettings
 
     // v2.7.75 / v2.7.79 诊断应急开关 —— v8.1 起从界面摘掉(玩家误开只会以为 mod 坏了)。
     //   字段保留成 internal:手工把 Mods/TldHacks.json 里对应项改成 true 仍然生效,排查卡顿用。
-    //   ModSettingsBase 只枚举 public 字段来建界面,而 TinyJSON 的 Encoder 带 NonPublic,
-    //   所以 internal 的效果正好是"界面上没有、JSON 里照旧"。
-    internal bool DiagPauseRuntime = false;   // 开了 OnUpdate/OnLateUpdate/OnGUI 全 skip,保留 Harmony patch
-    internal bool DiagUnpatchAll = false;     // 启动时 UnpatchAll + skip Reconcile,需重启游戏生效
+    //   ModSettingsBase 只枚举 public 字段来建界面;TinyJSON 只读写 public 或带 [Include] 的字段,
+    //   所以 internal + [Include] 的效果正好是"界面上没有、JSON 里照旧"。
+    [Include] internal bool DiagPauseRuntime = false;   // 开了 OnUpdate/OnLateUpdate/OnGUI 全 skip,保留 Harmony patch
+    [Include] internal bool DiagUnpatchAll = false;     // 启动时 UnpatchAll + skip Reconcile,需重启游戏生效
 
     // 已弃用、只是说明用的两项不在 Mod Settings 里露面(游戏内菜单也没有)。字段留着,老 JSON 照旧能读
     internal void HideRetiredFields()
@@ -1526,21 +1527,22 @@ internal class TldHacksSettings : JsonModSettings
     public bool Feat_AllAtNewGame = false;
 
     // 勋章加成数值,-1 = 不改(用原版值)。只在游戏内菜单调,不进 Mod Settings
-    internal float FeatV_BookSmarts = -1f;
-    internal float FeatV_ColdFusion = -1f;
-    internal float FeatV_EfficientMachine = -1f;
-    internal float FeatV_FireMaster = -1f;
-    internal float FeatV_FreeRunner = -1f;
-    internal float FeatV_SnowWalker = -1f;
-    internal float FeatV_ExpertTrapper = -1f;
-    internal float FeatV_StraightToHeart = -1f;
-    internal float FeatV_BlizzardWalker = -1f;
-    internal float FeatV_NightWalkerDay = -1f;
-    internal float FeatV_NightWalkerNight = -1f;
-    internal float FeatV_MasterHunterSight = -1f;
-    internal float FeatV_MasterHunterSmell = -1f;
-    internal float FeatV_MasterHunterSound = -1f;
-    internal float FeatV_SettledMind = -1f;
-    internal float FeatV_CelestialNavigator = -1f;
+    //   internal + [Include]:界面不显示,但 TinyJSON 照样读写(不带 [Include] 的非 public 字段不落盘,重开游戏就丢)
+    [Include] internal float FeatV_BookSmarts = -1f;
+    [Include] internal float FeatV_ColdFusion = -1f;
+    [Include] internal float FeatV_EfficientMachine = -1f;
+    [Include] internal float FeatV_FireMaster = -1f;
+    [Include] internal float FeatV_FreeRunner = -1f;
+    [Include] internal float FeatV_SnowWalker = -1f;
+    [Include] internal float FeatV_ExpertTrapper = -1f;
+    [Include] internal float FeatV_StraightToHeart = -1f;
+    [Include] internal float FeatV_BlizzardWalker = -1f;
+    [Include] internal float FeatV_NightWalkerDay = -1f;
+    [Include] internal float FeatV_NightWalkerNight = -1f;
+    [Include] internal float FeatV_MasterHunterSight = -1f;
+    [Include] internal float FeatV_MasterHunterSmell = -1f;
+    [Include] internal float FeatV_MasterHunterSound = -1f;
+    [Include] internal float FeatV_SettledMind = -1f;
+    [Include] internal float FeatV_CelestialNavigator = -1f;
 
 }

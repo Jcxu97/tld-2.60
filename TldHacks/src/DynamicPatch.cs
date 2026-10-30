@@ -821,6 +821,12 @@ internal static class DynamicPatch
         Spec(typeof(SaveGameSystem), "LoadSceneData", typeof(Patch_OwnDrops_LoadScene),
             null, "Postfix", () => CheatState.BlockAutoPickupOwnDrops),
 #endif
+#if !STORY_EDITION && !EP5_EDITION
+        Spec(typeof(SaveGameSystem), "SaveSceneData", typeof(Patch_Feats_SaveScene),
+            null, "Postfix", () => true),
+        Spec(typeof(SaveGameSystem), "LoadSceneData", typeof(Patch_Feats_LoadScene),
+            null, "Postfix", () => true),
+#endif
 
         // HouseLights
         Spec(typeof(GameManager), "InstantiatePlayerObject", typeof(Patch_HL_GameManager_InstantiatePlayer),

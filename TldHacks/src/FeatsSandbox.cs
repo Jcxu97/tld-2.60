@@ -77,6 +77,54 @@ internal static class FeatsSandbox
         foreach (var t in Types) SetEnabled(t, on);
     }
 
+    // ——— 启用列表另存一份进存档 ———
+    // 原版只靠 GlobalSaveGameFormat.m_FeatsEnabledSerialized,游戏里中途改的读档后会丢。
+    //   每次存场景把当前列表写进 ModData(键 featsEnabled),载入场景时写回。没有这份数据的老存档不动。
+    //   "v1:" 前缀用来区分"全部取消(空列表)"和"没有数据"。
+    private const string DataKey = "featsEnabled";
+    private static string _savedList, _savedSlot;
+
+    private static string CurrentSlot()
+    {
+        try { return SaveGameSystem.GetCurrentSaveName(); } catch { return null; }
+    }
+
+    internal static void SaveList()
+    {
+        try
+        {
+            var list = FeatEnabledTracker.m_FeatsEnabledThisSandbox;
+            if (list == null) return;
+            var names = new System.Collections.Generic.List<string>();
+            for (int i = 0; i < list.Count; i++) names.Add(list[i].ToString());
+            _savedList = "v1:" + string.Join(",", names);
+            _savedSlot = CurrentSlot();
+            RespawnablePlantsState.DataManager.Save(_savedList, DataKey);
+        }
+        catch (Exception ex) { ModMain.Log?.Warning($"[FeatsSandbox.Save] {ex.Message}"); }
+    }
+
+    internal static void LoadList()
+    {
+        try
+        {
+            _savedList = RespawnablePlantsState.DataManager.Load(DataKey);
+            _savedSlot = CurrentSlot();
+            ApplyList(_savedList);
+        }
+        catch (Exception ex) { ModMain.Log?.Warning($"[FeatsSandbox.Load] {ex.Message}"); }
+    }
+
+    private static void ApplyList(string data)
+    {
+        if (data == null || !data.StartsWith("v1:")) return;
+        var list = FeatEnabledTracker.m_FeatsEnabledThisSandbox;
+        if (list == null) return;
+        list.Clear();
+        foreach (var n in data.Substring(3).Split(',', StringSplitOptions.RemoveEmptyEntries))
+            if (Enum.TryParse(n, out FeatType t) && !list.Contains(t)) list.Add(t);
+    }
+
     // ——— 加成数值 ———
     // Settings 里对应字段 < 0 表示不改,用原版值。原版值第一次读到时记下,恢复时写回。
     internal sealed class Param
@@ -175,6 +223,13 @@ internal static class FeatsSandbox
     // 勋章实例挂在每个场景的 GameManager 上,换场景会重建,进场景后重写一遍改过的值
     internal static void OnSceneInitialized(TldHacksSettings s)
     {
+        // 原版恢复全局数据可能晚于 LoadSceneData,进场景后按本存档那份再写一次
+        try
+        {
+            if (GameManager.IsMainMenuActive()) _savedList = _savedSlot = null;
+            else if (_savedList != null && _savedSlot == CurrentSlot()) ApplyList(_savedList);
+        }
+        catch { }
         if (s == null) return;
         foreach (var p in Params)
             if (GetSetting(p, s) >= 0f) ApplyOne(p, s);
@@ -189,6 +244,17 @@ internal static class FeatsSandbox
             if (was) ApplyOne(p, s);
         }
     }
+}
+
+// 启用列表跟存档走,DynamicPatch 常挂
+internal static class Patch_Feats_SaveScene
+{
+    internal static void Postfix() => FeatsSandbox.SaveList();
+}
+
+internal static class Patch_Feats_LoadScene
+{
+    internal static void Postfix() => FeatsSandbox.LoadList();
 }
 
 // 开新档时勋章能选满(原版按难度限制数量)
