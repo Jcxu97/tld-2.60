@@ -9,23 +9,11 @@ internal static class CheatStateESP
     public static bool MagicBullet;
 }
 
-// 0.5s 缓存所有 BaseAi,避免每帧 FindObjectsOfType 卡顿
+// 直接用游戏自己的动物名单。原来每 0.5s FindObjectsOfType<BaseAi> 扫全场景,
+//   大地图一次 17~19ms(PerfProbe 10-31 实测),魔法子弹开着就每半秒顿一下
 internal static class AiCache
 {
-    private static Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppArrayBase<BaseAi> _cached;
-    private static float _lastRefresh = -999f;
-    private const float RefreshInterval = 0.5f;
-
-    public static Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppArrayBase<BaseAi> Get()
-    {
-        float t = Time.time;
-        if (t - _lastRefresh >= RefreshInterval)
-        {
-            _lastRefresh = t;
-            _cached = UnityEngine.Object.FindObjectsOfType<BaseAi>();
-        }
-        return _cached;
-    }
+    public static Il2CppSystem.Collections.Generic.List<BaseAi> Get() => BaseAiManager.m_BaseAis;
 }
 
 // 魔法子弹:开枪即对准星前方最近的动物直接施加伤害(命中无视弹道/落点)
