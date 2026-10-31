@@ -110,11 +110,55 @@ internal static class Teleport
             }
             catch { }
 
-            pm.TeleportPlayer(pos, rot);
+            var target = SnapToGround(pos);
+            pm.TeleportPlayer(target, rot);
             TeleportFallGuard.Arm();
-            Log($"[TP] TeleportPlayer({pos})");
+            Log($"[TP] TeleportPlayer({target})" + (target.y != pos.y ? $" 原 y={pos.y:F2}" : ""));
         }
         catch (Exception ex) { Log($"[TP] {ex.Message}"); }
+    }
+
+    // 传送点的 y 是手记的,有的比地面高出一截,落下来就摔伤摔死。从目标点上方一点往下打射线,
+    //   取第一块实体表面(楼里就是脚下这层楼板,不会打到屋顶),按玩家脚底相对 transform 的偏移放上去。
+    //   打不到东西(地形还没加载、点在世界外)就原样用。
+    internal static Vector3 SnapToGround(Vector3 pos)
+    {
+        try
+        {
+            const float Above = 1.2f, Depth = 200f;
+            var origin = pos + Vector3.up * Above;
+            var hits = Physics.RaycastAll(origin, Vector3.down, Above + Depth, ~0, QueryTriggerInteraction.Ignore);
+            if (hits == null || hits.Length == 0) return pos;
+
+            var playerT = GameManager.GetPlayerTransform();
+            float best = float.MinValue;
+            for (int i = 0; i < hits.Length; i++)
+            {
+                var col = hits[i].collider;
+                if (col == null) continue;
+                if (playerT != null && col.transform.IsChildOf(playerT)) continue;
+                if (col.TryCast<CharacterController>() != null) continue;
+                if (hits[i].point.y > best) best = hits[i].point.y;
+            }
+            if (best == float.MinValue) return pos;
+            return new Vector3(pos.x, best + FeetOffset() + 0.1f, pos.z);
+        }
+        catch { return pos; }
+    }
+
+    // transform 原点到脚底的距离(原点在脚底时为 0)。取不到就按 0。
+    private static float FeetOffset()
+    {
+        try
+        {
+            var playerT = GameManager.GetPlayerTransform();
+            var cc = GameManager.GetVpFPSPlayer()?.Controller?.m_Controller;
+            if (playerT == null || cc == null) return 0f;
+            float feetY = cc.transform.TransformPoint(cc.center).y - cc.height * 0.5f * cc.transform.lossyScale.y;
+            float off = playerT.position.y - feetY;
+            return off >= 0f && off < 3f ? off : 0f;
+        }
+        catch { return 0f; }
     }
 
     // 跨场景传送 pending state —— OnSceneWasInitialized 触发后等几帧传送
@@ -344,9 +388,15 @@ internal static class Skills
         ("步枪",     "Rifle",              SkillType.Rifle),
         ("弓术",     "Archery",            SkillType.Archery),
         ("修补",     "Clothing Repair",    SkillType.ClothingRepair),
+#if STORY_EDITION
         ("工具修理", "Tool Repair",        SkillType.ToolRepair),
+#endif
         ("左轮手枪", "Revolver",           SkillType.Revolver),
         ("制枪术",   "Gunsmithing",        SkillType.Gunsmithing),
+#if !STORY_EDITION
+        // 2.59 的 SkillsManager 已经没有工具修理(enum 还留着,GetSkill 取不到),新增了霰弹枪
+        ("霰弹枪",   "Shotgun",            SkillType.Shotgun),
+#endif
     };
 
     // 玩家可见等级(1-5)。GetCurrentTierNumber() 返回的是 SkillTiers enum 索引 0-4

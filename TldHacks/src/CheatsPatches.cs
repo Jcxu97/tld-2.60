@@ -4558,10 +4558,12 @@ internal static class FallClothingGuard
 
 internal static class TeleportFallGuard
 {
-    public static bool Active;
-    private static int _frames;
-    public static void Arm() { Active = true; _frames = 180; }
-    public static void Tick() { if (Active && --_frames <= 0) Active = false; }
+    // 原先按 180 帧算,高帧率下才 1 秒多,从高处落下还没着地保护就过期了 → 摔伤摔死。改按真实时间。
+    private const float Seconds = 8f;
+    private static float _until;
+    public static bool Active => _until > 0f && Time.realtimeSinceStartup < _until;
+    public static void Arm() { _until = Time.realtimeSinceStartup + Seconds; }
+    public static void Tick() { if (_until > 0f && Time.realtimeSinceStartup >= _until) _until = 0f; }
 }
 
 // v7.7 删掉 Patch_Blueprint_NumSets —— 目标方法 NumSetsOfMaterialsAvailable 在 TLD 2.55
