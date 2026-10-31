@@ -419,8 +419,9 @@ for fid, files in want.items():
 close_tab()
 done(dict(miss=miss))
 """, timeout=120)
-            except subprocess.TimeoutExpired:
-                print('size check timed out; if Chrome asks "Allow remote debugging", click Allow')
+            # bh() 失败是 sys.exit;另一个会话同时用浏览器时 daemon 偶尔超时 5 秒,别为这个关掉还在传的标签页
+            except (subprocess.TimeoutExpired, SystemExit):
+                print('size check failed; if Chrome asks "Allow remote debugging", click Allow')
                 continue
             if not got['miss']:
                 print('upload done, sizes match:', sum(len(v) for v in want.values()), 'files')
