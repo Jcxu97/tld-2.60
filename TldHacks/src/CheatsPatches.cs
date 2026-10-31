@@ -3608,38 +3608,45 @@ internal static class Patch_EvolveItem_Update
         "Skeleton",    // 预留:骨架态命名变体
     };
 
+    // 目标预制体指针 → 是否秒风干。每个风干物每帧都进这里,读 .name 每次都分配新字符串,所以按目标缓存
+    private static readonly System.Collections.Generic.Dictionary<System.IntPtr, bool> _verdict = new();
+
+    internal static void ClearCache() => _verdict.Clear();
+
+    private static bool IsCureTarget(string n)
+    {
+        if (string.IsNullOrEmpty(n)) return false;
+        // 黑名单优先 — 任何腐烂/啃残目标一律放行 vanilla
+        for (int i = 0; i < DecayTargetTokens.Length; i++)
+            if (n.IndexOf(DecayTargetTokens[i], System.StringComparison.OrdinalIgnoreCase) >= 0) return false;
+        // 白名单 — 必须是合法风干目标才秒(非白名单默认放行 vanilla,保守不秒,不主动伤未知 mod)
+        for (int i = 0; i < CureTargetTokens.Length; i++)
+            if (n.IndexOf(CureTargetTokens[i], System.StringComparison.OrdinalIgnoreCase) >= 0) return true;
+        return false;
+    }
+
     internal static void Prefix(EvolveItem __instance)
     {
         if (!CheatState.QuickEvolve) return;
         try
         {
+            // 采树苗时原版先在世界里生成一根放进检视,这根被秒干就会在原地掉出一根风干的。没进过背包的不秒
+            //   这道判断只读两个 bool,放在最前面,世界里没碰过的风干物就不用再读名字
+            var gi = __instance.m_GearItem;
+            if (gi == null || (!gi.m_InPlayerInventory && !gi.m_BeenInPlayerInventory)) return;
+
             // v6.8.7: 白名单 + 黑名单 双重决策 — 只有目标是合法风干物且非腐烂态才秒
             var become = __instance.m_GearItemToBecome;
             if (become == null) return;
-            var go = ((UnityEngine.Component)become).gameObject;
-            if (go == null) return;
-            string n = go.name;
-            if (string.IsNullOrEmpty(n)) return;
-
-            // 黑名单优先 — 任何腐烂/啃残目标一律放行 vanilla
-            for (int i = 0; i < DecayTargetTokens.Length; i++)
+            System.IntPtr key = become.Pointer;
+            if (!_verdict.TryGetValue(key, out bool ok))
             {
-                if (n.IndexOf(DecayTargetTokens[i], System.StringComparison.OrdinalIgnoreCase) >= 0)
-                    return;
+                var go = ((UnityEngine.Component)become).gameObject;
+                if (go == null) return;
+                ok = IsCureTarget(go.name);
+                _verdict[key] = ok;
             }
-
-            // 白名单 — 必须是合法风干目标才秒
-            bool isCureTarget = false;
-            for (int i = 0; i < CureTargetTokens.Length; i++)
-            {
-                if (n.IndexOf(CureTargetTokens[i], System.StringComparison.OrdinalIgnoreCase) >= 0)
-                { isCureTarget = true; break; }
-            }
-            if (!isCureTarget) return;  // 非白名单 — 默认放行 vanilla(保守不秒,不主动伤未知 mod)
-
-            // 采树苗时原版先在世界里生成一根放进检视,这根被秒干就会在原地掉出一根风干的。没进过背包的不秒
-            var gi = __instance.m_GearItem;
-            if (gi == null || (!gi.m_InPlayerInventory && !gi.m_BeenInPlayerInventory)) return;
+            if (!ok) return;
 
             __instance.m_TimeToEvolveGameDays = 0f;
             __instance.m_TimeSpentEvolvingGameHours = 1f;

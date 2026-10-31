@@ -1077,6 +1077,7 @@ public class ModMain : MelonMod
         try { Patch_HeatSource_Update.Snapshots.Clear(); } catch { }
         // v2.7.80 快速采集/割肉 snapshot 闭环 —— 实例随场景 GC,字段污染自然消失
         try { HarvestableSnaps.Snapshots.Clear(); } catch { }
+        Patch_EvolveItem_Update.ClearCache();
         try { Patch_Harvest_Refresh_Quick.Snapshots.Clear(); } catch { }
         // v7.7 同理清秒搜刮的 hold-time 快照(实例随场景销毁,旧 IntPtr 失效;
         //   不清会让 cleanupDone 永远不成立 → patch 卸不掉)
