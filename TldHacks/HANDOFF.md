@@ -1,9 +1,9 @@
 # HANDOFF: TldHacks
 
-> Last updated: 2026-10-31 (v10.7)
+> Last updated: 2026-10-31 (v10.8)
 
 ## 当前目标
-TldHacks v10.7(v10.6 + 跨场景传送回档修复)已打包并传完夸克 TLD V2.59 Hack 和百度 TLD HACK V2.59(最小包、完整版 4 分卷、终极版 64 分卷,两边按大小核对一致)。腾讯文档和群资料库用户自己改,我没动。传送修复没在游戏里实测,用户说直接发。
+TldHacks v10.8(v10.7 + 搬运猎物按钮修复)已打包并传完夸克 TLD V2.59 Hack 和百度 TLD HACK V2.59(最小包、完整版 4 分卷、终极版 64 分卷,两边按大小核对一致),腾讯文档、群资料库、鲸鲸 rules.md 已跟着改。终极版从 10-31 起不带 Mods\TldHacks.json 和 ItemPicker(用户定的)。传送和搬运按钮两个修复都没在游戏里实测。
 
 ## 已完成(10-31 v10.6)
 1. 勋章加成数值重进游戏就重置:16 个 `FeatV_*` 是 internal,TinyJSON 只存 public 或带 `[Include]` 的字段,所以从没写进 TldHacks.json。加了 `[Include]`(Diag 两个字段同理);ModMain 的预检清理、rescue、Newtonsoft 重写三处原来把非 public 键当孤儿删掉,改用 `PersistedSettingFields()` 统一判断
@@ -20,7 +20,7 @@ TldHacks v10.7(v10.6 + 跨场景传送回档修复)已打包并传完夸克 TLD 
 5. 坑:pack 中途被停,sb_full 会留在 `staging\_named\<完整版名>` 下,下次 pack 找不到 sb_full。要挪回 `staging\sb_full` 并删掉空的 `_named`
 6. 上传:夸克 sb、ul 分开跑。ul 头两次报 browser-harness `Runtime.evaluate timed out ... waiting for the daemon`(同时有另一个会话在用浏览器),第三次正常,中途没传完的旧文件已被挪进 OLD,不影响。百度先 goto pan.baidu.com 再拿 token(不然 fetch 相对路径报 Failed to parse URL),v10.6 的 70 个文件挪进 OLD 下新的 `替换下来的` 文件夹,三个文件夹改名 v10.7,再分 sb、ul 两次跑 baidu_upload.py。两边都 5 + 65 按大小核对一致
 
-## 已完成(10-31 v10.7 之后,未发版:搬运猎物按钮)
+## 已完成(10-31 v10.8:搬运猎物按钮)
 1. 玩家反馈:搬运按钮点了没反应、过一会和采集按钮重叠、切到拆块 tab 拆不了
 2. 原因:prefab 里 Mouse_Button_Harvest 和 Mouse_Button_Quarter 是同一父节点下的兄弟、同一坐标 (329,-242);原版 `Panel_BodyHarvest.Refresh`(反汇编 0x9b9b20)每帧按 tab 对两个按钮 SetActive。我们的克隆按钮是兄弟节点(原 mod 是挂在采集按钮下面),切到拆块 tab 不会被隐藏,碰撞框正好盖住拆块按钮。另外用 `_harvestBtnShifted` 加 `+=` 做相对偏移,关面板没走 4 参 Enable(false) 或者面板被重建时就会漂,搬运按钮最终和采集按钮重叠,点到的是采集按钮
 3. 改法(`IntegratedPatches4.cs` CarcassMovingState):按采集按钮的 InstanceID 记住原点,采集按钮放到原点 -100、搬运按钮放到原点 +100,都是绝对坐标;新增 `Panel_BodyHarvest.Refresh` Postfix(`Patch_Carcass_PanelRefresh`,只在 World_CarcassMoving 开着时挂上),每帧在原版之后同步:只在采集 tab 且没在采集/拆块时显示,并强制 UIButton.isEnabled 和 Collider 开着。克隆出来的 3 个 UIButton 的 onClick 全部清空;父节点变了就重建。三个工程都编过,已部署到游戏 Mods,**还没进游戏实测**
