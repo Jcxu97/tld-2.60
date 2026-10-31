@@ -1,9 +1,9 @@
 # HANDOFF: TldHacks
 
-> Last updated: 2026-10-31 (v10.8)
+> Last updated: 2026-10-31 (v10.9)
 
 ## 当前目标
-TldHacks v10.8(v10.7 + 搬运猎物按钮修复)已打包并传完夸克 TLD V2.59 Hack 和百度 TLD HACK V2.59(最小包、完整版 4 分卷、终极版 64 分卷,两边按大小核对一致),腾讯文档、群资料库、鲸鲸 rules.md 已跟着改。终极版从 10-31 起不带 Mods\TldHacks.json 和 ItemPicker(用户定的)。传送和搬运按钮两个修复都没在游戏里实测。
+TldHacks v10.9(v10.8 + 恢复火堆 + Shift+Q 小堆整堆丢弃 + 技能列表去掉工具修理加霰弹枪 + 传送贴地和落地保护)已打包,传夸克 TLD V2.59 Hack 和百度 TLD HACK V2.59(最小包、完整版 4 分卷、终极版 64 分卷)。腾讯文档、群资料库这次用户自己弄。终极版不带 Mods\TldHacks.json 和 ItemPicker(用户定的)。v10.9 的改动都没在游戏里实测。
 
 ## 已完成(10-31 v10.6)
 1. 勋章加成数值重进游戏就重置:16 个 `FeatV_*` 是 internal,TinyJSON 只存 public 或带 `[Include]` 的字段,所以从没写进 TldHacks.json。加了 `[Include]`(Diag 两个字段同理);ModMain 的预检清理、rescue、Newtonsoft 重写三处原来把非 public 键当孤儿删掉,改用 `PersistedSettingFields()` 统一判断
@@ -25,7 +25,15 @@ TldHacks v10.8(v10.7 + 搬运猎物按钮修复)已打包并传完夸克 TLD V2.
 2. 原因:prefab 里 Mouse_Button_Harvest 和 Mouse_Button_Quarter 是同一父节点下的兄弟、同一坐标 (329,-242);原版 `Panel_BodyHarvest.Refresh`(反汇编 0x9b9b20)每帧按 tab 对两个按钮 SetActive。我们的克隆按钮是兄弟节点(原 mod 是挂在采集按钮下面),切到拆块 tab 不会被隐藏,碰撞框正好盖住拆块按钮。另外用 `_harvestBtnShifted` 加 `+=` 做相对偏移,关面板没走 4 参 Enable(false) 或者面板被重建时就会漂,搬运按钮最终和采集按钮重叠,点到的是采集按钮
 3. 改法(`IntegratedPatches4.cs` CarcassMovingState):按采集按钮的 InstanceID 记住原点,采集按钮放到原点 -100、搬运按钮放到原点 +100,都是绝对坐标;新增 `Panel_BodyHarvest.Refresh` Postfix(`Patch_Carcass_PanelRefresh`,只在 World_CarcassMoving 开着时挂上),每帧在原版之后同步:只在采集 tab 且没在采集/拆块时显示,并强制 UIButton.isEnabled 和 Collider 开着。克隆出来的 3 个 UIButton 的 onClick 全部清空;父节点变了就重建。三个工程都编过,已部署到游戏 Mods,**还没进游戏实测**
 
-## 已完成(10-31,未发版:恢复火堆)
+## 已完成(10-31 v10.9:恢复火堆 + 三个 bug,commit 72ae881)
+1. Shift+Q 整堆丢弃对部分物品只丢一个:反汇编 2.59 `Panel_Inventory.OnDrop`,原版只在 `m_StackableItem.m_Units > 4` 时才弹 Panel_PickUnits,我们的整堆逻辑挂在 PickUnits 上,2~4 个的小堆不弹框就只丢一个。`QoLHotkeys.cs` Patch_QoL_Inventory_DropKey:按住整堆键且 1 < units ≤ 4 时逐个调 `OnDrop()`(选中物变了或 PickUnits 弹出就停),原版会把连续丢的合成一堆。丢弃路径全都走 `GearItem.Drop`,AutoPickupGuard 没漏,没改
+2. 技能"工具修理"加不上(日志 `skill ToolRepair not found`):2.59 的 SkillsManager 已删掉 ToolRepair(枚举还在,GetSkill 返回 null),新加了 Shotgun。`CheatsExtra.cs` Skills.All 里 ToolRepair 只留剧情版,沙盒/Ep5 加"霰弹枪"
+3. 传送点 y 太高摔死:`TeleportFallGuard` 原来按 180 帧算,高帧率下 1 秒多就过期,人还在半空。改成真实时间 8 秒。`Teleport.MovePlayerTo` 加 `SnapToGround`:从目标点上方 1.2m 往下 RaycastAll 200m(忽略 trigger 和玩家自己的碰撞体),取最高的命中面(楼里就是脚下楼板),按 CharacterController 算出的脚底偏移放上去 +0.1m;打不到就用原坐标,日志 `[TP] TeleportPlayer(...) 原 y=...`。同场景、跨场景、地图点击传送都走这里
+4. 发版:ModMain VERSION 10.9,完整版使用说明加【v10.9 有哪些变化】,终极版说明只改版本号。打包时游戏开着,pack 时把 `game_running`/`deploy` 换掉、build 加 `-p:NoDeploy=true`,打包和三种验证照常。终极版照手工流程 64 分卷,旧 V10.8 挪 `OLD\v10.8`
+5. 上传:百度先挪 70 个旧文件进 OLD 下 `1031-1331 替换下来的`、三个文件夹改 v10.9;夸克 sb、ul 分开跑,百度 sb、ul 分开跑。两边都 1 + 4 + 65 按大小核对一致,列过没有多余或带 (1) 的重复件。用户关游戏后已把同一个 DLL(MD5 b536b2fb)拷进游戏 Mods(旧的留 `.backup-release`)
+6. 三个修复和恢复火堆**都没在游戏里实测**
+
+## 已完成(10-31,恢复火堆,随 v10.9 发)
 1. 新功能"恢复火堆"(一次性操作区,`Cheats.RestoreLives`,剧情版 2.24 没有这套系统,用 `#if !STORY_EDITION` 排除)
 2. 原理(反汇编 2.59 确认):死后余生的火堆数 = `LifeAfterDeathManager.TotalLives`(= `m_Tunables.m_AvailableLives`,一般是 3)- `LivesUsed`;`LivesUsed` 只有 getter,读的是 `m_LifeAfterDeathState.m_LivesUsed`,这个 state 由 Serialize 存进存档。所以把 `m_LivesUsed` 置 0 即恢复满,存档后保留。`IsSystemEnabled`(= state.m_SystemEnabled && AvailableLives > 0)为假的模式直接提示没有火堆机制
 3. 编译过;当时游戏开着,DLL 没能部署到 Mods,**未实测**
@@ -38,6 +46,7 @@ TldHacks v10.8(v10.7 + 搬运猎物按钮修复)已打包并传完夸克 TLD V2.
 5. release.py 改成按 fid 传夸克三个编号文件夹(min / full / ul),换版自动改文件夹名;bh_quark.py 加 rename
 
 ## 下一步
+0. v10.9 等实测:Shift+Q 丢 2~4 个的小堆、技能页霰弹枪、恢复火堆、传送到原来会摔死的点(看日志 `原 y=` 改了多少)
 1. v10.6 两个勋章修复等用户实测:改加成数值重启游戏还在;启用几个勋章、存档、回主菜单再读档还在
 2. v10.7 传送回档修复等玩家反馈(飞行/下落中传送、跑动中传送、进 MoreBunkers 地堡),有问题看日志 `[TP.Save]`
 2. MoreBunkers 工作区改动没做完(m_Guid、LoadGearItemPrefab、InstantiateItemAtLocation 参数类型),修好前 `release.py pack sb` 会编译失败,要么修完要么照上面跳过
