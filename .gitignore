@@ -36,3 +36,7 @@ _work/release/morebunkers/*
 MoreBunkers/src/bin/
 MoreBunkers/src/obj/
 _tools/release/__pycache__/
+PerfProbe/src/bin/
+PerfProbe/src/obj/
+PerfFix/src/bin/
+PerfFix/src/obj/
