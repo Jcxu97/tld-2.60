@@ -47,7 +47,7 @@ internal static class Bunkers
             Id = "stock", NameZh = "囤货地堡", Interior = "PrepperCacheBEmpty", Guid = "f2b9047e-5d38-4a1c-9e6b-3c8a1d5f7e03",
             Spots = new[]
             {
-                new Spot("CoastalRegion", "沿海公路", "", 443.64f, 50.24f, -571.02f) { Exact = true },
+                new Spot("CoastalRegion", "沿海公路", "", 882.44f, 152.09f, 968.58f) { Exact = true },
             },
         },
     };

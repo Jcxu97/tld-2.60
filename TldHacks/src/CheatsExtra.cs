@@ -46,7 +46,7 @@ internal static class Teleport
         // C —— CoastalRegion(沿海公路)
         new Waypoint("沿海公路·加油站",    "CoastalRegion",            760.51f,  24.00f,  645.93f, "Coastal Hwy · Gas Station"),
         new Waypoint("沿海公路·交易地点",  "CoastalRegion",            325.76f,  26.22f,  118.83f, "Coastal Hwy · Trader Spot"),
-        new Waypoint("沿海公路·囤货地堡",  "CoastalRegion",            445.14f,  50.54f, -571.02f, "Coastal Hwy · Stock Bunker"),
+        new Waypoint("沿海公路·囤货地堡",  "CoastalRegion",            883.94f, 152.39f,  968.58f, "Coastal Hwy · Stock Bunker"),
         // C —— CrashMountainRegion(林狼雪岭)
         new Waypoint("林狼雪岭·机舱",      "CrashMountainRegion",      934.50f, 470.10f, 1174.40f, "Timberwolf Mtn · Plane"),
         new Waypoint("林狼雪岭·地堡",      "CrashMountainRegion",     1675.41f, 207.32f,  968.21f, "Timberwolf Mtn · Bunker"),
