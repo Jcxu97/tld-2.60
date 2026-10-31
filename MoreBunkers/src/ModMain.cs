@@ -3,7 +3,7 @@ using Il2Cpp;
 using MelonLoader;
 using UnityEngine;
 
-[assembly: MelonInfo(typeof(MoreBunkers.ModMain), "MoreBunkers", "1.3.0", "user")]
+[assembly: MelonInfo(typeof(MoreBunkers.ModMain), "MoreBunkers", "1.4.0", "user")]
 [assembly: MelonGame("Hinterland", "TheLongDark")]
 [assembly: MelonAdditionalDependencies("ModSettings", "ModData")]
 

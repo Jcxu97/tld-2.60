@@ -195,7 +195,7 @@ def verify_7z(binp, src, top, vols):
 def retire_old_sb(v):
     for p in glob.glob(os.path.join(DESK, 'TldHacks-v*.zip')) + glob.glob(os.path.join(DESK, 'TldHacksv*.zip')) \
             + glob.glob(os.path.join(DESK, 'V*完整版_带其他mods例如地图')):
-        m = re.search(r'[vV](\d+(?:\.\d+)+)', os.path.basename(p))
+        m = re.search(r'[vV](\d+(?:\.\d+)*)', os.path.basename(p))
         if m and m.group(1) != v:
             dst = os.path.join(DESK, 'OLD', 'v' + m.group(1))
             os.makedirs(dst, exist_ok=True)
