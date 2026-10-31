@@ -1320,6 +1320,10 @@ internal static class Menu
         y1 += ROW_ADV;
         if (Ui.Button("Act_UnlockFeats",      R(c1,            y1, TOG_W, ROW_H), I18n.T("一键解锁勋章", "Unlock Feats")))       Feats.UnlockAllFeats();
         if (Ui.Button("Act_RevealMap",        R(c1 + TOG2_OFF, y1, TOG_W, ROW_H), I18n.T("全开地图", "Reveal Map")))           Cheats.RevealFullMap();
+#if !STORY_EDITION
+        y1 += ROW_ADV;
+        if (Ui.Button("Act_RestoreLives",     R(c1,            y1, TOG_W, ROW_H), I18n.T("恢复火堆", "Restore Campfires")))  Cheats.RestoreLives();
+#endif
         y1 += ROW_ADV + SECTION_END_ADV;
 
 #if !STORY_EDITION

@@ -1233,6 +1233,34 @@ internal static class Cheats
         CheatState.LastActionLog = I18n.IsEnglish ? "Map revealed" : "地图已全开";
     }
 
+#if !STORY_EDITION
+    // 死后余生的"火堆"= TotalLives(m_Tunables.m_AvailableLives) - LivesUsed;
+    // LivesUsed 只有 getter,实际读 m_LifeAfterDeathState.m_LivesUsed,随存档序列化
+    public static void RestoreLives()
+    {
+        try
+        {
+            var mgr = GameManager.m_LifeAfterDeathManager;
+            var state = mgr?.m_LifeAfterDeathState;
+            if (mgr == null || state == null || !mgr.IsSystemEnabled)
+            {
+                CheatState.LastActionLog = I18n.T("当前模式没有火堆(死后余生)机制", "This mode has no campfire lives");
+                return;
+            }
+            int total = mgr.TotalLives;
+            int before = total - state.m_LivesUsed;
+            state.m_LivesUsed = 0;
+            CheatState.LastActionLog = I18n.T($"火堆已恢复 {before}/{total} → {total}/{total}",
+                $"Campfires restored {before}/{total} → {total}/{total}");
+        }
+        catch (Exception ex)
+        {
+            CheatState.LastActionLog = I18n.T("恢复火堆失败(见日志)", "Restore campfires failed (see log)");
+            ModMain.Log?.Warning($"[RestoreLives] {ex}");
+        }
+    }
+#endif
+
     public static void ClearWellFedBuff()
     {
         try

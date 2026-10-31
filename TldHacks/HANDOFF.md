@@ -25,6 +25,11 @@ TldHacks v10.8(v10.7 + 搬运猎物按钮修复)已打包并传完夸克 TLD V2.
 2. 原因:prefab 里 Mouse_Button_Harvest 和 Mouse_Button_Quarter 是同一父节点下的兄弟、同一坐标 (329,-242);原版 `Panel_BodyHarvest.Refresh`(反汇编 0x9b9b20)每帧按 tab 对两个按钮 SetActive。我们的克隆按钮是兄弟节点(原 mod 是挂在采集按钮下面),切到拆块 tab 不会被隐藏,碰撞框正好盖住拆块按钮。另外用 `_harvestBtnShifted` 加 `+=` 做相对偏移,关面板没走 4 参 Enable(false) 或者面板被重建时就会漂,搬运按钮最终和采集按钮重叠,点到的是采集按钮
 3. 改法(`IntegratedPatches4.cs` CarcassMovingState):按采集按钮的 InstanceID 记住原点,采集按钮放到原点 -100、搬运按钮放到原点 +100,都是绝对坐标;新增 `Panel_BodyHarvest.Refresh` Postfix(`Patch_Carcass_PanelRefresh`,只在 World_CarcassMoving 开着时挂上),每帧在原版之后同步:只在采集 tab 且没在采集/拆块时显示,并强制 UIButton.isEnabled 和 Collider 开着。克隆出来的 3 个 UIButton 的 onClick 全部清空;父节点变了就重建。三个工程都编过,已部署到游戏 Mods,**还没进游戏实测**
 
+## 已完成(10-31,未发版:恢复火堆)
+1. 新功能"恢复火堆"(一次性操作区,`Cheats.RestoreLives`,剧情版 2.24 没有这套系统,用 `#if !STORY_EDITION` 排除)
+2. 原理(反汇编 2.59 确认):死后余生的火堆数 = `LifeAfterDeathManager.TotalLives`(= `m_Tunables.m_AvailableLives`,一般是 3)- `LivesUsed`;`LivesUsed` 只有 getter,读的是 `m_LifeAfterDeathState.m_LivesUsed`,这个 state 由 Serialize 存进存档。所以把 `m_LivesUsed` 置 0 即恢复满,存档后保留。`IsSystemEnabled`(= state.m_SystemEnabled && AvailableLives > 0)为假的模式直接提示没有火堆机制
+3. 编译过;当时游戏开着,DLL 没能部署到 Mods,**未实测**
+
 ## 已完成(10-29 v10.3)
 1. 物品生成器删掉 29 种原版食谱未烹饪半成品(`GEAR_Uncooked*`,刷出来用不了,显示名又和熟的一样)
 2. 免甜点疼真正生效:`CausesHeadacheDebuff.Apply` 前缀跳过(以前只有开关没有补丁)
