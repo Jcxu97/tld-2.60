@@ -51,7 +51,6 @@ internal static class CarcassMovingState
     internal static bool IsCarrying;
     internal static bool SaveTrigger;
     internal static float PickUpTime;
-    private static bool _harvestBtnShifted;
     private static HashSet<int> _enabledColliders;
 
     internal static bool IsMovable(BodyHarvest bh)
@@ -173,44 +172,90 @@ internal static class CarcassMovingState
     internal static bool IsBtnAlive() =>
         MoveBtnObj != null && (bool)(UnityEngine.Object)MoveBtnObj;
 
+    // 搬运按钮是"采集"按钮的兄弟节点(和"拆块"按钮同一父节点、同一原点)。
+    // 原版 Refresh 每帧按 tab 开关采集/拆块按钮,所以搬运按钮也要在 Refresh 后同步,
+    // 否则切到拆块 tab 时它会盖住拆块按钮。位置一律按原点绝对设置,不做 += 累加。
+    private static readonly Dictionary<int, Vector3> _harvestBtnOrigin = new Dictionary<int, Vector3>();
+    private static bool _wantMoveBtn;
+    private static readonly Vector3 BtnOffset = new Vector3(100f, 0f, 0f);
+
+    private static Vector3 GetHarvestOrigin(GameObject harvestBtn)
+    {
+        int id = harvestBtn.GetInstanceID();
+        if (!_harvestBtnOrigin.TryGetValue(id, out var origin))
+        {
+            origin = harvestBtn.transform.localPosition;
+            _harvestBtnOrigin[id] = origin;
+        }
+        return origin;
+    }
+
+    private static void SetLocalPos(Transform t, Vector3 p)
+    {
+        if (t.localPosition != p) t.localPosition = p;
+    }
+
     internal static void AddMoveButton(Panel_BodyHarvest panel)
     {
         var harvestBtn = panel.m_Mouse_Button_Harvest;
         if (harvestBtn == null) return;
-        if (IsBtnAlive())
+        var parent = harvestBtn.transform.parent;
+        if (IsBtnAlive() && MoveBtnObj.transform.parent != parent)
         {
-            MoveBtnObj.SetActive(true);
+            UnityEngine.Object.Destroy(MoveBtnObj);
+            MoveBtnObj = null;
         }
-        else
+        if (!IsBtnAlive())
         {
-            MoveBtnObj = UnityEngine.Object.Instantiate(harvestBtn, harvestBtn.transform.parent);
+            GetHarvestOrigin(harvestBtn);
+            MoveBtnObj = UnityEngine.Object.Instantiate(harvestBtn, parent);
+            MoveBtnObj.name = "TldHacks_CarryCarcassButton";
             MoveBtnObj.transform.localScale = harvestBtn.transform.localScale;
-            var loc = MoveBtnObj.GetComponentInChildren<UILocalize>();
-            if (loc != null) ((Behaviour)loc).enabled = false;
-            var lbl = MoveBtnObj.GetComponentInChildren<UILabel>();
+            foreach (var loc in MoveBtnObj.GetComponentsInChildren<UILocalize>(true))
+                ((Behaviour)loc).enabled = false;
+            var lbl = MoveBtnObj.GetComponentInChildren<UILabel>(true);
             if (lbl != null) lbl.text = I18n.T("搬运猎物", "Carry");
-            var btn = MoveBtnObj.GetComponentInChildren<UIButton>();
-            if (btn != null) { btn.onClick.Clear(); EventDelegate.Callback cb = new System.Action(OnMoveClicked); btn.onClick.Add(new EventDelegate(cb)); }
+            // 采集按钮根节点上挂了 3 个 UIButton,全部清掉,只在第一个上挂回调
+            var btns = MoveBtnObj.GetComponentsInChildren<UIButton>(true);
+            foreach (var b in btns) b.onClick.Clear();
+            if (btns.Length > 0)
+            {
+                EventDelegate.Callback cb = new System.Action(OnMoveClicked);
+                btns[0].onClick.Add(new EventDelegate(cb));
+            }
         }
-        MoveBtnObj.transform.localPosition = harvestBtn.transform.localPosition + new Vector3(100f, 0f, 0f);
-        if (!_harvestBtnShifted)
-        {
-            harvestBtn.transform.localPosition += new Vector3(-100f, 0f, 0f);
-            _harvestBtnShifted = true;
-        }
+        _wantMoveBtn = true;
+        SyncMoveButton(panel);
     }
 
     internal static void RemoveMoveButton(Panel_BodyHarvest panel)
     {
+        _wantMoveBtn = false;
         if (IsBtnAlive())
             MoveBtnObj.SetActive(false);
-        if (_harvestBtnShifted)
-        {
-            var harvestBtn = panel.m_Mouse_Button_Harvest;
-            if (harvestBtn != null)
-                harvestBtn.transform.localPosition += new Vector3(100f, 0f, 0f);
-            _harvestBtnShifted = false;
-        }
+        var harvestBtn = panel?.m_Mouse_Button_Harvest;
+        if (harvestBtn != null && _harvestBtnOrigin.TryGetValue(harvestBtn.GetInstanceID(), out var origin))
+            SetLocalPos(harvestBtn.transform, origin);
+    }
+
+    // 由 Panel_BodyHarvest.Refresh 的 Postfix 每帧调用(原版 Refresh 刚设置完采集/拆块按钮的显隐)
+    internal static void SyncMoveButton(Panel_BodyHarvest panel)
+    {
+        if (!_wantMoveBtn || !IsBtnAlive()) return;
+        var harvestBtn = panel.m_Mouse_Button_Harvest;
+        if (harvestBtn == null) return;
+        var origin = GetHarvestOrigin(harvestBtn);
+        SetLocalPos(harvestBtn.transform, origin - BtnOffset);
+        SetLocalPos(MoveBtnObj.transform, origin + BtnOffset);
+
+        bool show = panel.IsTabHarvestSelected() && !panel.IsHarvestingOrQuartering();
+        if (MoveBtnObj.activeSelf != show) MoveBtnObj.SetActive(show);
+        if (!show) return;
+        // 克隆时会连同采集按钮当时的禁用状态一起复制,这里强制可点
+        foreach (var b in MoveBtnObj.GetComponentsInChildren<UIButton>(true))
+            if (!b.isEnabled) b.isEnabled = true;
+        foreach (var c in MoveBtnObj.GetComponentsInChildren<Collider>(true))
+            if (!c.enabled) c.enabled = true;
     }
 
     internal static void OnMoveClicked()
@@ -263,6 +308,15 @@ internal static class Patch_Carcass_PanelEnable
                 CarcassMovingState.RemoveMoveButton(__instance);
         }
         catch (Exception ex) { MelonLoader.MelonLogger.Msg($"[CarcassMove] PanelEnable exception: {ex}"); }
+    }
+}
+
+internal static class Patch_Carcass_PanelRefresh
+{
+    internal static void Postfix(Panel_BodyHarvest __instance)
+    {
+        try { CarcassMovingState.SyncMoveButton(__instance); }
+        catch (Exception ex) { MelonLoader.MelonLogger.Msg($"[CarcassMove] Refresh sync exception: {ex.Message}"); }
     }
 }
 

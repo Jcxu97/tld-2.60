@@ -625,6 +625,8 @@ internal static class DynamicPatch
             null, "Postfix", () => CheatState.World_CarcassMoving, null, new[] { typeof(BodyHarvest) }),
         Spec(typeof(Panel_BodyHarvest), "Enable", typeof(Patch_Carcass_PanelEnable),
             null, "Postfix", () => CheatState.World_CarcassMoving, null, BodyHarvestEnableArgs),
+        Spec(typeof(Panel_BodyHarvest), "Refresh", typeof(Patch_Carcass_PanelRefresh),
+            null, "Postfix", () => CheatState.World_CarcassMoving),
         Spec(typeof(GameManager), "SetAudioModeForLoadedScene", typeof(Patch_Carcass_SceneLoaded),
             null, "Postfix", () => CheatState.World_CarcassMoving),
         // 2.24 LoadScene.Activate 只有无参重载(2.55 才多出 (bool));Postfix 本身不取参数。
