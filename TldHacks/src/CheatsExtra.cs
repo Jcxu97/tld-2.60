@@ -393,10 +393,8 @@ internal static class Skills
 #endif
         ("左轮手枪", "Revolver",           SkillType.Revolver),
         ("制枪术",   "Gunsmithing",        SkillType.Gunsmithing),
-#if !STORY_EDITION
-        // 2.59 的 SkillsManager 已经没有工具修理(enum 还留着,GetSkill 取不到),新增了霰弹枪
-        ("霰弹枪",   "Shotgun",            SkillType.Shotgun),
-#endif
+        // 2.59 的 SkillsManager 没有工具修理的实例(enum 还留着,GetSkill 取不到)。
+        //   Shotgun 的 enum、类、prefab 字段都有,但游戏没实例化,GetSkill 同样取不到(10-31 实测日志),不列
     };
 
     // 玩家可见等级(1-5)。GetCurrentTierNumber() 返回的是 SkillTiers enum 索引 0-4
