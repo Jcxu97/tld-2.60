@@ -1,4 +1,4 @@
-当前网盘上是 TldHacks v10.9，适配游戏 2.59 版（10 月 30 日的小更新，在 10 月 28 日铁路 DLC 更新之后）。下载、安装、功能、按键都在这一份文档里。
+当前网盘上是 TldHacks V11，适配游戏 2.59 版（10 月 30 日的小更新，在 10 月 28 日铁路 DLC 更新之后）。下载、安装、功能、按键都在这一份文档里。
 找某个 mod 或某个按键，按 Ctrl+F 搜名字最快。电脑上点页面左边的“大纲”，能直接跳到各章。
 ! 嫌麻烦、装不上、装完进不去游戏的，直接找群主远程安装，30 元一次，见第一章。
 
@@ -39,14 +39,14 @@
 剧情包和沙盒包各装各的，互不影响，可以都装。
 装 mod 之前，先装网盘根目录的 .NET 运行库（前置！必须下载安装！Downloading the. NETRuntime.exe），装过就跳过。
 | 包 | 里面有什么 | 适合谁 | 在网盘哪里 |
-| 最小包 | 只有 TldHacks 修改器和它要用的几个前置 | 只要修改器菜单，别的 mod 自己配 | 1_TldHacks-v10.9最小安装包_只有修改器 文件夹里的 TldHacks-v10.9-最小安装包_只带修改mod！解压到游戏根目录.zip |
-| 完整版 | TldHacks 加十几个常用 mod 和它们要用的前置，建造、摆放、存档、雷达、更多地堡这些（见第六章） | 想一次装好，开箱就能玩 | 1_TldHacks-v10.9完整版_带其他mods例如地图 文件夹，四个分卷 材质包备份.001 到 .004 |
-| 终极版 | 群主自己在玩的整套，游戏 Mods 文件夹里在用的 mod 全都在。食物、衣服、装饰、配方、材质（TheLongDevelopment）这些完整版没带的也有，别的 mod 的设置是群主调好的，TldHacks 修改器是默认设置 | 想要群主同款 | 2_TldHacks-v10.9终极版_更多MOD食物衣服_ZHAOCHUN授权同款适配最新铁路DLC 文件夹，64 个分卷 终极版材质包备份.001 到 .064 |
+| 最小包 | 只有 TldHacks 修改器和它要用的几个前置 | 只要修改器菜单，别的 mod 自己配 | 1_TldHacks-v11最小安装包_只有修改器 文件夹里的 TldHacks-v11-最小安装包_只带修改mod！解压到游戏根目录.zip |
+| 完整版 | TldHacks 加十几个常用 mod 和它们要用的前置，建造、摆放、存档、雷达、更多地堡这些（见第六章） | 想一次装好，开箱就能玩 | 1_TldHacks-v11完整版_带其他mods例如地图 文件夹，四个分卷 材质包备份.001 到 .004 |
+| 终极版 | 群主自己在玩的整套，游戏 Mods 文件夹里在用的 mod 全都在。食物、衣服、装饰、配方、材质（TheLongDevelopment）这些完整版没带的也有，别的 mod 的设置是群主调好的，TldHacks 修改器是默认设置 | 想要群主同款 | 2_TldHacks-v11终极版_更多MOD食物衣服_ZHAOCHUN授权同款适配最新铁路DLC 文件夹，64 个分卷 终极版材质包备份.001 到 .064 |
 | 剧情包 | 剧情模式专用的 TldHacks 和 mod 加载器，第 1 到 4 章一个包，第 5 章一个包 | 玩剧情模式 | 4_The Long dark 故事剧情模式_可能有bug没测试 文件夹 |
 | 选装 mod | 单个功能的 mod | 只想加某一个功能 | 3_功能mods 选装 文件夹 |
 ### 选装 mod
 | 网盘里的文件 | 是什么 | 怎么装 |
-| MoreBunkers-v1.3_更多地堡三个新地堡_适配2.58_解压到游戏根目录.zip | 每个沙盒存档多出三个布置好的地堡（神秘湖工匠地堡、沿海公路囤货地堡、废弃机场雇佣兵地堡），里面有床、炉子、工作台和大量囤货。按 F10 提示地堡在哪。完整版和终极版已经带了 | 解压到游戏根目录 |
+| MoreBunkers-v1.4_更多地堡三个新地堡_适配2.59_解压到游戏根目录.zip | 每个沙盒存档多出三个布置好的地堡（神秘湖工匠地堡、沿海公路囤货地堡、废弃机场雇佣兵地堡），里面有床、炉子、工作台和大量囤货。按 Home 提示地堡在哪。完整版和终极版已经带了 | 解压到游戏根目录 |
 | TraderMoving-v1.0.1_搬运商人无线电和交易箱_解压到游戏根目录.zip | 把远疆 DLC 商人的无线电和交易箱搬到你想要的地方，可以跨场景搬。要有远疆 DLC。不要和 ImprovedTrader 一起装。终极版已经带了 | 解压到游戏根目录 |
 | 可以看电视了！NorthernLightsBroadcast_v2.1.1_修好不显示文字_全部放入Mods文件夹.zip | 游戏里的电视能放自己电脑上的视频（mp4、mkv、avi、wmv 这些），修好了电视菜单不显示文字。终极版已经带了 | 8 个 dll 和 modcomponent 文件全部放进 Mods 文件夹，说明文件不用放 |
 | PastimeReading_DLL放Mods文件夹放根目录1.zip | 游戏里看书，能换成自己的小说。这一份修好了中文越往后方框越多的问题 | PastimeReading.dll 和 pastimeReading 整个文件夹都放进 Mods 文件夹 |
@@ -62,7 +62,7 @@
 游戏根目录就是有 tld.exe 的那个文件夹。在 Steam 库里右键 The Long Dark，管理，浏览本地文件，打开的就是。
 Steam 默认在 D:\Steam\steamapps\common\TheLongDark\（或 C 盘，看你 Steam 装在哪）。
 ### 最小包
-+ 解压 TldHacks-v10.9-最小安装包_只带修改mod！解压到游戏根目录.zip，里面是 version.dll、MelonLoader、Mods 三样。
++ 解压 TldHacks-v11-最小安装包_只带修改mod！解压到游戏根目录.zip，里面是 version.dll、MelonLoader、Mods 三样。
 + 把这三样拖进游戏根目录，和 tld.exe 同一层，提示重名就选覆盖。
 + 以前单独装过被整合的 mod，或者装过别人整合包的，按第四章跑一次 bat。
 + 启动游戏，进存档后按 Tab 打开 TldHacks 菜单。
@@ -154,7 +154,7 @@ TldHacks 是内置修改器，三个沙盒包都带，用在沙盒模式。剧�
 | PerfectPlacement | 完美摆放（已汉化）。放下物品时自动贴齐旁边的物品、墙和墙角，摆正朝向。罐头能叠着放，木柴能码成一垛 |
 | SafehouseCustomizationPlus | 自定义安全屋，能搬、摆、复制家具。已修好新版游戏读档后家具和灶炉消失 |
 | ObjectSinkFix | 家具下沉修复。回到去过的地点时，家具不再沉进地板，保险箱、储物箱这类容器不再整个消失。已经沉下去的家具进地点时自动抬回原位 |
-| MoreBunkers | 更多地堡 v1.3。神秘湖工匠地堡、沿海公路囤货地堡、废弃机场雇佣兵地堡，入口是地上的旧舱口，按 Home 键看在哪 |
+| MoreBunkers | 更多地堡 v1.4。神秘湖工匠地堡、沿海公路囤货地堡、废弃机场雇佣兵地堡，入口是地上的旧舱口，按 Home 键看在哪 |
 | MotionTrackerLite | 动物雷达，屏幕上用图标提示附近动物的方位，按 U 开关 |
 | RarityRework | 物品稀有度。物品名字按档位上色，普通、优秀、精良、史诗、传说、神话六档。随机词条模式默认关，在 Mod Settings 里打开 |
 | SaveManager | 存档管理。F5 存档，F6 读档（F5 快速保存的注意事项见第十章） |
@@ -165,10 +165,10 @@ TldHacks 是内置修改器，三个沙盒包都带，用在沙盒模式。剧�
 | ImprovedFirstAidPanel | 急救面板更清楚好用 |
 | BricklayersDoorFix、RavineBridgeFix | 原版 bug 修复 |
 | DeveloperConsole | 开发者控制台，F2 打开。TldHacks 的 F1 飞行要靠它 |
-| ItemPicker | 默认停用，放在 Mods\_disabled 里，想用就挪回 Mods |
+| ItemPicker | 完整版里默认停用，放在 Mods\_disabled 里，想用就挪回 Mods。终极版里直接启用，用它自己的默认设置 |
 | 前置（别删） | ModSettings、ModData、ModComponent、ComplexLogger、AudioManager、AfflictionComponent、ExamineActionsAPI、KeyboardUtilities。这些是别的 mod 要用的库，删了别的 mod 会报错或失效 |
 ### 终极版多出来的 mod
-终极版有完整版的所有 mod，但不带 ItemPicker（走路时自动捡树枝石头那个）。另外还有这些（按字母排）。
+终极版有完整版的所有 mod，ItemPicker 直接启用，用它自己的默认设置（按一下左 Alt 把身边 2 米内的树枝和石块一次捡起来）。另外还有这些（按字母排）。
 AfflictionsAndBuffs、AlcoholMod、Better-Night-Sky、BetterCamera、BiggerTrappers、Bountiful_Foraging、CampingTools、Candlelight、ClothingExpanded、ClothingTweaker2、CookWhileFishingReborn、CougarSoundBegone、CozyBlankets、CozyCushions、ExtremeTempDrop、FPSBooster、FiligranisSkills、FoodPackByTKG、FoodsByCalorieWaltz、Forager.s.Delight、IndoorCampfires、IndoorsGreenery、InterloperHudPro、InterloperRegionSelection、ItemScanner、LitharsRidge、MapIconTracker、MehToolBox、Minor_Miseries、MiseryModePlus、ModSettingsQuickNav、MoreCameraSpawns、MoreWood、NorthernLightsBroadcast、PauseInJournal、PickWaterFromFishingHoles、PineNeedleTea、PredatorSpawnSelector、PrepperCache、Ranger_Recipes、RecipeRequirements、ResearchBookTweaker、RestandReadMod、ScaledFishMod、SeasonedInterloping、Shortcuts、SillyMod、StalkerAidsAndSupplements、SurvivorsLegacy、TheLongDevelopment、ThrowPower、TraderMoving、WildFire。
 物品包（.modcomponent 文件，加新物品、衣服、装饰、配方）有这些。AHandyToolbox、ClothingPackByTKG、Collector.Cards、FishingLine、HomeMadeBrewery、ItemPiles、Lich.s.Decorations.Plushie、Lich.s.Decorations.Stack、NorthfolkClothingPack、Rare-ExclusiveLoot、SnowmensTales、StorymodeCollectibles、Watches、WolfskinScarf，还有 ZC8787 开头的七个配方包。
 
@@ -211,6 +211,7 @@ AfflictionsAndBuffs、AlcoholMod、Better-Night-Sky、BetterCamera、BiggerTrapp
 | 按住左 Alt | 摆放物品时用鼠标转物体 | PlacingAnywhere |
 | H | 制作界面里切换原版和整理后的蓝图清单 | BlueprintCleaner |
 | 左 Alt + 鼠标左键 | 制作界面里隐藏或恢复某个蓝图。隐藏的蓝图要按 H 才看得到，显示成红色 | BlueprintCleaner |
+| 左 Alt（按一下） | 终极版里把身边 2 米内的树枝和石块一次捡起来，每个耗 5 卡路里 | ItemPicker |
 | 方向键左、右 | 蓝图叠在一起时切换上一个、下一个 | BlueprintCleaner |
 | U | 开关动物雷达 | MotionTrackerLite |
 | Home | 屏幕上提示这个存档的三个新地堡分别在哪张图 | MoreBunkers |
@@ -252,7 +253,7 @@ Architect、PlacingAnywhere、PerfectPlacement、BlueprintCleaner、MotionTracke
 + U 在两个包里都管两样。动物雷达（MotionTrackerLite）什么时候按都开关，摆放物品时 U 又是转物体（PlacingAnywhere），所以摆放时按 U 雷达也会跟着开关。
 + 完整版的 F2 管两样。DeveloperConsole 用它打开控制台，完美摆放拿着物品时用它切换记住形状。拿着物品按 F2，两样会一起动。
 + 终极版的 F9 同时管两样，查看地堡分布（PrepperCache）、写诊断日志（TraderMoving）。
-+ 终极版的左 Alt 摆放物品时是用鼠标转物体，制作界面里配合左键隐藏蓝图。
++ 终极版的左 Alt 摆放物品时是用鼠标转物体，制作界面里配合左键隐藏蓝图，平时按一下是 ItemPicker 捡身边的树枝石块。
 + 鼠标中键对着不同的东西干不同的事。对着建筑构件是复制（Architect），终极版里对着蜡烛是点灯，对着坐垫椅子是坐下，对着电视是开关。
 + B 和 H 在摆放物品时另有用处。B 平时打开建造菜单，摆放时是下移。H 在制作界面切换蓝图清单，摆放时是转物体。
 
