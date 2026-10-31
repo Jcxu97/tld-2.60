@@ -1,9 +1,9 @@
 # HANDOFF: TldHacks
 
-> Last updated: 2026-10-31 (v10.9)
+> Last updated: 2026-10-31 (V11)
 
 ## 当前目标
-TldHacks v10.9(v10.8 + 恢复火堆 + Shift+Q 小堆整堆丢弃 + 技能列表去掉工具修理 + 传送贴地和落地保护)已打包,传夸克 TLD V2.59 Hack 和百度 TLD HACK V2.59(最小包、完整版 4 分卷、终极版 64 分卷)。腾讯文档、群资料库这次用户自己弄。终极版不带 Mods\TldHacks.json 和 ItemPicker(用户定的)。v10.9 的改动都没在游戏里实测。
+TldHacks V11(版本号不带小数点,v10.9 + 魔法子弹改读 BaseAiManager.m_BaseAis 不再每 0.5 秒扫全场景 c4b9737 + 沿海公路囤货地堡传送点挪到 883.94,152.39,968.58)已打包,传夸克 TLD V2.59 Hack 和百度 TLD HACK V2.59(最小包、完整版 4 分卷、终极版 64 分卷、选装 MoreBunkers v1.4 zip),两边核对一致;腾讯文档、群资料库、鲸鲸 rules.md 已改。MoreBunkers 1.4.0 舱口挪到 882.44,152.09,968.58,工作区的 2.59 适配改动现在能编,pack 默认 EXTRAS 带上它了(那几处改动仍未提交,不是我的)。终极版带回 ItemPicker.dll 和 ItemPickerCustomList.txt,不带 ItemPicker.json(用默认设置),仍不带 TldHacks.json 和 PerfFix。舱口新位置没在游戏里实测。
 
 ## 已完成(10-31 v10.6)
 1. 勋章加成数值重进游戏就重置:16 个 `FeatV_*` 是 internal,TinyJSON 只存 public 或带 `[Include]` 的字段,所以从没写进 TldHacks.json。加了 `[Include]`(Diag 两个字段同理);ModMain 的预检清理、rescue、Newtonsoft 重写三处原来把非 public 键当孤儿删掉,改用 `PersistedSettingFields()` 统一判断
