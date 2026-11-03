@@ -129,4 +129,46 @@ internal static class Patch_SteamTrain_NoBreak
         __result = SteamTrainBoiler.BoilerExplosionRiskLevel.None;
     }
 }
+
+// 鲸油取暖器。原版 ManualUpdate(GearItem.ManualUpdate 每帧调,读档补时间也走它)只做一件事:
+//   按当前档位 m_FuelUsedPerHour × 小时数扣油,扣到 0 关机。SetBurnRate 把档位 m_Temperature 写进 HeatSource.m_MaxTempIncrease。
+//   所以耗油改传进来的小时数,温度在每帧扣油前按档位原值加上加成,拖滑条立刻生效。
+internal static class Patch_WhaleOilHeater_ManualUpdate
+{
+    internal static bool Wanted()
+    {
+        var s = ModMain.Settings;
+        return s != null && (s.Heater_NoFuel || System.Math.Abs(s.Heater_FuelMult - 1f) > 0.001f || s.Heater_TempBonus > 0.01f);
+    }
+
+    public static void Prefix(WhaleOilHeaterItem __instance, ref float deltaTODHours)
+    {
+        var s = ModMain.Settings;
+        if (s == null || __instance == null) return;
+        deltaTODHours = s.Heater_NoFuel ? 0f : deltaTODHours * s.Heater_FuelMult;
+        try { ApplyTemp(__instance, s.Heater_TempBonus); } catch { }
+    }
+
+    private static void ApplyTemp(WhaleOilHeaterItem h, float bonus)
+    {
+        var st = h.m_State;
+        var hs = h.m_HeatSource;
+        if (st == null || hs == null || !st.m_IsOn) return;
+        if (!h.TryGetHeaterSetting(out var set) || set == null) return;
+        float t = set.m_Temperature + bonus;
+        if (hs.m_MaxTempIncrease != t) hs.m_MaxTempIncrease = t;
+    }
+
+    // 补丁卸下时把正在烧的取暖器温度还原成档位原值
+    internal static bool RestoreDone()
+    {
+        try
+        {
+            var all = Object.FindObjectsOfType<WhaleOilHeaterItem>();
+            for (int i = 0; i < all.Length; i++) if (all[i] != null) ApplyTemp(all[i], 0f);
+        }
+        catch { }
+        return true;
+    }
+}
 #endif

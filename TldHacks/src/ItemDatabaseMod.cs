@@ -633,5 +633,8 @@ internal static class ItemDatabaseMod
     new ItemEntry("GEAR_cardRedD", "卡片-奔月 [CW]", "装饰", "", 0f),
     new ItemEntry("GEAR_glintwein", "红酒料包(自改) [CW]", "食物", "", 0.3f),
     new ItemEntry("GEAR_nannasOats", "祖母的燕麦 [CW]", "食物", "", 0.3f),
+    new ItemEntry("GEAR_HomeMadeSoup", "家常汤 [E5]", "食物", "", 0f),
+    new ItemEntry("GEAR_EP5UncookedHomeMadeSoup", "生家常汤 [E5]", "食物", "", 0f),
+    new ItemEntry("GEAR_EP5HomeMadeSoupRecipe", "家常汤食谱卡 [E5]", "工具", "", 0f),
     };
 }

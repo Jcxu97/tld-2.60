@@ -95,6 +95,7 @@ internal static class ModSettingsEnData
         "MapClickTP", "Map double-click teleport",   // 地图双击传送
         "TraderUnlimitedList", "Unlimited trade list (cap -> 64)",   // 交易清单不限制(上限 → 64)
         "TraderMaxTrust", "Max trader trust",   // 信任值最大化
+        "TraderUnlockModeItems", "Remove vanilla difficulty limits",
         "TraderInstantExchange", "Instant trader exchange",   // 商人交易秒完成
         "TraderAlwaysAvailable", "Trader always reachable (radio)",   // 随时可联系商人(无线电)
         "CougarInstantActivate", "Activate cougar immediately on new save",   // 新档首次立即激活美洲狮
@@ -318,6 +319,11 @@ internal static class ModSettingsEnData
         "Train_NoBreak", "Train never breaks",   // 火车不会坏
         "Train_KeepHighGear", "Keep second gear",   // 保持二档
         "Train_FullFuel", "Fuel and water always full",   // 燃料和水一直满
+        "Heater_NoFuel", "Heater uses no oil",
+        "Heater_FuelMult", "Heater oil use multiplier",
+        "Heater_TempBonus", "Heater temperature bonus",
+        "OilCan_WhaleMaxL", "Whale oil can limit (L)",
+        "OilCan_KeroseneMaxL", "Jerrycan limit (L)",
         "Stack_AddComponent", "Add stackable component",   // 启用堆叠组件添加
         "Stack_UseMaxHP", "Merge using best condition",   // 使用最大状态合并
         "World_BowRepair", "Allow bow repair",   // 允许修复弓
@@ -496,6 +502,11 @@ internal static class ModSettingsEnData
         "Train_NoBreak", "Train parts do not lose condition. The boiler does not explode.",   // 火车各部件不掉状态,锅炉不会爆炸
         "Train_KeepHighGear", "Steam pressure stays full while the boiler is lit, so second gear always works at full speed.",   // 锅炉点着时蒸汽压力一直满,二档一直能用,不会掉速
         "Train_FullFuel", "The train whale oil and water tanks stay full.",   // 火车的鲸油和水一直是满的
+        "Heater_NoFuel", "The whale oil heater does not use oil when it is on.",
+        "Heater_FuelMult", "Multiplies the oil that the whale oil heater uses. 1 is vanilla.",
+        "Heater_TempBonus", "Adds this many degrees to each whale oil heater setting. 0 is vanilla.",
+        "OilCan_WhaleMaxL", "The maximum litres in one whale oil can. 0 is the vanilla 5 L.",
+        "OilCan_KeroseneMaxL", "The maximum litres in one kerosene jerrycan. 0 is vanilla (4 L for the rusty jerrycan).",
         "Stack_AddComponent", "Adds a stackable component to selected items such as coffee, tea, carrots and potatoes.",   // 给 Coffee/茶/胡萝卜/土豆等指定物品添加可堆叠
         "Stack_UseMaxHP", "Merged stacks take the higher Condition (eight deer hides all use the best one).",   // 堆叠时按更高 HP 计算(8 张鹿皮按最佳那张)
         "World_BowRepair", "Adds repair options for bows, by hand or at the milling machine.",   // 给弓类武器添加修理/磨坊选项
@@ -533,6 +544,7 @@ internal static class ModSettingsEnData
         "QoL_NoPitchBlack", "The screen does not go fully black during sleep.",   // 睡觉时画面不全黑
         "TraderUnlimitedList", "Select up to 64 items in one trade.",   // 一次交易最多能选 64 样
         "TraderMaxTrust", "Set trust to the maximum. Items, discounts and conversations unlock by the vanilla rules. The first time trust is full, the DLC achievement unlocks.",   // 信任值加满,按原版规则解锁商品、降价和对话,第一次满格会解锁 DLC 成就
+        "TraderUnlockModeItems", "The trader does not filter items by difficulty. On Interloper and Misery, items such as hatchets, rifles and manufactured arrows also appear.",
         "TraderInstantExchange", "You do not have to give items. Close the exchange box to complete the trade.",   // 不用交货,关上交换箱就完成交易
         "TraderAlwaysAvailable", "Contact the trader by radio at any time. You do not have to wait after a trade.",   // 随时能用无线电联系商人,交易完成后也不用等
         "CougarInstantActivate", "Activate the cougar at once on a new save.",   // 新档第一次就立即激活美洲狮

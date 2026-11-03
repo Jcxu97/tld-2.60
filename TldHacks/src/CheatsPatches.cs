@@ -64,6 +64,19 @@ internal static class WeaponCache
 internal static class Patch_Gun_RemoveNextFromClip
 {
     internal static bool Prefix() => !CheatState.InfiniteAmmo;
+
+    // 双管霰弹枪在这里每打一发记一个空弹壳,原方法跳过了弹仓不减,弹壳会越记越多,装弹时退出一大把。
+    //   弹仓里的空弹壳不可能比空位多,按空位压回去
+    internal static void Postfix(GunItem __instance)
+    {
+        if (!CheatState.InfiniteAmmo || __instance == null) return;
+        try
+        {
+            int free = __instance.m_ClipSize - __instance.m_Clip.Count;
+            if (__instance.m_SpentCasingsInClip > free) __instance.m_SpentCasingsInClip = System.Math.Max(0, free);
+        }
+        catch { }
+    }
 }
 
 // v2.7.75 删 5 个 GunItem getter "belt-n-suspenders" patch —— TickCamera 的
@@ -1027,6 +1040,85 @@ internal static class Patch_FPSWeapon_PlayFireAnimation
         }
         catch { }
         _gun = null;
+    }
+}
+
+// 双管霰弹枪(DoubleBarrel)不走 GunItem 的后坐字段,开枪时自己起协程往上抬镜头(Shotgun.Actions.ApplyShotgunRecoil,
+//   抬多少读它设置里的 RecoilMaxPitchKick / RecoilMaxYawKick)。无后坐力直接跳过它,后坐力比例按比例缩这两个值,调用完还原。
+internal static class DoubleBarrelRecoilCompat
+{
+    private static System.Reflection.FieldInfo _instance, _pitch, _yaw;
+    private static object _settings;
+    private static float _savedPitch, _savedYaw;
+
+    internal static void Install(HarmonyLib.Harmony harmony)
+    {
+        try
+        {
+            var actions = HarmonyLib.AccessTools.TypeByName("Shotgun.Actions");
+            var target = actions != null ? HarmonyLib.AccessTools.Method(actions, "ApplyShotgunRecoil") : null;
+            if (target == null) return;
+            var settings = HarmonyLib.AccessTools.TypeByName("Shotgun.Settings");
+            _instance = settings != null ? HarmonyLib.AccessTools.Field(settings, "Instance") : null;
+            _pitch = settings != null ? HarmonyLib.AccessTools.Field(settings, "RecoilMaxPitchKick") : null;
+            _yaw = settings != null ? HarmonyLib.AccessTools.Field(settings, "RecoilMaxYawKick") : null;
+            harmony.Patch(target,
+                prefix: new HarmonyLib.HarmonyMethod(typeof(DoubleBarrelRecoilCompat), nameof(Prefix)),
+                postfix: new HarmonyLib.HarmonyMethod(typeof(DoubleBarrelRecoilCompat), nameof(Postfix)));
+            ModMain.Log?.Msg("[Compat] DoubleBarrel recoil hooked");
+        }
+        catch (Exception ex) { ModMain.Log?.Warning($"[Compat] DoubleBarrel recoil hook: {ex.Message}"); }
+    }
+
+    private static bool Prefix()
+    {
+        _settings = null;
+        if (CheatState.NoRecoil) return false;
+        float scale = CheatStateESP.RecoilScale;
+        if (scale >= 0.99f || _instance == null || _pitch == null || _yaw == null) return true;
+        try
+        {
+            var s = _instance.GetValue(null);
+            if (s == null) return true;
+            _savedPitch = (float)_pitch.GetValue(s);
+            _savedYaw = (float)_yaw.GetValue(s);
+            _pitch.SetValue(s, _savedPitch * scale);
+            _yaw.SetValue(s, _savedYaw * scale);
+            _settings = s;
+        }
+        catch { }
+        return true;
+    }
+
+    private static void Postfix()
+    {
+        if (_settings == null) return;
+        try { _pitch.SetValue(_settings, _savedPitch); _yaw.SetValue(_settings, _savedYaw); } catch { }
+        _settings = null;
+    }
+}
+
+// AfflictionComponent 只在场景名不含 "empty" 时才建 AfflictionManager,本意是跳过加载用的 Empty 场景,
+//   结果存档读进 PrepperCacheAEmpty 这类空地堡时管理器一直是 null,它挂的 StatusBar.IsBuffActive 每帧每条状态栏抛一次空引用
+//   (10-31 实测 5 分钟 17 万次,日志 76MB),要等走出地堡才停。只把这类地堡名里的 Empty 去掉再交给它判断。
+internal static class AfflictionComponentCompat
+{
+    internal static void Install(HarmonyLib.Harmony harmony)
+    {
+        try
+        {
+            var mod = HarmonyLib.AccessTools.TypeByName("AfflictionComponent.Mod");
+            var target = mod != null ? HarmonyLib.AccessTools.Method(mod, "OnSceneWasInitialized") : null;
+            if (target == null) return;
+            harmony.Patch(target, prefix: new HarmonyLib.HarmonyMethod(typeof(AfflictionComponentCompat), nameof(Prefix)));
+        }
+        catch (Exception ex) { ModMain.Log?.Warning($"[Compat] AfflictionComponent: {ex.Message}"); }
+    }
+
+    private static void Prefix(ref string sceneName)
+    {
+        if (sceneName != null && sceneName.StartsWith("PrepperCache", StringComparison.OrdinalIgnoreCase))
+            sceneName = sceneName.Replace("Empty", "");
     }
 }
 
@@ -3919,6 +4011,45 @@ internal static class Patch_TraderManager_GetAvailableTradeExchanges
     {
         try { RestoreCap(GameManager.GetTraderManager()); } catch { _origCap = -1; }
         return true;
+    }
+}
+
+// 解锁原版限制:原版 TradeExchange.FilterExchangeData 调 IsGainedItemValidInCurrentGamemode,
+//   它拿换出物品的预制体问 ShouldDisableForCurrentMode(GameObject),入侵者和悲惨模式里斧子、步枪、精工箭的预制体
+//   挂着 DisableObjectForXPMode,整条交易被滤掉,信任满了也不进清单。只在这一次调用里让模式检查放行,
+//   同一函数后半段"已有同款就不卖"照原版。
+internal static class Patch_TradeExchangeData_GainedItemValid
+{
+    internal static bool Active;
+    internal static bool On => CheatState.TraderUnlockModeItems;
+    internal static void Prefix() { Active = On; }
+    internal static void Postfix() { Active = false; }
+}
+
+internal static class Patch_DisableForMode_GameObject
+{
+    internal static bool Prefix(ref bool __result)
+    {
+        if (!Patch_TradeExchangeData_GainedItemValid.Active) return true;
+        __result = false;
+        return false;
+    }
+}
+
+// 奖励用 GearItem.InstantiateGearItem 生成,不像控制台刷物品那样调 RemoveDisabler,
+//   放到地上一激活 DisableObjectForXPMode.Update 就把它关掉。在交换箱里就把禁用组件去掉。
+internal static class Patch_ExchangeBox_PrepareAndShowRewards
+{
+    internal static void Postfix(Il2CppTLD.Trader.ExchangeBox __instance)
+    {
+        if (!Patch_TradeExchangeData_GainedItemValid.On || __instance == null) return;
+        try
+        {
+            var items = __instance.GetComponentsInChildren<GearItem>(true);
+            for (int i = 0; i < items.Length; i++)
+                if (items[i] != null) DisableObjectForXPMode.RemoveDisabler(items[i].gameObject);
+        }
+        catch { }
     }
 }
 

@@ -189,7 +189,7 @@ internal static class DynamicPatch
             Patch_KeroseneLamp_LightRange.RestoreDone),
 #endif
         Spec(typeof(GunItem), "RemoveNextFromClip", typeof(Patch_Gun_RemoveNextFromClip),
-            "Prefix", null, () => CheatState.InfiniteAmmo),
+            "Prefix", "Postfix", () => CheatState.InfiniteAmmo),
 
 #if !STORY_EDITION   // 2.24 无保温瓶(Il2CppTLD.Gear.InsulatedFlask*)
         Spec(typeof(Il2CppTLD.Gear.InsulatedFlask), "CalculateHeatLoss", typeof(Patch_Flask_CalcHeatLoss),
@@ -298,6 +298,15 @@ internal static class DynamicPatch
             typeof(Patch_TraderManager_GetAvailableTradeExchanges),
             "Prefix", null, () => CheatState.TraderUnlimitedList || CheatState.TraderMaxTrust,
             cleanupDone: Patch_TraderManager_GetAvailableTradeExchanges.RestoreDone),
+        Spec(typeof(Il2CppTLD.Trader.TradeExchangeData), "IsGainedItemValidInCurrentGamemode",
+            typeof(Patch_TradeExchangeData_GainedItemValid),
+            "Prefix", "Postfix", () => Patch_TradeExchangeData_GainedItemValid.On),
+        Spec(typeof(Il2CppTLD.Gameplay.DisableForCurrentModeExtensions), "ShouldDisableForCurrentMode",
+            typeof(Patch_DisableForMode_GameObject),
+            "Prefix", null, () => Patch_TradeExchangeData_GainedItemValid.On, null, new[] { typeof(UnityEngine.GameObject) }),
+        Spec(typeof(Il2CppTLD.Trader.ExchangeBox), "PrepareAndShowRewards",
+            typeof(Patch_ExchangeBox_PrepareAndShowRewards),
+            null, "Postfix", () => Patch_TradeExchangeData_GainedItemValid.On),
         // v6.9.6 改为按需挂载(原 () => true):默认 days>=30(≈原版) → 不挂载 → 商人到货完全走原版进度。
         //   玩家把"到来天数"拖到 <30 或开"商人常驻"才挂,且 Postfix 只升不降(见 Patch 内注释)。
         Spec(typeof(Il2CppTLD.Trader.TraderManager), "IsTraderAvailable",
@@ -886,6 +895,10 @@ internal static class DynamicPatch
             "Execute", null, () => true),
         Spec(typeof(Panel_TransferTrainTowerLiquid), "OnLiquidTransferred", typeof(Patch_TrainIntake_Diag),
             "Transferred", null, () => true),
+        Spec(typeof(WhaleOilHeaterItem), "ManualUpdate", typeof(Patch_WhaleOilHeater_ManualUpdate),
+            "Prefix", null, Patch_WhaleOilHeater_ManualUpdate.Wanted, Patch_WhaleOilHeater_ManualUpdate.RestoreDone),
+        Spec(typeof(LiquidItem), "Awake", typeof(Patch_LiquidItem_Awake),
+            null, "Postfix", OilCans.Wanted, OilCans.RestoreDone),
 #endif
         // 渲染路径: 每帧 × 每喷漆标记,不开功能时完全卸载
         Spec(typeof(DynamicDecalsManager), "RenderDynamicDecal", typeof(Patch_UT_GlowingDecals),

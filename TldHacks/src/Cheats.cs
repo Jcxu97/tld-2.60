@@ -89,6 +89,7 @@ internal static class CheatState
     // v2.7.55 商人 + 美洲狮
     public static bool TraderUnlimitedList;   // 交易清单上限 → 64
     public static bool TraderMaxTrust;        // 信任拉满
+    public static bool TraderUnlockModeItems; // 解锁原版难度限制的商品
     public static bool TraderInstantExchange; // 交易秒完成
     public static bool TraderAlwaysAvailable; // 随时可联系商人
     public static bool CougarInstantActivate; // 新档首次立即激活美洲狮
@@ -338,6 +339,7 @@ internal static class Cheats
             s.InfiniteStamina = false;
             s.TraderUnlimitedList = false;
             s.TraderMaxTrust = false;
+            s.TraderUnlockModeItems = false;
             s.TraderInstantExchange = false;
             s.TraderAlwaysAvailable = false;
             s.CougarInstantActivate = false;
@@ -420,6 +422,11 @@ internal static class Cheats
             s.Train_NoBreak = false;
             s.Train_KeepHighGear = false;
             s.Train_FullFuel = false;
+            s.Heater_NoFuel = false;
+            s.Heater_FuelMult = 1f;
+            s.Heater_TempBonus = 0f;
+            s.OilCan_WhaleMaxL = 0f;
+            s.OilCan_KeroseneMaxL = 0f;
 
             // ═══ StackManager ═══
             // Stack_AddComponent 不关(见 OneClickSkip):关了读档后已经堆起来的那几样会塌成 1 个
@@ -527,6 +534,7 @@ internal static class Cheats
         CheatState.MapClickTP = s.MapClickTP;
         CheatState.TraderUnlimitedList = s.TraderUnlimitedList;
         CheatState.TraderMaxTrust = s.TraderMaxTrust;
+        CheatState.TraderUnlockModeItems = s.TraderUnlockModeItems;
         CheatState.TraderInstantExchange = s.TraderInstantExchange;
         CheatState.TraderAlwaysAvailable = s.TraderAlwaysAvailable;
         CheatState.CougarInstantActivate = s.CougarInstantActivate;

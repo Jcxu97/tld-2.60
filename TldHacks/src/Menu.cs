@@ -1295,20 +1295,29 @@ internal static class Menu
         y1 += ROW_ADV;
         // 按钮组 144px 贴右边,标签占剩下的宽度
         float sb = c1 + TOG_WIDE - 144f;
+        void SkillRow(string label, Skill sk, string id)
+        {
+            GUI.Label (R(c1 + 4f,     y1, sb - c1 - 8f, ROW_H), label);
+            // v7.1 逐级 - / Lv N / + ,保留"满"
+            if (GUI.Button(R(sb,      y1, 26f,  ROW_H), "-")) Skills.StepTier(sk, -1, id);
+            var _prevA = _mutedLabelStyle.alignment;
+            _mutedLabelStyle.alignment = UnityEngine.TextAnchor.MiddleCenter;
+            GUI.Label (R(sb + 28f,    y1, 40f,  ROW_H), "Lv " + Skills.GetTierNumber(sk), _mutedLabelStyle);
+            _mutedLabelStyle.alignment = _prevA;
+            if (GUI.Button(R(sb + 70f,  y1, 26f, ROW_H), "+")) Skills.StepTier(sk, +1, id);
+            if (GUI.Button(R(sb + 100f, y1, 44f, ROW_H), I18n.T("满", "Max"))) Skills.SetMax(sk, id);
+            y1 += ROW_ADV;
+        }
+        var sm = GameManager.GetSkillsManager();
         for (int i = 0; i < Skills.All.Length; i++)
         {
             var (lbl, lblEn, t) = Skills.All[i];
-            GUI.Label (R(c1 + 4f,     y1, sb - c1 - 8f, ROW_H), I18n.T(lbl, lblEn));
-            // v7.1 逐级 - / Lv N / + ,保留"满"
-            if (GUI.Button(R(sb,      y1, 26f,  ROW_H), "-")) Skills.StepTier(t, -1);
-            var _prevA = _mutedLabelStyle.alignment;
-            _mutedLabelStyle.alignment = UnityEngine.TextAnchor.MiddleCenter;
-            GUI.Label (R(sb + 28f,    y1, 40f,  ROW_H), "Lv " + Skills.GetTierNumber(t), _mutedLabelStyle);
-            _mutedLabelStyle.alignment = _prevA;
-            if (GUI.Button(R(sb + 70f,  y1, 26f, ROW_H), "+")) Skills.StepTier(t, +1);
-            if (GUI.Button(R(sb + 100f, y1, 44f, ROW_H), I18n.T("满", "Max"))) Skills.SetMax(t);
-            y1 += ROW_ADV;
+            Skill sk = null;
+            try { sk = sm?.GetSkill(t); } catch { }
+            SkillRow(I18n.T(lbl, lblEn), sk, t.ToString());
         }
+        Skills.RefreshCustom();
+        foreach (var (lbl, lblEn, sk) in Skills.Custom) SkillRow(I18n.T(lbl, lblEn), sk, lblEn);
         y1 += SECTION_END_ADV;
 
         y1 = Section(c1, y1, I18n.T("一次性操作", "One-shot Actions"));

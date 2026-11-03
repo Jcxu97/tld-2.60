@@ -441,6 +441,10 @@ internal class TldHacksSettings : JsonModSettings
     [Description("信任值加满,按原版规则解锁商品、降价和对话,第一次满格会解锁 DLC 成就")]
     public bool TraderMaxTrust = false;
 
+    [Name("解锁原版限制")]
+    [Description("商人不再按难度过滤商品,入侵者和悲惨模式里原版不卖的斧子、步枪、精工箭等也会进清单")]
+    public bool TraderUnlockModeItems = false;
+
     [Name("即时交易")]
     [Description("不用交货,关上交换箱就完成交易")]
     public bool TraderInstantExchange = false;
@@ -1371,6 +1375,25 @@ internal class TldHacksSettings : JsonModSettings
     [Name("燃料和水一直满")]
     [Description("火车的鲸油和水一直是满的")]
     public bool Train_FullFuel = false;
+    [Name("取暖器不耗油")]
+    [Description("鲸油取暖器点着时不消耗鲸油")]
+    public bool Heater_NoFuel = false;
+    [Name("取暖器耗油倍率")]
+    [Description("鲸油取暖器每小时耗油量的倍数,原版三档每小时 0.25、0.5、0.75 升,1 是原版")]
+    [Slider(0.1f, 5f, 50)]
+    public float Heater_FuelMult = 1f;
+    [Name("取暖器温度加成")]
+    [Description("鲸油取暖器每一档额外加的温度(摄氏度),原版三档是 10、20、30 度,0 是原版")]
+    [Slider(0f, 50f, 51)]
+    public float Heater_TempBonus = 0f;
+    [Name("鲸油罐上限(升)")]
+    [Description("一个鲸油罐最多装多少升,合并时也按这个上限分,0 是原版 5 升")]
+    [Slider(0f, 2000f, 401)]
+    public float OilCan_WhaleMaxL = 0f;
+    [Name("油桶上限(升)")]
+    [Description("一个装煤油的油桶最多装多少升,合并时也按这个上限分,0 是原版(生锈油桶 4 升)")]
+    [Slider(0f, 2000f, 401)]
+    public float OilCan_KeroseneMaxL = 0f;
 
     [Section("StackManager / 堆叠管理 v1.0.6")]
     [Name("更多可堆叠")]

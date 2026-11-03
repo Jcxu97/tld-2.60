@@ -29,7 +29,7 @@ namespace TldHacks;
 public class ModMain : MelonMod
 {
     // 全 mod 唯一的版本号来源。MelonInfo / 程序集版本 / 菜单标题栏 / 启动日志都从这里取。
-    internal const string VERSION = "11";
+    internal const string VERSION = "12";
 
     public static MelonLogger.Instance Log;
     internal static TldHacksSettings Settings;
@@ -588,6 +588,7 @@ public class ModMain : MelonMod
         // v2.7.64 商人 + 美洲狮
         CheatState.TraderUnlimitedList = Settings.TraderUnlimitedList;
         CheatState.TraderMaxTrust = Settings.TraderMaxTrust;
+        CheatState.TraderUnlockModeItems = Settings.TraderUnlockModeItems;
         CheatState.TraderInstantExchange = Settings.TraderInstantExchange;
         CheatState.TraderAlwaysAvailable = Settings.TraderAlwaysAvailable;
         CheatState.CougarInstantActivate = Settings.CougarInstantActivate;
@@ -740,6 +741,8 @@ public class ModMain : MelonMod
         }
         catch (Exception ex) { Log.Warning($"[Compat] BlueprintCleaner unpatch failed: {ex.Message}"); }
 #endif
+        DoubleBarrelRecoilCompat.Install(HarmonyInstance);
+        AfflictionComponentCompat.Install(HarmonyInstance);
     }
 
     public override void OnUpdate()

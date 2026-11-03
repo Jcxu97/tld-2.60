@@ -397,29 +397,57 @@ internal static class Skills
         //   Shotgun 的 enum、类、prefab 字段都有,但游戏没实例化,GetSkill 同样取不到(10-31 实测日志),不列
     };
 
-    // 玩家可见等级(1-5)。GetCurrentTierNumber() 返回的是 SkillTiers enum 索引 0-4
-    //   (Beginner=0 … Master=4),即满级返回 4 → 显示给玩家须 +1 变成 1-5。
-    public static int GetTierNumber(SkillType t)
+    // 别的 mod 经 FiligranisSkills 加的技能(双管霰弹枪的 Shotgun 等)挂在 m_Skills 末尾,m_SkillType 填 -1,
+    //   GetSkill 取不到,只能按 "Skill_<名字>" 对象名认。没装就是空表,技能页不多出栏。
+    //   FiligranisSkills 存档时读的就是这个对象的点数,直接改它就能存进档
+    public static readonly List<(string Label, string LabelEn, Skill Skill)> Custom = new();
+    static IntPtr _customFor;
+
+    // 每次进场景 GameManager 重建,SkillsManager 指针变了才重扫
+    public static void RefreshCustom()
     {
         try
         {
             var sm = GameManager.GetSkillsManager();
-            var skill = sm?.GetSkill(t);
-            if (skill == null) return 1;
-            return skill.GetCurrentTierNumber() + 1;
+            IntPtr p = sm == null ? IntPtr.Zero : sm.Pointer;
+            if (p == _customFor) return;
+            _customFor = p;
+            Custom.Clear();
+            if (sm == null) return;
+            for (int i = 0; i < sm.m_Skills.Count; i++)
+            {
+                var sk = sm.m_Skills[i];
+                if (sk == null || (int)sk.m_SkillType != -1) continue;
+                string id = sk.name.StartsWith("Skill_") ? sk.name.Substring(6) : sk.name;
+                Custom.Add(id == "Shotgun" ? ("霰弹枪", "Shotgun", sk) : (id, id, sk));
+            }
         }
+        catch { Custom.Clear(); }
+    }
+
+    static Skill Get(SkillType t)
+    {
+        try { return GameManager.GetSkillsManager()?.GetSkill(t); } catch { return null; }
+    }
+
+    // 玩家可见等级(1-5)。GetCurrentTierNumber() 返回的是 SkillTiers enum 索引 0-4
+    //   (Beginner=0 … Master=4),即满级返回 4 → 显示给玩家须 +1 变成 1-5。
+    public static int GetTierNumber(SkillType t) => GetTierNumber(Get(t));
+
+    public static int GetTierNumber(Skill skill)
+    {
+        try { return skill == null ? 1 : skill.GetCurrentTierNumber() + 1; }
         catch { return 1; }
     }
 
+    public static void StepTier(SkillType t, int delta) => StepTier(Get(t), delta, t.ToString());
+
     // 逐级 +/-。内部全程用 tier 索引(0-4),与 SetTier/GetCurrentTierNumber 同体系;
     //   显示层 GetTierNumber 再 +1。clamp 0..4 → 可降到 Beginner、升到 Master 满级。
-    public static void StepTier(SkillType t, int delta)
+    public static void StepTier(Skill skill, int delta, string t)
     {
         try
         {
-            var sm = GameManager.GetSkillsManager();
-            if (sm == null) { Log("[Skills] no SkillsManager"); return; }
-            var skill = sm.GetSkill(t);
             if (skill == null) { Log($"[Skills] skill {t} not found"); return; }
             int next = skill.GetCurrentTierNumber() + delta;
             if (next < 0) next = 0;
@@ -437,13 +465,12 @@ internal static class Skills
         catch (Exception ex) { Log($"[Skills] {ex.Message}"); }
     }
 
-    public static void SetMax(SkillType t)
+    public static void SetMax(SkillType t) => SetMax(Get(t), t.ToString());
+
+    public static void SetMax(Skill skill, string t)
     {
         try
         {
-            var sm = GameManager.GetSkillsManager();
-            if (sm == null) { Log("[Skills] no SkillsManager"); return; }
-            var skill = sm.GetSkill(t);
             if (skill == null) { Log($"[Skills] skill {t} not found"); return; }
             int max = skill.GetMaxPoints();
             // PointAssignmentMode:0 = None, 1 = Normal, 2 = ... 反射枚举值,直接传 1 比较稳
@@ -462,6 +489,8 @@ internal static class Skills
     public static void SetAllMax()
     {
         foreach (var (_, _, t) in All) SetMax(t);
+        RefreshCustom();
+        foreach (var (_, en, sk) in Custom) SetMax(sk, en);
         Log(I18n.IsEnglish ? "[Skills] All skills maxed" : "[Skills] 所有技能满级");
     }
 

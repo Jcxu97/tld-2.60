@@ -2,7 +2,7 @@ import sys
 exec(open(r'D:\Github\tld--2.55\_tools\release\bh_baidu.py', encoding='utf-8').read())
 goto('https://pan.baidu.com/disk/main')
 time.sleep(5)
-V_OLD, V_NEW = '10.1', '10.3'
+V_OLD, V_NEW = '11', '12'
 names = {
     'min': '1_TldHacks-v{}最小安装包_只有修改器',
     'full': '1_TldHacks-v{}完整版_带其他mods例如地图',

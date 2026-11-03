@@ -57,6 +57,7 @@ internal static class StoryGuard
         // — 商人 & 美洲狮(沙盒专属)—
         CheatState.TraderUnlimitedList   = false;
         CheatState.TraderMaxTrust        = false;
+        CheatState.TraderUnlockModeItems = false;
         CheatState.TraderInstantExchange = false;
         CheatState.TraderAlwaysAvailable = false;
         CheatState.TT_ShowTraderTrust    = false;

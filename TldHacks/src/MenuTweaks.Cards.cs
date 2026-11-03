@@ -63,6 +63,9 @@ internal static partial class MenuTweaks
         bool cia = Ui.Toggle("CougarInstantActivate", R(x,    y, subTogW, ROW_H), s.CougarInstantActivate, I18n.T(" 召唤美洲狮", " Spawn Cougar"), ToggleStyle ?? GUI.skin.toggle);
         bool stt = Ui.Toggle("TT_ShowTraderTrust", R(xSub, y, subTogW, ROW_H), s.TT_ShowTraderTrust,   I18n.T(" 显示信任度", " Show Trust"), ToggleStyle ?? GUI.skin.toggle);
         y += ROW_ADV;
+        bool tum = Ui.Toggle("TraderUnlockModeItems", R(x, y, COL_TOG_W3, ROW_H), s.TraderUnlockModeItems, I18n.T(" 解锁原版限制", " Remove Vanilla Limits"), ToggleStyle ?? GUI.skin.toggle);
+        if (tum != s.TraderUnlockModeItems) { s.TraderUnlockModeItems = tum; CheatState.TraderUnlockModeItems = tum; changed = true; }
+        y += ROW_ADV;
 #if !STORY_EDITION
         b = Ui.Toggle("CE_TraderCheap", R(x, y, subTogW, ROW_H), s.CE_TraderCheap, I18n.T(" 商人打折", " Discount"), ToggleStyle ?? GUI.skin.toggle);
         if (b != s.CE_TraderCheap) { s.CE_TraderCheap = b; changed = true; }
@@ -253,6 +256,28 @@ internal static partial class MenuTweaks
         y += ROW_ADV;
         bool fuel = Ui.Toggle("Train_FullFuel", R(x, y, COL_TOG_W3, ROW_H), s.Train_FullFuel, I18n.T(" 燃料和水一直满", " Full Fuel & Water"), ToggleStyle ?? GUI.skin.toggle);
         if (fuel != s.Train_FullFuel) { s.Train_FullFuel = fuel; changed = true; }
+        y += ROW_ADV;
+        bool hnf = Ui.Toggle("Heater_NoFuel", R(x, y, COL_TOG_W3, ROW_H), s.Heater_NoFuel, I18n.T(" 鲸油取暖器不耗油", " Heater Uses No Oil"), ToggleStyle ?? GUI.skin.toggle);
+        if (hnf != s.Heater_NoFuel) { s.Heater_NoFuel = hnf; changed = true; }
+        y += ROW_ADV;
+        float hm = DrawSliderCol3(R, x, y, I18n.T("取暖器耗油", "Heater Oil"), s.Heater_FuelMult, 0.1f, 5f, "F1", key: "Heater_FuelMult");
+        hm = Mathf.Round(hm * 10f) / 10f;
+        if (hm != s.Heater_FuelMult) { s.Heater_FuelMult = hm; changed = true; }
+        y += ROW_ADV;
+        float ht = DrawSliderCol3(R, x, y, I18n.T("取暖器加温", "Heater +°C"), s.Heater_TempBonus, 0f, 50f, "F0", key: "Heater_TempBonus");
+        ht = Mathf.Round(ht);
+        if (ht != s.Heater_TempBonus) { s.Heater_TempBonus = ht; changed = true; }
+        y += ROW_ADV;
+        float wl = Mathf.Round(DrawSliderCol3(R, x, y, I18n.T("鲸油罐上限", "Oil Can L"), s.OilCan_WhaleMaxL, 0f, 2000f, "F0", key: "OilCan_WhaleMaxL") / 5f) * 5f;
+        if (wl != s.OilCan_WhaleMaxL) { s.OilCan_WhaleMaxL = wl; changed = true; OilCans.ApplyToInventory(); }
+        y += ROW_ADV;
+        float kl = Mathf.Round(DrawSliderCol3(R, x, y, I18n.T("油桶上限", "Jerrycan L"), s.OilCan_KeroseneMaxL, 0f, 2000f, "F0", key: "OilCan_KeroseneMaxL") / 5f) * 5f;
+        if (kl != s.OilCan_KeroseneMaxL) { s.OilCan_KeroseneMaxL = kl; changed = true; OilCans.ApplyToInventory(); }
+        y += ROW_ADV;
+        Ui.Hover("OilCan_MergeWhale", R(x, y, subTogW, ROW_H));
+        if (GUI.Button(R(x, y, subTogW, ROW_H), I18n.T("合并鲸油罐", "Merge Oil Cans"))) OilCans.Merge(OilCans.Kind.WhaleOil);
+        Ui.Hover("OilCan_MergeKerosene", R(xSub, y, subTogW, ROW_H));
+        if (GUI.Button(R(xSub, y, subTogW, ROW_H), I18n.T("合并油桶", "Merge Jerrycans"))) OilCans.Merge(OilCans.Kind.Kerosene);
         y += ROW_ADV + SECTION_END_ADV;
         return y;
     }
