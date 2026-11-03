@@ -6,7 +6,7 @@ V_OLD, V_NEW = '11', '12'
 names = {
     'min': '1_TldHacks-v{}最小安装包_只有修改器',
     'full': '1_TldHacks-v{}完整版_带其他mods例如地图',
-    'ul': '2_TldHacks-v{}终极版_更多MOD食物衣服_ZHAOCHUN授权同款适配最新铁路DLC',
+    'ul': '2_TldHacks-v{}终极版_更多MOD食物衣服_适配最新铁路DLC',
 }
 retire = {'min': ['TldHacks-v'], 'full': ['材质包备份.'], 'ul': ['TldHacks-v', '终极版材质包备份.', '终极版_安装说明.txt']}
 bd = token()

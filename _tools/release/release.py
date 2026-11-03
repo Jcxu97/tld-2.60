@@ -309,7 +309,7 @@ def net_folders(v):
     return {
         'min': ('3d6edcfec0e34dfe925f7bd2df94a407', f'1_TldHacks-v{v}最小安装包_只有修改器', ['TldHacks-v']),
         'full': ('b54013b80c034854963a6c6fd99bd694', f'1_TldHacks-v{v}完整版_带其他mods例如地图', ['材质包备份.']),
-        'ul': ('7fef6059be0f4e719d484a4aaaed0736', f'2_TldHacks-v{v}终极版_更多MOD食物衣服_ZHAOCHUN授权同款适配最新铁路DLC',
+        'ul': ('7fef6059be0f4e719d484a4aaaed0736', f'2_TldHacks-v{v}终极版_更多MOD食物衣服_适配最新铁路DLC',
                ['TldHacks-v', '终极版材质包备份.']),
     }
 
@@ -326,10 +326,10 @@ def upload_targets(keys):
         if k == 'sb':
             n = sb_names(v)
             out.append(('min', [os.path.join(DESK, n['min_cn'])]))
-            out.append(('full', sorted(glob.glob(os.path.join(n['full_dir'], '材质包备份.0*')))))
+            out.append(('full', sorted(glob.glob(os.path.join(n['full_dir'], '材质包备份.[0-9]*')))))
         elif k == 'ul':
             d = ul_dir(v)
-            out.append(('ul', sorted(glob.glob(os.path.join(d, '终极版材质包备份.0*'))) + [os.path.join(d, '终极版_安装说明.txt')]))
+            out.append(('ul', sorted(glob.glob(os.path.join(d, '终极版材质包备份.[0-9]*'))) + [os.path.join(d, '终极版_安装说明.txt')]))
         else:
             p = PKGS[k]
             # 2026-10-28 夸克转存时把整个 剧情材质包.bin 过滤掉了,分卷没事,所以只传分卷
