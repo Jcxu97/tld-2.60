@@ -208,10 +208,10 @@ internal static partial class MenuTweaks
 
         y2 = SectionCol(R, c2, y2, COL_W3, I18n.T("时间加速", "Time Scale"),
             I18n.T($"按住 {s.TimeScaleKey1} / {s.TimeScaleKey2}", $"Hold {s.TimeScaleKey1} / {s.TimeScaleKey2}"));
-        v = DrawSliderCol3(R, c2, y2, I18n.T("时间加速1", "TimeScale1"), s.TimeScale1, 1f, 50f, "F0", key: "TimeScale1");
+        v = DrawSliderCol3(R, c2, y2, I18n.T("时间加速1", "TimeScale1"), s.TimeScale1, 0.1f, 50f, "F1", key: "TimeScale1");
         if (v != s.TimeScale1) { s.TimeScale1 = v; changed = true; }
         y2 += ROW_ADV;
-        v = DrawSliderCol3(R, c2, y2, I18n.T("时间加速2", "TimeScale2"), s.TimeScale2, 1f, 50f, "F0", key: "TimeScale2");
+        v = DrawSliderCol3(R, c2, y2, I18n.T("时间加速2", "TimeScale2"), s.TimeScale2, 0.1f, 50f, "F1", key: "TimeScale2");
         if (v != s.TimeScale2) { s.TimeScale2 = v; changed = true; }
         y2 += ROW_ADV + SECTION_END_ADV;
 

@@ -672,14 +672,14 @@ internal class TldHacksSettings : JsonModSettings
     [Description("按住热键1/2期间游戏加速到对应倍率,松开恢复正常速度")]
     public KeyCode TimeScaleKey1 = KeyCode.Keypad1;
 
-    [Slider(1f, 50f, 50)]
+    [Slider(0.1f, 50f, 500)]
     [Name("时间加速1 (热键倍率)")]
     public float TimeScale1 = 20f;
 
     [Name("时间加速 热键2")]
     public KeyCode TimeScaleKey2 = KeyCode.Keypad2;
 
-    [Slider(1f, 50f, 50)]
+    [Slider(0.1f, 50f, 500)]
     [Name("时间加速2 (热键倍率)")]
     public float TimeScale2 = 5f;
 
