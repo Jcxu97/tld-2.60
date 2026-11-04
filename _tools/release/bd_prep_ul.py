@@ -4,8 +4,8 @@ goto('https://pan.baidu.com/disk/main')
 time.sleep(5)
 V_OLD, V_NEW = '11', '12'
 # 11-03 用户要求终极版文件夹名去掉 _ZHAOCHUN授权同款:V_OLD 那格用旧名,V_NEW 用新名
-V_OLD = '12终极版_更多MOD食物衣服_ZHAOCHUN授权同款适配最新铁路DLC'
-V_NEW = '12终极版_更多MOD食物衣服_适配最新铁路DLC'
+V_OLD = '12终极版_更多MOD食物衣服_适配最新铁路DLC'
+V_NEW = '12.1终极版_更多MOD食物衣服_适配最新铁路DLC'
 names = {'ul': '2_TldHacks-v{}'}
 retire = {'min': ['TldHacks-v'], 'full': ['材质包备份.'], 'ul': ['TldHacks-v', '终极版材质包备份.', '终极版_安装说明.txt']}
 bd = token()
