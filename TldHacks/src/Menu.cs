@@ -1610,8 +1610,8 @@ internal static class Menu
 
         float headY = y;   // 搜索框画在这张卡片的标题栏右端,不占内容行
         y = SectionWide(y, I18n.IsEnglish
-            ? $"Item Spawner ({ItemDatabase.All.Count + ItemDatabaseMod.All.Count} items)"
-            : $"物品生成器 ({ItemDatabase.All.Count + ItemDatabaseMod.All.Count} 条)");
+            ? $"Item Spawner ({ItemDatabase.All.Count + ItemDatabaseMod.All.Count + Furniture.Count} items)"
+            : $"物品生成器 ({ItemDatabase.All.Count + ItemDatabaseMod.All.Count + Furniture.Count} 条)");
         DrawItemSearchBox(headY);
 
         // 类别 tabs (全 9 个平铺)
@@ -1673,7 +1673,10 @@ internal static class Menu
             // 说明按 prefab 名查 MenuUi 的补充表,没写说明的物品不弹提示
             Ui.Hover(e.PrefabName, R(x, yy, colW - 8f, ROW_H));
             if (GUI.Button(R(x, yy, btnW, ROW_H), spawnBtnLabel))
-                Cheats.SpawnItem(e.PrefabName, _quantity);
+            {
+                if (e.Category == "家具") Furniture.Spawn(e, _quantity);
+                else Cheats.SpawnItem(e.PrefabName, _quantity);
+            }
             // v6.6 GC: 利用 ItemEntry 上预缓存的显示名+卡路里标签(见 RebuildFilter)
             GUI.Label(R(x + btnW + 6f, yy, colW - btnW - 14f, ROW_H),
                 I18n.IsEnglish ? (e.DisplayLabelEn ?? e.NameEn ?? e.Name) : (e.DisplayLabelZh ?? e.NameZh ?? e.Name),
@@ -1923,6 +1926,7 @@ internal static class Menu
             ItemDiscovery.Run();
             Resolve(ItemDatabase.All, false);
             Resolve(ItemDatabaseMod.All, true);
+            Furniture.ResolveNames();
             // 清单里 prefab 名写错的条目会在这里变成 IsValid=false 后静默消失,界面上看不出来,
             // 所以把两份清单各有几条没解析出来记到日志,改完清单一条 grep 就能核对。
             int badV = 0, badM = 0;
@@ -1971,6 +1975,17 @@ internal static class Menu
             BuildDisplayLabels(e);
             _filtered.Add(e);
         }
+#if !STORY_EDITION && !EP5_EDITION
+        // 家具七百多条,"全部"栏只在搜索时带上,免得把普通物品挤到后面几十页
+        if (cat == "家具" || (_selectedCategory == 0 && q.Length > 0))
+            foreach (var list in new[] { FurnitureDatabase.Carryables, FurnitureDatabase.Native })
+                foreach (var e in list)
+                {
+                    if (q.Length > 0 && !PinyinSearch.Match(e, q, qc)) continue;
+                    BuildDisplayLabels(e);
+                    _filtered.Add(e);
+                }
+#endif
         // 分页缓存失效
         _cachedPageNum = -1;
     }

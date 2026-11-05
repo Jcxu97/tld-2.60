@@ -126,6 +126,14 @@ internal class CarryableData
 			}
 		},
 		{
+			"CONTAINER_CoalBin",
+			new ObjectToModify
+			{
+				assetPath = "Assets/Prefabs/Containers/CONTAINER_CoalBin.prefab",
+				type = CarryableType.Container
+			}
+		},
+		{
 			"INTERACTIVE_Forge",
 			new ObjectToModify
 			{
@@ -238,6 +246,13 @@ internal class CarryableData
 		},
 		{
 			"CONTAINER_FirewoodBin",
+			new OverrideData
+			{
+				weight = 10f
+			}
+		},
+		{
+			"CONTAINER_CoalBin",
 			new OverrideData
 			{
 				weight = 10f

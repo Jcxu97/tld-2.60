@@ -59,6 +59,8 @@ internal static class PinyinSearch
         e.SearchInit = initials;
         string prefab = e.PrefabName ?? "";
         if (prefab.StartsWith("GEAR_")) prefab = prefab.Substring(5);
+        // 家具的 PrefabName 是资源路径,只留文件名,不然 assets / prefabs 这些词谁都能搜中
+        if (prefab.EndsWith(".prefab")) prefab = prefab.Substring(prefab.LastIndexOf('/') + 1, prefab.Length - prefab.LastIndexOf('/') - 8);
         e.SearchEn = ((StripMod(e.NameEn, e.IsMod) ?? "") + " " + prefab.Replace('_', ' ')).ToLowerInvariant();
     }
 }

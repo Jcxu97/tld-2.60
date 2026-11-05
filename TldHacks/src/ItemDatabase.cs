@@ -634,9 +634,14 @@ internal static class ItemDatabase
     };
 
     // 分类顺序,作为 UI tab key 和 ItemEntry.Category 过滤 key,保持中文不变
+#if STORY_EDITION || EP5_EDITION
     public static readonly string[] Categories = { "全部", "食物", "饮料", "工具", "武器", "医疗", "衣物", "狩猎", "材料", "装饰" };
-    // UI 显示用,与 Categories 同序;靠 I18n 切换语言
     public static readonly string[] CategoriesEn = { "All", "Food", "Drinks", "Tools", "Weapons", "Medical", "Clothing", "Hunting", "Materials", "Decor" };
+#else
+    public static readonly string[] Categories = { "全部", "食物", "饮料", "工具", "武器", "医疗", "衣物", "狩猎", "材料", "装饰", "家具" };
+    // UI 显示用,与 Categories 同序;靠 I18n 切换语言
+    public static readonly string[] CategoriesEn = { "All", "Food", "Drinks", "Tools", "Weapons", "Medical", "Clothing", "Hunting", "Materials", "Decor", "Furniture" };
+#endif
     public static string DisplayCategory(int i)
         => I18n.IsEnglish ? CategoriesEn[i] : Categories[i];
 }
