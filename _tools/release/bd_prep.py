@@ -9,7 +9,7 @@ names = {
     'ul': '2_TldHacks-v{}终极版_更多MOD食物衣服_适配最新铁路DLC',
 }
 # 一次只处理要传的包:先 min 和 full,终极版打好再改成 ['ul'] 跑一遍
-ONLY = ['min', 'full']
+ONLY = ['ul']
 names = {k: v for k, v in names.items() if k in ONLY}
 retire = {'min': ['TldHacks-v'], 'full': ['材质包备份.'], 'ul': ['TldHacks-v', '终极版材质包备份.', '终极版_安装说明.txt']}
 bd = token()
@@ -24,8 +24,10 @@ for k, pat in names.items():
     if stale:
         if not made:
             mkdir(bd, box); made = True
-        mv(bd, stale, box)
-        log.append((k, 'moved', [s.rsplit('/', 1)[1] for s in stale]))
+        # 终极版 183 个文件一次挪,请求太长,浏览器报 chunk is longer than limit
+        for i in range(0, len(stale), 40):
+            mv(bd, stale[i:i + 40], box)
+        log.append((k, 'moved', len(stale)))
     if cur != pat.format(V_NEW):
         rename(bd, path, pat.format(V_NEW))
         log.append((k, 'renamed', pat.format(V_NEW)))
