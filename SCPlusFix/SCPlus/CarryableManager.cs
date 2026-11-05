@@ -4,7 +4,7 @@ using System.Text;
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using UnityEngine.SceneManagement;
 
-namespace SCPlus;
+namespace SCPlusPP;
 
 internal class CarryableManager
 {

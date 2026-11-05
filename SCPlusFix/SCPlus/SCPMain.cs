@@ -16,7 +16,7 @@ using UnityEngine.AddressableAssets;
 using UnityEngine.AddressableAssets.ResourceLocators;
 using UnityEngine.SceneManagement;
 
-namespace SCPlus;
+namespace SCPlusPP;
 
 public class SCPMain : MelonMod
 {
@@ -47,6 +47,25 @@ public class SCPMain : MelonMod
 	public static bool decorationListPopulated;
 
 	public static int carryableCoroutineCounter = 0;
+
+	// 玩家 Mods 里还留着原版 SafehouseCustomizationPlus.dll(或旧的修复版)时不用删:本 mod 优先级最高先注册,
+	// 这里拦掉它后面的注册,它的补丁和设置页就都不会启动。存档用的还是同一个 ModData 名字,两边存档通用
+	public override void OnEarlyInitializeMelon()
+	{
+		HarmonyInstance.Patch(HarmonyLib.AccessTools.Method(typeof(MelonBase), nameof(MelonBase.Register)),
+			prefix: new HarmonyLib.HarmonyMethod(typeof(SCPMain), nameof(BlockOriginalRegister)));
+	}
+
+	private static bool BlockOriginalRegister(MelonBase __instance, ref bool __result)
+	{
+		if (__instance.MelonAssembly?.Assembly.GetName().Name != "SafehouseCustomizationPlus")
+		{
+			return true;
+		}
+		MelonLogger.Msg("SCPlusFix++ 已代替 " + Path.GetFileName(__instance.MelonAssembly.Location) + ",那个文件留着也没关系");
+		__result = false;
+		return false;
+	}
 
 	public override void OnInitializeMelon()
 	{

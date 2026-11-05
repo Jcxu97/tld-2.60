@@ -2,7 +2,7 @@ using Il2Cpp;
 using Il2CppTLD.PDID;
 using UnityEngine;
 
-namespace SCPlus;
+namespace SCPlusPP;
 
 internal class CarryableSaveDataProxy
 {

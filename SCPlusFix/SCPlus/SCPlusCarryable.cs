@@ -7,7 +7,7 @@ using Il2CppVLB;
 using MelonLoader;
 using UnityEngine;
 
-namespace SCPlus;
+namespace SCPlusPP;
 
 [RegisterTypeInIl2Cpp]
 internal class SCPlusCarryable : MonoBehaviour

@@ -9,7 +9,7 @@ using Il2CppTLD.Placement;
 using Il2CppVLB;
 using UnityEngine;
 
-namespace SCPlus;
+namespace SCPlusPP;
 
 internal class MiscPatches
 {

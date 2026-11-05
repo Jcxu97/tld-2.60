@@ -1,7 +1,7 @@
 using Il2Cpp;
 using UnityEngine;
 
-namespace SCPlus;
+namespace SCPlusPP;
 
 internal static class Settings
 {
@@ -12,13 +12,13 @@ internal static class Settings
 	public static void OnLoad()
 	{
 		options = new SCPSettings();
-		options.AddToModSettings("定义安全屋强化辅助v1.9.4");
+		options.AddToModSettings("SCPlusFix++ 自定义安全屋");
 	}
 
 	public static void OnInitialize()
 	{
 		// ModSettings names UI nodes after the localized title and field name
-		Transform thumb = InterfaceManager.GetPanel<Panel_OptionsMenu>().transform.Find("Pages/ModSettings/GameObject/ScrollPanel/Offset/Mod settings grid (定义安全屋强化辅助v1.9.4)/Custom Setting (色调)/Slider_FOV/Slider_Options/Thumb");
+		Transform thumb = InterfaceManager.GetPanel<Panel_OptionsMenu>().transform.Find("Pages/ModSettings/GameObject/ScrollPanel/Offset/Mod settings grid (SCPlusFix++ 自定义安全屋)/Custom Setting (色调)/Slider_FOV/Slider_Options/Thumb");
 		if (thumb != null)
 		{
 			hueSliderThumb = thumb.GetComponent<UISprite>();

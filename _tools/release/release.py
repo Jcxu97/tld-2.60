@@ -3,7 +3,7 @@
 #   python release.py pack [sb e5 st] build + deploy + pack + verify (no args = packages whose DLL changed)
 #   python release.py upload [sb e5 st] move old network files to OLD, upload, check sizes
 # Readme text stays manual: desktop outer readmes, and the readmes inside staging.
-# SCPlusFix (fixed SafehouseCustomizationPlus) and MoreBunkers are built and packed with sb automatically.
+# SCPlusFix++ (fixed SafehouseCustomizationPlus) and MoreBunkers are built and packed with sb automatically.
 import glob, hashlib, json, os, re, shutil, subprocess, sys, tempfile, time, zipfile
 
 REPO = r'D:\Github\tld--2.55'
@@ -29,12 +29,13 @@ PKGS = {
                vol='剧情材质包备份', readme='剧情模式_解压说明.txt', root='wintermute'),
 }
 
-# Fixed Chinese build of SafehouseCustomizationPlus 1.9.4. It ships only inside the sandbox full package.
-SCP = dict(csproj=r'SCPlusFix\SafehouseCustomizationPlus.csproj', out=r'SCPlusFix\bin\Release\SafehouseCustomizationPlus.dll',
-           game=r'Mods\SafehouseCustomizationPlus.dll', stage=os.path.join('sb_full', 'Mods', 'SafehouseCustomizationPlus.dll'))
+# SCPlusFix++ is the user's fixed Chinese build of SafehouseCustomizationPlus 1.9.4. It ships in the minimal and the
+# sandbox full package. It blocks an old SafehouseCustomizationPlus.dll left in Mods, so users do not have to delete it.
+SCP = dict(csproj=r'SCPlusFix\SafehouseCustomizationPlus.csproj', out=r'SCPlusFix\bin\Release\SCPlusFix++.dll',
+           game=r'Mods\SCPlusFix++.dll', stage=[os.path.join(p, 'Mods', 'SCPlusFix++.dll') for p in ('sb_min', 'sb_full')])
 # MoreBunkers ships inside the sandbox full package since 2026-10-26 (still also a separate zip in 零散MODS)
 MB = dict(csproj=r'MoreBunkers\src\MoreBunkers.csproj', out=r'MoreBunkers\src\bin\Release\MoreBunkers.dll',
-          game=r'Mods\MoreBunkers.dll', stage=os.path.join('sb_full', 'Mods', 'MoreBunkers.dll'))
+          game=r'Mods\MoreBunkers.dll', stage=[os.path.join('sb_full', 'Mods', 'MoreBunkers.dll')])
 EXTRAS = {'scp': SCP, 'mb': MB}
 
 
@@ -272,7 +273,8 @@ def pack(keys):
         if k == 'sb':
             for e, d in extra.items():
                 deploy('sb', d, EXTRAS[e])
-                shutil.copy2(d, os.path.join(STAGE, EXTRAS[e]['stage']))
+                for s in EXTRAS[e]['stage']:
+                    shutil.copy2(d, os.path.join(STAGE, s))
                 man[e] = md5(d)
         for s in stage_dll(k):
             shutil.copy2(dll, s)

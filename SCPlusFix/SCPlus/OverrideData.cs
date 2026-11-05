@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace SCPlus;
+namespace SCPlusPP;
 
 internal class OverrideData
 {

@@ -4,7 +4,7 @@ using Il2CppTLD.AddressableAssets;
 using MelonLoader;
 using UnityEngine;
 
-namespace SCPlus;
+namespace SCPlusPP;
 
 // TldHacks 物品生成器用反射调这里,把 SC+ 自己存档的器械直接放进背包。
 // 和读档时重建"在玩家身上"的那条路一样,存档也就跟收起来的那些一样走 SC+ 的 carried 列表

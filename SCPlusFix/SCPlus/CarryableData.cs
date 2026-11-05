@@ -4,7 +4,7 @@ using Il2Cpp;
 using Il2CppVLB;
 using UnityEngine;
 
-namespace SCPlus;
+namespace SCPlusPP;
 
 internal class CarryableData
 {

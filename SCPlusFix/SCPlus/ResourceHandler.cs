@@ -5,7 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography;
 
-namespace SCPlus;
+namespace SCPlusPP;
 
 internal class ResourceHandler
 {

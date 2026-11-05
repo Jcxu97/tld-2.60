@@ -36,7 +36,7 @@ out = [
     '',
     'internal static class FurnitureDatabase',
     '{',
-    '    // 原版收不进背包、靠 SCPlus 自己存档的器械,生成走 SCPlus.Spawner',
+    '    // 原版收不进背包、靠 SCPlusFix++ 自己存档的器械,生成走它的 Spawner',
     '    public static readonly List<ItemEntry> Carryables = new List<ItemEntry>',
     '    {',
 ]

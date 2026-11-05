@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <AssemblyName>SafehouseCustomizationPlus</AssemblyName>
+    <AssemblyName>SCPlusFix++</AssemblyName>
     <TargetFramework>net6.0</TargetFramework>
     <LangVersion>12.0</LangVersion>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>

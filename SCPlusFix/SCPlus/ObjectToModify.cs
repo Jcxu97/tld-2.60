@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace SCPlus;
+namespace SCPlusPP;
 
 internal class ObjectToModify
 {

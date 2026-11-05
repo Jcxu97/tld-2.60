@@ -2,7 +2,7 @@ using HarmonyLib;
 using Il2Cpp;
 using UnityEngine;
 
-namespace SCPlus;
+namespace SCPlusPP;
 
 internal class WorkbenchPatches
 {

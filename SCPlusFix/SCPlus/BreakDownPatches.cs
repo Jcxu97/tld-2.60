@@ -2,7 +2,7 @@ using System;
 using HarmonyLib;
 using Il2Cpp;
 
-namespace SCPlus;
+namespace SCPlusPP;
 
 internal class BreakDownPatches
 {

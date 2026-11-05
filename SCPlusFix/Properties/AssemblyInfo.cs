@@ -3,11 +3,13 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.Versioning;
 using MelonLoader;
-using SCPlus;
+using SCPlusPP;
 
-[assembly: AssemblyTitle("SafehouseCustomizationPlus")]
+[assembly: AssemblyTitle("SCPlusFix++")]
 [assembly: AssemblyCopyright("Created by Waltz")]
-[assembly: AssemblyFileVersion("1.9.4")]
-[assembly: MelonInfo(typeof(SCPMain), "SafehouseCustomizationPlus", "1.9.4", "Waltz", null)]
+[assembly: AssemblyFileVersion("2.0.0")]
+[assembly: MelonInfo(typeof(SCPMain), "SCPlusFix++", "2.0.0", "AKUL", null)]
 [assembly: MelonGame("Hinterland", "TheLongDark")]
-[assembly: AssemblyVersion("1.9.4.0")]
+// 要比 Mods 里可能还留着的原版 SafehouseCustomizationPlus 先注册,SCPMain.OnEarlyInitializeMelon 才拦得住它
+[assembly: MelonPriority(-1000)]
+[assembly: AssemblyVersion("2.0.0.0")]

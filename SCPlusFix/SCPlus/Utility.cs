@@ -12,7 +12,7 @@ using ModData;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace SCPlus;
+namespace SCPlusPP;
 
 internal static class Utility
 {

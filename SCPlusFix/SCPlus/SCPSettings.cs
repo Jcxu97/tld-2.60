@@ -4,7 +4,7 @@ using Il2CppVLB;
 using ModSettings;
 using UnityEngine;
 
-namespace SCPlus;
+namespace SCPlusPP;
 
 internal class SCPSettings : JsonModSettings
 {

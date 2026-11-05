@@ -4,7 +4,7 @@ using Il2Cpp;
 using Il2CppTLD.Placement;
 using UnityEngine;
 
-namespace SCPlus;
+namespace SCPlusPP;
 
 internal class GreenScreenPatches
 {
@@ -26,7 +26,7 @@ internal class GreenScreenPatches
 			DecorationItem component = objectToPlace.GetComponent<DecorationItem>();
 			if ((bool)component)
 			{
-				GearItem gearItem = UnityEngine.Object.Instantiate(GearItem.LoadGearItemPrefab("GEAR_Stone"));
+				GearItem gearItem = UnityEngine.Object.Instantiate(UnityEngine.AddressableAssets.Addressables.LoadAssetAsync<GameObject>((Il2CppSystem.Object)"GEAR_Stone").WaitForCompletion().GetComponent<GearItem>());
 				foreach (MeshRenderer meshRenderer in gearItem.m_MeshRenderers)
 				{
 					meshRenderer.enabled = false;

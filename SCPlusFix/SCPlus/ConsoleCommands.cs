@@ -9,7 +9,7 @@ using MelonLoader;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
-namespace SCPlus;
+namespace SCPlusPP;
 
 internal class ConsoleCommands
 {

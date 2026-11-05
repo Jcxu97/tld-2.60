@@ -6,7 +6,7 @@ using UnityEngine;
 namespace TldHacks;
 
 // 物品生成器的"家具"栏:家具和器械直接进背包的装饰品栏,从背包里拿出来自己摆。
-// 自带装饰品组件的家具这里直接生成,存档交给游戏;铣床、弹药工作台、炉子这些靠 SCPlus 自己存档,转给 SCPlus.Spawner
+// 自带装饰品组件的家具这里直接生成,存档交给游戏;铣床、弹药工作台、炉子这些靠 SCPlus 自己存档,转给 SCPlusFix++ 的 Spawner
 internal static class Furniture
 {
 #if STORY_EDITION || EP5_EDITION
@@ -25,13 +25,13 @@ internal static class Furniture
         _looked = true;
         foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
         {
-            var t = asm.GetType("SCPlus.Spawner", false);
+            var t = asm.GetType("SCPlusPP.Spawner", false);
             if (t == null) continue;
             _spawnCarryable = t.GetMethod("SpawnCarryable", BindingFlags.Public | BindingFlags.Static);
             _setupDecoration = t.GetMethod("SetupDecoration", BindingFlags.Public | BindingFlags.Static);
             break;
         }
-        ModMain.Log?.Msg($"[Furniture] SCPlus spawner {(_spawnCarryable != null ? "found" : "missing")}");
+        ModMain.Log?.Msg($"[Furniture] SCPlusFix++ spawner {(_spawnCarryable != null ? "found" : "missing")}");
     }
 
     internal static void ResolveNames()
@@ -59,7 +59,7 @@ internal static class Furniture
         bool carry = string.IsNullOrEmpty(e.Remark);
         if (carry && _spawnCarryable == null)
         {
-            CheatState.LastActionLog = I18n.T("这件要装整合包里的自定义安全屋(SCPlus)才能生成", "This one needs the bundled SafehouseCustomizationPlus");
+            CheatState.LastActionLog = I18n.T("这件要装 SCPlusFix++(自定义安全屋修复版)才能生成", "This one needs SCPlusFix++");
             return;
         }
         int ok = 0;

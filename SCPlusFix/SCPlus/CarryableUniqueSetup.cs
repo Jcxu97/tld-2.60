@@ -10,7 +10,7 @@ using MelonLoader;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace SCPlus;
+namespace SCPlusPP;
 
 internal class CarryableUniqueSetup
 {
@@ -137,7 +137,6 @@ internal class CarryableUniqueSetup
 		transform2.gameObject.AddComponent<PlacePoints>().m_PlacePoints = list2.ToArray();
 		woodStove.m_CookingSlots = list.ToArray();
 		woodStove.enabled = true;
-		Resources.Load<GameObject>("Assets/PrefabInstance/INTERACTIVE_StoveWoodC_LOD0");
 		gameObject.active = true;
 		return gameObject;
 	}

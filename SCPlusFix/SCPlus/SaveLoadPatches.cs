@@ -11,7 +11,7 @@ using MelonLoader;
 using TLD.TinyJSON;
 using UnityEngine;
 
-namespace SCPlus;
+namespace SCPlusPP;
 
 internal class SaveLoadPatches
 {

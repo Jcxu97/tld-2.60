@@ -5,7 +5,7 @@ using Il2Cpp;
 using TLD.TinyJSON;
 using UnityEngine;
 
-namespace SCPlus;
+namespace SCPlusPP;
 
 public static class Extensions
 {
