@@ -2,12 +2,15 @@ import sys
 exec(open(r'D:\Github\tld--2.55\_tools\release\bh_baidu.py', encoding='utf-8').read())
 goto('https://pan.baidu.com/disk/main')
 time.sleep(5)
-V_OLD, V_NEW = '11', '12'
+V_OLD, V_NEW = '12.1', '12.2'
 names = {
     'min': '1_TldHacks-v{}最小安装包_只有修改器',
     'full': '1_TldHacks-v{}完整版_带其他mods例如地图',
     'ul': '2_TldHacks-v{}终极版_更多MOD食物衣服_适配最新铁路DLC',
 }
+# 一次只处理要传的包:先 min 和 full,终极版打好再改成 ['ul'] 跑一遍
+ONLY = ['min', 'full']
+names = {k: v for k, v in names.items() if k in ONLY}
 retire = {'min': ['TldHacks-v'], 'full': ['材质包备份.'], 'ul': ['TldHacks-v', '终极版材质包备份.', '终极版_安装说明.txt']}
 bd = token()
 root = {i['name']: i for i in ls(ROOT)}

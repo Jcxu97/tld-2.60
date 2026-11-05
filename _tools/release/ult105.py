@@ -2,14 +2,14 @@ import os, shutil, sys
 sys.path.insert(0, r'D:\Github\tld--2.55\_tools\release')
 import release as R
 
-v = '12'
+v = '12.2'
 S = os.path.join(R.STAGE, 'ultimate')
-desk_old = os.path.join(R.DESK, 'V11终极版_我自己在用的全部mods')
+desk_old = os.path.join(R.DESK, 'V12.1终极版_我自己在用的全部mods')
 out = R.ul_dir(v)
 items = ['MelonLoader', 'Mods', 'Plugins', 'UserData', 'UserLibs', 'winhttp.dll', '使用说明.txt']
 
 if os.path.exists(desk_old):
-    dst = os.path.join(R.DESK, 'OLD', 'v11')
+    dst = os.path.join(R.DESK, 'OLD', 'v12.1')
     os.makedirs(dst, exist_ok=True)
     shutil.move(desk_old, dst)
     print('moved to OLD:', desk_old)

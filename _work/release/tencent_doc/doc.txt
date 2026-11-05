@@ -1,4 +1,4 @@
-当前网盘上是 TldHacks V12.1，适配游戏 2.59 版（10 月 30 日的小更新，在 10 月 28 日铁路 DLC 更新之后）。下载、安装、功能、按键都在这一份文档里。
+当前网盘上是 TldHacks V12.2，适配游戏 2.59 版（10 月 30 日的小更新，在 10 月 28 日铁路 DLC 更新之后）。下载、安装、功能、按键都在这一份文档里。
 找某个 mod 或某个按键，按 Ctrl+F 搜名字最快。电脑上点页面左边的“大纲”，能直接跳到各章。
 ! 嫌麻烦、装不上、装完进不去游戏的，直接找群主远程安装，30 元一次，见第一章。
 
@@ -39,9 +39,9 @@
 剧情包和沙盒包各装各的，互不影响，可以都装。
 装 mod 之前，先装网盘根目录的 .NET 运行库（前置！必须下载安装！Downloading the. NETRuntime.exe），装过就跳过。
 | 包 | 里面有什么 | 适合谁 | 在网盘哪里 |
-| 最小包 | 只有 TldHacks 修改器和它要用的几个前置 | 只要修改器菜单，别的 mod 自己配 | 1_TldHacks-v12.1最小安装包_只有修改器 文件夹里的 TldHacks-v12.1-最小安装包_只带修改mod！解压到游戏根目录.zip |
-| 完整版 | TldHacks 加十几个常用 mod 和它们要用的前置，建造、摆放、存档、雷达、更多地堡这些（见第六章） | 想一次装好，开箱就能玩 | 1_TldHacks-v12.1完整版_带其他mods例如地图 文件夹，四个分卷 材质包备份.001 到 .004 |
-| 终极版 | 群主自己在玩的整套，游戏 Mods 文件夹里在用的 mod 全都在。食物、衣服、装饰、配方、材质（TheLongDevelopment）这些完整版没带的也有，别的 mod 的设置是群主调好的，TldHacks 修改器是默认设置 | 想要群主同款 | 2_TldHacks-v12.1终极版_更多MOD食物衣服_适配最新铁路DLC 文件夹，182 个分卷 终极版材质包备份.001 到 .182 |
+| 最小包 | TldHacks 修改器、SCPlusFix++ 自定义安全屋，和它们要用的几个前置 | 只要修改器菜单，别的 mod 自己配 | 1_TldHacks-v12.2最小安装包_只有修改器 文件夹里的 TldHacks-v12.2-最小安装包_只带修改mod！解压到游戏根目录.zip |
+| 完整版 | TldHacks 加十几个常用 mod 和它们要用的前置，建造、摆放、存档、雷达、更多地堡这些（见第六章） | 想一次装好，开箱就能玩 | 1_TldHacks-v12.2完整版_带其他mods例如地图 文件夹，四个分卷 材质包备份.001 到 .004 |
+| 终极版 | 群主自己在玩的整套，游戏 Mods 文件夹里在用的 mod 全都在。食物、衣服、装饰、配方、材质（TheLongDevelopment）这些完整版没带的也有，别的 mod 的设置是群主调好的，TldHacks 修改器是默认设置 | 想要群主同款 | 2_TldHacks-v12.2终极版_更多MOD食物衣服_适配最新铁路DLC 文件夹，182 个分卷 终极版材质包备份.001 到 .182 |
 | 剧情包 | 剧情模式专用的 TldHacks 和 mod 加载器，第 1 到 4 章一个包，第 5 章一个包 | 玩剧情模式 | 4_The Long dark 故事剧情模式_可能有bug没测试 文件夹 |
 | 选装 mod | 单个功能的 mod | 只想加某一个功能 | 3_功能mods 选装 文件夹 |
 ### 选装 mod
@@ -62,7 +62,7 @@
 游戏根目录就是有 tld.exe 的那个文件夹。在 Steam 库里右键 The Long Dark，管理，浏览本地文件，打开的就是。
 Steam 默认在 D:\Steam\steamapps\common\TheLongDark\（或 C 盘，看你 Steam 装在哪）。
 ### 最小包
-+ 解压 TldHacks-v12.1-最小安装包_只带修改mod！解压到游戏根目录.zip，里面是 version.dll、MelonLoader、Mods 三样。
++ 解压 TldHacks-v12.2-最小安装包_只带修改mod！解压到游戏根目录.zip，里面是 version.dll、MelonLoader、Mods 三样。
 + 把这三样拖进游戏根目录，和 tld.exe 同一层，提示重名就选覆盖。
 + 以前单独装过被整合的 mod，或者装过别人整合包的，按第四章跑一次 bat。
 + 启动游戏，进存档后按 Tab 打开 TldHacks 菜单。
@@ -124,7 +124,7 @@ TldHacks 是内置修改器，三个沙盒包都带，用在沙盒模式。剧�
 | 动物 | 主页的动物 | 一击必杀 |
 | 生火 | 主页的环境 / 篝火 | 随意生火、篝火永不熄灭 |
 | 传送 | 物品 & 传送的快速传送 | 一键去各地图的预设地点，含铁路 DLC 的地点和 MoreBunkers 的三个地堡。列表用滚轮翻，它和物品生成器中间有一道分割栏，按住上下拖能调两块各占多高。按 M 打开地图，双击图标也能传送（同一张图里） |
-| 刷物品 | 物品 & 传送的物品生成器 | 按分类刷任意物品，含 DLC 和 mod 物品。右上角搜索框能搜拼音首字母（xs）、完整拼音（xiangshi）、英文原名（acorn），也能直接粘中文名 |
+| 刷物品 | 物品 & 传送的物品生成器 | 按分类刷任意物品，含 DLC 和 mod 物品。右上角搜索框能搜拼音首字母（xs）、完整拼音（xiangshi）、英文原名（acorn），也能直接粘中文名。家具那一栏是游戏里能摆的家具，还有炉子、铣床、弹药工作台这些器械，生成后在背包的装饰品里，拿出来自己摆。铣床、弹药工作台和炉子要装 SCPlusFix++ |
 | 跑得快、跳、飞 | 人物 & 操作 | 移动速度、跳跃、无限体力。F1 飞行要有 DeveloperConsole，最小包没带 |
 | 时间加速 | 人物 & 操作的时间加速 | 两个热键各绑一个倍率（0.1 到 50），按住就生效，调到 1 以下就是变慢 |
 | 搬猎物 | 人物 & 操作的搬运猎物 | 搬运猎物、搬运全部 |
@@ -152,7 +152,7 @@ TldHacks 是内置修改器，三个沙盒包都带，用在沙盒模式。剧�
 | Architect | 自由建造。按 B 打开建造菜单放建筑结构，方向键和 PageUp、PageDown 微调位置。可选免材料、调建造耗时 |
 | PlacingAnywhere | 物品放在哪都行，能转、能上下挪、能贴着鼠标指的平面放 |
 | PerfectPlacement | 完美摆放（已汉化）。放下物品时自动贴齐旁边的物品、墙和墙角，摆正朝向。罐头能叠着放，木柴能码成一垛 |
-| SafehouseCustomizationPlus | 自定义安全屋，能搬、摆、复制家具。已修好新版游戏读档后家具和灶炉消失 |
+| SCPlusFix++ | 自定义安全屋，原来的 SafehouseCustomizationPlus 修好以后改的名，能搬、摆、复制家具。最小包也带了。Mods 里留着原版 SafehouseCustomizationPlus.dll 不用删，SCPlusFix++ 会顶替它，老存档照常读 |
 | ObjectSinkFix | 家具下沉修复。回到去过的地点时，家具不再沉进地板，保险箱、储物箱这类容器不再整个消失。已经沉下去的家具进地点时自动抬回原位 |
 | MoreBunkers | 更多地堡 v1.4。神秘湖工匠地堡、沿海公路囤货地堡、废弃机场雇佣兵地堡，入口是地上的旧舱口，按 Home 键看在哪 |
 | MotionTrackerLite | 动物雷达，屏幕上用图标提示附近动物的方位，按 U 开关 |
@@ -246,7 +246,7 @@ TldHacks 是内置修改器，三个沙盒包都带，用在沙盒模式。剧�
 + 所有按键都能在游戏设置的 Mod Settings 里改，每个 mod 一页。
 + Mouse2 是鼠标中键（按下滚轮）。Mouse3 和 Mouse4 是鼠标侧面拇指位置的两个键。
 + 写“数字 5”的是字母上面那一排数字键，写“小键盘 1”的是键盘右边的数字小键盘。
-+ 最小包只有 TldHacks，按键看下面的 TldHacks 表。最小包没带 DeveloperConsole，F1 飞行用不了。
++ 最小包只有 TldHacks 和 SCPlusFix++，按键看下面的 TldHacks 表，SCPlusFix++ 的按键和完整版一样。最小包没带 DeveloperConsole，F1 飞行用不了。
 + TldHacks 的按键三个沙盒包一样。别的 mod 完整版和终极版有不少按键不一样，下面分开写。
 ### TldHacks
 | 作用 | 按键 |
@@ -284,7 +284,7 @@ TldHacks 是内置修改器，三个沙盒包都带，用在沙盒模式。剧�
 | 方向键左、右 | 蓝图叠在一起时切换上一个、下一个 | BlueprintCleaner |
 | U | 开关动物雷达 | MotionTrackerLite |
 | Home | 屏幕上提示这个存档的三个新地堡分别在哪张图 | MoreBunkers |
-| 小键盘 8 | 准星对着装饰物按，复制一个 | SafehouseCustomizationPlus |
+| 小键盘 8 | 准星对着装饰物按，复制一个 | SCPlusFix++ |
 | F5、F6 | 存档、读档 | SaveManager |
 | F2 | 打开或关闭开发者控制台 | DeveloperConsole |
 ### 完美摆放 PerfectPlacement
@@ -305,7 +305,7 @@ TldHacks 是内置修改器，三个沙盒包都带，用在沙盒模式。剧�
 | R | 收进背包 | 拿起一件后按，它和紧挨着的同种物品一起收进背包 |
 | L | 空间检查 | 开关空间检查，开着时不会放进顶到架子或天花板的位置 |
 ### 终极版其他 mod 的按键
-Architect、PlacingAnywhere、PerfectPlacement、BlueprintCleaner、MotionTrackerLite、MoreBunkers、SafehouseCustomizationPlus、SaveManager、DeveloperConsole 的按键和完整版一样，看上面的表。下面是终极版不一样的和多出来的。
+Architect、PlacingAnywhere、PerfectPlacement、BlueprintCleaner、MotionTrackerLite、MoreBunkers、SCPlusFix++、SaveManager、DeveloperConsole 的按键和完整版一样，看上面的表。下面是终极版不一样的和多出来的。
 | 按键 | 作用 | mod |
 | F9 | 手动查看当前存档的地堡分布 | PrepperCache |
 | Y | 看着无线电或交易箱按一下选中，再点右键抱起。抱着东西时按 Y 或右键放下。看着随身无线电选中后再按一下是呼叫商人 | TraderMoving |
@@ -395,7 +395,7 @@ Architect、PlacingAnywhere、PerfectPlacement、BlueprintCleaner、MotionTracke
 | ItemPicker | 按交互键报错，已修（完整版里默认停用） |
 | ItemRarities | 检查物品界面报错。修好后换成了 RarityRework |
 | PerfectPlacement 0.39.1 | 新加进完整版和终极版。修了两处新版报错，149 条文字汉化，默认键 F1 改成 F7、F5 改成 F11，避开 TldHacks 飞行和 SaveManager 存档 |
-| TldHacks、MoreBunkers、SafehouseCustomizationPlus、TraderMoving | 我们自己的 mod，都适配了新版 |
+| TldHacks、MoreBunkers、SCPlusFix++、TraderMoving | 我们自己的 mod，都适配了新版 |
 ### 更早修过的 mod
 | mod | 修了什么 |
 | SafehouseCustomizationPlus（汉化 1.9.4） | 读档后家具和灶炉消失，10 月 6 日修好。10 月 28 日更新后又修了一次 |
