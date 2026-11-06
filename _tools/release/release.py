@@ -285,8 +285,8 @@ def pack(keys):
 
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-# 2026-10-28 the user moved everything into TLD V2.58 Hack (renamed V2.59 on 2026-10-30). Sandbox packages go to both roots (TLD_NET_ROOT=v255 for the old one).
-NET_ROOTS = {'v258': ('0a583d04bfed47cd9c7ce2235c20e7d5', 'TLD V2.59 Hack'),
+# 2026-10-28 the user moved everything into TLD V2.58 Hack (renamed V2.59 on 2026-10-30, V2.60 on 2026-11-06). Sandbox packages go to both roots (TLD_NET_ROOT=v255 for the old one).
+NET_ROOTS = {'v258': ('0a583d04bfed47cd9c7ce2235c20e7d5', 'TLD V2.60 Hack'),
              'v255': ('1811aa2992d54afb9febfd56dd12a301', 'TLD V2.55 HACK')}
 NET_ROOT, NET_ROOT_NAME = NET_ROOTS[os.environ.get('TLD_NET_ROOT', 'v258')]
 NET_OLD = '6636f71049c9406fbe95a8b5c410763d'

@@ -1,4 +1,4 @@
-# Upload the current sandbox and ultimate packages to Baidu netdisk TLD HACK V2.59 through the logged-in web page.
+# Upload the current sandbox and ultimate packages to Baidu netdisk TLD HACK V2.60 through the logged-in web page.
 #   Run bd prep first (bh_baidu.py: retire old files, rename folders). This script only uploads and checks sizes.
 import json, os, subprocess, sys, time, urllib.parse
 
@@ -27,7 +27,7 @@ def main():
         os.remove(FLAG)
     procs = []
     for key, files in targets:
-        path = '/TLD HACK V2.59/' + folders[key]
+        path = '/TLD HACK V2.60/' + folders[key]
         code = f"""
 import os
 goto('https://pan.baidu.com/disk/main#/index?category=all&path=' + {json.dumps(urllib.parse.quote(path))})
@@ -45,7 +45,7 @@ close_tab()
         procs.append(p)
         print('uploading', len(files), 'files to', key, flush=True)
         time.sleep(10)
-    want = {'/TLD HACK V2.59/' + folders[k]: {os.path.basename(f): os.path.getsize(f) for f in fs} for k, fs in targets}
+    want = {'/TLD HACK V2.60/' + folders[k]: {os.path.basename(f): os.path.getsize(f) for f in fs} for k, fs in targets}
     deadline = time.time() + 5400
     try:
         while time.time() < deadline:
