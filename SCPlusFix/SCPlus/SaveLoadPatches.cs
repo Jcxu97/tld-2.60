@@ -40,8 +40,9 @@ internal class SaveLoadPatches
 		internal static void Postfix(ref string sceneSaveName)
 		{
 			Stopwatch stopwatch = Stopwatch.StartNew();
-			string text = Utility.dataManager.Load(Utility.movablesSaveDataTag + "_" + sceneSaveName);
-			string text2 = Utility.dataManager.Load(Utility.movablesSaveDataTag + "_carried");
+			// 原版和 V12.2 以前写的存档带 "@type":"SCPlus.X",TinyJSON 会解成原版程序集里的类型,赋不进 SCPlusPP.X,整段读档失败
+			string text = Utility.dataManager.Load(Utility.movablesSaveDataTag + "_" + sceneSaveName)?.Replace("SCPlus.", "SCPlusPP.");
+			string text2 = Utility.dataManager.Load(Utility.movablesSaveDataTag + "_carried")?.Replace("SCPlus.", "SCPlusPP.");
 			List<CarryableSaveDataProxy> item = new List<CarryableSaveDataProxy>();
 			if (!string.IsNullOrEmpty(text))
 			{
