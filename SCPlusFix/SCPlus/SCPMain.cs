@@ -50,21 +50,26 @@ public class SCPMain : MelonMod
 
 	// 玩家 Mods 里还留着原版 SafehouseCustomizationPlus.dll(或旧的修复版)时不用删:本 mod 优先级最高先注册,
 	// 这里拦掉它后面的注册,它的补丁和设置页就都不会启动。存档用的还是同一个 ModData 名字,两边存档通用
+	// 11-06 实测给 MelonBase.Register 挂前缀不触发,原版照样注册。改用 MelonLoader 自己的查重:
+	// 把原版的 Info 换成本 mod 的,它注册时撞上同名同作者就被拒,补丁和回调都不会挂
 	public override void OnEarlyInitializeMelon()
 	{
-		HarmonyInstance.Patch(HarmonyLib.AccessTools.Method(typeof(MelonBase), nameof(MelonBase.Register)),
-			prefix: new HarmonyLib.HarmonyMethod(typeof(SCPMain), nameof(BlockOriginalRegister)));
-	}
-
-	private static bool BlockOriginalRegister(MelonBase __instance, ref bool __result)
-	{
-		if (__instance.MelonAssembly?.Assembly.GetName().Name != "SafehouseCustomizationPlus")
+		var infoProp = typeof(MelonBase).GetProperty(nameof(MelonBase.Info));
+		foreach (MelonAssembly asm in MelonAssembly.LoadedAssemblies)
 		{
-			return true;
+			if (asm.Assembly.GetName().Name != "SafehouseCustomizationPlus")
+			{
+				continue;
+			}
+			foreach (MelonBase melon in asm.LoadedMelons)
+			{
+				if (!melon.Registered)
+				{
+					infoProp.SetValue(melon, Info);
+				}
+			}
+			MelonLogger.Msg("SCPlusFix++ 已代替 " + Path.GetFileName(asm.Location) + ",那个文件留着也没关系");
 		}
-		MelonLogger.Msg("SCPlusFix++ 已代替 " + Path.GetFileName(__instance.MelonAssembly.Location) + ",那个文件留着也没关系");
-		__result = false;
-		return false;
 	}
 
 	public override void OnInitializeMelon()
