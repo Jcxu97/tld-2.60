@@ -27,6 +27,9 @@ internal static class TldFixCalls
     // 2026-11-06 删存档后回到主菜单 m_ActiveScene 是 null,第五章两个 mod 每帧 .Contains 抛空引用刷日志
     internal static string ActiveScene() => GameManager.m_ActiveScene ?? "";
 
+    // 2.60 删了 ObjectAnim.Start,同样的初始化还在 Initialize 里
+    internal static void ObjectAnimStart(ObjectAnim oa) => oa?.Initialize();
+
     // 2.58 只留了按名字和 AssetReference 生成的重载
     internal static GearItem InstantiateItemAtLocation(PlayerManager pm, GearItem prefab, int numUnits, Vector3 position, bool stickToGround)
     {

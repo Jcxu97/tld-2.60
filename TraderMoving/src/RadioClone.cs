@@ -255,13 +255,8 @@ internal static class RadioClone
             if (!_injectLooked)
             {
                 _injectLooked = true;
-                foreach (var a in AppDomain.CurrentDomain.GetAssemblies())
-                {
-                    if (a.GetName().Name?.Contains("SafehouseCustomization") != true) continue;
-                    _injectField = a.GetType("SCPlus.DecorationPatches")?.GetField("injectPdids",
-                        System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
-                    break;
-                }
+                _injectField = ScPlusPickup.FindType("DecorationPatches")?.GetField("injectPdids",
+                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
             }
             if (_injectField == null) return null;
             if (set.HasValue) _injectField.SetValue(null, set.Value);

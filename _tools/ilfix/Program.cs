@@ -20,6 +20,7 @@ internal static class Program
         ["Il2CppTLD.Scenes.RegionSpecification Il2CppTLD.Gameplay.SandboxBaseConfig::GetRandomRegionFromAllAvailable()"] = nameof(TldFixCalls.GetRandomRegionFromAllAvailable),
         ["Il2Cpp.GearItem Il2Cpp.PlayerManager::InstantiateItemAtLocation(Il2Cpp.GearItem, System.Int32, UnityEngine.Vector3, System.Boolean)"] = nameof(TldFixCalls.InstantiateItemAtLocation),
         ["System.String Il2Cpp.GameManager::get_m_ActiveScene()"] = nameof(TldFixCalls.ActiveScene),
+        ["System.Void Il2Cpp.ObjectAnim::Start()"] = nameof(TldFixCalls.ObjectAnimStart),
     };
 
     private static int Main(string[] args)

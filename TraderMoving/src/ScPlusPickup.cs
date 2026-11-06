@@ -20,17 +20,23 @@ internal static class ScPlusPickup
     private static float _pendingSince;
     private static bool _stopAsked;
 
+    // SCPlusFix++(程序集 SCPlusFix++,命名空间 SCPlusPP)在的时候,旧版 SafehouseCustomizationPlus.dll 留在 Mods 里也被它拦着没启动,所以先找 SCPlusPP
+    internal static Type FindType(string name)
+    {
+        foreach (var ns in new[] { "SCPlusPP.", "SCPlus." })
+            foreach (var a in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                var t = a.GetType(ns + name, false);
+                if (t != null) return t;
+            }
+        return null;
+    }
+
     internal static void Install(HarmonyLib.Harmony harmony)
     {
         try
         {
-            Type t = null;
-            foreach (var a in AppDomain.CurrentDomain.GetAssemblies())
-            {
-                if (a.GetName().Name?.Contains("SafehouseCustomization") != true) continue;
-                t = a.GetType("SCPlus.DecorationPatches+PreventPickingUp");
-                break;
-            }
+            var t = FindType("DecorationPatches+PreventPickingUp");
             var m = t?.GetMethod("Prefix", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
             if (m == null)
             {
@@ -38,7 +44,7 @@ internal static class ScPlusPickup
                 return;
             }
             harmony.Patch(m, prefix: new HarmonyMethod(typeof(ScPlusPickup).GetMethod(nameof(Prefix), BindingFlags.Static | BindingFlags.NonPublic)));
-            ModMain.Log?.Msg("[TraderMoving] 已接管装修模式里无线电和交易箱的拿起");
+            ModMain.Log?.Msg($"[TraderMoving] 已接管装修模式里无线电和交易箱的拿起({t.Assembly.GetName().Name})");
         }
         catch (Exception ex) { ModMain.Log?.Warning($"[TraderMoving] 接管 SCPlus 拿起失败: {ex.Message}"); }
     }

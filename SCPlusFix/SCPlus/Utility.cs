@@ -324,7 +324,7 @@ internal static class Utility
 	public static ObjectAnim Initialize(this ObjectAnim oa, GameObject target)
 	{
 		oa.m_Target = target;
-		oa.Start();
+		oa.Initialize();
 		return oa;
 	}
 
