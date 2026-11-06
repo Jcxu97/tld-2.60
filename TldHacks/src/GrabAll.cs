@@ -248,7 +248,8 @@ internal static class GrabAll
                 if (go == null || !go.activeInHierarchy) continue;
 
                 // 尸骸上的可采集部件(生肉/皮毛)不是"地上物品",走拾取交互会出问题 → 跳过
-                if (gi.m_BodyHarvest != null || gi.m_BodyHarvestItem != null) continue;
+                // m_BodyHarvestItem 是刀斧锯的剥皮速度数据,不是尸体部件,不能按它跳过
+                if (gi.m_BodyHarvest != null) continue;
 
                 // 距离过滤(3D,含高度差)
                 if ((go.transform.position - origin).sqrMagnitude > r2) continue;

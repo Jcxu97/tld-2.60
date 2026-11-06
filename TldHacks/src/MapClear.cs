@@ -81,9 +81,17 @@ internal static class MapClear
         }
     }
 
-    private static bool IsMission(GearItem gi) => gi.m_MissionObject != null;
+    // 沙盒场景里的重锤、钢锯等也挂着 MissionObjectIdentifier,但 m_Id 是空的,只有 research1 这类分组标签,
+    //   不是任务物品。只有 m_Id 非空的才算任务物品
+    private static bool HasMissionId(MissionObjectIdentifier mo)
+    {
+        if (mo == null) return false;
+        try { return !string.IsNullOrEmpty(mo.m_Id); } catch { return true; }
+    }
 
-    private static bool IsMission(Container c) => c.m_MissionObject != null || !string.IsNullOrEmpty(c.m_MissionSupplyObjectiveId);
+    private static bool IsMission(GearItem gi) => HasMissionId(gi.m_MissionObject);
+
+    private static bool IsMission(Container c) => HasMissionId(c.m_MissionObject) || !string.IsNullOrEmpty(c.m_MissionSupplyObjectiveId);
 
     // 普通模式只收非任务物品;任务模式收任务物品,任务容器里的东西全收
     private static bool SkipItem(GearItem gi, bool missionContainer = false)
@@ -105,7 +113,8 @@ internal static class MapClear
                 var go = gi.gameObject;
                 // 没激活的是容器里的东西,走容器那条路
                 if (go == null || !go.activeInHierarchy) continue;
-                if (gi.m_BodyHarvest != null || gi.m_BodyHarvestItem != null) continue;
+                // m_BodyHarvestItem 是刀斧锯的剥皮速度数据,不是尸体部件,不能按它跳过
+                if (gi.m_BodyHarvest != null) continue;
                 if (SkipItem(gi) || GrabAll.IsTravois(go)) continue;
                 _items.Add(gi);
             }
