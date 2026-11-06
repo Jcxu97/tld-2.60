@@ -79,27 +79,51 @@ internal static class Furniture
             : I18n.T($"生成失败:{name}(看 Latest.log 里 [Furniture] 行)", $"Spawn failed: {name} (see [Furniture] in Latest.log)");
     }
 
-    // 和读档重建背包里的装饰品一样:先挂在不激活的临时物体下实例化,AddDecoration 会把它收进背包
+    // 走游戏自己做好家具进背包的那条路(InstantiateDecorationItemInPlayerInventory):激活实例化,Placeable.Awake 先拿到 guid 登记,
+    // AddDecoration 里的 MoveToPlayer 才生效,摆出去以后才进场景存档。以前在不激活的临时物体下实例化,Awake 晚到摆放时才跑,存档链断了,回屋就没了
     private static bool SpawnNative(string path)
     {
-        var temp = new GameObject("TldHacksFurnitureTemp");
-        temp.SetActive(false);
+        var prefab = UnityEngine.AddressableAssets.Addressables.LoadAssetAsync<GameObject>((Il2CppSystem.Object)path).WaitForCompletion();
+        var pdi = prefab != null ? prefab.GetComponent<DecorationItem>() : null;
+        if (pdi == null) { ModMain.Log?.Warning($"[Furniture] load failed {path}"); return false; }
+        bool allow = pdi.m_AllowInInventory;
+        var inject = InjectPdidsField();
+        object injectOld = inject?.GetValue(null);
+        DecorationItem di;
         try
         {
-            var prefab = UnityEngine.AddressableAssets.Addressables.LoadAssetAsync<GameObject>((Il2CppSystem.Object)path).WaitForCompletion();
-            if (prefab == null) { ModMain.Log?.Warning($"[Furniture] load failed {path}"); return false; }
-            var go = UnityEngine.Object.Instantiate(prefab, temp.transform);
-            var di = go.GetComponent<DecorationItem>();
-            if (di == null) { UnityEngine.Object.Destroy(go); return false; }
-            int slash = path.LastIndexOf('/');
-            go.name = path.Substring(slash + 1, path.Length - slash - 1 - ".prefab".Length);
-            di.m_AllowInInventory = true;
-            _setupDecoration?.Invoke(null, new object[] { di });
-            GameManager.GetInventoryComponent().AddDecoration(di);
-            go.SetActive(false);
-            return true;
+            pdi.m_AllowInInventory = true;
+            // SCPlus 的 Placeable.Awake 前缀开着时按坐标算 guid,一次生成几件都在玩家脚下会撞成同一个
+            inject?.SetValue(null, false);
+            di = GameManager.GetPlayerManagerComponent().InstantiateDecorationItemInPlayerInventory(pdi, PlayerManager.InventoryInstantiateFlags.None);
         }
-        finally { UnityEngine.Object.Destroy(temp); }
+        finally
+        {
+            pdi.m_AllowInInventory = allow;
+            if (inject != null) inject.SetValue(null, injectOld);
+        }
+        if (di == null) { ModMain.Log?.Warning($"[Furniture] instantiate failed {path}"); return false; }
+        int slash = path.LastIndexOf('/');
+        di.gameObject.name = path.Substring(slash + 1, path.Length - slash - 1 - ".prefab".Length);
+        di.m_AllowInInventory = true;
+        _setupDecoration?.Invoke(null, new object[] { di });
+        return true;
+    }
+
+    private static FieldInfo _inject;
+    private static bool _injectLooked;
+    private static FieldInfo InjectPdidsField()
+    {
+        if (_injectLooked) return _inject;
+        _injectLooked = true;
+        foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            var t = asm.GetType("SCPlusPP.DecorationPatches", false) ?? asm.GetType("SCPlus.DecorationPatches", false);
+            if (t == null) continue;
+            _inject = t.GetField("injectPdids", BindingFlags.Public | BindingFlags.Static);
+            if (_inject != null) break;
+        }
+        return _inject;
     }
 #endif
 }

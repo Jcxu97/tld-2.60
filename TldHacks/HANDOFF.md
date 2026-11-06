@@ -1,11 +1,12 @@
 # HANDOFF: TldHacks
 
-> Last updated: 2026-11-05 10:20
+> Last updated: 2026-11-06 12:00
 
 ## 当前目标
 TldHacks V12.2 已发(最小包、完整版、终极版传夸克和百度,腾讯文档、群知识库、鲸鲸第 19 条规矩已改)。家具栏和 SCPlusFix++ 都没进游戏实测,用户说相信直接发。
 
 ## 已完成(本轮)
+0. 11-06 修家具栏原生家具摆完回屋消失。旧写法在不激活的临时物体下实例化,Placeable.Awake 没跑,AddDecoration 里的 MoveToPlayer 因 guid 为空不生效,存档链断了。改走游戏的 `InstantiateDecorationItemInPlayerInventory`(反汇编确认它激活实例化再 AddDecoration),生成时临时关 SCPlus 的 injectPdids。只部署进游戏 Mods,没打包上传,没进游戏测。游戏本体 11-06 07:00 更新过
 1. 物品生成器加"家具"栏(773 条)。游戏自带装饰品组件的 762 件由 `src/Furniture.cs` 直接生成进背包装饰品;弹药工作台、铣床、锻炉、三种炉子、煤箱、柴火箱等 11 件转给 SCPlusFix++ 的 `SCPlusPP.Spawner.SpawnCarryable`(照读档重建身上器械那条路)。清单由 `_work/furniture/scan.py` 扫资源包、`gen.py` 生成 `src/FurnitureDatabase.cs`
 2. SCPlusFix 改名 SCPlusFix++(作者 AKUL,2.0.0,文件 `Mods\SCPlusFix++.dll`)。命名空间换成 `SCPlusPP`,MelonPriority -1000 先注册,`SCPMain.OnEarlyInitializeMelon` 给 `MelonBase.Register` 挂前缀,拦掉程序集名是 SafehouseCustomizationPlus 的 mod(原版和旧修复版),玩家不用删原版。ModData 名字还是 SafehouseCustomizationPlus,存档两边通用。设置文件跟着程序集名变成 `SCPlusFix++.json`
 3. 最小包加了 SCPlusFix++.dll、它要的 ModComponent.dll 和 AudioManager.dll、预设 SCPlusFix++.json。`release.py` 的 EXTRAS stage 改成列表
