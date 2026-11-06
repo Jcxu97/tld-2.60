@@ -1240,16 +1240,19 @@ internal static class Menu
             y3 += ROW_ADV;
         }
         bool infCon = Ui.Toggle("InfiniteContainer", R(c3, y3, TOG_W, ROW_H), s.InfiniteContainer, I18n.T(" 容器无限", " Inf. Container"));
+        bool infCarry = Ui.Toggle("InfiniteCarry", R(c3 + TOG2_OFF, y3, TOG_W, ROW_H), s.InfiniteCarry, I18n.T(" 无限负重", " Infinite Carry"));
         y3 += ROW_ADV + SECTION_END_ADV;
         if (lok != s.IgnoreLock || qc != s.QuickOpenContainer || usaf != s.UnlockSafes
-            || tbag != s.TechBackpack || infCon != s.InfiniteContainer || tbagKg != s.TechBackpackKg)
+            || tbag != s.TechBackpack || infCon != s.InfiniteContainer || tbagKg != s.TechBackpackKg
+            || infCarry != s.InfiniteCarry)
         {
-            bool wasOn = s.TechBackpack;
+            bool wasOn = s.TechBackpack || s.InfiniteCarry;
             s.IgnoreLock = lok; s.QuickOpenContainer = qc; s.UnlockSafes = usaf;
-            s.TechBackpack = tbag; s.InfiniteContainer = infCon; s.TechBackpackKg = tbagKg;
+            s.TechBackpack = tbag; s.InfiniteContainer = infCon; s.TechBackpackKg = tbagKg; s.InfiniteCarry = infCarry;
             CheatState.IgnoreLock = lok; CheatState.QuickOpenContainer = qc; CheatState.UnlockSafes = usaf;
             CheatState.TechBackpack = tbag; CheatState.InfiniteContainer = infCon; CheatState.TechBackpackKg = tbagKg;
-            if (wasOn && !tbag) EncumberVanilla.Reset();
+            CheatState.InfiniteCarry = infCarry;
+            if (wasOn && !tbag && !infCarry) EncumberVanilla.Reset();
             s.RequestSave();
         }
 

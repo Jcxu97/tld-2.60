@@ -83,6 +83,7 @@ internal static class CheatState
     public static bool FreeFireFuel;       // 生火材料不减
     public static bool TechBackpack;       // 自定义背包负重(覆盖原版 30kg 上限)
     public static float TechBackpackKg = 30f;
+    public static bool InfiniteCarry;      // 无限负重
     public static bool TorchFullValue;     // 火把满值
     // FreeSprint 已由 InfiniteStamina 覆盖,字段保留仅为 JSON 兼容
     public static bool InfiniteStamina;    // 无限体力
@@ -334,6 +335,7 @@ internal static class Cheats
             s.FireAnywhere = false;
             s.FreeFireFuel = false;
             s.TechBackpack = false;
+            s.InfiniteCarry = false;
             s.TorchFullValue = false;
             s.FreeSprint = false;
             s.InfiniteStamina = false;
@@ -529,6 +531,7 @@ internal static class Cheats
         CheatState.FireAnywhere = s.FireAnywhere;
         CheatState.FreeFireFuel = s.FreeFireFuel;
         CheatState.TechBackpack = s.TechBackpack;
+        CheatState.InfiniteCarry = s.InfiniteCarry;
         CheatState.TorchFullValue = s.TorchFullValue;
         CheatState.InfiniteStamina = s.InfiniteStamina;
         CheatState.MapClickTP = s.MapClickTP;

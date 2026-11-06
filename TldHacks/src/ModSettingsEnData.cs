@@ -89,6 +89,7 @@ internal static class ModSettingsEnData
         "FreeFireFuel", "Free fire fuel",   // 生火材料不减
         "TechBackpack", "Custom carry weight limit",   // 自定义背包负重
         "TechBackpackKg", "Carry weight limit (kg)",   // 背包负重上限(kg)
+        "InfiniteCarry", "Infinite carry weight",   // 无限负重
         "TorchFullValue", "Full-value torches",   // 火把满值
         "FreeSprint", "Free Sprint (incl. travois)",   // 无条件冲刺(含拉雪橇)
         "InfiniteStamina", "Infinite Stamina",   // 无限体力
@@ -418,6 +419,7 @@ internal static class ModSettingsEnData
         "FreeFireFuel", "Adding fuel to a fire does not consume the item.",   // 添加柴火时不消耗物品
         "TechBackpack", "Overrides the vanilla 30 kg carry weight limit with a value of your own.",   // 覆盖原版 30kg 背包上限为自定义值
         "TechBackpackKg", "The value that replaces the vanilla 30 kg limit; 30 is vanilla (default).",   // 替换原版 30kg 上限的目标值, 默认 30=原版
+        "InfiniteCarry", "No carry weight limit. You are never overloaded.",   // 背包负重不设上限,背多少都不超重
         "TorchFullValue", "Torches taken from a campfire come out with full burn time.",   // 从篝火取出的火把燃烧值为最大
         "FreeSprint", "Sprinting costs no stamina, and you can sprint without limit while pulling a travois.",   // 冲刺不消耗体力,拉雪橇也能无限冲刺
         "InfiniteStamina", "The stamina bar stays full; fatigue is not affected.",   // 体力条永远满,不影响疲劳值

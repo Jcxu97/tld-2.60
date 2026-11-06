@@ -1853,8 +1853,8 @@ internal static class Patch_TechBackpack
     {
         try
         {
-            if (__instance == null || !CheatState.TechBackpack) return;
-            float kg = CheatState.TechBackpackKg;
+            if (__instance == null || !(CheatState.TechBackpack || CheatState.InfiniteCarry)) return;
+            float kg = CheatState.InfiniteCarry ? 99999f : CheatState.TechBackpackKg;
 #if STORY_EDITION
             // 2.24 这 7 个字段名都带 KG 后缀且是裸 float(2.55 才改成 ItemWeight 并去掉后缀)
             if (kg == _lastKg && __instance.m_MaxCarryCapacityKG == kg) return;

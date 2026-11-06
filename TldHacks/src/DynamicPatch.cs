@@ -353,7 +353,7 @@ internal static class DynamicPatch
         Spec(typeof(PlayerManager), "ConsumeUnitFromInventory", typeof(Patch_ConsumeUnit),
             "Prefix", null, () => CheatState.FreeFireFuel || CheatState.FreeRepair),
         Spec(typeof(Encumber), "Update", typeof(Patch_TechBackpack),
-            null, "Postfix", () => CheatState.TechBackpack),
+            null, "Postfix", () => CheatState.TechBackpack || CheatState.InfiniteCarry),
         // v6.9.6 原 sentinel=10f 是错的:实测原版 GEAR_Torch m_BurnLifetimeMinutes=90。
         //   90=原版 → 不挂载补丁(火把完全原版行为)。仅当玩家拖高才挂载。
         Spec(typeof(TorchItem), "Update", typeof(Patch_TorchBurnTime),
@@ -654,7 +654,7 @@ internal static class DynamicPatch
         Spec(typeof(Fatigue), "CalculateFatigueIncrease", typeof(Patch_Carcass_Fatigue),
             null, "Postfix", () => CheatState.World_CarcassMoving, null, OneFloat),
         Spec(typeof(PlayerManager), "CalculateModifiedCalorieBurnRate", typeof(Patch_Carcass_Calorie),
-            null, "Postfix", () => CheatState.World_CarcassMoving || CheatState.TechBackpack, null, OneFloat),
+            null, "Postfix", () => CheatState.World_CarcassMoving || CheatState.TechBackpack || CheatState.InfiniteCarry, null, OneFloat),
         Spec(typeof(Inventory), "GetExtraScentIntensity", typeof(Patch_Carcass_Scent),
             null, "Postfix", () => CheatState.World_CarcassMoving),
         Spec(typeof(RopeClimbPoint), "OnRopeTransition", typeof(Patch_Carcass_RopeDrop),

@@ -415,6 +415,10 @@ internal class TldHacksSettings : JsonModSettings
     [Description("替换原版 30kg 上限的目标值, 默认 30=原版")]
     public float TechBackpackKg = 30f;
 
+    [Name("无限负重")]
+    [Description("背包负重不设上限,背多少都不超重")]
+    public bool InfiniteCarry = false;
+
     [Name("火把满值")]
     [Description("从篝火取出的火把燃烧值为最大")]
     public bool TorchFullValue = false;

@@ -582,6 +582,7 @@ public class ModMain : MelonMod
         CheatState.FreeFireFuel = Settings.FreeFireFuel;
         CheatState.TechBackpack = Settings.TechBackpack;
         CheatState.TechBackpackKg = Settings.TechBackpackKg;
+        CheatState.InfiniteCarry = Settings.InfiniteCarry;
         CheatState.TorchFullValue = Settings.TorchFullValue;
         CheatState.InfiniteStamina = Settings.InfiniteStamina;
         CheatState.MapClickTP = Settings.MapClickTP;

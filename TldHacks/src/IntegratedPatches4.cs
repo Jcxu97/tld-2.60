@@ -412,7 +412,7 @@ internal static class Patch_Carcass_Calorie
         // TechBackpack: 消除超重卡路里惩罚,完全对齐 vanilla 不超重时的消耗
         // 当 __result 大于 __0 (base) 说明 vanilla 在加超重/疲劳修正,直接钳回 __0
         // 走路/冲刺/睡觉等活动差异通过 __0 本身体现,不会被破坏
-        if (CheatState.TechBackpack && __0 > 0f)
+        if ((CheatState.TechBackpack || CheatState.InfiniteCarry) && __0 > 0f)
         {
             if (!_logged)
             {
