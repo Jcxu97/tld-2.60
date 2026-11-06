@@ -726,7 +726,9 @@ internal static class Menu
             }
         }
 
+        ItemPreview.BeginFrame();
         _window = GUI.Window(WindowId, _window, (GUI.WindowFunction)DrawContents, "");
+        ItemPreview.Draw(_activeTab == 2 && !_resizing && !_dragging && ModMain.Settings?.SpawnerPreview != false, _scale);
 
         SyncSearchInputLock(_activeTab == 2 && _searchFocused);
 
@@ -1675,6 +1677,7 @@ internal static class Menu
             var e = _filtered[idx];
             // 说明按 prefab 名查 MenuUi 的补充表,没写说明的物品不弹提示
             Ui.Hover(e.PrefabName, R(x, yy, colW - 8f, ROW_H));
+            ItemPreview.Mark(e, R(x, yy, btnW, ROW_H));
             if (GUI.Button(R(x, yy, btnW, ROW_H), spawnBtnLabel))
             {
                 if (e.Category == "家具") Furniture.Spawn(e, _quantity);
@@ -1779,6 +1782,14 @@ internal static class Menu
             }
 
             if (CBtn(cx, ty, clearW, th, "×") && _search.Length > 0) { _search = ""; _page = 0; }
+
+            var st = ModMain.Settings;
+            if (st != null)
+            {
+                const float togW = 110f;
+                bool pv = Ui.Toggle("SpawnerPreview", R(bx - 8f - togW, ty, togW, th), st.SpawnerPreview, I18n.T(" 显示图片", " Show image"));
+                if (pv != st.SpawnerPreview) { st.SpawnerPreview = pv; st.RequestSave(); }
+            }
         }
         catch (Exception ex)
         {

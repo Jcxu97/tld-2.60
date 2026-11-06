@@ -14,6 +14,7 @@ internal static class Ui
     internal static GUIStyle TipStyle;
 
     private static bool _inView;
+    internal static bool InView => _inView;
     private static Vector2 _mouseWin;
     private static string _key, _label;
     private static string _hoverKey;

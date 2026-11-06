@@ -121,6 +121,9 @@ internal class TldHacksSettings : JsonModSettings
     [Name("Menu Height(菜单高度,拖拽下边缘调整)")]
     public float MenuHeight = 760f;
 
+    [Name("Spawner preview(物品生成器悬停显示图片)")]
+    public bool SpawnerPreview = true;
+
     // v2.7.83:窗口位置持久化(拖动自动保存,重启保留)
     [Name("Menu X Position(窗口 X,拖动自动存)")]
     public float MenuX = 30f;

@@ -1,27 +1,29 @@
 # HANDOFF: TldHacks
 
-> Last updated: 2026-11-06 21:40
+> Last updated: 2026-11-06 23:15
 
 ## 当前目标
-修 V12.3 发出去后的几个 bug,修完重新打包上传(还没打包，没上传)。
+发 V12.4(悬停大图 + V12.3 之后的几处修复),网盘、腾讯文档、群资料库、B站演示视频一起更新。
 
 ## 已完成(本轮)
-1. 刷出来的铣床、锻炉等器械存档读档后丢失。原因是原版 SCPlus 和 SCPlusFix++ 同时在跑，存档里写的是原版类型名 `SCPlus.CarryableSaveDataProxy`,SCPlusFix++ 读档时 InvalidCast 整段失败。`SCPlusFix/SCPlus/SaveLoadPatches.cs` 读档前把 `SCPlus.` 换成 `SCPlusPP.`(3632518)
-2. SCPlusFix++ 挂在 `MelonBase.Register` 上的前缀从没触发，原版照常注册。改成把原版 melon 的 Info 换成本 mod 的，借 MelonLoader 同名同作者查重拒掉它(0495aa0)
-3. ilfix 对修过的 dll 重跑会克隆出第二个 TldFixCalls,Architect 加载报 Duplicate type。现在先换掉旧克隆。ilfix 改成 net6 编译，以前 net8 版克隆进去的 System.Runtime 8.0 引用在重跑时改回 6.0。Architect、PerfectPlacement、Episode5ShotgunPrototype、Episode5SurvivalItems 已重新处理(0495aa0)
-4. 以上新 dll 已放进游戏 Mods 和 `_work/release/staging` 的 sb_full、sb_min、ultimate。原件备份在 `%TEMP%\ilfix_net6_backup_20261106`
+1. 物品生成器悬停大图 `src/ItemPreview.cs`。鼠标停在某行的生成按钮上，另一半屏幕画原生图标、名字、描述。图标顺序是 ico_GearItem__ / DecorationItem.IconReference / SCPlus 图标包，都没有就把 LOD0 网格复制到第 31 层现拍一张。只留 16 条，挤出去就释放。主菜单 GUI.Window 回调晚于 OnGUI,所以按帧号读上一帧的悬停行
+2. 搜索框左边加显示图片开关，存在 Settings.SpawnerPreview。用户进游戏测过，说可以
+3. V12.4 已打包(TldHacks 66fc8190,终极版 182 卷)。夸克最小包、完整版已传，群资料库 00 01 06 07 10 已同步(md5 一致),鲸鲸 rules.md 第 22 条
+4. 演示视频 BV1Zs4z6CEpc 已过审，工程在 bili-game-pipeline/projects/tld-v124-preview
 
 ## 下一步
-1. 进游戏核对：日志有 `SCPlusFix++ 已代替` 和原版 `same Name and Author` 警告，没有 `System.Runtime, Version=8` 报错;刷铣床放身上，存档读档后还在
-2. 用户说可以打包上传后跑 `_tools/release/release.py pack / upload`
-3. 进神秘湖崩溃(玩家报的，卡特大坝走出去或传送都崩)本机复现不出，等玩家的 `MelonLoader\Latest.log` 和 `Player.log`
+1. 夸克终极版(`release.py upload ul`)传完后跑 `browser-harness < _tools/release/bd_prep124.py`,再 `python bd_up124.py sb`、`python bd_up124.py ul`
+2. 腾讯文档：tq_verify + compare 确认线上没手改，再 `bump124_doc.py`、build、tq_paste、读回比对
+3. commit + push
 
 ## 未决问题
-1. 启动偶发闪退(11-06 10:35、18:31、21:08),coreclr 0xc0000005,崩在 HarmonyInit 读补丁类特性，位置在 TldHacks 之后那几个 mod。转储没堆数据，定不到 mod。换了 net6 版第五章移植后再观察
-2. MoreBunkers 工作区里 10-31 的改动仍未提交
+1. 启动偶发闪退(coreclr 0xc0000005,HarmonyInit 读补丁类特性，在 TldHacks 之后的 mod),继续观察
+2. 进神秘湖崩溃(玩家报的)本机复现不出，等玩家的 `MelonLoader\Latest.log` 和 `Player.log`
+3. 现拍图假定家具正面朝 +Z,个别会拍成侧面，用户没报
+4. MoreBunkers 工作区里 10-31 的改动仍未提交
 
 ## 关键文件
-1. `../SCPlusFix/SCPlus/SCPMain.cs`、`../SCPlusFix/SCPlus/SaveLoadPatches.cs`
-2. `../_tools/ilfix/Program.cs`、`../_tools/ilfix/ilfix.csproj`
-3. `src/Furniture.cs`、`src/FurnitureDatabase.cs`、`../SCPlusFix/SCPlus/Spawner.cs`
-4. `../_tools/release/release.py`
+1. `src/ItemPreview.cs`、`src/Menu.cs`(DrawItemSearchBox、生成器行循环)、`src/Settings.cs`
+2. `src/Furniture.cs`、`src/FurnitureDatabase.cs`、`../SCPlusFix/SCPlus/SCPMain.cs`
+3. `../_tools/release/release.py`、`ult124_pack.py`、`bd_prep124.py`、`bd_up124.py`、`kb124.py`
+4. `../_work/release/tencent_doc/bump124_doc.py`
