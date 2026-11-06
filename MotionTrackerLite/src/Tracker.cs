@@ -177,7 +177,7 @@ internal static class Tracker
         }
         catch (Exception ex) { ModMain.Log?.Warning($"[ScanHarvestables] {ex.Message}"); }
 
-        ScanByTypeName("Il2Cpp.BeachcombingSpawner", EntityCategory.Structure, AnimalKind.Bear);
+        ScanByTypeName("Il2CppTLD.Gameplay.BeachcombingSpawner", EntityCategory.Structure, AnimalKind.Bear);
     }
 
     private static void ScanByTypeName(string typeName, EntityCategory cat, AnimalKind kind)
