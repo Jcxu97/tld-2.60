@@ -3,7 +3,7 @@ import json, os, subprocess, sys, time
 HERE = r'D:\Github\tld--2.55\_tools\release'
 SUB = '2a0f0b00d603426985a5f93326c2166d'
 OLD = '6636f71049c9406fbe95a8b5c410763d'
-OLD_NAME = 'TraderMoving-v1.0_搬运商人无线电和交易箱_解压到游戏根目录.zip'
+OLD_NAME = 'TraderMoving-v1.0.1_搬运商人无线电和交易箱_解压到游戏根目录.zip'
 FLAG = r'C:\Users\82077\AppData\Local\Temp\si_tools\upload_tm.done'
 NO_WINDOW = 0x08000000
 head = open(os.path.join(HERE, 'bh_quark.py'), encoding='utf-8').read()
@@ -28,7 +28,7 @@ stale = [i for i in items if not i['dir'] and i['name'] == {json.dumps(OLD_NAME,
 if stale:
     box = mkdir({json.dumps(OLD)}, {json.dumps(stamp, ensure_ascii=False)})
     mv([i['fid'] for i in stale], box)
-url = url_for([('0a583d04bfed47cd9c7ce2235c20e7d5', 'TLD V2.58 Hack'), ({json.dumps(SUB)}, '功能mods 选装')])
+url = url_for([('0a583d04bfed47cd9c7ce2235c20e7d5', 'TLD V2.60 Hack'), ({json.dumps(SUB)}, '3_功能mods 选装')])
 close_tab()
 done(dict(moved=[i['name'] for i in stale], url=url, names=[i['name'] for i in items]))
 """)
