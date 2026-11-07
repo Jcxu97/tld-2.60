@@ -33,6 +33,9 @@ internal static class Torches
     private static AssetReferencePlaceable _baseRef;
     private static GameObject _holder;
     private static readonly List<(Light light, float seed, float baseIntensity, float baseRange)> Lights = new();
+    private static readonly HashSet<int> Known = new();
+    private static float _fullIn = 5f, _fullOut = 1.6f, _rangeIn = 8f, _rangeOut = 10f;
+    private static float _nextScan, _nextLog, _lastSet = -1f;
 
     internal static void EnsureTemplate()
     {
@@ -144,10 +147,7 @@ internal static class Torches
         if (pl != null) pl.m_Addressable = new AssetReferencePlaceable(FakeGuid);
 
         foreach (var l in visual.GetComponentsInChildren<Light>(true))
-            if (l.enabled) Lights.Add((l, UnityEngine.Random.value * 100f, l.intensity, l.range));
-        var li = FindDeep(visual.transform, LightInName);
-        var lo = FindDeep(visual.transform, LightOutName);
-        if (li != null || lo != null) Pairs.Add((li?.gameObject, lo?.gameObject));
+            Register(l);
     }
 
     // z 轴朝墙外,火把绕 x 轴往外斜
@@ -232,7 +232,12 @@ internal static class Torches
             var core = FindDeep(fxGo.transform, "Core") ?? flame;
             head = core.position;
             fxGo.transform.rotation = fxRest;
-            fxGo.transform.position += head - core.position;
+            // 火苗主体(Sprite)在平放朝向下和火心不在一条竖线上,水平方向按火苗主体对齐火头,高度按火心
+            var body = FindDeep(fxGo.transform, "Sprite") ?? core;
+            var shift = head - body.position;
+            shift.y = head.y - core.position.y;
+            fxGo.transform.position += shift;
+            ModMain.Log.Msg($"火焰对位 火心 {Fmt(core.position)} 火苗 {Fmt(body.position)} 火头 {Fmt(head)}");
         }
         foreach (var l in copy.GetComponentsInChildren<Light>(true))
         {
@@ -245,8 +250,11 @@ internal static class Torches
             float full = isOut ? fx.outdoor : fx.indoor;
             if (full > 0f) l.intensity = full;
             if (l.range < 1f) l.range = 8f;
+            if (isOut) { _fullOut = l.intensity; _rangeOut = l.range; } else { _fullIn = l.intensity; _rangeIn = l.range; }
             var lri = l.GetComponent<LightRandomIntensity>();
             if (lri != null) Object.DestroyImmediate(lri);
+            var lq = l.GetComponent<LightQualitySwitch>();
+            if (lq != null) Object.DestroyImmediate(lq);
             var lf = l.GetComponent<LightFlickering>();
             if (lf != null)
             {
@@ -372,6 +380,39 @@ internal static class Torches
         return null;
     }
 
+    private static string Fmt(Vector3 v) => $"({v.x:F3},{v.y:F3},{v.z:F3})";
+
+    private static void Register(Light l)
+    {
+        if (l == null || !Known.Add(l.GetInstanceID())) return;
+        bool isOut = l.gameObject.name == LightOutName;
+        Lights.Add((l, UnityEngine.Random.value * 100f, isOut ? _fullOut : _fullIn, isOut ? _rangeOut : _rangeIn));
+        if (isOut) return;
+        var parent = l.transform.parent;
+        var lo = parent != null ? parent.Find(LightOutName) : null;
+        Pairs.Add((l.gameObject, lo != null ? lo.gameObject : null));
+        if (lo != null) Register(lo.GetComponent<Light>());
+    }
+
+    // 游戏放置、搬动家具时可能复制出新实例,它的灯不会经过 Convert,所以隔两秒扫一遍场景里亮着的灯
+    private static void Scan()
+    {
+        if (Time.realtimeSinceStartup < _nextScan) return;
+        _nextScan = Time.realtimeSinceStartup + 2f;
+        foreach (var l in Object.FindObjectsOfType<Light>())
+        {
+            if (l == null) continue;
+            string n = l.gameObject.name;
+            if (n != LightInName && n != LightOutName) continue;
+            if (n == LightOutName && l.transform.parent != null)
+            {
+                var li = l.transform.parent.Find(LightInName);
+                if (li != null) { Register(li.GetComponent<Light>()); continue; }
+            }
+            Register(l);
+        }
+    }
+
     // 室内外用原版火把各自那盏灯
     private static void TickLights()
     {
@@ -393,8 +434,17 @@ internal static class Torches
 
     internal static void TickFlicker()
     {
+        Scan();
         TickLights();
         if (Lights.Count == 0) return;
+        if (Time.realtimeSinceStartup >= _nextLog)
+        {
+            _nextLog = Time.realtimeSinceStartup + 10f;
+            int on = 0; string seen = "";
+            foreach (var (l0, _, _, _) in Lights)
+                if (l0 != null && l0.isActiveAndEnabled) { on++; seen = $"{l0.name} 亮度 {l0.intensity:F2} 范围 {l0.range:F1}"; }
+            ModMain.Log.Msg($"火光检查 登记 {Lights.Count} 盏 亮着 {on} 盏 {seen} 上帧设的亮度 {_lastSet:F2}");
+        }
         float time = Time.time;
         float want = ModMain.Settings != null ? ModMain.Settings.LightIntensity : 1f;
         float amp = ModMain.Settings != null ? ModMain.Settings.Flicker : 0.1f;
@@ -403,8 +453,8 @@ internal static class Torches
         for (int i = Lights.Count - 1; i >= 0; i--)
         {
             var (l, seed, b, range) = Lights[i];
-            l.range = range * (ModMain.Settings != null ? ModMain.Settings.LightRange : 1f);
             if (l == null) { Lights.RemoveAt(i); continue; }
+            l.range = range * (ModMain.Settings != null ? ModMain.Settings.LightRange : 1f);
             float v;
             if (jump)
             {
@@ -415,6 +465,7 @@ internal static class Torches
             }
             else v = b * want * (1f - amp * Mathf.PerlinNoise(seed, time * 3f));
             l.intensity = v;
+            if (l.isActiveAndEnabled) _lastSet = v;
             var lt = l.GetComponent<LightTracking>();
             if (lt != null) lt.SetLightIntensity(v);
         }
