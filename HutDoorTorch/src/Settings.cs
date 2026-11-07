@@ -17,6 +17,11 @@ internal class Settings : JsonModSettings
     [Slider(0.2f, 2f, 19)]
     public float LightIntensity = 1f;
 
+    [Name("照亮范围")]
+    [Description("1 是原版火把的范围(室内 8 米,室外 10 米)。")]
+    [Slider(0.5f, 3f, 26)]
+    public float LightRange = 1f;
+
     [Name("火光闪烁")]
     [Description("火光明暗跳动的幅度,0 是不闪。打开下面的原版跳动时不起作用。")]
     [Slider(0f, 0.5f, 11)]

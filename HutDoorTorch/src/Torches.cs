@@ -32,7 +32,7 @@ internal static class Torches
     internal static DecorationItem BaseItem;
     private static AssetReferencePlaceable _baseRef;
     private static GameObject _holder;
-    private static readonly List<(Light light, float seed, float baseIntensity)> Lights = new();
+    private static readonly List<(Light light, float seed, float baseIntensity, float baseRange)> Lights = new();
 
     internal static void EnsureTemplate()
     {
@@ -144,7 +144,7 @@ internal static class Torches
         if (pl != null) pl.m_Addressable = new AssetReferencePlaceable(FakeGuid);
 
         foreach (var l in visual.GetComponentsInChildren<Light>(true))
-            if (l.enabled) Lights.Add((l, UnityEngine.Random.value * 100f, l.intensity));
+            if (l.enabled) Lights.Add((l, UnityEngine.Random.value * 100f, l.intensity, l.range));
         var li = FindDeep(visual.transform, LightInName);
         var lo = FindDeep(visual.transform, LightOutName);
         if (li != null || lo != null) Pairs.Add((li?.gameObject, lo?.gameObject));
@@ -247,6 +247,12 @@ internal static class Torches
             if (l.range < 1f) l.range = 8f;
             var lri = l.GetComponent<LightRandomIntensity>();
             if (lri != null) Object.DestroyImmediate(lri);
+            var lf = l.GetComponent<LightFlickering>();
+            if (lf != null)
+            {
+                l.color = Color.Lerp(lf.color0, lf.color1, 0.5f);
+                Object.DestroyImmediate(lf);
+            }
             // 灯放在火头外面一点,免得把墙照成一块亮斑
             l.transform.position = head + Vector3.forward * LightOut + Vector3.up * 0.1f;
         }
@@ -396,7 +402,8 @@ internal static class Torches
         int step = Mathf.FloorToInt(time / 0.2f);
         for (int i = Lights.Count - 1; i >= 0; i--)
         {
-            var (l, seed, b) = Lights[i];
+            var (l, seed, b, range) = Lights[i];
+            l.range = range * (ModMain.Settings != null ? ModMain.Settings.LightRange : 1f);
             if (l == null) { Lights.RemoveAt(i); continue; }
             float v;
             if (jump)
