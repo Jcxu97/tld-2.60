@@ -2,7 +2,7 @@ import json, os, subprocess, sys, time
 
 HERE = r'D:\Github\tld--2.55\_tools\release'
 SUB = '0a583d04bfed47cd9c7ce2235c20e7d5'
-OLD = '6636f71049c9406fbe95a8b5c410763d'
+OLD = '7c837ffcf20e43e7914f7f31516b91eb'
 OLD_NAME = '安装教程，进群必看.docx'
 FLAG = r'C:\Users\82077\AppData\Local\Temp\si_tools\upload_docx.done'
 NO_WINDOW = 0x08000000

@@ -10,7 +10,7 @@ dups = [i for i in items if '(1)' in i['name']]
 rows = [dict(n=i['name'], s=i['size'], orig=by.get(i['name'].replace('(1)', ''), {{}}).get('size'), fid=i['fid']) for i in dups]
 moved = None
 if {move!r}:
-    old = '6636f71049c9406fbe95a8b5c410763d'
+    old = '7c837ffcf20e43e7914f7f31516b91eb'
     sub = [i for i in ls(old) if i['name'] == '1031-终极版重复上传的' and i['dir']]
     to = sub[0]['fid'] if sub else mkdir(old, '1031-终极版重复上传的')
     mv([r['fid'] for r in rows], to)

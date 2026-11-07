@@ -292,7 +292,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 NET_ROOTS = {'v258': ('0a583d04bfed47cd9c7ce2235c20e7d5', 'TLD V2.60 Hack'),
              'v255': ('1811aa2992d54afb9febfd56dd12a301', 'TLD V2.55 HACK')}
 NET_ROOT, NET_ROOT_NAME = NET_ROOTS[os.environ.get('TLD_NET_ROOT', 'v258')]
-NET_OLD = '6636f71049c9406fbe95a8b5c410763d'
+NET_OLD = '7c837ffcf20e43e7914f7f31516b91eb'
 NET_STORY = 'c4a2c414862a42e08adf5b8fdef57596'
 NET_SUB = {'e5': 'e5a5e3c68b584e298da17a8799830a94', 'st': '1cef7e23cdcd45a9b6a6b6f1c3a25a89'}
 

@@ -2,7 +2,7 @@ import json, os, subprocess, sys, time
 
 HERE = r'D:\Github\tld--2.55\_tools\release'
 SUB = '2a0f0b00d603426985a5f93326c2166d'
-OLD = '6636f71049c9406fbe95a8b5c410763d'
+OLD = '7c837ffcf20e43e7914f7f31516b91eb'
 OLD_NAME = 'MoreBunkers-v1.3_更多地堡三个新地堡_解压到游戏根目录.zip'
 FLAG = r'C:\Users\82077\AppData\Local\Temp\si_tools\upload_mb.done'
 NO_WINDOW = 0x08000000
