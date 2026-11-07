@@ -163,8 +163,8 @@ internal static class Torches
         GameObject meshGo = ti != null ? ti.m_TorchMeshGameObject : null;
         GameObject burntGo = ti != null ? ti.m_TorchBurntMeshGameObject : null;
         GameObject fxGo = ti != null ? ti.m_FXGameObject : null;
-        Light lightIn = ti != null ? ti.m_LightIndoor : null;
-        Light lightOut = ti != null ? ti.m_LightOutdoor : null;
+        Light lightIn = (ti != null ? ti.m_LightIndoor : null) ?? FindDeep(copy.transform, "LightIndoor")?.GetComponent<Light>();
+        Light lightOut = (ti != null ? ti.m_LightOutdoor : null) ?? FindDeep(copy.transform, "LightOutdoor")?.GetComponent<Light>();
 
         // 原版火把的光和火苗是 TorchIntensity 按燃烧程度调出来的,它离不开火把物品本身,
         // 所以先读出烧得最旺时的数值再删掉;灯光登记、闪烁、粒子的小脚本留着,效果和原版一样
@@ -230,7 +230,7 @@ internal static class Torches
         {
             fxGo.SetActive(true);
             var core = FindDeep(fxGo.transform, "Core") ?? flame;
-            head = core.position;
+            head = copy.transform.TransformPoint(center + axis * (half * 0.8f));
             fxGo.transform.rotation = fxRest;
             // 火苗主体(Sprite)在平放朝向下和火心不在一条竖线上,水平方向按火苗主体对齐火头,高度按火心
             var body = FindDeep(fxGo.transform, "Sprite") ?? core;
