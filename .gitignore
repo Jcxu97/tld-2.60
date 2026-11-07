@@ -40,3 +40,15 @@ PerfProbe/src/bin/
 PerfProbe/src/obj/
 PerfFix/src/bin/
 PerfFix/src/obj/
+FiligranisSkillsFix/**/bin/
+FiligranisSkillsFix/**/obj/
+PrepperCacheFix/**/bin/
+PrepperCacheFix/**/obj/
+ItemPickerFix/**/bin/
+ItemPickerFix/**/obj/
+ItemRaritiesFix/**/bin/
+ItemRaritiesFix/**/obj/
+ObjectSinkFix/**/bin/
+ObjectSinkFix/**/obj/
+RarityRework/**/bin/
+RarityRework/**/obj/

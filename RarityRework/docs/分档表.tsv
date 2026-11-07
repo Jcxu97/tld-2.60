@@ -1,0 +1,1190 @@
+GEAR	中文名	档位	分类	来源	原档
+GEAR_Bow_Woodwrights	木匠的弓	神话	武器	原版	Lv5
+GEAR_Hatchet_Crafted	手斧（传奇）	神话	武器	原版	
+GEAR_Knife_Hunter	狩猎刀（传奇）	神话	武器	原版	
+GEAR_Rifle_Barbs	巴尔布的步枪	神话	武器	原版	Lv6
+GEAR_Rifle_Curators	管理人的步枪	神话	武器	原版	Lv5
+GEAR_Rifle_Vaughns	沃恩的步枪	神话	武器	原版	Lv4
+GEAR_BearSkinCoat	熊皮大衣	神话	衣物	原版	Lv6
+GEAR_CougarWrap	美洲狮皮护套	神话	衣物	原版	Lv6
+GEAR_ChemicalNCrampons	防化靴(鞋底钉)	传说	其他	mod CE	
+GEAR_CombatNCrampons	军靴(鞋底钉)	传说	其他	mod CE	
+GEAR_DeerskinNCrampons	鹿皮靴(鞋底钉)	传说	其他	mod CE	
+GEAR_DressingNCrampons	皮鞋(鞋底钉)	传说	其他	mod CE	
+GEAR_InsulatedNCrampons	橡胶靴(鞋底钉)	传说	其他	mod CE	
+GEAR_MooseBagPlusScabbard	驼鹿皮背包(枪套)	传说	其他	mod CE	
+GEAR_MuklukNCrampons	皮制软靴(鞋底钉)	传说	其他	mod CE	
+GEAR_RunningNCrampons	跑鞋(鞋底钉)	传说	其他	mod CE	
+GEAR_SkiNCrampons	滑雪靴(鞋底钉)	传说	其他	mod CE	
+GEAR_TrailNCrampons	越野鞋(鞋底钉)	传说	其他	mod CE	
+GEAR_WorkNCrampons	工作靴(鞋底钉)	传说	其他	mod CE	
+GEAR_EmergencyStim	强心针	传说	医疗	原版	Lv5
+GEAR_MilitaryStim	军用兴奋剂	传说	医疗	原版	
+GEAR_BearSkinBedRoll	熊皮睡袋	传说	工具	原版	Lv5
+GEAR_Crampons	鞋底钉	传说	工具	原版	Lv5
+GEAR_Tent	C-防水帐篷	传说	工具	mod Camp	
+GEAR_TentBear	C-猎人帐篷(自改)	传说	工具	mod Camp	
+GEAR_Travois	旧式雪橇	传说	工具	原版	Lv5
+GEAR_WhaleOilHeater	麦克劳德超高效鲸油取暖器	传说	工具	原版	
+GEAR_Bow_Bushcraft	丛林生存弓	传说	武器	原版	Lv4
+GEAR_Bow_Manufactured	运动弓	传说	武器	原版	Lv5
+GEAR_CougarClawKnife	美洲狮爪刀	传说	武器	原版	Lv6
+GEAR_FlareGun	信号枪	传说	武器	原版	Lv5
+GEAR_HuntingRifle	猎枪	传说	武器	原版	
+GEAR_Revolver44Mag	44马格南左轮	传说	武器	原版	
+GEAR_RevolverFancy	猎人的左轮手枪	传说	武器	原版	Lv4
+GEAR_RevolverGreen	护林人的左轮手枪	传说	武器	原版	Lv4
+GEAR_RevolverStubNosed	典狱长的左轮手枪	传说	武器	原版	Lv4
+GEAR_Rifle	步枪	传说	武器	原版	Lv4
+GEAR_RifleB	山地步枪	传说	武器	原版	
+GEAR_RifleC	步枪C	传说	武器	原版	
+GEAR_Rifle_Trader	地堡步枪	传说	武器	原版	Lv3
+GEAR_Shotgun	霰弹枪	传说	武器	原版	
+GEAR_CougarHideDried	鞣制的美洲狮皮	传说	狩猎	原版	Lv6
+GEAR_BallisticVest	防弹背心	传说	衣物	原版	Lv5
+GEAR_BearskinLeggings_MOD	M-熊皮紧身裤	传说	衣物	mod Northfolk	
+GEAR_ColdFusionSuit	极寒防护套装	传说	衣物	原版	
+GEAR_ExpeditionCoat	远征风雪大衣	传说	衣物	原版	
+GEAR_ExpeditionParka	远征派克大衣	传说	衣物	原版	
+GEAR_GreyWolfSkinCoat	M-森兰狼大衣	传说	衣物	mod BF	
+GEAR_MooseHideBag	驼鹿皮背包	传说	衣物	原版	Lv4
+GEAR_MuklukBoots	皮制软靴	传说	衣物	原版	Lv5
+GEAR_SurvivorParka	幸存者派克大衣	传说	衣物	原版	
+GEAR_TechnicalBackpack	高科技背包	传说	衣物	原版	
+GEAR_WolfSkinCape	狼皮大衣	传说	衣物	原版	Lv5
+GEAR_WolfSkinPant	狼皮裤	传说	衣物	原版	Lv5
+GEAR_WolfskinBoots_MOD	M-狼皮靴(自改)	传说	衣物	mod Northfolk	
+GEAR_WolfskinCap_MOD	M-狼王皮帽(自改)	传说	衣物	mod Northfolk	
+GEAR_WolfskinParka	狼皮派克大衣	传说	衣物	原版	
+GEAR_DeerSkinCoat	鹿皮外套	史诗		原版	
+GEAR_DeerSkinGloves	鹿皮手套	史诗		原版	
+GEAR_DeerSkinHat	鹿皮帽	史诗		原版	
+GEAR_CargoToolbelt	工装裤(腰带)	史诗	其他	mod CE	
+GEAR_ChemicalICrampons	防化靴(简易鞋底钉)	史诗	其他	mod CE	
+GEAR_CombatICrampons	军靴(简易鞋底钉)	史诗	其他	mod CE	
+GEAR_CombatToolbelt	作战裤(腰带)	史诗	其他	mod CE	
+GEAR_DeerskinICrampons	鹿皮靴(简易鞋底钉)	史诗	其他	mod CE	
+GEAR_DeerskinToolbelt	鹿皮短裤(腰带)	史诗	其他	mod CE	
+GEAR_DressingICrampons	皮鞋(简易鞋底钉)	史诗	其他	mod CE	
+GEAR_InsulatedICrampons	橡胶靴(简易鞋底钉)	史诗	其他	mod CE	
+GEAR_InsulatedToolbelt	雪花裤(腰带)	史诗	其他	mod CE	
+GEAR_JeansToolbelt	牛仔裤(腰带)	史诗	其他	mod CE	
+GEAR_MinerToolbelt	矿工裤子(腰带)	史诗	其他	mod CE	
+GEAR_MuklukICrampons	皮制软靴(简易鞋底钉)	史诗	其他	mod CE	
+GEAR_RunningICrampons	跑鞋(简易鞋底钉)	史诗	其他	mod CE	
+GEAR_SkiICrampons	滑雪靴(简易鞋底钉)	史诗	其他	mod CE	
+GEAR_TrailICrampons	越野鞋(简易鞋底钉)	史诗	其他	mod CE	
+GEAR_WorkICrampons	工作靴(简易鞋底钉)	史诗	其他	mod CE	
+GEAR_WorkToolbelt	工作裤(腰带)	史诗	其他	mod CE	
+GEAR_Anabiotics	镇静剂	史诗	医疗	mod Stalker	
+GEAR_FirstAidKitPainkiller	医药箱(自改)	史诗	医疗	mod Stalker	
+GEAR_PainkillerMorphineVial	吗啡	史诗	医疗	mod Stalker	
+GEAR_StitchingKit	缝合套件	史诗	医疗	原版	
+GEAR_BedRoll_Down	改良羽绒睡袋	史诗	工具	原版	Lv4
+GEAR_BoltCutters	螺栓割刀	史诗	工具	原版	
+GEAR_Firestriker	打火器	史诗	工具	原版	Lv4
+GEAR_Flashlight_LongLasting	矿工用手电	史诗	工具	原版	Lv4
+GEAR_Hatchet	小斧头	史诗	工具	原版	Lv2
+GEAR_HighQualityTools	高质工具	史诗	工具	原版	Lv4
+GEAR_ImprovisedCrampons	简易鞋底钉	史诗	工具	原版	Lv4
+GEAR_JeremiahKnife	杰里迈亚的刀	史诗	工具	原版	
+GEAR_KeroseneLamp_Spelunkers	探洞者提灯	史诗	工具	原版	Lv4
+GEAR_Knife	猎刀	史诗	工具	原版	Lv2
+GEAR_MagnifyingLens	放大镜	史诗	工具	原版	Lv4
+GEAR_Respirator	防毒面具	史诗	工具	原版	Lv4
+GEAR_SewingKit	针线包	史诗	工具	原版	Lv1
+GEAR_TanningRack	C-鞣制架	史诗	工具	mod Camp	
+GEAR_TanningRackBP1	C-鞣制架	史诗	工具	mod Camp	
+GEAR_TanningRackBP2	C-鞣制架	史诗	工具	mod Camp	
+GEAR_TanningRackDPS1	C-鞣制架	史诗	工具	mod Camp	
+GEAR_TanningRackDPS2	C-鞣制架	史诗	工具	mod Camp	
+GEAR_TanningRackMP1	C-鞣制架	史诗	工具	mod Camp	
+GEAR_TanningRackMP2	C-鞣制架	史诗	工具	mod Camp	
+GEAR_TanningRackWPS1	C-鞣制架	史诗	工具	mod Camp	
+GEAR_TanningRackWPS2	C-鞣制架	史诗	工具	mod Camp	
+GEAR_ToolBelt	工头的工具腰带	史诗	工具	原版	Lv3
+GEAR_Vice	工作台老虎钳	史诗	工具	原版	Lv3
+GEAR_BowDrill	弓钻	史诗	材料	mod FirePk	
+GEAR_FlintNSteel	简易打火器	史诗	材料	mod FirePk	
+GEAR_FuelOrca	鲸油	史诗	材料	mod BF	
+GEAR_GreyWolfPeltDried	M-森林狼皮	史诗	材料	mod BF	
+GEAR_GunParts	枪械部件	史诗	材料	mod Toolbox	
+GEAR_MetalLighter	C-防风打火机(自改)	史诗	材料	mod Camp	
+GEAR_WhaleOilCan	鲸油	史诗	材料	原版	
+GEAR_ArrowManufactured	精工箭	史诗	武器	原版	Lv4
+GEAR_BearSpear	猎熊矛	史诗	武器	原版	
+GEAR_BlueFlare	海军陆战队信号弹	史诗	武器	原版	Lv4
+GEAR_Bow	生存的弓	史诗	武器	原版	Lv3
+GEAR_BowB	猎弓B	史诗	武器	原版	
+GEAR_BowC	猎弓C	史诗	武器	原版	
+GEAR_FlareGunAmmoSingle	信号弹	史诗	武器	原版	Lv4
+GEAR_Revolver	左轮手枪	史诗	武器	原版	Lv3
+GEAR_RevolverAmmoBox	左轮弹药箱	史诗	武器	原版	Lv2
+GEAR_RevolverB	左轮手枪B	史诗	武器	原版	
+GEAR_RevolverFlat	平身左轮	史诗	武器	原版	
+GEAR_RifleAmmoBox	步枪弹药箱	史诗	武器	原版	Lv3
+GEAR_ShotgunAmmoBox	霰弹枪弹药	史诗	武器	原版	
+GEAR_ShotgunAmmoBoxBirdshot	霰弹枪弹药箱-鸟弹	史诗	武器	原版	
+GEAR_ShotgunAmmoBoxBuckshot	霰弹枪弹药箱-鹿弹	史诗	武器	原版	
+GEAR_ShotgunAmmoBoxSlug	霰弹枪弹药箱-独弹	史诗	武器	原版	
+GEAR_SurvivalBow	生存弓	史诗	武器	原版	
+GEAR_SurvivalKnife	求生刀	史诗	武器	原版	Lv5
+GEAR_BearHide	新剥取的黑熊毛皮	史诗	狩猎	原版	Lv4
+GEAR_BearHideDried	鞣制的黑熊毛皮	史诗	狩猎	原版	Lv5
+GEAR_CaribouHideDried	驯鹿皮(晒干)	史诗	狩猎	原版	
+GEAR_CougarClaw	美洲狮爪	史诗	狩猎	原版	Lv6
+GEAR_CougarHide	新剥取的美洲狮皮	史诗	狩猎	原版	Lv6
+GEAR_MooseHide	新剥取的驼鹿皮	史诗	狩猎	原版	Lv3
+GEAR_MooseHideDried	鞣制的驼鹿皮	史诗	狩猎	原版	Lv4
+GEAR_WolfPeltDried	鞣制的狼皮	史诗	狩猎	原版	Lv5
+GEAR_BackPackForestTalker_A	森林之语背包	史诗	衣物	mod 	
+GEAR_BackPackForestTalker_A01	森林之语背包 01	史诗	衣物	mod 	
+GEAR_BackPack_A	背包	史诗	衣物	mod 	
+GEAR_ClimbingSocks	登山袜	史诗	衣物	原版	Lv4
+GEAR_CombatBoots	军靴	史诗	衣物	原版	Lv3
+GEAR_CombatPants	作战裤	史诗	衣物	原版	Lv4
+GEAR_CowichanSweater	印第安式厚毛衣	史诗	衣物	原版	Lv5
+GEAR_CryptidHeadWear	M-幽林头饰	史诗	衣物	mod BF	
+GEAR_DeerSkinBoots	鹿皮靴	史诗	衣物	原版	Lv4
+GEAR_DeerSkinPants	鹿皮短裤	史诗	衣物	原版	Lv4
+GEAR_DeerskinCoat_MOD	M-鹿皮大衣(自改)	史诗	衣物	mod Northfolk	
+GEAR_DeerskinGloves_MOD	M-鹿皮手套	史诗	衣物	mod Northfolk	
+GEAR_Deerskin_pants	鹿皮裤(变体)	史诗	衣物	原版	
+GEAR_GreyWolfSkinBraces	M-森林狼护臂	史诗	衣物	mod BF	
+GEAR_HatLeatherAviatorA	飞行员帽	史诗	衣物	原版	Lv5
+GEAR_InsulatedBoots	橡胶靴	史诗	衣物	原版	Lv4
+GEAR_InsulatedPants	雪花裤	史诗	衣物	原版	Lv4
+GEAR_JacketLeatherFlightA	飞行夹克	史诗	衣物	原版	Lv4
+GEAR_MilitaryParka	军用大衣	史诗	衣物	原版	Lv4
+GEAR_MooseHideCloak	驼鹿皮斗篷	史诗	衣物	原版	Lv4
+GEAR_PremiumWinterCoat	优质冬季大衣	史诗	衣物	原版	Lv5
+GEAR_RabbitSkinMittens	兔皮连指手套	史诗	衣物	原版	Lv4
+GEAR_RabbitskinHat	兔皮帽	史诗	衣物	原版	Lv5
+GEAR_RifleScabbardA	安全主管的步枪套	史诗	衣物	原版	Lv5
+GEAR_SatchelM	C-巡游者背包(自改)	史诗	衣物	mod Camp	
+GEAR_WolfScarf	狼皮围巾(自改)	史诗	衣物	mod Wolf	
+GEAR_WolfSkinHat	狼皮帽	史诗	衣物	原版	Lv5
+GEAR_BookArchery	紧盯目标	史诗	装饰	原版	Lv4
+GEAR_BookGunsmithing	枪械学	史诗	装饰	原版	Lv3
+GEAR_BookRevolverFirearm	轻武器手册	史诗	装饰	原版	Lv4
+GEAR_BookRifleFirearm	《前沿射击指南》	史诗	装饰	原版	Lv4
+GEAR_BookRifleFirearmAdvanced	《铳·枪·炮 - 高级射击》	史诗	装饰	原版	Lv4
+GEAR_CookedBarPemmican	干肉条	史诗	食物	原版	Lv4
+GEAR_CookedFishcakes	海滨鱼饼	史诗	食物	原版	Lv4
+GEAR_CookedPancakePeach	莉莉的薄煎饼	史诗	食物	原版	Lv4
+GEAR_CookedPieForagers	生存者的馅饼	史诗	食物	原版	Lv4
+GEAR_CookedPieMeat	布雷耶豪斯馅饼	史诗	食物	原版	Lv5
+GEAR_CookedPiePredator	潜行者的馅饼	史诗	食物	原版	Lv5
+GEAR_CookedPorridgeFruit	“翼面弧”燕麦粥	史诗	食物	原版	Lv4
+GEAR_CookedStewVegetables	汤姆逊家族炖菜	史诗	食物	原版	Lv4
+GEAR_MRE	军用口粮	史诗	食物	原版	Lv5
+GEAR_UncookedBarPemmican	干肉条(未烹饪)	史诗	食物	原版	Lv4
+GEAR_UncookedFishcakes	海滨鱼饼(未烹饪)	史诗	食物	原版	Lv4
+GEAR_UncookedPancakePeach	莉莉的薄煎饼(未烹饪)	史诗	食物	原版	Lv4
+GEAR_UncookedPieForagers	生存者的馅饼(未烹饪)	史诗	食物	原版	Lv4
+GEAR_UncookedPieMeat	布雷耶豪斯馅饼(未烹饪)	史诗	食物	原版	Lv5
+GEAR_UncookedPiePredator	潜行者的馅饼(未烹饪)	史诗	食物	原版	Lv5
+GEAR_UncookedPorridgeFruit	“翼面弧”燕麦粥(未烹饪)	史诗	食物	原版	Lv4
+GEAR_UncookedStewVegetables	汤姆逊家族炖菜(未烹饪)	史诗	食物	原版	Lv4
+GEAR_LichRosehipWineAge3	3阶段陈酿玫瑰果酒	史诗	饮料	mod Brew	
+GEAR_BlueprintCard_BushcraftBow	图纸卡(丛林生存弓)	精良		原版	
+GEAR_BlueprintCard_WolfSkinHat	图纸卡(狼皮帽)	精良		原版	
+GEAR_BlueprintCard_WolfSkinPants	图纸卡(狼皮裤)	精良		原版	
+GEAR_InsulatedFlask	隔热真空保温瓶	精良		原版	
+GEAR_RecipeCardBarPemmican		精良		原版	
+GEAR_RecipeCardFishcakes		精良		原版	
+GEAR_RecipeCardPancakePeach		精良		原版	
+GEAR_RecipeCardPieFishermans		精良		原版	
+GEAR_RecipeCardPieForagers		精良		原版	
+GEAR_RecipeCardPieMeat		精良		原版	
+GEAR_RecipeCardPiePredator		精良		原版	
+GEAR_RecipeCardPorridgeFruit		精良		原版	
+GEAR_RecipeCardSoupPotato		精良		原版	
+GEAR_RecipeCardSoupPtarmigan		精良		原版	
+GEAR_RecipeCardSoupRabbit		精良		原版	
+GEAR_RecipeCardStewMeat		精良		原版	
+GEAR_RecipeCardStewVegetables		精良		原版	
+GEAR_CookedApplePie	苹果派	精良	其他	mod FoodTKG	
+GEAR_CookedBearStew	M-熊肉乱炖	精良	其他	mod Ranger	
+GEAR_CookedMooseStew	M-驼鹿肉乱炖	精良	其他	mod Ranger	
+GEAR_CookedPierogi	芝士煎饺	精良	其他	mod FoodTKG	
+GEAR_CookedPoutine	肉汁奶酪薯条	精良	其他	mod FoodTKG	
+GEAR_CookedSkilletPizza	火腿披萨	精良	其他	mod FoodTKG	
+GEAR_CookedToastedSandwich	芝士三明治	精良	其他	mod FoodTKG	
+GEAR_CookedWolfStew	M-狼肉乱炖	精良	其他	mod Ranger	
+GEAR_Cookedperogi	煮水饺	精良	其他	mod FoodTKG	
+GEAR_OrcaFat	虎鲸脂肪	精良	其他	mod BF	
+GEAR_SatchelExplosive	雷管包	精良	其他	mod Story	
+GEAR_AntiInfectionWipes	消毒湿巾	精良	医疗	原版	
+GEAR_AntibioticPillBottle	抗生素瓶	精良	医疗	原版	
+GEAR_BirchbarkTeaJam	桦树皮茶(果酱)	精良	医疗	mod Stalker	
+GEAR_BirchbarkTeaSugar	桦树皮茶(糖)	精良	医疗	mod Stalker	
+GEAR_BottleAntibiotics	抗生素	精良	医疗	原版	Lv3
+GEAR_BottleHydrogenPeroxide	消毒剂	精良	医疗	原版	Lv2
+GEAR_BottlePainKillers	止痛药	精良	医疗	原版	Lv3
+GEAR_BottleVitaminC	维生素C	精良	医疗	原版	Lv3
+GEAR_HeatPad	热敷包	精良	医疗	原版	Lv3
+GEAR_PainkillerIbuprofen	布洛芬	精良	医疗	mod Stalker	
+GEAR_ReishiTeaJam	灵芝茶(果酱)	精良	医疗	mod Stalker	
+GEAR_ReishiTeaSugar	灵芝茶(糖)	精良	医疗	mod Stalker	
+GEAR_SleepingPills	安眠药	精良	医疗	mod Stalker	
+GEAR_WhiskyFlask	秘制药酒壶	精良	医疗	mod FoodTKG	
+GEAR_glintweinCup	热红酒(自改)	精良	医疗	mod CW	
+GEAR_hematogen	血原棒	精良	医疗	mod CW	
+GEAR_AnalogWatch	W-指针腕表(TAB)	精良	工具	mod Watch	
+GEAR_BedRoll	睡袋	精良	工具	原版	Lv3
+GEAR_BedRoll_Blend	睡袋(变体)	精良	工具	原版	
+GEAR_Book1011	生存手册101 第一册	精良	工具	mod Camp	
+GEAR_Book1012	生存手册101 第二册	精良	工具	mod Camp	
+GEAR_Book1013	生存手册101 第三册	精良	工具	mod Camp	
+GEAR_Book1014	生存手册101 第四册	精良	工具	mod Camp	
+GEAR_Book1015	生存手册101 第五册	精良	工具	mod Camp	
+GEAR_Book1016	生存手册101 第六册	精良	工具	mod Camp	
+GEAR_Canister	滤罐	精良	工具	原版	Lv3
+GEAR_CarBattery	蓄电池	精良	工具	原版	Lv4
+GEAR_CarbonFilter	木炭滤芯	精良	工具	mod Greenery	
+GEAR_CookingPot	锅子	精良	工具	原版	Lv2
+GEAR_DigitalWatch	W-电子表(TAB)	精良	工具	mod Watch	
+GEAR_FishingTackleBox	钓具箱	精良	工具	原版	
+GEAR_Flashlight	手电	精良	工具	原版	Lv3
+GEAR_Flashlight_CrankLamp	手摇灯	精良	工具	原版	
+GEAR_Flashlight_DIf	手电筒(变体)	精良	工具	原版	
+GEAR_GardeningTools	种植工具套件	精良	工具	mod Greenery	
+GEAR_Hacksaw	钢锯	精良	工具	原版	Lv2
+GEAR_Hammer	重锤	精良	工具	原版	Lv3
+GEAR_HandheldShortwave	手持短波收音机	精良	工具	原版	Lv5
+GEAR_HatchetImprovised	简易小斧	精良	工具	原版	Lv3
+GEAR_InsulatedFlask_A	保温瓶 A (1L)	精良	工具	原版	Lv2
+GEAR_InsulatedFlask_B	保温瓶 B (1.5L)	精良	工具	原版	Lv2
+GEAR_InsulatedFlask_C	保温瓶 C (2L)	精良	工具	原版	Lv2
+GEAR_InsulatedFlask_D	保温瓶 D (2.5L)	精良	工具	原版	Lv2
+GEAR_InsulatedFlask_E	保温瓶 E (3L)	精良	工具	原版	Lv2
+GEAR_InsulatedFlask_F	保温瓶 F (3.5L)	精良	工具	原版	Lv2
+GEAR_InsulatedFlask_G	保温瓶 G (4L)	精良	工具	原版	Lv2
+GEAR_JerrycanRusty	生锈油桶	精良	工具	原版	Lv3
+GEAR_Jerrycan_A	油壶	精良	工具	mod 	
+GEAR_KeroseneLampB	煤油灯	精良	工具	原版	Lv2
+GEAR_KnifeImprovised	简易小刀	精良	工具	原版	Lv3
+GEAR_KnifeScrapMetal	废金属刀	精良	工具	原版	
+GEAR_MakeshiftBedroll	拼布睡袋	精良	工具	mod Cozy	
+GEAR_NoiseMaker	制噪器	精良	工具	原版	Lv4
+GEAR_Prybar	撬棍	精良	工具	原版	Lv1
+GEAR_RevolverCleaningKit	左轮清洁套件	精良	工具	原版	
+GEAR_RifleCleaningKit	枪械清理套件	精良	工具	原版	Lv3
+GEAR_Rope	登山绳	精良	工具	原版	Lv3
+GEAR_RosehipWineBarrelReadyAge1	玫瑰果酒桶1阶段陈酿(成品)	精良	工具	mod Brew	
+GEAR_RosehipWineBarrelReadyAge2	玫瑰果酒桶2阶段陈酿(成品)	精良	工具	mod Brew	
+GEAR_RosehipWineBarrelReadyAge3	玫瑰果酒桶3阶段陈酿(成品)	精良	工具	mod Brew	
+GEAR_SafeCrackingStethoscope	听诊器(开保险箱)	精良	工具	原版	
+GEAR_SharpeningStone	磨刀石	精良	工具	原版	Lv2
+GEAR_SimpleTools	简易工具箱	精良	工具	原版	Lv2
+GEAR_Skillet	平底煎锅	精良	工具	原版	Lv3
+GEAR_Snare	陷阱	精良	工具	原版	Lv2
+GEAR_SpearFishing	鱼叉	精良	工具	原版	
+GEAR_TapeRoll	胶带	精良	工具	mod Toolbox	
+GEAR_Toolbox_Simple	简易工具箱	精良	工具	原版	
+GEAR_WaterPurificationTablets	净水药片	精良	工具	原版	Lv3
+GEAR_WoodworkingTools	木工工具	精良	工具	原版	Lv3
+GEAR_ARC_nailbox	一盒钉子	精良	材料	mod Arch	
+GEAR_Accelerant	助燃剂	精良	材料	原版	Lv3
+GEAR_AccelerantGunpowder	火药引火剂	精良	材料	原版	
+GEAR_AccelerantKerosene	煤油引火剂	精良	材料	原版	Lv3
+GEAR_AcornBrandyBarrelReady	橡子白兰地酒桶(成品)	精良	材料	mod Brew	
+GEAR_ActiveEmberBox	阴燃的灰烬罐	精良	材料	mod FirePk	
+GEAR_BirchBarkBeerBarrelReady	桦树皮啤酒桶(成品)	精良	材料	mod Brew	
+GEAR_BookPlantsGuide	大熊岛药用植物	精良	材料	mod Story	
+GEAR_BurdockMoonshineBarrelReady	牛蒡烈酒酒桶(成品)	精良	材料	mod Brew	
+GEAR_CannedChiliPackage	辣味罐头大包装	精良	材料	mod FoodTKG	
+GEAR_CannedSpaghettiPackage	意面罐头大包装	精良	材料	mod FoodTKG	
+GEAR_CannedStewPackage	炖肉罐头大包装	精良	材料	mod FoodTKG	
+GEAR_CatFoodPackage	猫粮大包装	精良	材料	mod FoodTKG	
+GEAR_CatTailRumBarrelReady	香蒲朗姆酒酒桶(成品)	精良	材料	mod Brew	
+GEAR_CerealHoneyPackage	蜂蜜麦片大包装	精良	材料	mod FoodTKG	
+GEAR_CerealWholeGrainPackage	全谷麦片大包装	精良	材料	mod FoodTKG	
+GEAR_CocoaPackage	热可可大包装	精良	材料	mod FoodTKG	
+GEAR_CornflakesPackage	玉米片大包装	精良	材料	mod FoodTKG	
+GEAR_ElectronicParts	电子零件	精良	材料	mod Toolbox	
+GEAR_EmberBox	灰烬罐	精良	材料	mod FirePk	
+GEAR_ForgedHatchetHead	锻造斧头	精良	材料	原版	
+GEAR_ForgedKnifeBladeA	锻造刀刃A	精良	材料	原版	
+GEAR_ForgedKnifeBladeB	锻造刀刃B	精良	材料	原版	
+GEAR_Fuse	保险丝	精良	材料	原版	Lv3
+GEAR_GreyWolfPelt	M-森林狼皮	精良	材料	mod BF	
+GEAR_GunpowderCan	火药罐	精良	材料	原版	Lv3
+GEAR_HumidKit	加湿器套件	精良	材料	mod Greenery	
+GEAR_LichStackCanOfDogfood	打包狗粮	精良	材料	mod Stack	
+GEAR_LichStackChocolatebar	打包巧克力棒	精良	材料	mod Stack	
+GEAR_LichStackEnergybar	打包能量棒	精良	材料	mod Stack	
+GEAR_LichStackFlareRed	打包信号棒	精良	材料	mod Stack	
+GEAR_LichStackGranolabar	打包燕麦卷	精良	材料	mod Stack	
+GEAR_LichStackHideBear	打包熊皮	精良	材料	mod Stack	
+GEAR_LichStackHideDeer	打包鹿皮	精良	材料	mod Stack	
+GEAR_LichStackHideMoose	打包驼鹿皮	精良	材料	mod Stack	
+GEAR_LichStackHideRabbit	打包兔皮	精良	材料	mod Stack	
+GEAR_LichStackHideWolf	打包狼皮	精良	材料	mod Stack	
+GEAR_LichStackMeatBear	打包熊肉	精良	材料	mod Stack	
+GEAR_LichStackMeatDeer	打包鹿肉	精良	材料	mod Stack	
+GEAR_LichStackMeatMoose	打包驼鹿肉	精良	材料	mod Stack	
+GEAR_LichStackMeatRabbit	打包兔肉	精良	材料	mod Stack	
+GEAR_LichStackMeatWolf	打包狼肉	精良	材料	mod Stack	
+GEAR_LichStackWater	10L水壶	精良	材料	mod Stack	
+GEAR_NutsNBoltsBox	螺栓螺母(盒)	精良	材料	mod Toolbox	
+GEAR_ReishiWhiskyBarrelReady	灵芝威士忌酒桶(成品)	精良	材料	mod Brew	
+GEAR_SpearHead	矛尖	精良	材料	原版	
+GEAR_StringDurable	耐用线材	精良	材料	mod Toolbox	
+GEAR_TarpSheet	防水布	精良	材料	mod Toolbox	
+GEAR_VodkaBarrelReady	自酿伏特加酒桶(成品)	精良	材料	mod Brew	
+GEAR_Arrow	简单的箭	精良	武器	原版	Lv2
+GEAR_ArrowHardened	淬火箭	精良	武器	原版	Lv1
+GEAR_ArrowHead	箭头	精良	武器	原版	Lv3
+GEAR_ArrowManufacturedHead	量产箭头	精良	武器	原版	
+GEAR_ArrowSurvival	生存箭	精良	武器	原版	
+GEAR_Bullet	弹头	精良	武器	原版	Lv3
+GEAR_FlareA	信号棒	精良	武器	原版	Lv2
+GEAR_RevolverAmmoSingle	左轮子弹(单发)	精良	武器	原版	Lv2
+GEAR_RifleAmmoSingle	步枪子弹(单发)	精良	武器	原版	Lv3
+GEAR_ShotgunAmmoSingle	霰弹枪独头弹	精良	武器	原版	
+GEAR_ShotgunAmmoSingleBirdshot	霰弹枪子弹-鸟弹(单发)	精良	武器	原版	
+GEAR_ShotgunAmmoSingleBuckshot	霰弹枪子弹-鹿弹(单发)	精良	武器	原版	
+GEAR_ShotgunAmmoSingleSlug	霰弹枪子弹-独弹(单发)	精良	武器	原版	
+GEAR_BearQuarter	小块熊尸	精良	狩猎	原版	Lv3
+GEAR_CaribouHide	驯鹿皮(生)	精良	狩猎	原版	
+GEAR_CougarCarcass	美洲狮的尸骸	精良	狩猎	原版	
+GEAR_CougarQuarter	美洲狮尸块	精良	狩猎	原版	Lv6
+GEAR_CuredLeather	鞣制皮革	精良	狩猎	原版	
+GEAR_GutDried	加工内脏	精良	狩猎	原版	Lv3
+GEAR_LeatherDried	鞣制的皮革	精良	狩猎	原版	Lv2
+GEAR_LeatherHideDried	皮革毛皮(晒干)	精良	狩猎	原版	Lv3
+GEAR_Leather_Dried_Shoes	皮革鞋面(晒干)	精良	狩猎	原版	
+GEAR_MooseQuarter	驼鹿尸块	精良	狩猎	原版	Lv3
+GEAR_RabbitPeltDried	兔皮(晒干)	精良	狩猎	原版	Lv3
+GEAR_WolfPelt	新剥取的狼皮	精良	狩猎	原版	Lv4
+GEAR_Balaclava	巴拉克拉法帽	精良	衣物	原版	Lv3
+GEAR_CargoPants	工装裤	精良	衣物	原版	Lv2
+GEAR_DownParka	城市风雪大衣	精良	衣物	原版	Lv2
+GEAR_DownSkiJacket	羽绒滑雪夹克	精良	衣物	原版	Lv1
+GEAR_FishermanSweater	渔夫毛衣	精良	衣物	原版	Lv3
+GEAR_Gauntlets	长手套	精良	衣物	原版	Lv3
+GEAR_HatGatorBalaclavaA	高科技巴拉克拉法帽	精良	衣物	原版	Lv3
+GEAR_HeavyParka	老式风雪大衣	精良	衣物	原版	Lv3
+GEAR_HeavyWoolSweater	厚羊毛衫	精良	衣物	原版	Lv3
+GEAR_LongUnderwearWool	羊毛长内衣	精良	衣物	原版	Lv3
+GEAR_MackinawJacket	麦基诺厚呢夹克	精良	衣物	原版	Lv3
+GEAR_MinersBoots	防化靴	精良	衣物	原版	Lv4
+GEAR_MinersJacket	矿工夹克	精良	衣物	原版	Lv3
+GEAR_MinersPants	矿工裤子	精良	衣物	原版	Lv3
+GEAR_PrisonCoat	加厚的飞行员夹克	精良	衣物	mod TKG	
+GEAR_QualityWinterCoat	优质冬装	精良	衣物	原版	Lv3
+GEAR_SkiBoots	滑雪靴	精良	衣物	原版	Lv5
+GEAR_SkiGloves	滑雪手套	精良	衣物	原版	Lv2
+GEAR_SkiGoggles	滑雪护目镜(自改)	精良	衣物	mod TKG	
+GEAR_Skimask	滑雪面罩	精良	衣物	mod TKG	
+GEAR_TacticalGloves	战术手套	精良	衣物	原版	Lv4
+GEAR_TacticalJacket	战术夹克	精良	衣物	原版	Lv3
+GEAR_WoolWrap	长款羊毛围巾	精良	衣物	原版	Lv2
+GEAR_BookCarcassHarvesting	尸体处理	精良	装饰	原版	Lv3
+GEAR_BookCooking	《荒野厨房》	精良	装饰	原版	Lv3
+GEAR_BookFireStarting	《户外生存！》	精良	装饰	原版	Lv3
+GEAR_BookIceFishing	《冰上钓鱼人》	精良	装饰	原版	Lv3
+GEAR_BookMending	缝纫初级读本	精良	装饰	原版	Lv3
+GEAR_AirlineFoodChick	航空餐(鸡)	精良	食物	原版	Lv3
+GEAR_AirlineFoodVeg	航空餐(素)	精良	食物	原版	Lv3
+GEAR_BeeHarvestedHoney	蜂蜜	精良	食物	mod BF	
+GEAR_BeefJerky	牛肉干	精良	食物	原版	Lv4
+GEAR_CannedHam	火腿罐头	精良	食物	原版	Lv3
+GEAR_CheesePackage	奶酪棒	精良	食物	mod FoodTKG	
+GEAR_CondensedMilk	炼乳	精良	食物	原版	Lv4
+GEAR_CookedBannockAcorn	橡实薄饼	精良	食物	原版	Lv3
+GEAR_CookedBannockAcornJam	橡实薄饼(果酱)	精良	食物	mod Stalker	
+GEAR_CookedBannockAcornSugar	橡实薄饼(糖)	精良	食物	mod Stalker	
+GEAR_CookedBannockJam	薄饼(果酱)	精良	食物	mod Stalker	
+GEAR_CookedBannockSugar	薄饼(糖)	精良	食物	mod Stalker	
+GEAR_CookedBlueberryPie	蓝莓派	精良	食物	mod Greenery	
+GEAR_CookedCohoSalmon	银大马哈鱼 (熟)	精良	食物	原版	Lv5
+GEAR_CookedForagerOmelette	觅食者煎蛋饼	精良	食物	mod BF	
+GEAR_CookedForagerStew	觅食者炖菜	精良	食物	mod BF	
+GEAR_CookedMeatBear	熟熊肉	精良	食物	原版	Lv3
+GEAR_CookedMeatCougar	美洲狮肉（熟）	精良	食物	原版	Lv6
+GEAR_CookedMeatMoose	驼鹿肉 (熟)	精良	食物	原版	Lv5
+GEAR_CookedOmelette	煎蛋饼	精良	食物	mod BF	
+GEAR_CookedPancakeAcorn	橡实薄煎饼	精良	食物	原版	Lv3
+GEAR_CookedPiePtarmigan	松鸡肉馅饼	精良	食物	原版	Lv3
+GEAR_CookedPieRoseHip	玫瑰果馅饼	精良	食物	原版	Lv3
+GEAR_CookedPorridgeJam	燕麦粥(果酱)	精良	食物	mod Stalker	
+GEAR_CookedPorridgeSugar	燕麦粥(糖)	精良	食物	mod Stalker	
+GEAR_CookedPtarmiganWhole	烤整只松鸡	精良	食物	原版	
+GEAR_CookedSoapberryPie	肥皂果派	精良	食物	mod Greenery	
+GEAR_CookedSpanishOmelette	土豆煎蛋饼	精良	食物	mod BF	
+GEAR_CookedStewMeat	护林员炖菜	精良	食物	原版	Lv3
+GEAR_CookedStewPtarmigan	炖松鸡	精良	食物	原版	Lv3
+GEAR_CookedStewRabbit	煮兔肉	精良	食物	原版	Lv3
+GEAR_CookedStewTrout	炖鳟鱼	精良	食物	原版	Lv3
+GEAR_CookedStewVenison	炖鹿肉	精良	食物	原版	Lv3
+GEAR_CuredFish	腌鱼	精良	食物	原版	Lv3
+GEAR_CuredFishBassLarge	大嘴鲈鱼肉干	精良	食物	mod BF	
+GEAR_CuredFishBassSmall	小嘴鲈鱼肉干	精良	食物	mod BF	
+GEAR_CuredFishBurbot	鳕鱼肉干	精良	食物	mod BF	
+GEAR_CuredFishGoldeye	金目鱼肉干	精良	食物	mod BF	
+GEAR_CuredFishRed	王鱼肉干	精良	食物	mod BF	
+GEAR_CuredFishRock	岩鱼肉干	精良	食物	mod BF	
+GEAR_CuredFishSalmon	大马哈鱼肉干	精良	食物	mod BF	
+GEAR_CuredFishTrout	虹鳟鱼肉干	精良	食物	mod BF	
+GEAR_CuredFishWhite	湖白鲑肉干	精良	食物	mod BF	
+GEAR_CuredMeat	腌肉	精良	食物	原版	Lv3
+GEAR_CuredMeatA	腌肉	精良	食物	原版	
+GEAR_CuredMeatBear	熊肉干	精良	食物	mod BF	
+GEAR_CuredMeatBird	乌鸦肉干	精良	食物	mod BF	
+GEAR_CuredMeatMoose	驼鹿肉干	精良	食物	mod BF	
+GEAR_CuredMeatOrca	鲸鱼肉干	精良	食物	mod BF	
+GEAR_CuredMeatPtarmigan	鸡肉干	精良	食物	原版	
+GEAR_CuredMeatRabbit	兔肉干	精良	食物	mod BF	
+GEAR_CuredMeatVenison	鹿肉干	精良	食物	mod BF	
+GEAR_CuredMeatWolf	狼肉干	精良	食物	mod BF	
+GEAR_EnergyBar	能量棒	精良	食物	原版	Lv3
+GEAR_HoneyJar	蜂蜜	精良	食物	mod FoodTKG	
+GEAR_LichStackCanOfPeach	顶级桃子包裹	精良	食物	mod Stack	
+GEAR_LichStackCanOfPorkandbeans	猪肉扁豆包裹	精良	食物	mod Stack	
+GEAR_LichStackCanOfTomatosoup	番茄汤包裹	精良	食物	mod Stack	
+GEAR_MacCheeseCooked	芝士通心粉	精良	食物	mod Retro	
+GEAR_MapleSyrup	枫糖糖浆	精良	食物	原版	Lv4
+GEAR_MashedPotatoesCooked	土豆泥	精良	食物	mod Retro	
+GEAR_OldMansBeardDressing	胡须地衣伤口敷料	精良	食物	原版	Lv1
+GEAR_OrcaMeatCooked	熟鲸鱼肉	精良	食物	mod BF	
+GEAR_OrcaMeatRaw	生鲸鱼肉	精良	食物	mod BF	
+GEAR_PeanutButter	花生酱	精良	食物	原版	Lv4
+GEAR_PremiumPastaCooked	精品意面	精良	食物	mod Retro	
+GEAR_RawCohoSalmon	银大马哈鱼 (生)	精良	食物	原版	Lv3
+GEAR_RawMeatBear	生熊肉	精良	食物	原版	Lv3
+GEAR_RawMeatCougar	美洲狮肉（生）	精良	食物	原版	Lv6
+GEAR_RawMeatMoose	驼鹿肉	精良	食物	原版	Lv5
+GEAR_ReishiPrepared	灵芝(腌制)	精良	食物	原版	Lv2
+GEAR_SPAM	斯帕姆午餐肉罐头	精良	食物	mod FoodTKG	
+GEAR_SaltBag	盐袋	精良	食物	原版	Lv2
+GEAR_SaltedFishBassLarge	腌制的大嘴鲈鱼	精良	食物	mod BF	
+GEAR_SaltedFishBassSmall	腌制的小嘴鲈鱼	精良	食物	mod BF	
+GEAR_SaltedFishBurbot	腌制的鳕鱼	精良	食物	mod BF	
+GEAR_SaltedFishGoldeye	腌制的金目鱼	精良	食物	mod BF	
+GEAR_SaltedFishRed	腌制的王鱼	精良	食物	mod BF	
+GEAR_SaltedFishRock	腌制的岩鱼	精良	食物	mod BF	
+GEAR_SaltedFishSalmon	腌制的大马哈鱼	精良	食物	mod BF	
+GEAR_SaltedFishTrout	腌制的虹鳟鱼	精良	食物	mod BF	
+GEAR_SaltedFishWhite	腌制的湖白鲑	精良	食物	mod BF	
+GEAR_SaltedMeatBear	腌制的熊肉	精良	食物	mod BF	
+GEAR_SaltedMeatBird	腌制的乌鸦肉	精良	食物	mod BF	
+GEAR_SaltedMeatMoose	腌制的驼鹿肉	精良	食物	mod BF	
+GEAR_SaltedMeatOrca	腌制的鲸鱼肉	精良	食物	mod BF	
+GEAR_SaltedMeatPtarmigan	腌制的鸡肉	精良	食物	原版	
+GEAR_SaltedMeatRabbit	腌制的兔子肉	精良	食物	mod BF	
+GEAR_SaltedMeatVenison	腌制的鹿肉	精良	食物	mod BF	
+GEAR_SaltedMeatWolf	腌制的狼肉	精良	食物	mod BF	
+GEAR_UncookedBannockAcorn	橡实薄饼(未烹饪)	精良	食物	原版	Lv3
+GEAR_UncookedPancakeAcorn	橡实薄煎饼(未烹饪)	精良	食物	原版	Lv3
+GEAR_UncookedPiePtarmigan	松鸡肉馅饼(未烹饪)	精良	食物	原版	Lv3
+GEAR_UncookedPieRoseHip	玫瑰果馅饼(未烹饪)	精良	食物	原版	Lv3
+GEAR_UncookedStewMeat	护林员炖菜(未烹饪)	精良	食物	原版	Lv3
+GEAR_UncookedStewPtarmigan	炖松鸡(未烹饪)	精良	食物	原版	Lv3
+GEAR_UncookedStewRabbit	煮兔肉(未烹饪)	精良	食物	原版	Lv3
+GEAR_UncookedStewTrout	炖鳟鱼(未烹饪)	精良	食物	原版	Lv3
+GEAR_UncookedStewVenison	炖鹿肉(未烹饪)	精良	食物	原版	Lv3
+GEAR_BirchbarkTea	桦树皮茶	精良	饮料	原版	Lv4
+GEAR_LichRosehipWineAge2	2阶段陈酿玫瑰果酒	精良	饮料	mod Brew	
+GEAR_ReishiTea	灵芝茶	精良	饮料	原版	Lv1
+GEAR_BottleCaffeine	咖啡因片	优秀		原版	Lv2
+GEAR_UncookedCookingOil	食用油(未烹饪)	优秀		原版	
+GEAR_CattailRhizomeCooked	烤香蒲根	优秀	其他	mod Ranger	
+GEAR_Goldnuggeta	金块	优秀	其他	mod Story	
+GEAR_PotatoSack	土豆麻袋	优秀	其他	mod Brew	
+GEAR_RabbitRiverSallad	兔肉拌菜	优秀	其他	mod Ranger	
+GEAR_UnCookedApplePie	苹果派	优秀	其他	mod FoodTKG	
+GEAR_UnCookedPierogi	芝士煎饺	优秀	其他	mod FoodTKG	
+GEAR_UnCookedPoutine	肉汁奶酪薯条	优秀	其他	mod FoodTKG	
+GEAR_UnCookedSkilletPizza	火腿披萨	优秀	其他	mod FoodTKG	
+GEAR_UnCookedToastedSandwich	芝士三明治	优秀	其他	mod FoodTKG	
+GEAR_Uncookedperogi	生水饺	优秀	其他	mod FoodTKG	
+GEAR_Bandage	绷带	优秀	医疗	原版	
+GEAR_BottleOfWater	急救水	优秀	医疗	原版	
+GEAR_BurdockTeaJam	牛蒡茶(果酱)	优秀	医疗	mod Stalker	
+GEAR_BurdockTeaSugar	牛蒡茶(糖)	优秀	医疗	mod Stalker	
+GEAR_CaffeineBox	咖啡因片	优秀	医疗	原版	
+GEAR_ForsakenSpirits	被遗忘者咖啡鸡尾酒	优秀	医疗	mod FoodTKG	
+GEAR_ForsakenSpiritsPlastic	被遗忘者茶调鸡尾酒	优秀	医疗	mod FoodTKG	
+GEAR_HeavyBandage	重型绷带	优秀	医疗	原版	Lv1
+GEAR_NaturalBandage	牛蒡敷料	优秀	医疗	mod Stalker	
+GEAR_RoseHipTeaJam	玫瑰果茶(果酱)	优秀	医疗	mod Stalker	
+GEAR_RoseHipTeaSugar	玫瑰果茶(糖)	优秀	医疗	mod Stalker	
+GEAR_VodkaBottle	精酿伏特加	优秀	医疗	mod FoodTKG	
+GEAR_AcornBrandyBarrel	M-橡子白兰地酒桶	优秀	工具	mod Brew	
+GEAR_Barrel	M-酿酒桶	优秀	工具	mod Brew	
+GEAR_BirchBarkBeerBarrel	M-桦树皮啤酒桶	优秀	工具	mod Brew	
+GEAR_BurdockMoonshineBarrel	M-牛蒡烈酒酒桶	优秀	工具	mod Brew	
+GEAR_Camera	照相机	优秀	工具	原版	Lv3
+GEAR_CanOpener	开罐器	优秀	工具	原版	Lv1
+GEAR_CatTailRumBarrel	M-香蒲朗姆酒酒桶	优秀	工具	mod Brew	
+GEAR_Compass	指南针	优秀	工具	原版	
+GEAR_FishingBaitA	鱼饵	优秀	工具	原版	Lv2
+GEAR_FishingLine	钓鱼线(整轴)	优秀	工具	原版	Lv1
+GEAR_FishingLureA	鱼饵A	优秀	工具	原版	Lv1
+GEAR_FishingLureB	鱼饵B	优秀	工具	原版	Lv3
+GEAR_FishingLureC	鱼饵C	优秀	工具	原版	Lv3
+GEAR_FishingLureD	鱼饵D	优秀	工具	原版	Lv3
+GEAR_GardeningToolsImprovised	简易种植工具套件	优秀	工具	mod Greenery	
+GEAR_HookAndLine	钩线组合	优秀	工具	原版	Lv1
+GEAR_LampFuelFull	满灯油	优秀	工具	原版	Lv2
+GEAR_MakeshiftBlanket	拼布毯子	优秀	工具	mod Cozy	
+GEAR_MapBI	荒凉水湾地图	优秀	工具	mod Camp	
+GEAR_MapCH	沿海公路地图	优秀	工具	mod Camp	
+GEAR_MapML	大熊岛地理杂志	优秀	工具	mod Camp	
+GEAR_MapMT	米尔顿地图	优秀	工具	mod Camp	
+GEAR_MapPV	怡人山谷地图	优秀	工具	mod Camp	
+GEAR_OldBlanket1	老旧的毯子	优秀	工具	mod Cozy	
+GEAR_OldBlanket2	老旧的毯子	优秀	工具	mod Cozy	
+GEAR_PackMatches	盒装火柴	优秀	工具	原版	Lv1
+GEAR_ReishiWhiskyBarrel	M-灵芝威士忌酒桶	优秀	工具	mod Brew	
+GEAR_RosehipWineBarrel	M-玫瑰果酒桶	优秀	工具	mod Brew	
+GEAR_Stopwatch	W-秒表(TAB)	优秀	工具	mod Watch	
+GEAR_Sundial	W-日晷(TAB)	优秀	工具	mod Watch	
+GEAR_TipUp	上钩指示器	优秀	工具	原版	Lv3
+GEAR_TipUp_Flag	冰钓旗	优秀	工具	原版	
+GEAR_Torch	火把	优秀	工具	原版	Lv1
+GEAR_VodkaBarrel	M-自酿伏特加酒桶	优秀	工具	mod Brew	
+GEAR_WoodMatches	木制火柴	优秀	工具	原版	Lv2
+GEAR_ARC_log	施工原木	优秀	材料	mod Arch	
+GEAR_ARC_logbundle	一捆原木	优秀	材料	mod Arch	
+GEAR_ARC_nails	一把钉子	优秀	材料	mod Arch	
+GEAR_ARC_plank	施工木板	优秀	材料	mod Arch	
+GEAR_ARC_plankbundle	一捆木板	优秀	材料	mod Arch	
+GEAR_AnimalFat	动物脂肪	优秀	材料	原版	Lv2
+GEAR_BariumCarbonate	碳酸钡	优秀	材料	mod WildFire	
+GEAR_Battery9V	工业电池	优秀	材料	mod Toolbox	
+GEAR_BeeHive	蜂巢	优秀	材料	mod BF	
+GEAR_BirchSaplingDried	加工桦树苗	优秀	材料	原版	Lv2
+GEAR_BirchbarkPrepared	加工过的桦树皮	优秀	材料	原版	Lv3
+GEAR_BirchbarkTeaDried	桦树皮(晒干)	优秀	材料	原版	
+GEAR_CalciumChloride	氯化钙	优秀	材料	mod WildFire	
+GEAR_Candle	蜡烛	优秀	材料	mod Candle	
+GEAR_CannedChiliPackage2	辣味罐头小包装	优秀	材料	mod FoodTKG	
+GEAR_CannedSpaghettiPackage2	意面罐头小包装	优秀	材料	mod FoodTKG	
+GEAR_CannedStewPackage2	炖肉罐头小包装	优秀	材料	mod FoodTKG	
+GEAR_CerealHoneyPackage2	蜂蜜麦片小包装	优秀	材料	mod FoodTKG	
+GEAR_CerealWholeGrainPackage2	全谷麦片小包装	优秀	材料	mod FoodTKG	
+GEAR_Coal	煤炭	优秀	材料	原版	Lv3
+GEAR_CoalChunk	煤块	优秀	材料	mod BF	
+GEAR_CoalPile004	煤炭打包X4	优秀	材料	mod Piles	
+GEAR_CocoaPackage2	热可可小包装	优秀	材料	mod FoodTKG	
+GEAR_CopperCarbonate	碳酸铜	优秀	材料	mod WildFire	
+GEAR_CornflakesPackage2	玉米片小包装	优秀	材料	mod FoodTKG	
+GEAR_CrushedHalite	石盐末	优秀	材料	mod BF	
+GEAR_DistilledWater	蒸馏水	优秀	材料	mod Greenery	
+GEAR_DustingSulfur	硫粉	优秀	材料	原版	Lv3
+GEAR_EmptyPackage	空包装盒	优秀	材料	mod FoodTKG	
+GEAR_FatRaw	动物脂肪	优秀	材料	mod Candle	
+GEAR_Firelog	加工木柴	优秀	材料	原版	Lv2
+GEAR_Flint	燧石	优秀	材料	mod Toolbox	
+GEAR_GardeningMesh	种植网	优秀	材料	mod Greenery	
+GEAR_GoldNugget	金粒	优秀	材料	mod 	Lv3
+GEAR_Halite	石盐(大)	优秀	材料	mod BF	
+GEAR_IronFilings	一把铁屑	优秀	材料	mod WildFire	
+GEAR_LampFuel	灯油	优秀	材料	原版	Lv2
+GEAR_LichStackCloth	打包布料	优秀	材料	mod Stack	
+GEAR_MagnesiumPowder	镁粉	优秀	材料	mod WildFire	
+GEAR_MapleSaplingDried	加工枫树苗	优秀	材料	原版	Lv3
+GEAR_MetalBoxForge	金属盒	优秀	材料	mod Toolbox	
+GEAR_NestFull1	鸟巢	优秀	材料	mod BF	
+GEAR_NestFull2	鸟巢	优秀	材料	mod BF	
+GEAR_NestFull3	鸟巢	优秀	材料	mod BF	
+GEAR_NutsNBolts	螺栓螺母	优秀	材料	mod Toolbox	
+GEAR_OakFireWood	橡树木	优秀	材料	mod Wood	
+GEAR_OakFireWoodPile5	一堆橡树木x5	优秀	材料	mod Wood	
+GEAR_OrcaBones1	虎鲸骸骨	优秀	材料	mod BF	
+GEAR_OrcaBones2	虎鲸骸骨	优秀	材料	mod BF	
+GEAR_PlantNutrients	植物肥料	优秀	材料	mod Greenery	
+GEAR_PlantNutrientsCrafted	植物肥料	优秀	材料	mod Greenery	
+GEAR_RecycledGlass	玻璃板材	优秀	材料	mod Toolbox	
+GEAR_RecycledPlastic	塑料板材	优秀	材料	mod Toolbox	
+GEAR_Rubidium	铷	优秀	材料	mod WildFire	
+GEAR_ScrapMetal	废金属	优秀	材料	原版	Lv1
+GEAR_ScrapPile010	废金属打包X10	优秀	材料	mod Piles	
+GEAR_SeedsBlue	蓝莓果种子(包)	优秀	材料	mod Greenery	
+GEAR_SeedsBlueExtracted	蓝莓果种子(罐)	优秀	材料	mod Greenery	
+GEAR_SeedsBurdockExtracted	牛蒡种子	优秀	材料	mod Greenery	
+GEAR_SeedsCarrotExtracted	胡萝卜种子	优秀	材料	mod Greenery	
+GEAR_SeedsHerbExtracted	草本植物种子(罐)	优秀	材料	mod Greenery	
+GEAR_SeedsHerbs	草本植物种子(包)	优秀	材料	mod Greenery	
+GEAR_SeedsLichenExtracted	胡须地衣种子	优秀	材料	mod Greenery	
+GEAR_SeedsReishiExtracted	灵芝种子	优秀	材料	mod Greenery	
+GEAR_SeedsRoseExtracted	玫瑰果种子	优秀	材料	mod Greenery	
+GEAR_SeedsSoap	肥皂果种子(包)	优秀	材料	mod Greenery	
+GEAR_SeedsSoapExtracted	肥皂果种子(罐)	优秀	材料	mod Greenery	
+GEAR_StringBundle	线团	优秀	材料	mod Toolbox	
+GEAR_StrongFishingLine	鱼线卷	优秀	材料	mod Fish	
+GEAR_StumpRemover	树桩去除剂	优秀	材料	原版	Lv3
+GEAR_WireBundle	电线	优秀	材料	原版	Lv2
+GEAR_Yeast	酵母菌	优秀	材料	mod Brew	
+GEAR_ArrowManufacturedShaft	量产箭杆	优秀	武器	原版	
+GEAR_ArrowShaft	箭杆	优秀	武器	原版	Lv1
+GEAR_BearSpearBroken	损坏的猎熊矛	优秀	武器	原版	
+GEAR_BrokenArrowManufactured	断掉的精工箭	优秀	武器	原版	
+GEAR_RevolverAmmoCasing	左轮弹壳	优秀	武器	原版	Lv2
+GEAR_RifleAmmoCasing	步枪弹壳	优秀	武器	原版	Lv3
+GEAR_RifleBroken	损毁的猎枪	优秀	武器	原版	
+GEAR_ScrapLead	废铅	优秀	武器	原版	Lv3
+GEAR_ShotgunAmmoCasing	霰弹枪弹壳	优秀	武器	原版	
+GEAR_SpearFishingHead	鱼叉头	优秀	武器	原版	
+GEAR_SprayPaintCanGlyphA	符文喷漆罐	优秀	武器	原版	Lv3
+GEAR_BoneB	骨头	优秀	狩猎	原版	
+GEAR_BoneBearB	熊骨头	优秀	狩猎	原版	
+GEAR_BoneDeerB	鹿骨头	优秀	狩猎	原版	
+GEAR_BoneMooseB	驼鹿骨头	优秀	狩猎	原版	
+GEAR_BoneWolfB	狼骨头	优秀	狩猎	原版	
+GEAR_CrowFeather	乌鸦羽毛	优秀	狩猎	原版	Lv2
+GEAR_Gut	新鲜内脏	优秀	狩猎	原版	Lv2
+GEAR_Leather	新鲜皮革	优秀	狩猎	原版	Lv3
+GEAR_LeatherHide	皮革(生)	优秀	狩猎	原版	Lv2
+GEAR_Leather_Shoes	皮革鞋面	优秀	狩猎	原版	
+GEAR_PtarmiganCarcass	松鸡尸骸	优秀	狩猎	原版	Lv2
+GEAR_PtarmiganFeathers	羽毛	优秀	狩猎	原版	Lv4
+GEAR_PtarmiganPelt	松鸡皮	优秀	狩猎	原版	
+GEAR_RabbitCarcass	兔子尸体	优秀	狩猎	原版	Lv2
+GEAR_RabbitPelt	兔皮(生)	优秀	狩猎	原版	Lv2
+GEAR_StagQuarter	小块鹿尸	优秀	狩猎	原版	Lv2
+GEAR_TimberwolfQuarter	灰狼肉块	优秀	狩猎	原版	Lv2
+GEAR_WolfCarcass	狼的尸骸	优秀	狩猎	原版	
+GEAR_WolfCarcassMoose	驼鹿皮革碎片	优秀	狩猎	原版	
+GEAR_WolfQuarter	小块狼尸	优秀	狩猎	原版	Lv2
+GEAR_ArmWrap	手臂绑带	优秀	衣物	原版	
+GEAR_BasicWinterCoat	基本冬季大衣	优秀	衣物	原版	Lv1
+GEAR_BasicWoolHat	棉布无檐毛线帽	优秀	衣物	原版	Lv2
+GEAR_BasicWoolScarf	羊毛围巾	优秀	衣物	原版	Lv2
+GEAR_BeanieCap	豆豆帽	优秀	衣物	mod TKG	
+GEAR_DownVest	羽绒背心	优秀	衣物	原版	Lv1
+GEAR_EarMuffs	羊毛耳套	优秀	衣物	原版	Lv3
+GEAR_FarmBoots	农夫的靴子	优秀	衣物	mod TKG	
+GEAR_FleeceMittens	羊绒连指手套	优秀	衣物	原版	Lv1
+GEAR_FleeceSweater	羊绒毛衣	优秀	衣物	原版	Lv1
+GEAR_ImprovisedDownInsulation	防水贴身衣物	优秀	衣物	原版	Lv2
+GEAR_InsulatedVest	防水马甲	优秀	衣物	原版	Lv1
+GEAR_JerseyHockeyA	曲棍球衣	优秀	衣物	原版	Lv2
+GEAR_LeatherBindings	皮革绑腿	优秀	衣物	原版	
+GEAR_LightParka	简易风雪大衣	优秀	衣物	原版	Lv1
+GEAR_LongUnderwear	长内衣	优秀	衣物	原版	Lv1
+GEAR_MedicalFaceMask	医用口罩	优秀	衣物	mod TKG	
+GEAR_MinersHelmet	安全帽	优秀	衣物	原版	Lv2
+GEAR_MittenBlueStripe	花纹羊毛连指手套(蓝条)	优秀	衣物	原版	Lv2
+GEAR_MittenBrownStripe	花纹羊毛连指手套(棕条)	优秀	衣物	原版	Lv2
+GEAR_MittenBurgundyPattern	花纹羊毛连指手套(酒红)	优秀	衣物	原版	Lv2
+GEAR_Mittens	连指手套	优秀	衣物	原版	Lv2
+GEAR_PrisonerVest	囚犯背心	优秀	衣物	原版	
+GEAR_SkiJacket	滑雪衫	优秀	衣物	原版	Lv2
+GEAR_SockDots	花纹羊毛短袜(圆点)	优秀	衣物	原版	Lv2
+GEAR_SockMoose	花纹羊毛短袜(驼鹿)	优秀	衣物	原版	Lv2
+GEAR_SockPlaid	花纹羊毛短袜(格纹)	优秀	衣物	原版	Lv2
+GEAR_SweaterChristmasA	节日毛衣	优秀	衣物	原版	Lv3
+GEAR_Toque	羊毛无檐毛线帽	优秀	衣物	原版	Lv4
+GEAR_WoolShirt	羊毛衬衫	优秀	衣物	原版	Lv3
+GEAR_WoolSocks	羊毛短袜	优秀	衣物	原版	Lv2
+GEAR_WoolSweater	羊毛毛衣	优秀	衣物	原版	Lv2
+GEAR_WoolWrapCap	绒面蒙头斗篷	优秀	衣物	原版	Lv1
+GEAR_WorkBoots	工作靴	优秀	衣物	原版	Lv2
+GEAR_WorkGloves	工作手套	优秀	衣物	原版	Lv2
+GEAR_WorkPants	工作裤	优秀	衣物	原版	Lv3
+GEAR_ABCSoup	字母汤	优秀	食物	mod CW	
+GEAR_AcornCooked	橡实（熟）	优秀	食物	原版	Lv2
+GEAR_AcornCookedBig	橡实（熟 - 大份）	优秀	食物	原版	Lv2
+GEAR_AcornShelled	制好的橡实	优秀	食物	原版	Lv2
+GEAR_AcornShelledBig	制好的橡实（大份）	优秀	食物	原版	Lv2
+GEAR_AcornShelled_Bbig	去壳橡子(大版)	优秀	食物	原版	
+GEAR_AppleSauceJar	苹果酱罐	优秀	食物	mod Retro	
+GEAR_AppleSnacks	苹果脆片	优秀	食物	mod Retro	
+GEAR_BabyFoodBanana	婴儿食品(香蕉)	优秀	食物	mod Retro	
+GEAR_BabyFoodBerries	婴儿食品(浆果)	优秀	食物	mod Retro	
+GEAR_BabyFoodCarrot	婴儿食品(胡萝卜)	优秀	食物	mod Retro	
+GEAR_BabyFoodPeas	婴儿食品(豌豆)	优秀	食物	mod Retro	
+GEAR_BakedBeans	焗豆罐头	优秀	食物	mod Retro	
+GEAR_BakedBeansOpened	焗豆罐头(开封)	优秀	食物	mod Retro	
+GEAR_Berrysoap	肥皂果	优秀	食物	mod Greenery	
+GEAR_BirdEggBoiled	水煮鸟蛋	优秀	食物	mod BF	
+GEAR_BirdEggRaw	鸟蛋	优秀	食物	mod BF	
+GEAR_BirdMeatCooked	烤乌鸦肉	优秀	食物	mod BF	
+GEAR_BirdMeatRaw	乌鸦肉	优秀	食物	mod BF	
+GEAR_Blueberries	蓝莓果	优秀	食物	mod Greenery	
+GEAR_Bread	薄饼面包	优秀	食物	mod FoodTKG	
+GEAR_BurdockPrepared	加工过的牛蒡	优秀	食物	原版	Lv2
+GEAR_CandyBar	糖棒	优秀	食物	原版	Lv2
+GEAR_CannedBeans	罐装豆类	优秀	食物	原版	Lv1
+GEAR_CannedBeansB	罐装豆类B	优秀	食物	原版	
+GEAR_CannedChili	墨西哥辣味甜面酱罐头	优秀	食物	mod FoodTKG	
+GEAR_CannedChiliOpened	墨西哥辣味甜面酱罐头	优秀	食物	mod FoodTKG	
+GEAR_CannedCorn	玉米罐头	优秀	食物	原版	Lv1
+GEAR_CannedMangos	芒果罐头	优秀	食物	mod FoodTKG	
+GEAR_CannedPears	梨罐头	优秀	食物	mod FoodTKG	
+GEAR_CannedPeasAndCarrots	罐装豌豆胡萝卜	优秀	食物	原版	
+GEAR_CannedPineapple	菠萝罐头	优秀	食物	原版	Lv2
+GEAR_CannedPineapples	苹果罐头	优秀	食物	mod FoodTKG	
+GEAR_CannedSardines	罐装沙丁鱼	优秀	食物	原版	Lv2
+GEAR_CannedSpaghetti	意式肉丸面罐头	优秀	食物	mod FoodTKG	
+GEAR_CannedSpaghettiOpened	意式肉丸面罐头	优秀	食物	mod FoodTKG	
+GEAR_CannedStew	蔬菜炖肉罐头	优秀	食物	mod FoodTKG	
+GEAR_CannedStewOpened	蔬菜炖肉罐头	优秀	食物	mod FoodTKG	
+GEAR_CatFood	猫食	优秀	食物	mod FoodTKG	
+GEAR_CatFoodSmall	金枪鱼罐头	优秀	食物	mod FoodTKG	
+GEAR_CattailRhizomeRaw	香蒲根茎	优秀	食物	mod Ranger	
+GEAR_CerealHoney	POPs蜂蜜麦片	优秀	食物	mod FoodTKG	
+GEAR_CerealWholeGrain	全谷麦片	优秀	食物	mod FoodTKG	
+GEAR_Cereal_A	麦片 A	优秀	食物	mod 	Lv2
+GEAR_Cereal_B	麦片 B	优秀	食物	mod 	
+GEAR_CheeseDoodles	芝士球	优秀	食物	mod Retro	
+GEAR_ChickenMeatballs	鸡肉丸罐头	优秀	食物	mod Retro	
+GEAR_ChickenMeatballsOpened	鸡肉丸罐头(开封)	优秀	食物	mod Retro	
+GEAR_CookedBannock	薄饼	优秀	食物	原版	Lv2
+GEAR_CookedBurbot	淡水鳕鱼 (熟)	优秀	食物	原版	Lv4
+GEAR_CookedBurdock	熟牛蒡根	优秀	食物	原版	
+GEAR_CookedCatTailStalk	熟香蒲茎	优秀	食物	原版	
+GEAR_CookedCopperFish	岩鱼 (熟)	优秀	食物	原版	
+GEAR_CookedGoldeye	金目鱼 (熟)	优秀	食物	原版	Lv2
+GEAR_CookedLakeBurbot	湖江鳕 (熟)	优秀	食物	原版	
+GEAR_CookedLakeGoldeye	湖金目鱼 (熟)	优秀	食物	原版	
+GEAR_CookedLakeWhiteFish	湖白鲑 (熟)	优秀	食物	原版	Lv2
+GEAR_CookedMeatCaribou	熟驯鹿肉	优秀	食物	原版	
+GEAR_CookedMeatDeer	熟鹿肉	优秀	食物	原版	Lv2
+GEAR_CookedMeatPtarmigan	熟松鸡肉	优秀	食物	原版	Lv4
+GEAR_CookedMeatRabbit	熟兔肉	优秀	食物	原版	Lv2
+GEAR_CookedMeatWolf	熟狼肉	优秀	食物	原版	Lv3
+GEAR_CookedPancake	薄煎饼	优秀	食物	原版	Lv2
+GEAR_CookedPieFishermans	码头工人的馅饼	优秀	食物	原版	Lv2
+GEAR_CookedPiePeach	桃肉馅饼	优秀	食物	原版	Lv2
+GEAR_CookedPieRabbit	兔肉馅饼	优秀	食物	原版	Lv2
+GEAR_CookedPieVenison	鹿肉馅饼	优秀	食物	原版	Lv2
+GEAR_CookedPorridge	燕麦粥	优秀	食物	原版	Lv2
+GEAR_CookedRainbowTrout	虹鳟鱼 (熟)	优秀	食物	原版	Lv1
+GEAR_CookedRedIrishLord	爱尔兰王鱼 (熟)	优秀	食物	原版	Lv2
+GEAR_CookedRockfish	岩鱼 (熟)	优秀	食物	原版	Lv3
+GEAR_CookedSmallMouthBass	小嘴鲈鱼 (熟)	优秀	食物	原版	Lv5
+GEAR_CookedSoupPotato	“最后手段”汤	优秀	食物	原版	Lv2
+GEAR_CookedSoupPtarmigan	搬运工浓汤	优秀	食物	原版	Lv2
+GEAR_CookedSoupRabbit	流浪汉肉汤	优秀	食物	原版	Lv2
+GEAR_Cookies	曲奇饼干	优秀	食物	mod FoodTKG	
+GEAR_CookiesJam	果酱曲奇	优秀	食物	mod Retro	
+GEAR_CookingOil	食用油	优秀	食物	原版	Lv1
+GEAR_Cornflakes	玉米片	优秀	食物	mod FoodTKG	
+GEAR_Crackers	饼干	优秀	食物	原版	Lv5
+GEAR_CrushedTomatoes	番茄碎罐头	优秀	食物	mod Retro	
+GEAR_CrushedTomatoesOpened	番茄碎罐头(开封)	优秀	食物	mod Retro	
+GEAR_CupNoodles	速食杯面	优秀	食物	mod FoodTKG	
+GEAR_CupNoodlesOpen	速食杯面	优秀	食物	mod FoodTKG	
+GEAR_DogFood	狗粮	优秀	食物	原版	Lv2
+GEAR_DriedApples	苹果干	优秀	食物	原版	Lv2
+GEAR_DriedMangos	干芒果	优秀	食物	原版	
+GEAR_DriedRaisins	葡萄干	优秀	食物	mod Retro	
+GEAR_DryMilkPacket	浓缩奶包	优秀	食物	mod FoodTKG	
+GEAR_Flour	老磨坊面粉	优秀	食物	原版	Lv1
+GEAR_FlourBag	精致面粉	优秀	食物	mod FoodTKG	
+GEAR_GranolaBar	格兰诺拉燕麦卷	优秀	食物	原版	Lv2
+GEAR_GroundBeef	牛肉碎罐头	优秀	食物	mod Retro	
+GEAR_GroundBeefOpened	牛肉碎罐头(开封)	优秀	食物	mod Retro	
+GEAR_HerbLeavesDried	风干的草本果实	优秀	食物	mod Greenery	
+GEAR_HerbLeavesHarvested	草本果实	优秀	食物	mod Greenery	
+GEAR_HotCocoaBag	可可粉	优秀	食物	mod FoodTKG	
+GEAR_HotCocoaBox	盒装热可可	优秀	食物	mod FoodTKG	
+GEAR_Jalapeno	墨西哥辣椒罐头	优秀	食物	mod FoodTKG	
+GEAR_JamBlueberry	蓝莓酱	优秀	食物	mod Greenery	
+GEAR_JamSoapberry	肥皂果酱	优秀	食物	mod Greenery	
+GEAR_Largemouthbass	大嘴鲈鱼	优秀	食物	mod BF	
+GEAR_LichAcornBrandy	橡子白兰地	优秀	食物	mod Brew	
+GEAR_LichVodka	自酿伏特加	优秀	食物	mod Brew	
+GEAR_MeatFat	动物脂肪	优秀	食物	原版	
+GEAR_MilkPowder	奶粉	优秀	食物	原版	
+GEAR_MixedNuts	混合坚果	优秀	食物	mod Retro	
+GEAR_ModChocolateBar	黑巧克力	优秀	食物	mod FoodTKG	
+GEAR_ModSyrup	枫糖浆	优秀	食物	mod FoodTKG	
+GEAR_NanaimoBar	纳奈莫条	优秀	食物	mod FoodTKG	
+GEAR_OatmealPacket	燕麦包	优秀	食物	原版	
+GEAR_OatsTin	奔流燕麦片	优秀	食物	原版	Lv1
+GEAR_OldMansBeardHarvested	老人须(采集)	优秀	食物	原版	Lv1
+GEAR_OrangeBiscuits	橙味饼干	优秀	食物	mod Retro	
+GEAR_Pickled_Eggs	腌蛋	优秀	食物	原版	
+GEAR_Pickled_Onions	腌洋葱	优秀	食物	原版	
+GEAR_Pickles	腌菜	优秀	食物	原版	Lv2
+GEAR_Pineapples	菠萝罐头	优秀	食物	mod Retro	
+GEAR_PineapplesOpened	菠萝罐头(开封)	优秀	食物	mod Retro	
+GEAR_PinnacleCanPeaches	顶峰桃子罐头	优秀	食物	原版	Lv1
+GEAR_PotatoCooked	烧熟的土豆	优秀	食物	原版	Lv2
+GEAR_PreparedBlueberries	调制好的蓝莓	优秀	食物	mod Greenery	
+GEAR_PreparedSoapberries	调制好的肥皂果	优秀	食物	mod Greenery	
+GEAR_RawBurbot	淡水鳕鱼 (生)	优秀	食物	原版	Lv4
+GEAR_RawGoldeye	金目鱼 (生)	优秀	食物	原版	Lv2
+GEAR_RawLakeBurbot	生湖江鳕	优秀	食物	原版	
+GEAR_RawLakeWhiteFish	湖白鲑 (生)	优秀	食物	原版	Lv2
+GEAR_RawMeatCaribou	生驯鹿肉	优秀	食物	原版	
+GEAR_RawMeatDeer	生鹿肉	优秀	食物	原版	Lv2
+GEAR_RawMeatPtarmigan	生松鸡肉	优秀	食物	原版	Lv2
+GEAR_RawMeatRabbit	生兔肉	优秀	食物	原版	Lv2
+GEAR_RawMeatWolf	生狼肉	优秀	食物	原版	Lv3
+GEAR_RawPtarmiganWhole	生整只松鸡	优秀	食物	原版	
+GEAR_RawRainbowTrout	虹鳟鱼 (生)	优秀	食物	原版	Lv1
+GEAR_RawRedIrishLord	爱尔兰王鱼 (生)	优秀	食物	原版	Lv2
+GEAR_RawRockfish	岩鱼 (生)	优秀	食物	原版	Lv3
+GEAR_RawSmallMouthBass	小嘴鲈鱼 (生)	优秀	食物	原版	Lv3
+GEAR_ReishiMushroom	灵芝	优秀	食物	原版	Lv2
+GEAR_RiceCooked	长粒熟米饭	优秀	食物	mod FoodTKG	
+GEAR_RiceRaw	盒装长粒米	优秀	食物	mod FoodTKG	
+GEAR_RosehipJam	玫瑰果酱	优秀	食物	mod Stalker	
+GEAR_RosehipsPrepared	玫瑰果(腌制)	优秀	食物	原版	Lv2
+GEAR_Salt	盐	优秀	食物	原版	Lv1
+GEAR_Sausages	香肠罐头	优秀	食物	mod Retro	
+GEAR_SausagesOpened	香肠罐头(开封)	优秀	食物	mod Retro	
+GEAR_SoyRamen	方便面	优秀	食物	mod FoodTKG	
+GEAR_SoyRamenCooked	煮面	优秀	食物	mod FoodTKG	
+GEAR_SugarA	糖	优秀	食物	mod Stalker	
+GEAR_SwedishMeatballs	瑞典肉丸罐头	优秀	食物	mod Retro	
+GEAR_SwedishMeatballsOpened	瑞典肉丸罐头(开封)	优秀	食物	mod Retro	
+GEAR_TomatoSoupCan	番茄汤	优秀	食物	原版	Lv1
+GEAR_TrailMix	综合果仁	优秀	食物	mod Retro	
+GEAR_UncookedBannock	薄饼(未烹饪)	优秀	食物	原版	Lv2
+GEAR_UncookedBearStew	M-熊肉乱炖(生)	优秀	食物	mod Ranger	
+GEAR_UncookedBlueberryPie	蓝莓派(生)	优秀	食物	mod Greenery	
+GEAR_UncookedForagerOmelette	打好的蛋液	优秀	食物	mod BF	
+GEAR_UncookedForagerStew	觅食者炖菜	优秀	食物	mod BF	
+GEAR_UncookedMooseStew	M-驼鹿肉乱炖(生)	优秀	食物	mod Ranger	
+GEAR_UncookedOil	食用油(未烹饪)	优秀	食物	原版	Lv1
+GEAR_UncookedOmelette	打好的蛋液	优秀	食物	mod BF	
+GEAR_UncookedPancake	薄煎饼(未烹饪)	优秀	食物	原版	Lv2
+GEAR_UncookedPieFishermans	码头工人的馅饼(未烹饪)	优秀	食物	原版	Lv2
+GEAR_UncookedPiePeach	桃肉馅饼(未烹饪)	优秀	食物	原版	Lv2
+GEAR_UncookedPieRabbit	兔肉馅饼(未烹饪)	优秀	食物	原版	Lv2
+GEAR_UncookedPieVenison	鹿肉馅饼(未烹饪)	优秀	食物	原版	Lv2
+GEAR_UncookedPorridge	燕麦粥(未烹饪)	优秀	食物	原版	Lv2
+GEAR_UncookedRosehipJam	生玫瑰果酱	优秀	食物	mod Stalker	
+GEAR_UncookedSoapberryPie	肥皂果派(生)	优秀	食物	mod Greenery	
+GEAR_UncookedSoupPotato	“最后手段”汤(未烹饪)	优秀	食物	原版	Lv2
+GEAR_UncookedSoupPtarmigan	搬运工浓汤(未烹饪)	优秀	食物	原版	Lv2
+GEAR_UncookedSoupRabbit	流浪汉肉汤(未烹饪)	优秀	食物	原版	Lv2
+GEAR_UncookedSpanishOmelette	打好的蛋液	优秀	食物	mod BF	
+GEAR_UncookedWolfStew	M-狼肉乱炖(生)	优秀	食物	mod Ranger	
+GEAR_Wax	动物油脂	优秀	食物	mod Candle	
+GEAR_applesaucePryanik	苹果糕饼	优秀	食物	mod CW	
+GEAR_bananaChips	香蕉脆片	优秀	食物	mod CW	
+GEAR_crabSnack	蟹肉麦片	优秀	食物	mod CW	
+GEAR_figConfiture	无花果酱	优秀	食物	mod CW	
+GEAR_glintwein	红酒料包(自改)	优秀	食物	mod CW	
+GEAR_honeyNuts	蜂蜜坚果	优秀	食物	mod CW	
+GEAR_icecreamCup	威化冰淇淋甜筒	优秀	食物	mod CW	
+GEAR_jubileeCookies	姜味曲奇	优秀	食物	mod CW	
+GEAR_kvass	格瓦斯	优秀	食物	mod CW	
+GEAR_lecso	Lecsó烩菜	优秀	食物	mod CW	
+GEAR_marinaraMackerel	酱汁鲭鱼	优秀	食物	mod CW	
+GEAR_mysteryCake	巧克力果仁威化饼	优秀	食物	mod CW	
+GEAR_nannasOats	祖母的燕麦	优秀	食物	mod CW	
+GEAR_nordShoreChocolate	黑巧克力(盐焦糖味)	优秀	食物	mod CW	
+GEAR_oatsBowl	燕麦粥	优秀	食物	mod CW	
+GEAR_pinenutBrittle	松子糖	优秀	食物	mod CW	
+GEAR_rahatLokum	土耳其软糖	优秀	食物	mod CW	
+GEAR_roastedAlmonds	烤杏仁	优秀	食物	mod CW	
+GEAR_strawberryPlombir	普隆别尔草莓雪糕	优秀	食物	mod CW	
+GEAR_tunaPate	金枪鱼肉酱	优秀	食物	mod CW	
+GEAR_AcornCoffeeCup	一杯橡实咖啡	优秀	饮料	原版	Lv2
+GEAR_AcornCoffeeCupSugar	橡实咖啡(糖)	优秀	饮料	mod Stalker	
+GEAR_AcornCoffeeTin	橡子咖啡罐	优秀	饮料	原版	
+GEAR_AuroraEnergyDrink	极光能量饮料	优秀	饮料	mod FoodTKG	
+GEAR_BeerBottle	啤酒	优秀	饮料	mod FoodTKG	
+GEAR_BurdockTea	牛蒡茶	优秀	饮料	原版	Lv2
+GEAR_CoffeeCup	一杯咖啡	优秀	饮料	原版	Lv2
+GEAR_CoffeeCupSugar	咖啡(糖)	优秀	饮料	mod Stalker	
+GEAR_CoffeeTin	咖啡罐	优秀	饮料	原版	Lv3
+GEAR_CupMilk	复水牛奶	优秀	饮料	mod FoodTKG	
+GEAR_GreenTeaCup	一杯花茶	优秀	饮料	原版	Lv3
+GEAR_GreenTeaCupJam	草药茶(果酱)	优秀	饮料	mod Stalker	
+GEAR_GreenTeaCupSugar	草药茶(糖)	优秀	饮料	mod Stalker	
+GEAR_GreenTeaPackage	花茶	优秀	饮料	原版	Lv3
+GEAR_HerbalTeaHomemade	自制的草药茶	优秀	饮料	mod Greenery	
+GEAR_HotCocoaCup	热可可	优秀	饮料	mod FoodTKG	
+GEAR_LichBirchBarkBeer	桦树皮啤酒	优秀	饮料	mod Brew	
+GEAR_LichBurdockMoonshine	牛蒡烈酒	优秀	饮料	mod Brew	
+GEAR_LichCatTailRum	香蒲朗姆酒	优秀	饮料	mod Brew	
+GEAR_LichReishiWhisky	灵芝威士忌	优秀	饮料	mod Brew	
+GEAR_LichRosehipWineAge1	1阶段陈酿玫瑰果酒	优秀	饮料	mod Brew	
+GEAR_MountainSoda	尖峰苏打水	优秀	饮料	mod FoodTKG	
+GEAR_MountainSodaPlastic	尖峰苏打水	优秀	饮料	mod FoodTKG	
+GEAR_PineNeedleTea	松针茶	优秀	饮料	mod Pine	
+GEAR_RedWineBottle	红酒	优秀	饮料	mod FoodTKG	
+GEAR_RoseHipTea	玫瑰茶	优秀	饮料	原版	Lv1
+GEAR_SodaEnergy	动起来！能量饮料	优秀	饮料	原版	Lv2
+GEAR_SoyMilk	豆奶	优秀	饮料	mod Retro	
+GEAR_Water1000ml	净水(1L)	优秀	饮料	原版	Lv2
+GEAR_Water500ml	净水(500ml)	优秀	饮料	原版	Lv2
+GEAR_WaterBottle	水瓶	优秀	饮料	原版	
+GEAR_WaterSupplyPotable	饮用水	优秀	饮料	原版	Lv2
+GEAR_hotSpringSoda	温泉苏打水	优秀	饮料	mod CW	
+GEAR_latteDrops	水滴咖啡	优秀	饮料	mod CW	
+GEAR_solitudeCider	野苹果酒	优秀	饮料	mod CW	
+GEAR_CashBundle	钞票	普通		原版	Lv1
+GEAR_FilmBoxBW	FastFilm-500BW 黑白胶片	普通		原版	Lv2
+GEAR_FilmBoxColour	FastFilm-500 彩色胶片	普通		原版	Lv3
+GEAR_FilmBoxSepia	FastFilm-500SPA 棕褐胶片	普通		原版	Lv3
+GEAR_GoldCross	教堂圣器	普通	其他	mod Story	
+GEAR_LichStackNewspaper1	打包报纸卷	普通	其他	mod Stack	
+GEAR_LichStackNewspaper2	打包纸堆	普通	其他	mod Stack	
+GEAR_LichStackNewspaper3	打包报纸	普通	其他	mod Stack	
+GEAR_RosaryA	神圣念珠	普通	其他	mod Story	
+GEAR_SignL	神秘的路标	普通	其他	mod Lithar	
+GEAR_CigarettePackMarlboro	万宝路香烟	普通	医疗	mod Stalker	
+GEAR_CigarettePackOld	好彩香烟	普通	医疗	mod Stalker	
+GEAR_ccCocoaCard	热可可纪念卡(自改)	普通	医疗	mod Cards	
+GEAR_ccPumpkinSoupCard	南瓜汤纪念卡(自改)	普通	医疗	mod Cards	
+GEAR_CattailPlant	香蒲	普通	工具	原版	
+GEAR_CattailStalk	香蒲茎	普通	工具	原版	Lv1
+GEAR_CattailTinder	香蒲的顶穗	普通	工具	原版	Lv1
+GEAR_DirtBox	盒装泥土	普通	工具	mod Greenery	
+GEAR_DirtCan	罐装泥土	普通	工具	mod Greenery	
+GEAR_DirtHumid	盒装泥土(加湿器)	普通	工具	mod Greenery	
+GEAR_DirtPot	盆栽泥土	普通	工具	mod Greenery	
+GEAR_Hook	钩子	普通	工具	原版	Lv1
+GEAR_Line	鱼线	普通	工具	原版	Lv1
+GEAR_MapBIDeco	荒凉水湾地图	普通	工具	mod Camp	
+GEAR_MapCHDeco	沿海公路地图	普通	工具	mod Camp	
+GEAR_MapMLDeco	大熊岛地理杂志	普通	工具	mod Camp	
+GEAR_MapMTDeco	米尔顿地图	普通	工具	mod Camp	
+GEAR_MapPVDeco	怡人山谷地图	普通	工具	mod Camp	
+GEAR_PillowDZ01	垫子	普通	工具	mod Cushion	
+GEAR_PillowDZ02	垫子	普通	工具	mod Cushion	
+GEAR_PillowDZ03	垫子	普通	工具	mod Cushion	
+GEAR_PillowDZ04	垫子	普通	工具	mod Cushion	
+GEAR_PillowDZ05	垫子	普通	工具	mod Cushion	
+GEAR_PillowDZ06	垫子	普通	工具	mod Cushion	
+GEAR_PillowDZ07	垫子	普通	工具	mod Cushion	
+GEAR_PillowDZ08	垫子	普通	工具	mod Cushion	
+GEAR_PillowDZ09	垫子	普通	工具	mod Cushion	
+GEAR_PillowDZ10	垫子	普通	工具	mod Cushion	
+GEAR_PillowDZ11	垫子	普通	工具	mod Cushion	
+GEAR_PillowDZ12	垫子	普通	工具	mod Cushion	
+GEAR_PillowDZ13	垫子	普通	工具	mod Cushion	
+GEAR_PillowDZ14	垫子	普通	工具	mod Cushion	
+GEAR_RockCacheA	石头堆	普通	工具	原版	
+GEAR_1FirConeFuel	冷杉果(外壳)	普通	材料	mod BF	
+GEAR_4FirCone	冷杉果	普通	材料	mod BF	
+GEAR_BarkTinder	桦树皮	普通	材料	原版	Lv1
+GEAR_BirchSapling	绿色桦树苗	普通	材料	原版	Lv1
+GEAR_BirchWood	桦树木	普通	材料	mod Wood	
+GEAR_BirchWoodPile5	一堆桦树木x5	普通	材料	mod Wood	
+GEAR_BirdFeatherBundle	乌鸦羽毛	普通	材料	mod BF	
+GEAR_Bones	碎骨片	普通	材料	mod Toolbox	
+GEAR_BookBigOne	当地传说-湖主(Mod)	普通	材料	mod Story	
+GEAR_BookGhostStag	当地传说-幽灵鹿(Mod)	普通	材料	mod Story	
+GEAR_BookLostCave	当地传说-迷失的洞穴(Mod)	普通	材料	mod Story	
+GEAR_BookSasquatch	当地传说-北美野人(Mod)	普通	材料	mod Story	
+GEAR_CattailPile005	香蒲茎干打包X5	普通	材料	mod Piles	
+GEAR_CeramicShards	黏土碎片	普通	材料	mod Toolbox	
+GEAR_Charcoal	木炭	普通	材料	原版	Lv1
+GEAR_CharcoalPile010	木炭打包X10	普通	材料	mod Piles	
+GEAR_Cloth	布料	普通	材料	原版	Lv1
+GEAR_CrumpledPaper	废纸	普通	材料	mod Toolbox	
+GEAR_DeadMatter	有机废物	普通	材料	mod Greenery	
+GEAR_DeadPlanterBig	枯萎的植物	普通	材料	mod Greenery	
+GEAR_DeadPlanterBox	枯萎的植物	普通	材料	mod Greenery	
+GEAR_DeadPlanterHumid	枯萎的植物	普通	材料	mod Greenery	
+GEAR_DeadPlanterSmall	枯萎的植物	普通	材料	mod Greenery	
+GEAR_GlassShards	玻璃碎片	普通	材料	mod Toolbox	
+GEAR_HaliteSmall	石盐(小)	普通	材料	mod BF	
+GEAR_Hardwood	硬木	普通	材料	原版	Lv1
+GEAR_HardwoodPile005	冷杉木打包X5	普通	材料	mod Piles	
+GEAR_LichStackRecycledcan	打包空罐	普通	材料	mod Stack	
+GEAR_LichStackSpraypaint	打包油漆喷灌	普通	材料	mod Stack	
+GEAR_MapleSapling	绿色枫树苗	普通	材料	原版	Lv2
+GEAR_NestEmpty	空巢穴	普通	材料	mod BF	
+GEAR_Newsprint	报纸	普通	材料	原版	Lv1
+GEAR_NewsprintInsulation	报纸保暖填充	普通	材料	原版	
+GEAR_NewsprintRoll	一卷报纸	普通	材料	原版	Lv2
+GEAR_OldWoolScarf	旧羊毛围巾	普通	材料	原版	
+GEAR_PaperStack	纸堆	普通	材料	原版	Lv1
+GEAR_PineNeedle	松针	普通	材料	mod Pine	
+GEAR_PineNeedleDried	风干的松针	普通	材料	mod Pine	
+GEAR_PlantWater	雨滴	普通	材料	mod Greenery	
+GEAR_PlanterBig	栽培盆	普通	材料	mod Greenery	
+GEAR_PlanterBlueberries1	蓝莓种植器(成熟)	普通	材料	mod Greenery	
+GEAR_PlanterBlueberries2	蓝莓种植器(幼苗)	普通	材料	mod Greenery	
+GEAR_PlanterBox	金属盒种植器	普通	材料	mod Greenery	
+GEAR_PlanterBurdockBig1	牛蒡盆栽(成熟)	普通	材料	mod Greenery	
+GEAR_PlanterBurdockBig2	牛蒡盆栽(幼苗)	普通	材料	mod Greenery	
+GEAR_PlanterBurdockSmall1	牛蒡栽培罐(成熟)	普通	材料	mod Greenery	
+GEAR_PlanterBurdockSmall2	牛蒡栽培罐(幼苗)	普通	材料	mod Greenery	
+GEAR_PlanterCarrot1	胡萝卜种植器(成熟)	普通	材料	mod Greenery	
+GEAR_PlanterCarrot2	胡萝卜种植器(幼苗)	普通	材料	mod Greenery	
+GEAR_PlanterCattailBig1	香蒲盆栽(成熟)	普通	材料	mod Greenery	
+GEAR_PlanterCattailBig2	香蒲盆栽(幼苗)	普通	材料	mod Greenery	
+GEAR_PlanterCattailSmall1	香蒲栽培罐(成熟)	普通	材料	mod Greenery	
+GEAR_PlanterCattailSmall2	香蒲栽培罐(幼苗)	普通	材料	mod Greenery	
+GEAR_PlanterHerbs1	草本植物种植器(成熟)	普通	材料	mod Greenery	
+GEAR_PlanterHerbs2	草本植物种植器(幼苗)	普通	材料	mod Greenery	
+GEAR_PlanterHumid	金属盒种植器(加湿器)	普通	材料	mod Greenery	
+GEAR_PlanterOldmanBig1	胡须地衣盆栽(成熟)	普通	材料	mod Greenery	
+GEAR_PlanterOldmanBig2	胡须地衣盆栽(幼苗)	普通	材料	mod Greenery	
+GEAR_PlanterPotato1	土豆种植器(成熟)	普通	材料	mod Greenery	
+GEAR_PlanterPotato2	土豆种植器(幼苗)	普通	材料	mod Greenery	
+GEAR_PlanterReishiBig1	灵芝盆栽(成熟)	普通	材料	mod Greenery	
+GEAR_PlanterReishiBig2	灵芝盆栽(幼苗)	普通	材料	mod Greenery	
+GEAR_PlanterRosehipBig1	玫瑰果盆栽(成熟)	普通	材料	mod Greenery	
+GEAR_PlanterRosehipBig2	玫瑰果盆栽(幼苗)	普通	材料	mod Greenery	
+GEAR_PlanterRosehipSmall1	玫瑰果栽培罐(成熟)	普通	材料	mod Greenery	
+GEAR_PlanterRosehipSmall2	玫瑰果栽培罐(幼苗)	普通	材料	mod Greenery	
+GEAR_PlanterSmall	栽培罐	普通	材料	mod Greenery	
+GEAR_PlanterSoapberries1	肥皂果种植器(成熟)	普通	材料	mod Greenery	
+GEAR_PlanterSoapberries2	肥皂果种植器(幼苗)	普通	材料	mod Greenery	
+GEAR_ReclaimedWoodB	回收木材	普通	材料	原版	Lv1
+GEAR_RecycledCan	回收的空罐	普通	材料	原版	Lv1
+GEAR_Rock	岩石	普通	材料	mod Toolbox	
+GEAR_RwoodPile010	旧木材打包X10	普通	材料	mod Piles	
+GEAR_ScrapPlastic	废塑料	普通	材料	mod Toolbox	
+GEAR_SkullBear	熊头骨	普通	材料	mod BF	
+GEAR_SkullStag	鹿头骨	普通	材料	mod BF	
+GEAR_SnowDog	S-雪狗	普通	材料	mod Snow	
+GEAR_SnowMen	S-雪人	普通	材料	mod Snow	
+GEAR_SnowMister	S-雪先生	普通	材料	mod Snow	
+GEAR_Softwood	软木	普通	材料	原版	Lv1
+GEAR_SoftwoodPile005	雪松木打包X5	普通	材料	mod Piles	
+GEAR_SoilBag	土壤	普通	材料	mod Greenery	
+GEAR_Stick	树枝	普通	材料	原版	Lv1
+GEAR_StickPile010	树枝打包X10	普通	材料	mod Piles	
+GEAR_StickPile050	树枝打包X50	普通	材料	mod Piles	
+GEAR_StickPile050F	树枝横向打包X50	普通	材料	mod Piles	
+GEAR_StonePile010	石块打包X10	普通	材料	mod Piles	
+GEAR_Tinder	火绒	普通	材料	原版	Lv1
+GEAR_Wick	烛心	普通	材料	mod Candle	
+GEAR_ccAirlinerBrandCard	航运公司会员卡(自改)	普通	材料	mod Cards	
+GEAR_ccBananaCard	香蕉纪念卡	普通	材料	mod Cards	
+GEAR_ccBananaCard_Foil	金箔香蕉纪念卡	普通	材料	mod Cards	
+GEAR_ccBananaCard_Holo	全息香蕉纪念卡	普通	材料	mod Cards	
+GEAR_ccBearCard	大熊队交易卡	普通	材料	mod Cards	
+GEAR_ccBearCard_Holo	大熊队全息交易卡	普通	材料	mod Cards	
+GEAR_ccCaptainCard	船长钥匙卡(自改)	普通	材料	mod Cards	
+GEAR_ccCardBase	空白卡牌	普通	材料	mod Cards	
+GEAR_ccConemanCard	科尼人卡牌(自改)	普通	材料	mod Cards	
+GEAR_ccDarkwalkerCard	暗行者卡牌(自改)	普通	材料	mod Cards	
+GEAR_ccDarkwalkerCard_Foil	金箔暗行者卡牌(自改)	普通	材料	mod Cards	
+GEAR_ccDeadmanCard	亡灵卡	普通	材料	mod Cards	
+GEAR_ccDeadmanCard_Holo	亡灵全息卡	普通	材料	mod Cards	
+GEAR_ccInhabitantCard	居民卡(自改)	普通	材料	mod Cards	
+GEAR_ccModderBooster	卡牌模组拓展包	普通	材料	mod Cards	
+GEAR_ccOldBearCard	大熊卡牌	普通	材料	mod Cards	
+GEAR_ccRifleCard	步枪交易卡(自改)	普通	材料	mod Cards	
+GEAR_ccSmokingCard	吸烟警示卡(自改)	普通	材料	mod Cards	
+GEAR_ccStoriesIBooster	故事1卡牌扩展包	普通	材料	mod Cards	
+GEAR_ccTKGCard	TKG卡牌(自改)	普通	材料	mod Cards	
+GEAR_ccTLDevCard	TLDev签名卡(自改)	普通	材料	mod Cards	
+GEAR_ccTOTTCard	工具交易卡(自改)	普通	材料	mod Cards	
+GEAR_ccTourGuideCard	导游纪念卡(自改)	普通	材料	mod Cards	
+GEAR_ccTransportCard	草原兔航运商务卡(自改)	普通	材料	mod Cards	
+GEAR_ccWolfBrandCard	林狼主题卡(自改)	普通	材料	mod Cards	
+GEAR_ccWolfBrandCard_Holo	林狼全息主题卡(自改)	普通	材料	mod Cards	
+GEAR_BrokenArrow	断箭	普通	武器	原版	Lv2
+GEAR_BrokenArrowHardened	破损淬火箭	普通	武器	原版	Lv1
+GEAR_SprayPaintCan	喷漆罐	普通	武器	原版	Lv1
+GEAR_Stone	石块	普通	武器	原版	Lv1
+GEAR_BaseballCap	棒球帽	普通	衣物	原版	Lv1
+GEAR_BasicBoots	基本靴子	普通	衣物	原版	Lv1
+GEAR_BasicGloves	基本手套	普通	衣物	原版	Lv1
+GEAR_BasicShoes	基础鞋	普通	衣物	原版	Lv1
+GEAR_CottonHoodie	连帽衫	普通	衣物	原版	Lv1
+GEAR_CottonScarf	棉布围巾	普通	衣物	原版	Lv1
+GEAR_CottonShirt	礼服衬衫	普通	衣物	原版	Lv1
+GEAR_CottonSocks	运动袜	普通	衣物	原版	Lv1
+GEAR_ImprovisedFaceMask	口罩	普通	衣物	mod TKG	
+GEAR_ImprovisedHat	简易头巾	普通	衣物	原版	Lv1
+GEAR_ImprovisedMittens	简易扎手带	普通	衣物	原版	Lv1
+GEAR_Jeans	牛仔裤	普通	衣物	原版	Lv1
+GEAR_LeatherShoes	皮鞋	普通	衣物	原版	Lv1
+GEAR_LichPlush1	毛绒玩偶 1	普通	衣物	mod Plushie	
+GEAR_LichPlush10	毛绒玩偶 10	普通	衣物	mod Plushie	
+GEAR_LichPlush11	毛绒玩偶 11	普通	衣物	mod Plushie	
+GEAR_LichPlush12	毛绒玩偶 12	普通	衣物	mod Plushie	
+GEAR_LichPlush13	毛绒玩偶 13	普通	衣物	mod Plushie	
+GEAR_LichPlush2	毛绒玩偶 2	普通	衣物	mod Plushie	
+GEAR_LichPlush3	毛绒玩偶 3	普通	衣物	mod Plushie	
+GEAR_LichPlush4	毛绒玩偶 4	普通	衣物	mod Plushie	
+GEAR_LichPlush5	毛绒玩偶 5	普通	衣物	mod Plushie	
+GEAR_LichPlush6	毛绒玩偶 6	普通	衣物	mod Plushie	
+GEAR_LichPlush7	毛绒玩偶 7	普通	衣物	mod Plushie	
+GEAR_LichPlush8	毛绒玩偶 8	普通	衣物	mod Plushie	
+GEAR_LichPlush9	毛绒玩偶 9	普通	衣物	mod Plushie	
+GEAR_NewsprintBootStuffing	报纸鞋衬	普通	衣物	原版	
+GEAR_PlaidShirt	格子花呢上衣	普通	衣物	原版	Lv1
+GEAR_PrisonPants	囚裤	普通	衣物	mod TKG	
+GEAR_PrisonShirt	囚服	普通	衣物	mod TKG	
+GEAR_TShirtCM	T 恤衫(CM)	普通	衣物	原版	Lv1
+GEAR_TShirtGBI	T 恤衫(GBI)	普通	衣物	原版	Lv1
+GEAR_TShirtSnappy	T 恤衫(Snappy)	普通	衣物	原版	Lv1
+GEAR_TeeShirt	T 恤衫	普通	衣物	原版	Lv1
+GEAR_BookA	书 A	普通	装饰	原版	Lv1
+GEAR_BookB	书 B	普通	装饰	原版	Lv1
+GEAR_BookBopen	书 B(翻开)	普通	装饰	原版	Lv1
+GEAR_BookC	书 C	普通	装饰	原版	Lv1
+GEAR_BookD	书 D	普通	装饰	原版	Lv1
+GEAR_BookE	书 E	普通	装饰	原版	Lv1
+GEAR_BookEopen	书 E(翻开)	普通	装饰	原版	Lv1
+GEAR_BookF	书 F	普通	装饰	原版	Lv1
+GEAR_BookFopen	书 F(翻开)	普通	装饰	原版	Lv1
+GEAR_BookG	书 G	普通	装饰	原版	Lv1
+GEAR_BookH	书 H	普通	装饰	原版	Lv1
+GEAR_BookHopen	书 H(翻开)	普通	装饰	原版	Lv1
+GEAR_BookI	书 I	普通	装饰	原版	Lv1
+GEAR_BookLabE_01	实验室书籍01	普通	装饰	原版	Lv1
+GEAR_BookLabE_02	实验室书籍02	普通	装饰	原版	Lv1
+GEAR_BookLabE_03	实验室书籍03	普通	装饰	原版	Lv1
+GEAR_BookLabE_Open_01	实验室书籍(翻开)01	普通	装饰	原版	Lv1
+GEAR_BookManual	手册	普通	装饰	原版	Lv1
+GEAR_Film_Box_BW	黑白胶卷盒	普通	装饰	原版	
+GEAR_Film_Box_Colour	彩色胶卷盒	普通	装饰	原版	
+GEAR_Film_Box_Sepia	棕褐胶卷盒	普通	装饰	原版	
+GEAR_TV_CRT	显像管电视	普通	装饰	mod TV	
+GEAR_TV_LCD	液晶电视	普通	装饰	mod TV	
+GEAR_TV_WALL	壁挂液晶电视	普通	装饰	mod TV	
+GEAR_candleBlueA	蜡烛熊-钓鱼	普通	装饰	mod CW	
+GEAR_candleBlueB	蜡烛熊-便秘	普通	装饰	mod CW	
+GEAR_candleBlueC	蜡烛熊-老友	普通	装饰	mod CW	
+GEAR_candleBlueD	蜡烛熊-打牌	普通	装饰	mod CW	
+GEAR_candleGreenA	蜡烛熊-打雪仗	普通	装饰	mod CW	
+GEAR_candleGreenB	蜡烛熊-节日	普通	装饰	mod CW	
+GEAR_candleGreenC	蜡烛熊-美食	普通	装饰	mod CW	
+GEAR_candleGreenD	蜡烛熊-舞蹈家	普通	装饰	mod CW	
+GEAR_candlePurpleA	蜡烛熊-堆雪人	普通	装饰	mod CW	
+GEAR_candlePurpleB	蜡烛熊-学者	普通	装饰	mod CW	
+GEAR_candlePurpleC	蜡烛熊-搬运	普通	装饰	mod CW	
+GEAR_candlePurpleD	蜡烛熊-礼物盒	普通	装饰	mod CW	
+GEAR_candleRedA	蜡烛熊-恶作剧	普通	装饰	mod CW	
+GEAR_candleRedB	蜡烛熊-闹事者	普通	装饰	mod CW	
+GEAR_candleRedC	蜡烛熊-龙裔	普通	装饰	mod CW	
+GEAR_candleRedD	蜡烛熊-奔月	普通	装饰	mod CW	
+GEAR_cardBlueA	卡片-钓鱼	普通	装饰	mod CW	
+GEAR_cardBlueB	卡片-便秘	普通	装饰	mod CW	
+GEAR_cardBlueC	卡片-老友	普通	装饰	mod CW	
+GEAR_cardBlueD	卡片-打牌	普通	装饰	mod CW	
+GEAR_cardGreenA	卡片-打雪仗	普通	装饰	mod CW	
+GEAR_cardGreenB	卡片-节日	普通	装饰	mod CW	
+GEAR_cardGreenC	卡片-美食	普通	装饰	mod CW	
+GEAR_cardGreenD	卡片-舞蹈家	普通	装饰	mod CW	
+GEAR_cardPurpleA	卡片-堆雪人	普通	装饰	mod CW	
+GEAR_cardPurpleB	卡片-学者	普通	装饰	mod CW	
+GEAR_cardPurpleC	卡片-搬运	普通	装饰	mod CW	
+GEAR_cardPurpleD	卡片-礼物盒	普通	装饰	mod CW	
+GEAR_cardRedA	卡片-恶作剧	普通	装饰	mod CW	
+GEAR_cardRedB	卡片-闹事者	普通	装饰	mod CW	
+GEAR_cardRedC	卡片-龙裔	普通	装饰	mod CW	
+GEAR_cardRedD	卡片-奔月	普通	装饰	mod CW	
+GEAR_1FirSeedBunchRoasted	烤种子(堆叠)	普通	食物	mod BF	
+GEAR_2FirConeSeedsRoasted	烤种子	普通	食物	mod BF	
+GEAR_2FirSeedBunch	冷杉果种子(堆叠)	普通	食物	mod BF	
+GEAR_3FirConeSeeds	冷杉果种子	普通	食物	mod BF	
+GEAR_Acorn	橡实	普通	食物	原版	Lv2
+GEAR_AcornGrounds	橡实渣	普通	食物	原版	Lv2
+GEAR_Broth	肉汤	普通	食物	原版	Lv1
+GEAR_Burdock	牛蒡根	普通	食物	原版	Lv1
+GEAR_Carrot	胡萝卜	普通	食物	原版	Lv1
+GEAR_CatTailStalk	香蒲的茎干	普通	食物	原版	
+GEAR_KetchupChips	番茄酱薯条	普通	食物	原版	Lv1
+GEAR_MeatFat_Spoiled	变质动物脂肪	普通	食物	原版	
+GEAR_PineNeedlePrepared	制好的松针	普通	食物	mod Pine	
+GEAR_Potato	土豆	普通	食物	原版	Lv2
+GEAR_RoseHip	玫瑰果	普通	食物	原版	Lv2
+GEAR_UncookedBroth	肉汤(未烹饪)	普通	食物	原版	Lv1
+GEAR_Soda	汽水	普通	饮料	原版	Lv1
+GEAR_SodaGrape	葡萄汽水	普通	饮料	原版	Lv2
+GEAR_SodaOrange	橙子汽水	普通	饮料	原版	Lv1
+GEAR_WaterSupplyNotPotable	非饮用水	普通	饮料	原版	Lv1

@@ -1,0 +1,95 @@
+using System;
+using System.Collections.Generic;
+using System.Text;
+using Il2Cpp;
+using Il2CppSystem.Collections.Generic;
+using RarityRework.Enums;
+using RarityRework.Managers;
+using MelonLoader;
+using UnityEngine;
+
+namespace RarityRework.Utilities;
+
+internal static class Logging
+{
+	internal static void Log(string message, params object[] parameters)
+	{
+		Melon<Mod>.Logger.Msg(message, parameters);
+	}
+
+	internal static void LogDebug(string message, params object[] parameters)
+	{
+		Melon<Mod>.Logger.Msg("[DEBUG] " + message, parameters);
+	}
+
+	internal static void LogWarning(string message, params object[] parameters)
+	{
+		Melon<Mod>.Logger.Warning(message, parameters);
+	}
+
+	internal static void LogError(string message, params object[] parameters)
+	{
+		Melon<Mod>.Logger.Error(message, parameters);
+	}
+
+	internal static void LogException(string message, Exception exception, params object[] parameters)
+	{
+		//IL_003a: Unknown result type (might be due to invalid IL or missing references)
+		StringBuilder stringBuilder = new StringBuilder();
+		stringBuilder.Append("[EXCEPTION]");
+		stringBuilder.Append(message);
+		stringBuilder.AppendLine(exception.Message);
+		Melon<Mod>.Logger.Error(stringBuilder.ToString(), new object[2]
+		{
+			Color.red,
+			parameters
+		});
+	}
+
+	internal static void LogItemsWithoutRarities()
+	{
+		System.Collections.Generic.HashSet<string> hashSet = new System.Collections.Generic.HashSet<string>(new string[203]
+		{
+			"GEAR_WolfCarcass", "GEAR_NewsprintBootStuffing", "GEAR_NewsprintInsulation", "GEAR_TechnicalBackpack", "GEAR_BoltCutters", "GEAR_CookingPotDummy", "GEAR_SpearHead", "GEAR_BearSpear", "GEAR_BearSpearBroken", "GEAR_BearSpearBrokenStory",
+			"GEAR_BearSpearStory", "GEAR_GoldNugget", "Gear_Travois_Dummy", "GEAR_AccelerantGunpowder", "GEAR_CattailPlant", "GEAR_MountainTownFarmKey", "GEAR_PostCard_AC_CentralSpire", "GEAR_PostCard_AC_TopShelf", "GEAR_PostCard_BI_EchoOne-RadioTower", "GEAR_PostCard_BR_Canyon",
+			"GEAR_PostCard_BR_Prison", "GEAR_PostCard_CR_AbandonedLookout", "GEAR_PostCard_FM_MuskegOverlook", "GEAR_PostCard_FM_ShortwaveTower", "GEAR_PostCard_ML_ForestryLookout", "GEAR_PostCard_ML_LakeOverlook", "GEAR_PostCard_MT_RadioTower", "GEAR_PostCard_PV_SignalHill", "GEAR_PostCard_RV_Pensive", "GEAR_PostCard_TM_AndresPeak",
+			"GEAR_PostCard_TM_TailSection", "GEAR_BackerNote1A", "GEAR_BackerNote1B", "GEAR_BackerNote1C", "GEAR_BackerNote2A", "GEAR_BackerNote2B", "GEAR_BackerNote2C", "GEAR_BackerNote3A", "GEAR_BackerNote3B", "GEAR_BackerNote3C",
+			"GEAR_BackerNote4A", "GEAR_BackerNote4B", "GEAR_BackerNote4C", "GEAR_BlackrockAdminNote", "GEAR_BlackrockAmmoRoomNote", "GEAR_BlackrockCodeNote", "GEAR_BlackrockSecurityNote", "GEAR_BlackrockTowerNote", "GEAR_CanneryCodeNote", "GEAR_CanneryMemo",
+			"GEAR_CannerySurvivalPath", "GEAR_CanyonClimbersCaveNote", "GEAR_CanyonDeadClimberNote", "GEAR_CanyonFishingHutJournal", "GEAR_CanyonMinersNote", "GEAR_ClimbersJournal", "GEAR_DarkwalkerDiary1", "GEAR_DarkwalkerDiary2", "GEAR_DarkwalkerDiary3", "GEAR_DarkwalkerDiary4",
+			"GEAR_DarkwalkerDiary5", "GEAR_DarkwalkerDiary6", "GEAR_DarkwalkerDiary7", "GEAR_DarkwalkerDiary8", "GEAR_DarkwalkerDiary9", "GEAR_DarkwalkerDiary10", "GEAR_DarkwalkerDiary11", "GEAR_DarkwalkerID", "GEAR_DeadmanNote1", "GEAR_DeadmanNote2",
+			"GEAR_DeadmanNote3", "GEAR_DeadmanNote4", "GEAR_DeadmanNote5", "GEAR_VisorNoteML1", "GEAR_VisorNoteFM1", "GEAR_VisorNoteFM2", "GEAR_VisorNoteFM3", "GEAR_VisorNoteBR1", "GEAR_VisorNoteBR2", "GEAR_VisorNoteBR3",
+			"GEAR_BRKey1", "GEAR_BRKey2", "GEAR_BIKey1", "GEAR_BIKey2", "GEAR_VisorNoteBI1", "GEAR_VisorNoteBI2", "GEAR_VisorNoteBI3", "GEAR_VisorNoteMT1", "GEAR_VisorNoteMT2", "GEAR_VisorNoteMT3",
+			"GEAR_VisorNoteMTKey1", "GEAR_VisorNoteHRV1", "GEAR_VisorNoteHRV2", "GEAR_VisorNoteHRV3", "GEAR_VisorNoteHRVKey1", "GEAR_VisorNoteBlackrock1", "GEAR_VisorNoteBlackrock2", "GEAR_VisorNoteBlackrock3", "GEAR_VisorNoteBlackrockKey3", "GEAR_VisorNoteAC1",
+			"GEAR_VisorNoteAC2", "GEAR_VisorNoteAC3", "GEAR_VisorNoteACKey1", "GEAR_VisorNoteDP1", "GEAR_VisorNoteDP2", "GEAR_VisorNoteDP3", "GEAR_VisorNoteDPKey1", "GEAR_VisorNoteTWM1", "GEAR_VisorNoteTWM2", "GEAR_VisorNotePV1",
+			"GEAR_VisorNotePV2", "GEAR_VisorNotePV3", "GEAR_VisorNoteML2", "GEAR_VisorNoteML3", "GEAR_VisorNoteMLKey2", "GEAR_VisorNoteMLKey3", "GEAR_VisorNoteCH1", "GEAR_VisorNoteCH2", "GEAR_AirfieldCargomasterNote", "GEAR_AirfieldHangarNote",
+			"GEAR_AirfieldJunkerNote", "GEAR_AirfieldTowerNote", "GEAR_AirfieldCabinNote", "GEAR_AirfieldControlNote", "GEAR_AirfieldGeologistNote1", "GEAR_AirfieldSecChiefNote1", "GEAR_Tale1ChiefNote1", "GEAR_Tale1ChiefNote2", "GEAR_Tale1ChiefNote3", "GEAR_Tale1ChiefNote4",
+			"GEAR_Tale1ChiefNote5", "GEAR_Tale1Transcript1", "GEAR_Tale1Transcript2", "GEAR_Tale1Transcript3", "GEAR_Tale1Transcript4", "GEAR_Logbook_A01", "GEAR_Logbook_A02", "GEAR_Logbook_A03", "GEAR_Logbook_A04", "GEAR_RecipeCardFishcakes",
+			"GEAR_RecipeCardPancakePeach", "GEAR_RecipeCardPieFishermans", "GEAR_RecipeCardPieForagers", "GEAR_RecipeCardPieMeat", "GEAR_RecipeCardPiePredator", "GEAR_RecipeCardPorridgeFruit", "GEAR_RecipeCardStewMeat", "GEAR_RecipeCardStewVegetables", "GEAR_LogbookTale2_A01", "GEAR_LogbookTale2_A02",
+			"GEAR_LogbookTale2_A03", "GEAR_LogbookTale2_A04", "GEAR_ClipBoardTale2_A", "GEAR_ClipBoardTale2_B", "GEAR_Tale2GeologistNote1", "GEAR_Tale2_CorpseKey", "GEAR_Tale2RudigerNote1", "GEAR_Tale2SecurityChiefBones", "GEAR_LangstonMineKey1", "GEAR_Tale2_LockerKey",
+			"GEAR_LangstonMineLockboxKey1", "GEAR_ClipBoardTale2_C", "GEAR_ClipBoardTale2_D", "GEAR_MineRegionBunkhouseNote", "GEAR_MineRegionPumphouseNote", "GEAR_PostCard_Tale02", "GEAR_PostCard_MR_Settlement", "GEAR_PostCard_MR_Window", "GEAR_Tale3ForemanLog1", "GEAR_Tale3ForemanLog2",
+			"GEAR_Tale3ForemanLog3", "GEAR_Tale3RudigerNote1", "GEAR_Tale3RudigerNote2", "GEAR_Tale3RudigerNote3", "GEAR_Tale3ForemanLog4", "GEAR_Tale3_ForemanRefugeKey", "GEAR_Tale_03_PostCard_01", "GEAR_Tale_03_PostCard_02", "GEAR_Tale_03_PostCard_03", "GEAR_Tale_03_PostCard_04",
+			"GEAR_Tale_03_PostCard_05", "GEAR_SecurityChiefID", "GEAR_MountainPassAvalancheNote", "GEAR_MountainPassWeatherStationNote", "GEAR_Rudiger_Watch", "GEAR_PostCard_MP_OgresTeardrop", "GEAR_PostCard_MP_BrokenRoad", "GEAR_RecipeCardSoupPotato", "GEAR_RecipeCardSoupRabbit", "GEAR_RecipeCardBarPemmican",
+			"GEAR_BunkerPapers1", "GEAR_BunkerPapers2", "GEAR_BunkerPapers3", "GEAR_BunkerPapers4", "GEAR_BunkerSchematic_A", "GEAR_BunkerSchematic_B", "GEAR_BunkerSchematic_C", "GEAR_CougarPoster1", "GEAR_CougarPoster2", "GEAR_NaturalistNote1",
+			"GEAR_NaturalistNote2", "GEAR_TraderWyattBonesNote", "GEAR_Trader_Pamphlet"
+		});
+		var enumerator = ConsoleManager.m_SearchStringToGearNames._values.GetEnumerator();
+		while (enumerator.MoveNext())
+		{
+			string current = enumerator.Current;
+			if (current.StartsWith("GEAR_") && !hashSet.Contains(current) && RarityManager.GetRarity(current) == Rarities.None)
+			{
+				Log("Item '" + current + "' does not have an assigned rarity.");
+			}
+		}
+	}
+
+	internal static void LogDecorationNames()
+	{
+		var enumerator = DecorationItem.s_DecorationItems.GetEnumerator();
+		while (enumerator.MoveNext())
+		{
+			string displayNameLocId = enumerator.Current.DisplayNameLocId;
+			Log("Decoration Item Name: " + displayNameLocId);
+		}
+	}
+}
