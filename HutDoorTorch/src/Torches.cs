@@ -173,6 +173,7 @@ internal static class Torches
         foreach (var mb in copy.GetComponentsInChildren<MonoBehaviour>(true))
         {
             if (mb.TryCast<LightTracking>() != null || mb.TryCast<LightRandomIntensity>() != null || mb.TryCast<ParticleRandomEmission>() != null) continue;
+            if (mb.GetComponent<Light>() != null) continue;
             Object.DestroyImmediate(mb);
         }
         foreach (var rb in copy.GetComponentsInChildren<Rigidbody>(true)) Object.DestroyImmediate(rb);
@@ -192,9 +193,15 @@ internal static class Torches
         var b = mf != null && mf.sharedMesh != null ? mf.sharedMesh.bounds : new Bounds(Vector3.zero, new Vector3(0.05f, 0.6f, 0.05f));
         var m2c = copy.transform.worldToLocalMatrix * meshGo.transform.localToWorldMatrix;
         Vector3 center = m2c.MultiplyPoint(b.center);
-        Vector3 axis = fxGo != null ? (copy.transform.InverseTransformPoint(fxGo.transform.position) - center).normalized
-                                    : m2c.MultiplyVector(Vector3.up).normalized;
+        // 火把模型是顺着最长的那条边放的,火头那一端就是"上"
+        int lng = b.size.x >= b.size.y ? (b.size.x >= b.size.z ? 0 : 2) : (b.size.y >= b.size.z ? 1 : 2);
+        var la = Vector3.zero; la[lng] = 1f;
+        Vector3 axis = m2c.MultiplyVector(la).normalized;
+        var flame = fxGo != null ? FindDeep(fxGo.transform, "TorchFlame") ?? fxGo.transform : null;
+        if (flame != null && Vector3.Dot(copy.transform.InverseTransformPoint(flame.position) - center, axis) < 0f) axis = -axis;
         if (axis.sqrMagnitude < 0.5f) axis = Vector3.up;
+        // 原版火把平放在地上时火苗是朝上的,火焰就按那个朝向摆
+        Quaternion fxRest = fxGo != null ? Quaternion.Inverse(copy.transform.rotation) * fxGo.transform.rotation : Quaternion.identity;
         float half = 0f;
         for (int i = 0; i < 8; i++)
         {
@@ -217,12 +224,14 @@ internal static class Torches
         copy.transform.localRotation = r;
         copy.transform.localPosition = -(r * hold);
 
-        // 火焰按火把竖着拿时的样子摆,这样斜插时火苗还是朝上
+        // root 这时在原点不转,世界空间就是 root 空间。火焰转回平放时的朝向,再挪回火头上
+        Vector3 head = Vector3.zero;
         if (fxGo != null)
         {
             fxGo.SetActive(true);
-            // root 这时在原点不转,世界空间就是 root 空间,把斜出去的角度从火焰上转回来
-            fxGo.transform.rotation = Quaternion.Euler(-tilt, 0f, 0f) * fxGo.transform.rotation;
+            head = flame.position;
+            fxGo.transform.rotation = fxRest;
+            fxGo.transform.position += head - flame.position;
         }
         float mult = ModMain.Settings != null ? ModMain.Settings.LightIntensity : 1f;
         foreach (var l in copy.GetComponentsInChildren<Light>(true))
@@ -234,11 +243,19 @@ internal static class Torches
             l.gameObject.SetActive(true);
             l.enabled = true;
             float full = isOut ? fx.outdoor : fx.indoor;
+            float low = isOut ? fx.outdoorMin : fx.indoorMin;
             if (full > 0f) l.intensity = full;
             l.intensity *= mult;
             if (l.range < 1f) l.range = 8f;
-            // 原版手持火把的灯不在火头上,而是往外挪开一段,免得把墙照成一块亮斑
-            l.transform.position += Vector3.forward * LightOut + Vector3.up * 0.1f;
+            var lri = l.GetComponent<LightRandomIntensity>();
+            if (lri != null && full > 0f)
+            {
+                float lo = (low > 0f ? low : full * 0.6f) * mult, hi = full * mult;
+                lri.m_Min = lo; lri.m_Max = hi;
+                try { lri.SetMinMax(lo, hi); } catch { }
+            }
+            // 灯放在火头外面一点,免得把墙照成一块亮斑
+            l.transform.position = head + Vector3.forward * LightOut + Vector3.up * 0.1f;
         }
         fx.Apply();
 
@@ -267,28 +284,21 @@ internal static class Torches
 
     private sealed class FullFlame
     {
-        internal float indoor, outdoor;
+        internal float indoor, outdoor, indoorMin, outdoorMin;
+        internal readonly List<(ParticleSystem ps, float size)> Sizes = new();
         internal readonly List<(ParticleSystem ps, float rate)> Rates = new();
         internal readonly List<(ParticleRandomEmission pre, float min, float max)> Random = new();
         internal GameObject glow;
-        internal Color glowColor;
 
         internal void Apply()
         {
             foreach (var (ps, rate) in Rates)
                 if (ps != null) { var em = ps.emission; em.rateOverTime = rate; }
+            foreach (var (ps, size) in Sizes)
+                if (ps != null && size > 0f) { var main = ps.main; main.startSizeMultiplier = size; }
             foreach (var (pre, min, max) in Random)
                 if (pre != null && min >= 0f && max >= 0f) { pre.m_Min = min; pre.m_Max = max; }
-            if (glow != null)
-            {
-                glow.SetActive(true);
-                foreach (var r in glow.GetComponentsInChildren<Renderer>(true))
-                    foreach (var m in r.materials)
-                    {
-                        if (m.HasProperty("_TintColor")) m.SetColor("_TintColor", glowColor);
-                        if (m.HasProperty("_Color")) m.SetColor("_Color", glowColor);
-                    }
-            }
+            if (glow != null) glow.SetActive(true);
         }
     }
 
@@ -300,18 +310,28 @@ internal static class Torches
         if (t == null) return f;
         try
         {
+            // TorchIntensity 的 ParticleSystem 缓存字段要等它 Awake 才有,这里直接从公开的物体上取
+            ParticleSystem Ps(GameObject g) => g != null ? g.GetComponent<ParticleSystem>() : null;
+            ParticleRandomEmission Pre(GameObject g) => g != null ? g.GetComponent<ParticleRandomEmission>() : null;
             f.indoor = At1(t.m_IndoorIntensityMax);
             f.outdoor = At1(t.m_OutdoorIntensityMax);
+            f.indoorMin = At1(t.m_IndoorIntensityMin);
+            f.outdoorMin = At1(t.m_OutdoorIntensityMin);
+            var sprite = Ps(t.m_SpriteParticles);
+            var core = Ps(t.m_CoreParticles);
+            if (sprite != null) f.Sizes.Add((sprite, At1(t.m_SpriteSize)));
+            if (core != null) f.Sizes.Add((core, At1(t.m_CoreSize)));
             void Rate(ParticleSystem ps, AnimationCurve c) { float v = At1(c); if (ps != null && v >= 0f) f.Rates.Add((ps, v)); }
-            Rate(t.m_SparkParticles_ParticleSystem, t.m_SparkRate);
-            Rate(t.m_SmokeParticles_ParticleSystem, t.m_SmokeRate);
-            if (t.m_SpriteParticles_ParticleRandomEmission != null) f.Random.Add((t.m_SpriteParticles_ParticleRandomEmission, At1(t.m_SpriteRateMin), At1(t.m_SpriteRateMax)));
-            else Rate(t.m_SpriteParticles_ParticleSystem, t.m_SpriteRateMax);
-            if (t.m_CoreParticles_ParticleRandomEmission != null) f.Random.Add((t.m_CoreParticles_ParticleRandomEmission, At1(t.m_CoreRateMin), At1(t.m_CoreRateMax)));
-            else Rate(t.m_CoreParticles_ParticleSystem, t.m_CoreRateMax);
+            Rate(Ps(t.m_SparkParticles), t.m_SparkRate);
+            Rate(Ps(t.m_SmokeParticles), t.m_SmokeRate);
+            var spre = Pre(t.m_SpriteParticles);
+            if (spre != null) f.Random.Add((spre, At1(t.m_SpriteRateMin), At1(t.m_SpriteRateMax)));
+            else Rate(sprite, t.m_SpriteRateMax);
+            var cpre = Pre(t.m_CoreParticles);
+            if (cpre != null) f.Random.Add((cpre, At1(t.m_CoreRateMin), At1(t.m_CoreRateMax)));
+            else Rate(core, t.m_CoreRateMax);
             f.glow = t.m_RadialGradient;
-            f.glowColor = t.m_RadialGradientColor;
-            ModMain.Log.Msg($"原版火把火光 室内 {f.indoor:F2} 室外 {f.outdoor:F2} 光晕 {(f.glow != null ? f.glow.name : "无")}");
+            ModMain.Log.Msg($"原版火把火光 室内 {f.indoor:F2} 室外 {f.outdoor:F2} 光晕 {(f.glow != null ? f.glow.name : "无")} 粒子 {f.Rates.Count}+{f.Random.Count} 大小 {f.Sizes.Count}");
         }
         catch (Exception ex) { ModMain.Log.Warning("读原版火把火光失败: " + ex.Message); }
         return f;

@@ -327,11 +327,11 @@ internal static class Patch_Localization
     internal static readonly Dictionary<string, (string zh, string en)> Text = new()
     {
         ["HDT_HutDoor"] = ("钓鱼小屋门", "Fishing Hut Door"),
-        ["HDT_HutDoor_Desc"] = ("照原版钓鱼小屋做的木门。带到没有门的钓鱼小屋门口,看着门框装上。关上门屋里就不进风。",
-            "A wooden door for a fishing hut. Carry it to a fishing hut without a door and look at the door frame to install it. Close it to keep the wind out."),
+        ["HDT_HutDoor_Desc"] = ("几块厚木板钉成的门,缝里塞着旧布条。湖面上那些只剩门洞的小屋,把它装进门框,风雪就进不来了。",
+            "A heavy door of thick nailed boards, with old cloth pushed into the gaps. Fit it into the empty frame of a lake hut to keep the wind and snow out."),
         ["HDT_WallTorch"] = ("壁挂火把", "Wall Torch"),
-        ["HDT_WallTorch_Desc"] = ("带铁支架的火把,当家具挂在墙上。一直烧着,离开再回来也不会灭。",
-            "A torch on an iron bracket. Place it on a wall like furniture. It burns forever."),
+        ["HDT_WallTorch_Desc"] = ("铁环把火把卡在一块木板上,钉到墙上就不用再举着。火头浸透了松脂,烧得又稳又久,出门回来屋里还亮着。",
+            "An iron ring holds the torch on a wooden board. Nail it to a wall and keep your hands free. The head is full of pitch, so it burns slowly and stays lit while you are away."),
     };
 
     private static void Postfix() => Inject();
