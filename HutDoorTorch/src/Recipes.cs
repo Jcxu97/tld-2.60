@@ -35,7 +35,35 @@ internal static class Recipes
         if (all == null) return;
         if (Made.Count == 0) Build(all);
         foreach (var bp in Made)
+        {
             if (!all.Contains(bp)) all.Add(bp);
+            try { mgr.UnlockSilent(bp); } catch { }
+        }
+    }
+
+    internal static BPManager Manager
+    {
+        get
+        {
+            try { var m = InterfaceManager.m_Instance?.m_BlueprintManager; if (m != null) return m; } catch { }
+            return BPManager.Instance;
+        }
+    }
+
+    // 制造界面自己另存了一份能显示的配方,原版工作台配方在里面时把我们的也放进去
+    internal static void AddToPanel(Panel_Crafting panel)
+    {
+        var list = panel?.m_Blueprints;
+        if (list == null || Made.Count == 0) return;
+        bool workbench = false;
+        foreach (var bp in list)
+            if (bp != null && bp.m_RequiredCraftingLocation == CraftingLocation.Workbench && !Made.Contains(bp)) { workbench = true; break; }
+        int added = 0;
+        if (workbench)
+            foreach (var bp in Made)
+                if (!list.Contains(bp)) { list.Add(bp); added++; }
+        if (added > 0) panel.ApplyFilter();
+        ModMain.Log.Msg($"制造界面配方 {list.Count} 条,工作台配方 {(workbench ? "有" : "没有")},补进 {added} 条");
     }
 
     private static void Build(Il2CppSystem.Collections.Generic.List<BlueprintData> all)
@@ -91,6 +119,7 @@ internal static class Recipes
             bp.m_Locked = false;
             bp.m_AppearsInStoryOnly = false;
             bp.m_RequiresLitFire = false;
+            bp.m_XPModesToDisable = new Il2CppSystem.Collections.Generic.List<ExperienceModeType>();
             Made.Add(bp);
         }
         ModMain.Log.Msg($"加了 {Made.Count} 条配方");
@@ -114,7 +143,7 @@ internal static class Patch_PanelCraftingEnable
     private static void Prefix(bool enable)
     {
         if (!enable) return;
-        try { Recipes.AddTo(BPManager.Instance); }
+        try { Recipes.AddTo(Recipes.Manager); }
         catch (Exception ex) { ModMain.Log.Error("加配方失败: " + ex); }
     }
 }
@@ -124,8 +153,18 @@ internal static class Patch_PanelCraftingInit
 {
     private static void Prefix()
     {
-        try { Recipes.AddTo(BPManager.Instance); }
+        try { Recipes.AddTo(Recipes.Manager); }
         catch (Exception ex) { ModMain.Log.Error("加配方失败: " + ex); }
+    }
+}
+
+[HarmonyPatch(typeof(Panel_Crafting), nameof(Panel_Crafting.RefreshAvailableBlueprints))]
+internal static class Patch_PanelCraftingRefresh
+{
+    private static void Postfix(Panel_Crafting __instance)
+    {
+        try { Recipes.AddToPanel(__instance); }
+        catch (Exception ex) { ModMain.Log.Error("制造界面加配方失败: " + ex); }
     }
 }
 

@@ -51,10 +51,10 @@ internal static class TldHacksCompat
         try
         {
             Torches.EnsureTemplate();
-            if (Torches.Template == null) return false;
-            var di = GameManager.GetPlayerManagerComponent().InstantiateDecorationItemInPlayerInventory(Torches.Template, PlayerManager.InventoryInstantiateFlags.None);
-            if (di != null) { di.gameObject.name = TorchKey; di.m_AllowInInventory = true; }
+            if (Torches.Template == null) { ModMain.Log.Warning("壁挂火把模板没建好"); return false; }
+            var di = Torches.GiveOne();
             __result = di != null;
+            if (di == null) ModMain.Log.Warning("壁挂火把没能放进背包");
         }
         catch (Exception ex) { ModMain.Log.Error("生成壁挂火把失败: " + ex); }
         return false;

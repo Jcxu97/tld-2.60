@@ -89,7 +89,7 @@ internal static class Gear
             data.m_BaseWeight = ItemWeight.FromKilograms(d.WeightKg);
             data.m_PrefabReference = new AssetReferenceGearItem(d.FakeGuid);
             var iconSrc = LoadVanilla(d.IconFrom);
-            if (iconSrc != null) data.m_IconData = iconSrc.m_GearItemData.m_IconData;
+            if (iconSrc != null) SetIcon(data, iconSrc);
             Object.DontDestroyOnLoad(data);
             d.Data = data;
 
@@ -99,6 +99,26 @@ internal static class Gear
             d.Template.m_GearItemData = data;
         }
         ModMain.Log.Msg("物品模板已建好");
+    }
+
+    // 和 ModComponent 一样另建一份图标数据,背包格子和大图都指到原版物品的图
+    private static void SetIcon(GearItemData data, GearItem src)
+    {
+        var sd = src.m_GearItemData;
+        Texture2D tex = null;
+        try { tex = src.GetInventoryIconTexture(); } catch { }
+        if (tex == null)
+            try { tex = Addressables.LoadAssetAsync<Texture2D>((Il2CppSystem.Object)src.name.Replace("GEAR_", "ico_GearItem__")).WaitForCompletion(); } catch { }
+        var icon = ScriptableObject.CreateInstance<GearItemInventoryIconSimpleData>();
+        icon.name = data.name.Replace("GearItemData_GEAR_", "ico_GearItem__");
+        icon.m_Icon = tex;
+        Object.DontDestroyOnLoad(icon);
+        data.m_IconData = icon;
+        data.m_CoverFlowMainTexture = sd.m_CoverFlowMainTexture;
+        data.m_CoverFlowBlendTexture = sd.m_CoverFlowBlendTexture;
+        data.m_CoverFlowDamageTexture = sd.m_CoverFlowDamageTexture;
+        data.m_CoverFlowOpenedTexture = sd.m_CoverFlowOpenedTexture;
+        ModMain.Log.Msg($"图标 {icon.name} 取自 {src.name}: {(tex != null ? tex.name : "没取到")}");
     }
 
     internal static void Convert(GearItem gi, GearDef d)
@@ -242,21 +262,37 @@ internal static class Patch_DeserializeByRefProxy
     private static void Postfix(GearItem __result, GearDef __state) { if (__state != null) Gear.Convert(__result, __state); }
 }
 
-[HarmonyPatch(typeof(Localization), nameof(Localization.Get), new Type[] { typeof(string) })]
+// 界面上的字是直接查字符串表的,所以和 ModComponent 一样把词条写进当前语言的表里
+[HarmonyPatch(typeof(Localization), nameof(Localization.LoadStringTableForLanguage))]
 internal static class Patch_Localization
 {
-    internal static readonly Dictionary<string, string> Text = new()
+    internal static readonly Dictionary<string, (string zh, string en)> Text = new()
     {
-        ["HDT_HutDoor"] = "钓鱼小屋门",
-        ["HDT_HutDoor_Desc"] = "照原版钓鱼小屋做的木门。带到没有门的钓鱼小屋门口,看着门框装上。关上门屋里就不进风。",
-        ["HDT_WallTorch"] = "壁挂火把",
-        ["HDT_WallTorch_Desc"] = "带铁支架的火把,当家具挂在墙上。一直烧着,离开再回来也不会灭。",
+        ["HDT_HutDoor"] = ("钓鱼小屋门", "Fishing Hut Door"),
+        ["HDT_HutDoor_Desc"] = ("照原版钓鱼小屋做的木门。带到没有门的钓鱼小屋门口,看着门框装上。关上门屋里就不进风。",
+            "A wooden door for a fishing hut. Carry it to a fishing hut without a door and look at the door frame to install it. Close it to keep the wind out."),
+        ["HDT_WallTorch"] = ("壁挂火把", "Wall Torch"),
+        ["HDT_WallTorch_Desc"] = ("带铁支架的火把,当家具挂在墙上。一直烧着,离开再回来也不会灭。",
+            "A torch on an iron bracket. Place it on a wall like furniture. It burns forever."),
     };
 
-    private static bool Prefix(string key, ref string __result)
+    private static void Postfix() => Inject();
+
+    internal static void Inject()
     {
-        if (key == null || !key.StartsWith("HDT_", StringComparison.Ordinal)) return true;
-        if (!Text.TryGetValue(key, out __result)) __result = key;
-        return false;
+        try
+        {
+            var table = Localization.s_CurrentLanguageStringTable;
+            if (table == null) return;
+            var langs = table.GetLanguages();
+            foreach (var kv in Text)
+            {
+                var e = table.GetEntryFromKey(kv.Key) ?? table.AddEntryForKey(kv.Key);
+                while (e.m_Languages.Count < langs.Count) e.m_Languages.Add("");
+                for (int i = 0; i < langs.Count; i++)
+                    e.m_Languages[i] = langs[i].Contains("English") ? kv.Value.en : kv.Value.zh;
+            }
+        }
+        catch (Exception ex) { ModMain.Log.Warning("写入文字失败: " + ex.Message); }
     }
 }

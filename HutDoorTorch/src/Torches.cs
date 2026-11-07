@@ -48,6 +48,26 @@ internal static class Torches
         ModMain.Log.Msg($"壁挂火把模板已建好,摆放规则 {Template.m_PlacementRules}");
     }
 
+    // 和 TldHacks 生成家具一样,先临时允许进背包,再走游戏自己的放进背包
+    internal static DecorationItem GiveOne()
+    {
+        EnsureTemplate();
+        if (Template == null) return null;
+        bool allow = Template.m_AllowInInventory;
+        DecorationItem di;
+        try
+        {
+            Template.m_AllowInInventory = true;
+            di = GameManager.GetPlayerManagerComponent().InstantiateDecorationItemInPlayerInventory(Template, PlayerManager.InventoryInstantiateFlags.None);
+        }
+        finally { Template.m_AllowInInventory = allow; }
+        if (di == null) return null;
+        di.gameObject.name = Template.name;
+        di.m_AllowInInventory = true;
+        ModMain.Log.Msg("壁挂火把放进背包了");
+        return di;
+    }
+
     internal static bool IsOurs(AssetReference r)
     {
         try { return r != null && string.Equals(r.AssetGUID, FakeGuid, StringComparison.OrdinalIgnoreCase); }

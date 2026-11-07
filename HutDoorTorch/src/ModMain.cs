@@ -62,9 +62,10 @@ public class ModMain : MelonMod
                 _scanAt = -1f;
                 Gear.EnsureTemplates();
                 Torches.EnsureTemplate();
+                Patch_Localization.Inject();
                 Store.LoadIfNewSession();
                 Huts.ScanScene();
-                try { Recipes.AddTo(Il2CppTLD.Gear.BlueprintManager.Instance); } catch (Exception ex) { Log.Error("加配方失败: " + ex); }
+                try { Recipes.AddTo(Recipes.Manager); } catch (Exception ex) { Log.Error("加配方失败: " + ex); }
                 _rescanAt = Time.realtimeSinceStartup + 10f;
             }
             else if (_rescanAt > 0f && Time.realtimeSinceStartup >= _rescanAt)
@@ -77,8 +78,7 @@ public class ModMain : MelonMod
             if (Input.GetKeyDown(KeyCode.F8))
             {
                 Gear.GiveOne(Gear.Door);
-                Torches.EnsureTemplate();
-                var di = GameManager.GetPlayerManagerComponent().InstantiateDecorationItemInPlayerInventory(Torches.Template, PlayerManager.InventoryInstantiateFlags.None);
+                var di = Torches.GiveOne();
                 Log.Msg($"测试:给了门和火把 {(di != null ? di.name : "null")}");
                 HUDMessage.AddMessage("测试:给了门和壁挂火把", false, false);
             }
