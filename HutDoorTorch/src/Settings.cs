@@ -13,8 +13,8 @@ internal class Settings : JsonModSettings
     public float TiltDegrees = 35f;
 
     [Name("火光亮度")]
-    [Slider(0.2f, 3f, 29)]
-    public float LightIntensity = 1.2f;
+    [Slider(0.2f, 2f, 19)]
+    public float LightIntensity = 1f;
 
     [Section("钓鱼小屋门")]
 

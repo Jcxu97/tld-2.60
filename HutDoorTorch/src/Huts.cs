@@ -103,6 +103,24 @@ internal static class Huts
     internal static Vector3 DoorwayWorld(Transform hut) =>
         hut.TransformPoint(HingeLocal + DoorRot * (DoorLocal + BoxCenter));
 
+#if HDT_TEST
+    internal static void TeleportToNearest()
+    {
+        var pm = GameManager.GetPlayerManagerComponent();
+        var me = GameManager.GetPlayerTransform().position;
+        Transform best = null;
+        foreach (var h in Doorless) if (h != null && (best == null || (h.position - me).sqrMagnitude < (best.position - me).sqrMagnitude)) best = h;
+        foreach (var d in Doors) if (d?.Hinge != null && best == null) best = d.Hinge.parent;
+        if (best == null) { ModMain.Log.Msg("测试:附近没有小屋"); return; }
+        var door = DoorwayWorld(best);
+        var out_ = door - best.TransformPoint(InsideCenter); out_.y = 0f; out_.Normalize();
+        var pos = door + out_ * 2.2f; pos.y = best.position.y + 0.1f;
+        var look = -out_;
+        pm.TeleportPlayer(pos, Quaternion.LookRotation(look));
+        ModMain.Log.Msg($"测试:传到 {best.name} 门外 {pos}");
+    }
+#endif
+
     // 正对着哪间小屋的空门框
     internal static Transform DoorwayInView(Camera cam, float maxDist)
     {

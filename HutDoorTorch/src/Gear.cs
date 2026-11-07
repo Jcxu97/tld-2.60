@@ -96,7 +96,7 @@ internal static class Gear
             var go = Object.Instantiate(basePrefab.gameObject, _holder.transform);
             go.name = d.Name;
             d.Template = go.GetComponent<GearItem>();
-            d.Template.m_GearItemData = data;
+            Convert(d.Template, d);
         }
         ModMain.Log.Msg("物品模板已建好");
     }
@@ -126,6 +126,27 @@ internal static class Gear
         if (gi == null || d?.Data == null) return;
         gi.gameObject.name = d.Name;
         gi.m_GearItemData = d.Data;
+        // 废金属能叠放,不去掉的话进背包会并进废金属那一格,门就看不见了
+        var st = gi.m_StackableItem ?? gi.GetComponent<StackableItem>();
+        if (st != null) { Object.DestroyImmediate(st); gi.m_StackableItem = null; }
+    }
+
+    internal static string DumpInventory()
+    {
+        var sb = new System.Text.StringBuilder();
+        try
+        {
+            foreach (var w in GameManager.GetInventoryComponent().m_Items)
+            {
+                var gi = w?.m_GearItem;
+                if (gi == null) continue;
+                string n = gi.name;
+                if (!n.Contains("HDT") && !n.Contains("ScrapMetal")) continue;
+                sb.Append($" [{n} 格名 {w.m_GearItemName} 数据 {gi.m_GearItemData?.name} 叠 {(gi.m_StackableItem != null ? gi.m_StackableItem.m_Units : 0)}]");
+            }
+        }
+        catch (Exception ex) { sb.Append(" 出错 " + ex.Message); }
+        return sb.ToString();
     }
 
     internal static bool Is(GearItem gi, GearDef d) => gi != null && gi.m_GearItemData == d.Data;
@@ -183,8 +204,7 @@ internal static class Gear
         try
         {
             var gi = GameManager.GetPlayerManagerComponent().InstantiateItemInPlayerInventory(d.Template, 1, 1f, PlayerManager.InventoryInstantiateFlags.None);
-            Convert(gi, d);
-            FixInventoryName(gi);
+            ModMain.Log.Msg($"给物品 {d.Name}: {(gi != null ? gi.name + " 在背包 " + gi.m_InPlayerInventory + " 父 " + (gi.transform.parent != null ? gi.transform.parent.name : "无") : "生成失败")}");
         }
         catch (Exception ex) { ModMain.Log.Error("还物品失败: " + ex); }
     }
@@ -294,5 +314,32 @@ internal static class Patch_Localization
             }
         }
         catch (Exception ex) { ModMain.Log.Warning("写入文字失败: " + ex.Message); }
+    }
+}
+
+// 背包界面按分类筛物品,门被筛掉时记下来并放行,看日志能知道是哪个分类把它拦了
+[HarmonyPatch(typeof(Panel_Inventory), nameof(Panel_Inventory.ItemPassesFilter), new Type[] { typeof(GearItem), typeof(string) })]
+internal static class Patch_InventoryFilter
+{
+    private static readonly HashSet<string> Seen = new();
+    private static void Postfix(GearItem pi, string filterName, ref bool __result)
+    {
+        if (pi == null || Gear.ByName(pi.name) == null) return;
+        string key = filterName + ":" + __result;
+        if (Seen.Add(key)) ModMain.Log.Msg($"背包分类 {filterName} 原本显示门 {__result}");
+        if (!__result && filterName != null && (filterName.IndexOf("All", StringComparison.OrdinalIgnoreCase) >= 0 || filterName.IndexOf("Material", StringComparison.OrdinalIgnoreCase) >= 0))
+            __result = true;
+    }
+}
+
+[HarmonyPatch(typeof(Panel_Inventory), nameof(Panel_Inventory.UpdateFilteredInventoryList))]
+internal static class Patch_InventoryList
+{
+    private static float _next;
+    private static void Postfix()
+    {
+        if (UnityEngine.Time.realtimeSinceStartup < _next) return;
+        _next = UnityEngine.Time.realtimeSinceStartup + 5f;
+        ModMain.Log.Msg("打开背包时:" + Gear.DumpInventory());
     }
 }

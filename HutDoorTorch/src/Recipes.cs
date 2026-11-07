@@ -110,12 +110,18 @@ internal static class Recipes
                 bp.m_CraftedResultGear = null;
             }
             bp.m_CraftedResultCount = 1;
+            var icon = s.result != null ? Gear.LoadVanilla(s.result.IconFrom)?.m_GearItemData?.m_CoverFlowMainTexture : Torches.IconRef;
+            if (icon != null) bp.m_CraftingIcon = icon;
             bp.m_DurationMinutes = s.minutes;
             bp.m_RequiredGear = new Il2CppReferenceArray<BlueprintData.RequiredGearItem>(mats.ToArray());
             bp.m_RequiredPowder = new Il2CppReferenceArray<BlueprintData.RequiredPowder>(0);
             bp.m_RequiredLiquid = new Il2CppReferenceArray<BlueprintData.RequiredLiquid>(0);
             bp.m_RequiredTool = null;
+#if HDT_TEST
+            bp.m_RequiredCraftingLocation = CraftingLocation.Anywhere;
+#else
             bp.m_RequiredCraftingLocation = CraftingLocation.Workbench;
+#endif
             bp.m_Locked = false;
             bp.m_AppearsInStoryOnly = false;
             bp.m_RequiresLitFire = false;
@@ -168,17 +174,31 @@ internal static class Patch_PanelCraftingRefresh
     }
 }
 
-// 做出来的东西是按底子生成的时候,换回新物品
+// 游戏往背包里放物品时按资源编号去资源表里找,新物品不在表里会生成失败。
+// 制造、物品生成器、拆门都走这里:按新物品的名字生成(内部按废金属生成再换回),再放进背包
 [HarmonyPatch(typeof(PlayerManager), nameof(PlayerManager.InstantiateItemInPlayerInventory), new Type[] { typeof(GearItem), typeof(int), typeof(float), typeof(PlayerManager.InventoryInstantiateFlags) })]
 internal static class Patch_InstantiateInInventory
 {
-    private static void Postfix(GearItem gearItem, GearItem __result)
+    private static bool Prefix(GearItem gearItem, int units, ref GearItem __result)
     {
-        if (__result == null || gearItem == null) return;
-        var d = Gear.ByName(gearItem.name);
-        if (d == null || Gear.Is(__result, d)) { Gear.FixInventoryName(__result); return; }
-        Gear.Convert(__result, d);
-        Gear.FixInventoryName(__result);
+        var d = gearItem != null ? Gear.ByName(gearItem.name) : null;
+        if (d == null) return true;
+        __result = null;
+        try
+        {
+            var inv = GameManager.GetInventoryComponent();
+            for (int i = 0; i < Math.Max(1, units); i++)
+            {
+                var gi = GearItem.InstantiateGearItem(d.Name);
+                if (gi == null) { ModMain.Log.Warning($"生成 {d.Name} 失败"); break; }
+                Gear.Convert(gi, d);
+                inv.AddGear(gi, false);
+                Gear.FixInventoryName(gi);
+                __result = gi;
+            }
+        }
+        catch (Exception ex) { ModMain.Log.Error($"放 {d.Name} 进背包失败: " + ex); }
+        return false;
     }
 }
 

@@ -7,7 +7,7 @@ namespace HutDoorTorch;
 // 背包里有门、正对着没门的小屋门框时,按交互键装门。
 internal static class Interact
 {
-    private const float Range = 2.5f;
+    private const float Range = 3f;
     private const float HoldSeconds = 1.2f;
 
     private static string _hover;
@@ -15,6 +15,7 @@ internal static class Interact
     private static float _pressTime = -1f;
     private static object _pressTarget;
     private static bool _holdDone;
+    private static float _diagAt;
 
     internal static void Reset()
     {
@@ -28,8 +29,16 @@ internal static class Interact
     {
         _hover = null;
         _hoverGo = null;
-        if (InterfaceManager.IsOverlayActiveImmediate()) { _pressTime = -1f; return; }
         var cam = GameManager.GetMainCamera();
+#if HDT_TEST
+        if (Time.realtimeSinceStartup > _diagAt)
+        {
+            _diagAt = Time.realtimeSinceStartup + 3f;
+            Transform dw = cam != null ? Huts.DoorwayInView(cam, 3f) : null;
+            ModMain.Log.Msg($"诊断 浮层 {InterfaceManager.IsOverlayActiveImmediate()}/{InterfaceManager.IsOverlayActiveCached()} 鼠标 {Cursor.lockState} 相机 {(cam != null ? cam.name : "无")} 门框 {(dw != null ? dw.name : "无")} 背包门 {Gear.CountInInventory(Gear.Door)} 屋 {Huts.DoorlessCount}");
+        }
+#endif
+        if (InterfaceManager.IsOverlayActiveImmediate()) { _pressTime = -1f; return; }
         if (cam == null) return;
 
         HutDoor door = null;

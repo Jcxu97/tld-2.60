@@ -79,9 +79,12 @@ public class ModMain : MelonMod
             {
                 Gear.GiveOne(Gear.Door);
                 var di = Torches.GiveOne();
-                Log.Msg($"测试:给了门和火把 {(di != null ? di.name : "null")}");
+                GameManager.GetPlayerManagerComponent().InstantiateItemInPlayerInventory("GEAR_Stick", 2, 1f, PlayerManager.InventoryInstantiateFlags.None);
+                Log.Msg($"测试:给了门和火把 {(di != null ? di.name : "null")} 门名 {Localization.Get(Gear.Door.LocName)} 图标 {(Gear.Door.Data.m_IconData != null ? Gear.Door.Data.m_IconData.GetInventoryIcon(1f)?.name : "无")}");
                 HUDMessage.AddMessage("测试:给了门和壁挂火把", false, false);
+                Log.Msg("测试:背包" + Gear.DumpInventory());
             }
+            if (Input.GetKeyDown(KeyCode.F9)) Huts.TeleportToNearest();
 #endif
             Huts.Tick(Time.deltaTime);
             Torches.TickFlicker();

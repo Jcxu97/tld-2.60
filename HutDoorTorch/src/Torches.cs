@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using HarmonyLib;
 using Il2Cpp;
+using Il2CppTLD.Gear;
 using Il2CppTLD.Placement;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -22,9 +23,10 @@ internal static class Torches
     private const float WallGap = 0.09f;
 
     internal static DecorationItem Template;
+    internal static DecorationItem BaseItem;
     private static AssetReferencePlaceable _baseRef;
     private static GameObject _holder;
-    private static readonly List<(Light light, float seed)> Lights = new();
+    private static readonly List<(Light light, float seed, float baseIntensity)> Lights = new();
 
     internal static void EnsureTemplate()
     {
@@ -38,6 +40,7 @@ internal static class Torches
             return;
         }
         _baseRef = pl.m_Addressable;
+        BaseItem = prefab.GetComponent<DecorationItem>();
         _holder = new GameObject("HutDoorTorch_DecoTemplate");
         _holder.SetActive(false);
         Object.DontDestroyOnLoad(_holder);
@@ -48,24 +51,20 @@ internal static class Torches
         ModMain.Log.Msg($"壁挂火把模板已建好,摆放规则 {Template.m_PlacementRules}");
     }
 
-    // 和 TldHacks 生成家具一样,先临时允许进背包,再走游戏自己的放进背包
     internal static DecorationItem GiveOne()
     {
         EnsureTemplate();
         if (Template == null) return null;
-        bool allow = Template.m_AllowInInventory;
-        DecorationItem di;
-        try
+        return GameManager.GetPlayerManagerComponent().InstantiateDecorationItemInPlayerInventory(Template, PlayerManager.InventoryInstantiateFlags.None);
+    }
+
+    // 背包、制造界面里的图都用原版火把的
+    internal static AssetReferenceTexture2D IconRef
+    {
+        get
         {
-            Template.m_AllowInInventory = true;
-            di = GameManager.GetPlayerManagerComponent().InstantiateDecorationItemInPlayerInventory(Template, PlayerManager.InventoryInstantiateFlags.None);
+            try { return Gear.LoadVanilla("GEAR_Torch")?.m_GearItemData?.m_CoverFlowMainTexture; } catch { return null; }
         }
-        finally { Template.m_AllowInInventory = allow; }
-        if (di == null) return null;
-        di.gameObject.name = Template.name;
-        di.m_AllowInInventory = true;
-        ModMain.Log.Msg("壁挂火把放进背包了");
-        return di;
     }
 
     internal static bool IsOurs(AssetReference r)
@@ -127,7 +126,10 @@ internal static class Torches
             di.m_DisplayName = new LocalizedString { m_LocalizationID = "HDT_WallTorch" };
             di.m_Description = new LocalizedString { m_LocalizationID = "HDT_WallTorch_Desc" };
             di.m_Weight = Il2CppTLD.IntBackedUnit.ItemWeight.FromKilograms(1f);
+            di.m_AllowInInventory = true;
             di.m_DecorationPrefab = new AssetReferenceDecorationItem(FakeGuid);
+            var torchIcon = IconRef;
+            if (torchIcon != null) di.m_IconReference = torchIcon;
             var tinted = new Il2CppSystem.Collections.Generic.List<Renderer>();
             foreach (var r in visual.GetComponentsInChildren<MeshRenderer>(true)) tinted.Add(r);
             di.m_TintedRenderers = tinted;
@@ -136,7 +138,7 @@ internal static class Torches
         if (pl != null) pl.m_Addressable = new AssetReferencePlaceable(FakeGuid);
 
         foreach (var l in visual.GetComponentsInChildren<Light>(true))
-            if (l.enabled) Lights.Add((l, UnityEngine.Random.value * 100f));
+            if (l.enabled) Lights.Add((l, UnityEngine.Random.value * 100f, l.intensity));
     }
 
     // z 轴朝墙外,火把绕 x 轴往外斜
@@ -206,7 +208,6 @@ internal static class Torches
             fxGo.transform.rotation = Quaternion.Euler(-tilt, 0f, 0f) * fxGo.transform.rotation;
         }
         var want = PickLight(lightIn, lightOut);
-        float intensity = ModMain.Settings != null ? ModMain.Settings.LightIntensity : 1.2f;
         foreach (var l in copy.GetComponentsInChildren<Light>(true))
         {
             bool use = want == null || l == want;
@@ -214,14 +215,13 @@ internal static class Torches
             if (!use) continue;
             l.gameObject.SetActive(true);
             if (l.range < 1f) l.range = 8f;
-            l.intensity = intensity;
         }
         if (fxGo != null)
             foreach (var l in fxGo.GetComponentsInChildren<Light>(true))
             {
                 bool use = want == null || l == want;
                 l.enabled = use;
-                if (use) { if (l.range < 1f) l.range = 8f; l.intensity = intensity; }
+                if (use && l.range < 1f) l.range = 8f;
             }
 
         BuildBracket(root.transform, arm, meshGo);
@@ -273,12 +273,13 @@ internal static class Torches
     {
         if (Lights.Count == 0) return;
         float time = Time.time;
-        float want = ModMain.Settings != null ? ModMain.Settings.LightIntensity : 1.2f;
+        float want = ModMain.Settings != null ? ModMain.Settings.LightIntensity : 1f;
         for (int i = Lights.Count - 1; i >= 0; i--)
         {
-            var (l, seed) = Lights[i];
+            var (l, seed, b) = Lights[i];
             if (l == null) { Lights.RemoveAt(i); continue; }
-            l.intensity = want * (0.85f + 0.3f * Mathf.PerlinNoise(seed, time * 3f));
+            // 亮度沿用原版手持火把的灯光,设置里的是倍数
+            l.intensity = b * want * (0.85f + 0.3f * Mathf.PerlinNoise(seed, time * 3f));
         }
     }
 }
@@ -319,5 +320,94 @@ internal static class Patch_PlaceableDeserialize
     {
         if (!Patch_PlaceableFindOrCreate.TakePending(guid)) return;
         Torches.Convert(__instance.gameObject);
+    }
+}
+
+// 游戏按家具自己的资源编号生成家具,我们的编号不在资源表里会生成失败。
+// 和读档一样,先让游戏按铜鱼标本生成并放进背包,出来以后再换成火把。制造、物品生成器、测试键都走这里
+[HarmonyPatch(typeof(PlayerManager), nameof(PlayerManager.InstantiateDecorationItemInPlayerInventory))]
+internal static class Patch_InstantiateDecoration
+{
+    private static bool _allow;
+    private static void Prefix(ref DecorationItem decorationItem, out bool __state)
+    {
+        __state = decorationItem != null && decorationItem == Torches.Template && Torches.BaseItem != null;
+        if (!__state) return;
+        decorationItem = Torches.BaseItem;
+        _allow = Torches.BaseItem.m_AllowInInventory;
+        Torches.BaseItem.m_AllowInInventory = true;
+    }
+
+    private static void Postfix(DecorationItem __result, bool __state)
+    {
+        if (!__state) return;
+        Torches.BaseItem.m_AllowInInventory = _allow;
+        if (__result == null) { ModMain.Log.Warning("壁挂火把放进背包失败"); return; }
+        Torches.Convert(__result.gameObject);
+        __result.gameObject.name = Torches.Template.name;
+        __result.m_AllowInInventory = true;
+        ModMain.Log.Msg("壁挂火把放进背包了");
+    }
+}
+
+// 背包格子里的小图换成原版火把的
+[HarmonyPatch(typeof(DecorationItem), nameof(DecorationItem.GetInventoryIconTexture))]
+internal static class Patch_DecorationIcon
+{
+    private static Texture2D _tex;
+    private static void Postfix(DecorationItem __instance, ref Texture2D __result)
+    {
+        if (__instance == null || !__instance.name.StartsWith("HDT_WallTorch")) return;
+        if (_tex == null)
+            try { _tex = Gear.LoadVanilla("GEAR_Torch")?.GetInventoryIconTexture(); } catch { }
+        if (_tex != null) __result = _tex;
+    }
+}
+
+// 制造完成时游戏按成品自己的资源编号生成,新物品不在资源表里会什么都不给。
+// 成品是门或壁挂火把时,改走能用的那条路直接放进背包
+internal static class CraftedResult
+{
+    internal static bool TryMake(ICraftingResult result, ref ICraftingResult made)
+    {
+        if (result == null) return false;
+        var pm = GameManager.GetPlayerManagerComponent();
+        var di = result.TryCast<DecorationItem>();
+        if (di != null && Torches.Template != null && di.Pointer == Torches.Template.Pointer)
+        {
+            var got = pm.InstantiateDecorationItemInPlayerInventory(Torches.Template, PlayerManager.InventoryInstantiateFlags.None);
+            made = got != null ? got.Cast<ICraftingResult>() : null;
+            ModMain.Log.Msg($"做好壁挂火把 {(got != null)}");
+            return true;
+        }
+        var gi = result.TryCast<GearItem>();
+        if (gi != null && Gear.ByName(gi.name) != null)
+        {
+            var got = pm.InstantiateItemInPlayerInventory(gi, 1, 1f, PlayerManager.InventoryInstantiateFlags.None);
+            made = got != null ? got.Cast<ICraftingResult>() : null;
+            ModMain.Log.Msg($"做好 {gi.name} {(got != null)}");
+            return true;
+        }
+        return false;
+    }
+}
+
+[HarmonyPatch(typeof(PlayerManager), nameof(PlayerManager.InstantiateCraftedItemInPlayerInventory))]
+internal static class Patch_CraftedToInventory
+{
+    private static bool Prefix(ICraftingResult result, ref ICraftingResult __result)
+    {
+        try { return !CraftedResult.TryMake(result, ref __result); }
+        catch (Exception ex) { ModMain.Log.Error("制造成品失败: " + ex); return true; }
+    }
+}
+
+[HarmonyPatch(typeof(Container), nameof(Container.InstantiateCraftedItem))]
+internal static class Patch_CraftedToContainer
+{
+    private static bool Prefix(ICraftingResult craftedItem, ref ICraftingResult __result)
+    {
+        try { return !CraftedResult.TryMake(craftedItem, ref __result); }
+        catch (Exception ex) { ModMain.Log.Error("制造成品失败: " + ex); return true; }
     }
 }
