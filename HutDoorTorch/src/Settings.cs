@@ -13,8 +13,14 @@ internal class Settings : JsonModSettings
     public float TiltDegrees = 35f;
 
     [Name("火光亮度")]
+    [Description("1 是原版火把烧旺时的亮度。")]
     [Slider(0.2f, 2f, 19)]
     public float LightIntensity = 1f;
+
+    [Name("火光闪烁")]
+    [Description("火光明暗跳动的幅度,0 是不闪。")]
+    [Slider(0f, 0.5f, 11)]
+    public float Flicker = 0.1f;
 
     [Section("钓鱼小屋门")]
 

@@ -144,7 +144,7 @@ internal static class Torches
         if (pl != null) pl.m_Addressable = new AssetReferencePlaceable(FakeGuid);
 
         foreach (var l in visual.GetComponentsInChildren<Light>(true))
-            if (l.enabled && l.GetComponent<LightRandomIntensity>() == null) Lights.Add((l, UnityEngine.Random.value * 100f, l.intensity));
+            if (l.enabled) Lights.Add((l, UnityEngine.Random.value * 100f, l.intensity));
         var li = FindDeep(visual.transform, LightInName);
         var lo = FindDeep(visual.transform, LightOutName);
         if (li != null || lo != null) Pairs.Add((li?.gameObject, lo?.gameObject));
@@ -229,11 +229,11 @@ internal static class Torches
         if (fxGo != null)
         {
             fxGo.SetActive(true);
-            head = flame.position;
+            var core = FindDeep(fxGo.transform, "Core") ?? flame;
+            head = core.position;
             fxGo.transform.rotation = fxRest;
-            fxGo.transform.position += head - flame.position;
+            fxGo.transform.position += head - core.position;
         }
-        float mult = ModMain.Settings != null ? ModMain.Settings.LightIntensity : 1f;
         foreach (var l in copy.GetComponentsInChildren<Light>(true))
         {
             bool isOut = lightOut != null && l == lightOut;
@@ -243,17 +243,10 @@ internal static class Torches
             l.gameObject.SetActive(true);
             l.enabled = true;
             float full = isOut ? fx.outdoor : fx.indoor;
-            float low = isOut ? fx.outdoorMin : fx.indoorMin;
             if (full > 0f) l.intensity = full;
-            l.intensity *= mult;
             if (l.range < 1f) l.range = 8f;
             var lri = l.GetComponent<LightRandomIntensity>();
-            if (lri != null && full > 0f)
-            {
-                float lo = (low > 0f ? low : full * 0.6f) * mult, hi = full * mult;
-                lri.m_Min = lo; lri.m_Max = hi;
-                try { lri.SetMinMax(lo, hi); } catch { }
-            }
+            if (lri != null) Object.DestroyImmediate(lri);
             // 灯放在火头外面一点,免得把墙照成一块亮斑
             l.transform.position = head + Vector3.forward * LightOut + Vector3.up * 0.1f;
         }
@@ -284,8 +277,7 @@ internal static class Torches
 
     private sealed class FullFlame
     {
-        internal float indoor, outdoor, indoorMin, outdoorMin;
-        internal readonly List<(ParticleSystem ps, float size)> Sizes = new();
+        internal float indoor, outdoor;
         internal readonly List<(ParticleSystem ps, float rate)> Rates = new();
         internal readonly List<(ParticleRandomEmission pre, float min, float max)> Random = new();
         internal GameObject glow;
@@ -294,11 +286,9 @@ internal static class Torches
         {
             foreach (var (ps, rate) in Rates)
                 if (ps != null) { var em = ps.emission; em.rateOverTime = rate; }
-            foreach (var (ps, size) in Sizes)
-                if (ps != null && size > 0f) { var main = ps.main; main.startSizeMultiplier = size; }
             foreach (var (pre, min, max) in Random)
                 if (pre != null && min >= 0f && max >= 0f) { pre.m_Min = min; pre.m_Max = max; }
-            if (glow != null) glow.SetActive(true);
+            if (glow != null) glow.SetActive(false);
         }
     }
 
@@ -315,12 +305,8 @@ internal static class Torches
             ParticleRandomEmission Pre(GameObject g) => g != null ? g.GetComponent<ParticleRandomEmission>() : null;
             f.indoor = At1(t.m_IndoorIntensityMax);
             f.outdoor = At1(t.m_OutdoorIntensityMax);
-            f.indoorMin = At1(t.m_IndoorIntensityMin);
-            f.outdoorMin = At1(t.m_OutdoorIntensityMin);
             var sprite = Ps(t.m_SpriteParticles);
             var core = Ps(t.m_CoreParticles);
-            if (sprite != null) f.Sizes.Add((sprite, At1(t.m_SpriteSize)));
-            if (core != null) f.Sizes.Add((core, At1(t.m_CoreSize)));
             void Rate(ParticleSystem ps, AnimationCurve c) { float v = At1(c); if (ps != null && v >= 0f) f.Rates.Add((ps, v)); }
             Rate(Ps(t.m_SparkParticles), t.m_SparkRate);
             Rate(Ps(t.m_SmokeParticles), t.m_SmokeRate);
@@ -331,7 +317,7 @@ internal static class Torches
             if (cpre != null) f.Random.Add((cpre, At1(t.m_CoreRateMin), At1(t.m_CoreRateMax)));
             else Rate(core, t.m_CoreRateMax);
             f.glow = t.m_RadialGradient;
-            ModMain.Log.Msg($"原版火把火光 室内 {f.indoor:F2} 室外 {f.outdoor:F2} 光晕 {(f.glow != null ? f.glow.name : "无")} 粒子 {f.Rates.Count}+{f.Random.Count} 大小 {f.Sizes.Count}");
+            ModMain.Log.Msg($"原版火把火光 室内 {f.indoor:F2} 室外 {f.outdoor:F2} 光晕 {(f.glow != null ? f.glow.name : "无")} 粒子 {f.Rates.Count}+{f.Random.Count}");
         }
         catch (Exception ex) { ModMain.Log.Warning("读原版火把火光失败: " + ex.Message); }
         return f;
@@ -343,46 +329,10 @@ internal static class Torches
         var mr = torchMesh != null ? torchMesh.GetComponent<MeshRenderer>() : null;
         if (mr != null && mr.sharedMaterial != null) mat = Res.Copy(mr.sharedMaterial, Res.Metal, "HDT_Bracket");
 
-        if (!PlankBoard(root, new Vector3(0f, 0.02f, 0.0125f), new Vector3(0.14f, 0.30f, 0.025f)))
-            Part(root, PrimitiveType.Cube, new Vector3(0f, 0.02f, 0.0125f), Quaternion.identity, new Vector3(0.14f, 0.30f, 0.025f), mat);
+        Material wood = mr != null && mr.sharedMaterial != null ? Res.Copy(mr.sharedMaterial, Res.Board, "HDT_TorchBoard") : mat;
+        Part(root, PrimitiveType.Cube, new Vector3(0f, 0.02f, 0.0125f), Quaternion.identity, new Vector3(0.14f, 0.30f, 0.025f), wood);
         Part(root, PrimitiveType.Cube, new Vector3(0f, 0f, WallGap * 0.5f + 0.008f), Quaternion.identity, new Vector3(0.022f, 0.022f, WallGap), mat);
         Part(arm, PrimitiveType.Cylinder, Vector3.zero, Quaternion.identity, new Vector3(0.07f, 0.02f, 0.07f), mat);
-        for (int i = 0; i < 2; i++)
-            Part(root, PrimitiveType.Cylinder, new Vector3(0f, i == 0 ? 0.14f : -0.10f, 0.026f), Quaternion.Euler(90f, 0f, 0f), new Vector3(0.016f, 0.003f, 0.016f), mat);
-    }
-
-    // 底板用原版旧木板的模型和材质,按长中短三条边缩放到底板大小,长边竖着、最薄的一边贴墙
-    private static bool PlankBoard(Transform root, Vector3 pos, Vector3 size)
-    {
-        try
-        {
-            var plank = Gear.LoadVanilla("GEAR_ReclaimedWoodB");
-            var mf = plank != null ? plank.GetComponentInChildren<MeshFilter>(true) : null;
-            var r = mf != null ? mf.GetComponent<MeshRenderer>() : null;
-            if (mf == null || mf.sharedMesh == null || r == null) return false;
-            var b = mf.sharedMesh.bounds;
-            float[] e = { b.size.x, b.size.y, b.size.z };
-            int lng = 0, thn = 0;
-            for (int i = 1; i < 3; i++) { if (e[i] > e[lng]) lng = i; if (e[i] < e[thn]) thn = i; }
-            int mid = 3 - lng - thn;
-            if (mid == lng || mid == thn) return false;
-            Vector3 Ax(int i) => i == 0 ? Vector3.right : i == 1 ? Vector3.up : Vector3.forward;
-            var sc = new float[3];
-            sc[lng] = size.y / Mathf.Max(e[lng], 1e-4f);
-            sc[thn] = size.z / Mathf.Max(e[thn], 1e-4f);
-            sc[mid] = size.x / Mathf.Max(e[mid], 1e-4f);
-            var go = new GameObject("HDT_Board");
-            go.transform.SetParent(root, false);
-            var rot = Quaternion.Inverse(Quaternion.LookRotation(Ax(thn), Ax(lng)));
-            var scale = new Vector3(sc[0], sc[1], sc[2]);
-            go.transform.localRotation = rot;
-            go.transform.localScale = scale;
-            go.transform.localPosition = pos - rot * Vector3.Scale(scale, b.center);
-            go.AddComponent<MeshFilter>().sharedMesh = mf.sharedMesh;
-            go.AddComponent<MeshRenderer>().sharedMaterials = r.sharedMaterials;
-            return true;
-        }
-        catch (Exception ex) { ModMain.Log.Warning("底板模型失败: " + ex.Message); return false; }
     }
 
     private static void Part(Transform parent, PrimitiveType type, Vector3 pos, Quaternion rot, Vector3 scale, Material mat)
@@ -441,12 +391,15 @@ internal static class Torches
         if (Lights.Count == 0) return;
         float time = Time.time;
         float want = ModMain.Settings != null ? ModMain.Settings.LightIntensity : 1f;
+        float amp = ModMain.Settings != null ? ModMain.Settings.Flicker : 0.1f;
         for (int i = Lights.Count - 1; i >= 0; i--)
         {
             var (l, seed, b) = Lights[i];
             if (l == null) { Lights.RemoveAt(i); continue; }
-            // 亮度沿用原版手持火把的灯光,设置里的是倍数
-            l.intensity = b * want * (0.85f + 0.3f * Mathf.PerlinNoise(seed, time * 3f));
+            float v = b * want * (1f - amp * Mathf.PerlinNoise(seed, time * 3f));
+            l.intensity = v;
+            var lt = l.GetComponent<LightTracking>();
+            if (lt != null) lt.SetLightIntensity(v);
         }
     }
 }
