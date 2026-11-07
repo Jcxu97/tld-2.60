@@ -1,34 +1,34 @@
 # HANDOFF — tld--2.55
 
-> Last updated: 2026-10-04 10:00
+> Last updated: 2026-11-08 01:30
 
 ## 当前目标
 
-TldHacks v9.7、剧情第 5 章 V1.2、1~4 章 V1.5、MoreBunkers v1.1 发版,等用户进游戏测。
+TldHacks V12.6 已发到夸克和百度,等群友反馈。
 
 ## 已完成(本轮)
 
-- MoreBunkers 数量按"朝圣者下一个人过半年"重算,架子也算进总量:`design/totals.py` 对目标(囤货 450000 千卡、300 升水、300 柴),热量单位数从 `design/gear_stats.json` 读;`check.py` 和 `totals.py` 都是 problems: 0。难度比例 朝圣者 1、旅行者 1/2、潜行者 1/3、入侵者 0.65/3、厄难 0.25/3
-- 能叠的一件一件摆(Stock.IsBundled 只有箭、火绒、树枝、弹壳、信号弹壳十根一捆),一件里的单位数取预制件默认值(Stock.Pack)
-- 签名(Layouts.Sig)只算摆件不算数量,前缀 v2|;1.0 存档进地堡走 Stock.FromV1,按序号把 station / handed / moved / boxes 改名,不重摆(三个地堡 1.0 和现在摆件顺序核过一致)
-- 出舱口挪位改成看 Bunkers.LeftAt(门钩子记时间),不看出生点名字:日志证明正常出舱口时户外已经清空,TldHacks 传送反倒带着舱口名字
-- 回主菜单清 JustEntered;进原版地堡、改设置(OnSettingsChanged)、剧情模式都处理了;ModData 存失败报一次,读坏了另存 `_broken`
+- 新 mod BlueprintIconFix:制造列表里配方没图标时,用结果物品的背包图标补上。进完整版和终极版,release.py EXTRAS 里叫 bif
+- TldHacks V12.6:物品生成器里 GEAR_FishingLine 名字后加(游戏废案);咖啡罐、茶包这类多份物品能堆叠(Stacking.cs,没进游戏测过)
+- 终极版加了 HutDoorTorch(dll 和用户调过的 json),完整版和最小包不带
+- 夸克根目录 OLD 换成新文件夹 fid 7c837ffc…,发版脚本都改了;夸克、百度三个包按文件夹核对一致;腾讯文档整篇覆盖并读回一致
+- 群机器人资料库 00 01 06 07 10 24 同步到 server,rules.md 加第 28 条
 
 ## 下一步
 
-- 用户新档和 1.0 老档各进一次地堡,看日志 `[MoreBunkers]`:`stocked`、`kept the 1.0 layout as it is`、`cleared N loose items (kept M)`(M 很大说明刷出来的东西也带了玩家标记,重摆会重复)、`went in`(箱子装不下)
-- 从地堡正常走出去应被挪到门口;在地堡里用 TldHacks 传送到同一张图别的点,不应被拉回门口
+- 有人开制造界面后看 Latest.log 有没有 `补图标` 行,确认 BlueprintIconFix 生效
+- 咖啡罐堆叠改动没测过,群里报堆叠问题先看 Stacking.cs 的 Dedupe 和 LabelFix.RestoreUnits
 
 ## 未决问题
 
-- 游戏里没有军用兴奋剂和霰弹枪,雇佣兵地堡用强心针代替
-- 同一存档不回主菜单直接读档时,ModData 不重读,摆没摆过的记录可能和场景对不上
+- 百度的 OLD 文件夹还是旧名字,夸克那边用户换成了 `OLD`,要不要统一没问过
 
 ## 关键文件
 
-- MoreBunkers/design/layouts.py — 三个地堡的布置和数量(唯一来源),改完跑 check.py、totals.py、design.py
-- MoreBunkers/src/Stock.cs — 摆家具、排物品、装箱子、1.0 迁移
-- MoreBunkers/src/Bunkers.cs — 地堡定义、舱口、出口挪位
-- MoreBunkers/src/ModMain.cs — 场景切换时的状态
-- _work/release/morebunkers/ — MoreBunkers 包的说明和 Mods(打包手动,见 memory 发版流程)
+- BlueprintIconFix/src/BlueprintIconFix.cs — 补图标的 patch
+- TldHacks/src/Menu.cs — ResolveDisplayNames 里给废案鱼线加后缀
+- TldHacks/src/Stacking.cs — 多份物品的堆叠判断
+- _tools/release/release.py — pack 和 upload,EXTRAS、NET_OLD
+- _tools/release/ult126.py、ult126_pack.py、bd_prep126.py、bd_up126.py、kb126.py — 这一版的终极版、百度、资料库脚本
+- _work/release/tencent_doc/ — 腾讯文档源稿和粘贴、读回、比对脚本
 - TldHacks/HANDOFF.md — TldHacks 明细
