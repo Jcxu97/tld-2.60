@@ -22,7 +22,7 @@ public class ModMain : MelonMod
         Log = LoggerInstance;
         Settings = new Settings();
         Settings.AddToModSettings("钓鱼小屋门和壁挂火把");
-        Log.Msg($"HutDoorTorch v1.0.0 已加载,挂火把键 {Settings.PlaceKey}");
+        Log.Msg("HutDoorTorch v1.0.0 已加载");
     }
 
     public override void OnSceneWasLoaded(int buildIndex, string sceneName)
@@ -31,7 +31,6 @@ public class ModMain : MelonMod
         {
             _inGame = false;
             Huts.Clear();
-            Torches.Clear();
             Interact.Reset();
             Store.Forget();
             return;
@@ -47,7 +46,6 @@ public class ModMain : MelonMod
 
     public override void OnSceneWasUnloaded(int buildIndex, string sceneName)
     {
-        Torches.Cancel(false);
         Interact.Reset();
     }
 
@@ -60,16 +58,12 @@ public class ModMain : MelonMod
             {
                 _scanAt = -1f;
                 Gear.EnsureTemplates();
+                Torches.EnsureTemplate();
                 Store.LoadIfNewSession();
                 Huts.ScanScene();
-                Torches.ScanScene();
             }
-            var cam = GameManager.GetMainCamera();
             Huts.Tick(Time.deltaTime);
             Torches.TickFlicker();
-            if (Torches.Placing) { Torches.TickPlacing(cam); return; }
-            if (Settings.PlaceKey != KeyCode.None && Input.GetKeyDown(Settings.PlaceKey) && !InterfaceManager.IsOverlayActiveImmediate())
-                Torches.BeginPlacing();
             Interact.Tick();
         }
         catch (Exception ex) { Log.Error("OnUpdate: " + ex); }

@@ -7,12 +7,8 @@ internal class Settings : JsonModSettings
 {
     [Section("壁挂火把")]
 
-    [Name("挂火把键")]
-    [Description("背包里有壁挂火把时按一下,看着墙会出现虚影,左键挂上,右键取消。")]
-    public KeyCode PlaceKey = KeyCode.H;
-
     [Name("倾斜角度")]
-    [Description("火把从墙面往外斜出来的角度,0 是贴墙竖直,90 是水平伸出。")]
+    [Description("火把从墙面往外斜出来的角度,0 是贴墙竖直,90 是水平伸出。改了以后新做和读档后的火把生效。")]
     [Slider(0f, 80f, 17)]
     public float TiltDegrees = 35f;
 

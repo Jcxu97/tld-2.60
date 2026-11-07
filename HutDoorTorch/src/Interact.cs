@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace HutDoorTorch;
 
-// 看着门或火把时的提示和按键。短按交互键开关门,长按拆下;
+// 看着门时的提示和按键。短按交互键开关门,长按拆下;
 // 背包里有门、正对着没门的小屋门框时,按交互键装门。
 internal static class Interact
 {
@@ -33,18 +33,16 @@ internal static class Interact
         if (cam == null) return;
 
         HutDoor door = null;
-        WallTorch torch = null;
         Transform doorway = null;
         var ray = new Ray(cam.transform.position, cam.transform.forward);
         if (Physics.Raycast(ray, out RaycastHit hit, Range, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
         {
             door = Huts.DoorFromCollider(hit.collider);
-            if (door == null) torch = Torches.FromCollider(hit.collider);
         }
-        if (door == null && torch == null && Gear.CountInInventory(Gear.Door) > 0)
+        if (door == null && Gear.CountInInventory(Gear.Door) > 0)
             doorway = Huts.DoorwayInView(cam, 3f);
 
-        object target = (object)door ?? (object)torch ?? doorway;
+        object target = (object)door ?? doorway;
         var pm = GameManager.GetPlayerManagerComponent();
         bool pressed = InputManager.GetInteractPressed(pm);
         bool released = InputManager.GetInteractReleased(pm);
@@ -59,12 +57,6 @@ internal static class Interact
             _hover = (door.IsOpen ? "关门" : "开门") + Progress(held, "长按拆下");
             if (holding && !_holdDone && held >= HoldSeconds) { _holdDone = true; _pressTime = -1f; Huts.Remove(door); return; }
             if (released && holding && !_holdDone) Huts.Toggle(door);
-        }
-        else if (torch != null)
-        {
-            _hoverGo = torch.Root;
-            _hover = "壁挂火把" + Progress(held, "长按取下");
-            if (holding && !_holdDone && held >= HoldSeconds) { _holdDone = true; _pressTime = -1f; Torches.Remove(torch); return; }
         }
         else if (doorway != null)
         {

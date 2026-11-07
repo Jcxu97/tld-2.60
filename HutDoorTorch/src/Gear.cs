@@ -29,23 +29,17 @@ internal static class Gear
 {
     internal const string BaseName = "GEAR_ScrapMetal";
     internal const string DoorName = "GEAR_HDT_HutDoor";
-    internal const string TorchName = "GEAR_HDT_WallTorch";
 
     internal static readonly GearDef Door = new()
     {
         Name = DoorName, LocName = "HDT_HutDoor", LocDesc = "HDT_HutDoor_Desc",
         IconFrom = "GEAR_ReclaimedWoodB", WeightKg = 6f, FakeGuid = "8d1f0c2a9b7e4c11a5f3d6e0b2c4a701",
     };
-    internal static readonly GearDef Torch = new()
-    {
-        Name = TorchName, LocName = "HDT_WallTorch", LocDesc = "HDT_WallTorch_Desc",
-        IconFrom = "GEAR_Torch", WeightKg = 1f, FakeGuid = "8d1f0c2a9b7e4c11a5f3d6e0b2c4a702",
-    };
-    private static readonly GearDef[] All = { Door, Torch };
+    private static readonly GearDef[] All = { Door };
 
     private static GameObject _holder;
     private static AssetReferenceGearItem _baseRef;
-    internal static bool Ready => Door.Template != null && Torch.Template != null;
+    internal static bool Ready => Door.Template != null;
 
     internal static GearDef ByName(string name)
     {
@@ -256,7 +250,7 @@ internal static class Patch_Localization
         ["HDT_HutDoor"] = "钓鱼小屋门",
         ["HDT_HutDoor_Desc"] = "照原版钓鱼小屋做的木门。带到没有门的钓鱼小屋门口,看着门框装上。关上门屋里就不进风。",
         ["HDT_WallTorch"] = "壁挂火把",
-        ["HDT_WallTorch_Desc"] = "带铁支架的火把,斜插在墙上。点着以后一直烧,离开再回来也不会灭。",
+        ["HDT_WallTorch_Desc"] = "带铁支架的火把,当家具挂在墙上。一直烧着,离开再回来也不会灭。",
     };
 
     private static bool Prefix(string key, ref string __result)

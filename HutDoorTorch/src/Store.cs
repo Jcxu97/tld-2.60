@@ -17,25 +17,13 @@ internal class DoorRecord
 }
 
 [Serializable]
-internal class TorchRecord
-{
-    public string scene = "";
-    public float px, py, pz;
-    public float rx, ry, rz, rw = 1f;
-
-    internal Vector3 Pos => new(px, py, pz);
-    internal Quaternion Rot => new(rx, ry, rz, rw);
-}
-
-[Serializable]
 internal class StoreFile
 {
     public int version = 1;
     public List<DoorRecord> doors = new();
-    public List<TorchRecord> torches = new();
 }
 
-// 装上的门和挂上的火把都不归游戏存档管,记在 mod 自己的存档里,进场景时照着摆出来
+// 装上的门不归游戏存档管,记在 mod 自己的存档里,进场景时照着摆出来
 internal static class Store
 {
     private static readonly ModDataManager Manager = new("HutDoorTorch");
@@ -70,14 +58,13 @@ internal static class Store
             string json = Manager.Load(Tag);
             Data = string.IsNullOrEmpty(json) ? new StoreFile() : JsonSerializer.Deserialize<StoreFile>(json, Opts) ?? new StoreFile();
             Data.doors ??= new();
-            Data.torches ??= new();
         }
         catch (Exception ex)
         {
             ModMain.Log.Error("存档读入失败,按空处理: " + ex.Message);
             Data = new StoreFile();
         }
-        ModMain.Log.Msg($"存档读入({name}):门 {Data.doors.Count} 扇,火把 {Data.torches.Count} 支");
+        ModMain.Log.Msg($"存档读入({name}):门 {Data.doors.Count} 扇");
     }
 
     internal static void Forget() { _loaded = null; Data = new StoreFile(); }

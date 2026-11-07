@@ -16,19 +16,21 @@ internal static class Recipes
 {
     private static readonly List<BlueprintData> Made = new();
 
+    // result 为 null 的是壁挂火把,做出来是家具
     private static readonly (string id, GearDef result, int minutes, (string gear, int count)[] mats)[] Specs =
     {
         ("BP_HDT_HutDoor_Fir", Gear.Door, 120, new[] { ("GEAR_Hardwood", 10) }),
         ("BP_HDT_HutDoor_Cedar", Gear.Door, 120, new[] { ("GEAR_Softwood", 10) }),
-        ("BP_HDT_WallTorch_Fir", Gear.Torch, 30, new[] { ("GEAR_Stick", 2), ("GEAR_Hardwood", 1), ("GEAR_Torch", 1) }),
-        ("BP_HDT_WallTorch_Cedar", Gear.Torch, 30, new[] { ("GEAR_Stick", 2), ("GEAR_Softwood", 1), ("GEAR_Torch", 1) }),
+        ("BP_HDT_WallTorch_Fir", null, 30, new[] { ("GEAR_Stick", 2), ("GEAR_Hardwood", 1), ("GEAR_Torch", 1) }),
+        ("BP_HDT_WallTorch_Cedar", null, 30, new[] { ("GEAR_Stick", 2), ("GEAR_Softwood", 1), ("GEAR_Torch", 1) }),
     };
 
     internal static void AddTo(BPManager mgr)
     {
         if (mgr == null) return;
         Gear.EnsureTemplates();
-        if (!Gear.Ready) return;
+        Torches.EnsureTemplate();
+        if (!Gear.Ready || Torches.Template == null) return;
         var all = mgr.m_AllBlueprints;
         if (all == null) return;
         if (Made.Count == 0) Build(all);
@@ -64,9 +66,18 @@ internal static class Recipes
             var bp = Object.Instantiate(baseBp);
             bp.name = s.id;
             Object.DontDestroyOnLoad(bp);
-            bp.m_CraftingResultType = CraftingResult.StandardGear;
-            bp.m_CraftedResultGear = s.result.Template;
-            bp.m_CraftedResultDecoration = null;
+            if (s.result != null)
+            {
+                bp.m_CraftingResultType = CraftingResult.StandardGear;
+                bp.m_CraftedResultGear = s.result.Template;
+                bp.m_CraftedResultDecoration = null;
+            }
+            else
+            {
+                bp.m_CraftingResultType = CraftingResult.Decoration;
+                bp.m_CraftedResultDecoration = Torches.Template;
+                bp.m_CraftedResultGear = null;
+            }
             bp.m_CraftedResultCount = 1;
             bp.m_DurationMinutes = s.minutes;
             bp.m_RequiredGear = new Il2CppReferenceArray<BlueprintData.RequiredGearItem>(mats.ToArray());
@@ -82,12 +93,6 @@ internal static class Recipes
         ModMain.Log.Msg($"加了 {Made.Count} 条配方");
     }
 
-    internal static GearDef ResultOf(BlueprintData bp)
-    {
-        if (bp == null) return null;
-        foreach (var s in Specs) if (bp.name == s.id) return s.result;
-        return null;
-    }
 }
 
 [HarmonyPatch(typeof(BPManager), nameof(BPManager.LoadAllUserBlueprints))]
