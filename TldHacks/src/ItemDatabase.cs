@@ -542,7 +542,7 @@ internal static class ItemDatabase
     new ItemEntry("GEAR_Toolbox_Simple", "简易工具箱", "工具", "", 0.5f),
     new ItemEntry("GEAR_LampFuelFull", "满灯油", "工具", "", 0.5f),
     new ItemEntry("GEAR_TipUp_Flag", "冰钓旗", "工具", "", 0.5f),
-    new ItemEntry("GEAR_FishingLine", "钓鱼线(整轴)", "工具", "", 0.5f),
+    new ItemEntry("GEAR_FishingLine", "鱼线", "工具", "", 0.25f),
     new ItemEntry("GEAR_FishingBaitA", "鱼饵", "工具", "", 0.5f),
     new ItemEntry("GEAR_RockCacheA", "石头堆", "工具", "", 0.5f),
     new ItemEntry("GEAR_Rope", "登山绳", "工具", "", 0.5f),

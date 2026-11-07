@@ -1930,6 +1930,8 @@ internal static class Menu
                             if (HasChineseChar(dn)) e.NameZh = dn;
                             else e.NameEn = dn;
                         }
+                        // 原版没用上的物品,名字借的是 GEAR_Line,做不了钓鱼用具
+                        if (e.PrefabName == "GEAR_FishingLine") { e.NameZh += "（游戏废案）"; e.NameEn += " (cut content)"; }
                         if (isMod) { e.NameZh += " (mod)"; e.NameEn += " (mod)"; }
 #endif
                     }

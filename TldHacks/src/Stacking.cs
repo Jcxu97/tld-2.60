@@ -57,7 +57,7 @@ internal static class Stacking
 
                 // 快速过滤：count ≤ 1 的不需要显示堆叠标签,跳过 IL2Cpp 访问
                 if (!StackState.TryGetCount(cachedDi.Pointer, out int cachedCount) || cachedCount <= 1)
-                    continue;
+                { LabelFix.RestoreUnits(item); continue; }
 
                 Il2Cpp.GearItem curGi = null;
                 try { curGi = item.m_GearItem; } catch { _staleList.Add(kv.Key); continue; }
@@ -200,8 +200,10 @@ internal static class Dedupe
             // 已真合并的 stackable(m_Units>1)由原版/StackManager 显示 × N,我们让路。
             // 只挂组件但 m_Units=1 的(如整合包给 DryMilkPacket / MixedNuts 加的),
             // 实际没被合,我们仍做 UI 堆叠
+            // 咖啡罐、茶包这类一件就带好几份(m_DefaultUnitsInItem=5/3),m_Units>1 不代表合过堆,
+            //   只有超过单件份数才算真堆叠
             var stackable = gi.GetComponent<StackableItem>();
-            if (stackable != null && stackable.m_Units > 1) { keep.Add(di); continue; }
+            if (stackable != null && stackable.m_Units > System.Math.Max(1, stackable.m_DefaultUnitsInItem)) { keep.Add(di); continue; }
 
             // 必须用 GameObject.name(每个 prefab 独立),不能用 m_GearItemData.name —
             // 整合包里多个 mod 加的物品可能共用同一个 GearItemData asset,name 相同,
@@ -424,11 +426,14 @@ internal static class LabelFix
     {
         try
         {
-            if (item == null || !_unitsHidden.Remove(item.Pointer)) return;
+            if (item == null || !_unitsHidden.Contains(item.Pointer)) return;
             var ul = item.m_UnitLabel;
             var us = item.m_UnitSprite;
             bool show = ul != null && ul.gameObject != null && ul.gameObject.activeSelf;
-            if (us != null && us.gameObject != null && us.gameObject.activeSelf != show) us.gameObject.SetActive(show);
+            // 份数数字可能晚于这次刷新才亮,数字没亮时先别出名单,下一轮 OnLateUpdate 再补图标
+            if (!show) return;
+            _unitsHidden.Remove(item.Pointer);
+            if (us != null && us.gameObject != null && !us.gameObject.activeSelf) us.gameObject.SetActive(true);
         }
         catch { }
     }

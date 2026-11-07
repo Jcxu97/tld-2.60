@@ -36,7 +36,10 @@ SCP = dict(csproj=r'SCPlusFix\SafehouseCustomizationPlus.csproj', out=r'SCPlusFi
 # MoreBunkers ships inside the sandbox full package since 2026-10-26 (still also a separate zip in 零散MODS)
 MB = dict(csproj=r'MoreBunkers\src\MoreBunkers.csproj', out=r'MoreBunkers\src\bin\Release\MoreBunkers.dll',
           game=r'Mods\MoreBunkers.dll', stage=[os.path.join('sb_full', 'Mods', 'MoreBunkers.dll')])
-EXTRAS = {'scp': SCP, 'mb': MB}
+# BlueprintIconFix (2026-11-08) fills blank crafting list icons with the result item's inventory icon. Full and ultimate only.
+BIF = dict(csproj=r'BlueprintIconFix\BlueprintIconFix.csproj', out=r'BlueprintIconFix\bin\Release\net6.0\BlueprintIconFix.dll',
+           game=r'Mods\BlueprintIconFix.dll', stage=[os.path.join(p, 'Mods', 'BlueprintIconFix.dll') for p in ('sb_full', 'ultimate')])
+EXTRAS = {'scp': SCP, 'mb': MB, 'bif': BIF}
 
 
 def sb_names(v):
