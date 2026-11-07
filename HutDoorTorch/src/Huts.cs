@@ -46,9 +46,13 @@ internal static class Huts
         Doors.Clear();
     }
 
+    private static int _lastCount = -1;
+    private static string _lastScene;
+
     internal static void ScanScene()
     {
         Doorless.Clear();
+        int named = 0;
         Doors.RemoveAll(d => d.Hut == null || d.DoorGo == null);
         try
         {
@@ -56,8 +60,9 @@ internal static class Huts
             {
                 if (md == null) continue;
                 var t = md.transform;
-                if (!IsDoorlessHut(t.name) || !t.gameObject.activeInHierarchy) continue;
-                if (t.Find("Hinge") != null) continue;
+                if (!IsDoorlessHut(t.name)) continue;
+                named++;
+                if (!t.gameObject.activeInHierarchy || t.Find("Hinge") != null) continue;
                 Doorless.Add(t);
             }
         }
@@ -72,7 +77,10 @@ internal static class Huts
             if (DoorOn(hut) != null) continue;
             Build(hut, rec);
         }
-        if (Doorless.Count > 0) ModMain.Log.Msg($"{scene}:没门的钓鱼小屋 {Doorless.Count} 间,装了门的 {Doors.Count} 间");
+        if (Doorless.Count != _lastCount || scene != _lastScene)
+            ModMain.Log.Msg($"{scene}:钓鱼小屋 {named} 间,其中没门又已激活的 {Doorless.Count} 间,装了门的 {Doors.Count} 间");
+        _lastCount = Doorless.Count;
+        _lastScene = scene;
     }
 
     private static Transform FindHut(float x, float z)

@@ -40,15 +40,18 @@ internal static class Recipes
 
     private static void Build(Il2CppSystem.Collections.Generic.List<BlueprintData> all)
     {
-        BlueprintData baseBp = null;
+        BlueprintData baseBp = null, anyBp = null;
         foreach (var bp in all)
         {
             if (bp == null || bp.m_CraftedResultGear == null) continue;
+            anyBp ??= bp;
             if (bp.m_RequiredCraftingLocation != CraftingLocation.Workbench) continue;
-            if (baseBp == null) baseBp = bp;
+            baseBp ??= bp;
             if (bp.m_CraftedResultGear.name.Contains("Snare")) { baseBp = bp; break; }
         }
-        if (baseBp == null) { ModMain.Log.Error("没找到可以照抄的工作台配方"); return; }
+        baseBp ??= anyBp;
+        // 游戏刚启动时配方表还是空的,进存档或打开制造界面时再试
+        if (baseBp == null) { ModMain.Log.Msg($"配方表里还没有能照抄的配方(共 {all.Count} 条),稍后再加"); return; }
         ModMain.Log.Msg($"配方照抄 {baseBp.name}");
 
         foreach (var s in Specs)
@@ -101,6 +104,17 @@ internal static class Patch_LoadAllUserBlueprints
     private static void Postfix(BPManager __instance)
     {
         try { Recipes.AddTo(__instance); }
+        catch (Exception ex) { ModMain.Log.Error("加配方失败: " + ex); }
+    }
+}
+
+[HarmonyPatch(typeof(Panel_Crafting), nameof(Panel_Crafting.Enable), new Type[] { typeof(bool), typeof(bool) })]
+internal static class Patch_PanelCraftingEnable
+{
+    private static void Prefix(bool enable)
+    {
+        if (!enable) return;
+        try { Recipes.AddTo(BPManager.Instance); }
         catch (Exception ex) { ModMain.Log.Error("加配方失败: " + ex); }
     }
 }

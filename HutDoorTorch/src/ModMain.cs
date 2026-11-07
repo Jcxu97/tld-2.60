@@ -16,12 +16,14 @@ public class ModMain : MelonMod
 
     private static bool _inGame;
     private static float _scanAt = -1f;
+    private static float _rescanAt = -1f;
 
     public override void OnInitializeMelon()
     {
         Log = LoggerInstance;
         Settings = new Settings();
         Settings.AddToModSettings("钓鱼小屋门和壁挂火把");
+        TldHacksCompat.Install(HarmonyInstance);
         Log.Msg("HutDoorTorch v1.0.0 已加载");
     }
 
@@ -30,6 +32,7 @@ public class ModMain : MelonMod
         if (sceneName != null && sceneName.Contains("MainMenu"))
         {
             _inGame = false;
+            _rescanAt = -1f;
             Huts.Clear();
             Interact.Reset();
             Store.Forget();
@@ -61,7 +64,25 @@ public class ModMain : MelonMod
                 Torches.EnsureTemplate();
                 Store.LoadIfNewSession();
                 Huts.ScanScene();
+                try { Recipes.AddTo(Il2CppTLD.Gear.BlueprintManager.Instance); } catch (Exception ex) { Log.Error("加配方失败: " + ex); }
+                _rescanAt = Time.realtimeSinceStartup + 10f;
             }
+            else if (_rescanAt > 0f && Time.realtimeSinceStartup >= _rescanAt)
+            {
+                // 远处的小屋进场景时可能还没激活,隔一阵再找一遍
+                _rescanAt = Time.realtimeSinceStartup + 10f;
+                Huts.ScanScene();
+            }
+#if HDT_TEST
+            if (Input.GetKeyDown(KeyCode.F8))
+            {
+                Gear.GiveOne(Gear.Door);
+                Torches.EnsureTemplate();
+                var di = GameManager.GetPlayerManagerComponent().InstantiateDecorationItemInPlayerInventory(Torches.Template, PlayerManager.InventoryInstantiateFlags.None);
+                Log.Msg($"测试:给了门和火把 {(di != null ? di.name : "null")}");
+                HUDMessage.AddMessage("测试:给了门和壁挂火把", false, false);
+            }
+#endif
             Huts.Tick(Time.deltaTime);
             Torches.TickFlicker();
             Interact.Tick();
