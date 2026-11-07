@@ -23,6 +23,12 @@ internal static class Torches
     private const float WallGap = 0.09f;
 
     internal static DecorationItem Template;
+    private const string LightInName = "HDT_LightIndoor";
+    private const string LightOutName = "HDT_LightOutdoor";
+    private const float LightOut = 0.35f;
+    private static readonly List<(GameObject indoor, GameObject outdoor)> Pairs = new();
+    private static string _lightScene;
+    private static bool _outside;
     internal static DecorationItem BaseItem;
     private static AssetReferencePlaceable _baseRef;
     private static GameObject _holder;
@@ -139,6 +145,9 @@ internal static class Torches
 
         foreach (var l in visual.GetComponentsInChildren<Light>(true))
             if (l.enabled && l.GetComponent<LightRandomIntensity>() == null) Lights.Add((l, UnityEngine.Random.value * 100f, l.intensity));
+        var li = FindDeep(visual.transform, LightInName);
+        var lo = FindDeep(visual.transform, LightOutName);
+        if (li != null || lo != null) Pairs.Add((li?.gameObject, lo?.gameObject));
     }
 
     // z 轴朝墙外,火把绕 x 轴往外斜
@@ -215,18 +224,21 @@ internal static class Torches
             // root 这时在原点不转,世界空间就是 root 空间,把斜出去的角度从火焰上转回来
             fxGo.transform.rotation = Quaternion.Euler(-tilt, 0f, 0f) * fxGo.transform.rotation;
         }
-        var want = PickLight(lightIn, lightOut);
         float mult = ModMain.Settings != null ? ModMain.Settings.LightIntensity : 1f;
         foreach (var l in copy.GetComponentsInChildren<Light>(true))
         {
-            bool use = want == null || l == want;
-            l.enabled = use;
-            if (!use) { l.gameObject.SetActive(false); continue; }
+            bool isOut = lightOut != null && l == lightOut;
+            bool isIn = lightIn != null && l == lightIn;
+            if (!isOut && !isIn) { l.enabled = false; continue; }
+            l.gameObject.name = isOut ? LightOutName : LightInName;
             l.gameObject.SetActive(true);
-            float full = l == lightOut ? fx.outdoor : fx.indoor;
+            l.enabled = true;
+            float full = isOut ? fx.outdoor : fx.indoor;
             if (full > 0f) l.intensity = full;
             l.intensity *= mult;
             if (l.range < 1f) l.range = 8f;
+            // 原版手持火把的灯不在火头上,而是往外挪开一段,免得把墙照成一块亮斑
+            l.transform.position += Vector3.forward * LightOut + Vector3.up * 0.1f;
         }
         fx.Apply();
 
@@ -305,26 +317,52 @@ internal static class Torches
         return f;
     }
 
-    private static Light PickLight(Light indoor, Light outdoor)
-    {
-        bool outside = false;
-        try { outside = GameManager.IsOutDoorsScene(GameManager.m_ActiveScene); } catch { }
-        if (outside && outdoor != null) return outdoor;
-        return indoor ?? outdoor;
-    }
-
     private static void BuildBracket(Transform root, Transform arm, GameObject torchMesh)
     {
         Material mat = null;
         var mr = torchMesh != null ? torchMesh.GetComponent<MeshRenderer>() : null;
         if (mr != null && mr.sharedMaterial != null) mat = Res.Copy(mr.sharedMaterial, Res.Metal, "HDT_Bracket");
 
-        Material wood = mr != null && mr.sharedMaterial != null ? Res.Copy(mr.sharedMaterial, Res.Wood, "HDT_TorchBoard") : mat;
-        Part(root, PrimitiveType.Cube, new Vector3(0f, 0.02f, 0.0125f), Quaternion.identity, new Vector3(0.14f, 0.30f, 0.025f), wood);
+        if (!PlankBoard(root, new Vector3(0f, 0.02f, 0.0125f), new Vector3(0.14f, 0.30f, 0.025f)))
+            Part(root, PrimitiveType.Cube, new Vector3(0f, 0.02f, 0.0125f), Quaternion.identity, new Vector3(0.14f, 0.30f, 0.025f), mat);
         Part(root, PrimitiveType.Cube, new Vector3(0f, 0f, WallGap * 0.5f + 0.008f), Quaternion.identity, new Vector3(0.022f, 0.022f, WallGap), mat);
         Part(arm, PrimitiveType.Cylinder, Vector3.zero, Quaternion.identity, new Vector3(0.07f, 0.02f, 0.07f), mat);
         for (int i = 0; i < 2; i++)
             Part(root, PrimitiveType.Cylinder, new Vector3(0f, i == 0 ? 0.14f : -0.10f, 0.026f), Quaternion.Euler(90f, 0f, 0f), new Vector3(0.016f, 0.003f, 0.016f), mat);
+    }
+
+    // 底板用原版旧木板的模型和材质,按长中短三条边缩放到底板大小,长边竖着、最薄的一边贴墙
+    private static bool PlankBoard(Transform root, Vector3 pos, Vector3 size)
+    {
+        try
+        {
+            var plank = Gear.LoadVanilla("GEAR_ReclaimedWoodB");
+            var mf = plank != null ? plank.GetComponentInChildren<MeshFilter>(true) : null;
+            var r = mf != null ? mf.GetComponent<MeshRenderer>() : null;
+            if (mf == null || mf.sharedMesh == null || r == null) return false;
+            var b = mf.sharedMesh.bounds;
+            float[] e = { b.size.x, b.size.y, b.size.z };
+            int lng = 0, thn = 0;
+            for (int i = 1; i < 3; i++) { if (e[i] > e[lng]) lng = i; if (e[i] < e[thn]) thn = i; }
+            int mid = 3 - lng - thn;
+            if (mid == lng || mid == thn) return false;
+            Vector3 Ax(int i) => i == 0 ? Vector3.right : i == 1 ? Vector3.up : Vector3.forward;
+            var sc = new float[3];
+            sc[lng] = size.y / Mathf.Max(e[lng], 1e-4f);
+            sc[thn] = size.z / Mathf.Max(e[thn], 1e-4f);
+            sc[mid] = size.x / Mathf.Max(e[mid], 1e-4f);
+            var go = new GameObject("HDT_Board");
+            go.transform.SetParent(root, false);
+            var rot = Quaternion.Inverse(Quaternion.LookRotation(Ax(thn), Ax(lng)));
+            var scale = new Vector3(sc[0], sc[1], sc[2]);
+            go.transform.localRotation = rot;
+            go.transform.localScale = scale;
+            go.transform.localPosition = pos - rot * Vector3.Scale(scale, b.center);
+            go.AddComponent<MeshFilter>().sharedMesh = mf.sharedMesh;
+            go.AddComponent<MeshRenderer>().sharedMaterials = r.sharedMaterials;
+            return true;
+        }
+        catch (Exception ex) { ModMain.Log.Warning("底板模型失败: " + ex.Message); return false; }
     }
 
     private static void Part(Transform parent, PrimitiveType type, Vector3 pos, Quaternion rot, Vector3 scale, Material mat)
@@ -337,10 +375,49 @@ internal static class Torches
         go.transform.localRotation = rot;
         go.transform.localScale = scale;
         if (mat != null) go.GetComponent<MeshRenderer>().sharedMaterial = mat;
+        // 完美放置算外框时会丢掉叫 Cube/Cylinder 的内置网格,换个名字的副本让支架也算进去
+        var mf = go.GetComponent<MeshFilter>();
+        if (!Renamed.TryGetValue(type, out var mesh) || mesh == null)
+        {
+            mesh = Object.Instantiate(mf.sharedMesh);
+            mesh.name = "HDT_Bracket" + type;
+            mesh.hideFlags = HideFlags.DontUnloadUnusedAsset;
+            Renamed[type] = mesh;
+        }
+        mf.sharedMesh = mesh;
+    }
+
+    private static readonly Dictionary<PrimitiveType, Mesh> Renamed = new();
+
+    private static Transform FindDeep(Transform t, string name)
+    {
+        if (t.name == name) return t;
+        for (int i = 0; i < t.childCount; i++) { var r = FindDeep(t.GetChild(i), name); if (r != null) return r; }
+        return null;
+    }
+
+    // 室内外用原版火把各自那盏灯
+    private static void TickLights()
+    {
+        string scene = Store.Scene;
+        if (scene != _lightScene)
+        {
+            _lightScene = scene;
+            try { _outside = GameManager.IsOutDoorsScene(scene); } catch { _outside = false; }
+        }
+        for (int i = Pairs.Count - 1; i >= 0; i--)
+        {
+            var (a, b) = Pairs[i];
+            if (a == null && b == null) { Pairs.RemoveAt(i); continue; }
+            bool useOut = _outside && b != null || a == null;
+            if (a != null && a.activeSelf == useOut) a.SetActive(!useOut);
+            if (b != null && b.activeSelf != useOut) b.SetActive(useOut);
+        }
     }
 
     internal static void TickFlicker()
     {
+        TickLights();
         if (Lights.Count == 0) return;
         float time = Time.time;
         float want = ModMain.Settings != null ? ModMain.Settings.LightIntensity : 1f;

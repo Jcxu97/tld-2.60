@@ -109,6 +109,8 @@ internal static class Gear
         try { tex = src.GetInventoryIconTexture(); } catch { }
         if (tex == null)
             try { tex = Addressables.LoadAssetAsync<Texture2D>((Il2CppSystem.Object)src.name.Replace("GEAR_", "ico_GearItem__")).WaitForCompletion(); } catch { }
+        if (data.name.EndsWith(DoorName))
+            try { var own = Res.DoorIcon; if (own != null) tex = own; } catch (Exception ex) { ModMain.Log.Warning("门图标读取失败: " + ex.Message); }
         var icon = ScriptableObject.CreateInstance<GearItemInventoryIconSimpleData>();
         icon.name = data.name.Replace("GearItemData_GEAR_", "ico_GearItem__");
         icon.m_Icon = tex;
@@ -129,6 +131,42 @@ internal static class Gear
         // 废金属能叠放,不去掉的话进背包会并进废金属那一格,门就看不见了
         var st = gi.m_StackableItem ?? gi.GetComponent<StackableItem>();
         if (st != null) { Object.DestroyImmediate(st); gi.m_StackableItem = null; }
+        if (d == Door) DoorModel(gi);
+    }
+
+    private const float GroundScale = 0.45f;
+
+    // 地上的样子换成门:藏起废金属的模型,挂一扇缩小的门,碰撞盒跟着门的大小
+    private static void DoorModel(GearItem gi)
+    {
+        if (gi.transform.Find("HDT_DoorModel") != null) return;
+        var mesh = Res.DoorMesh();
+        if (mesh == null) return;
+        Material src = null;
+        foreach (var r in gi.GetComponentsInChildren<MeshRenderer>(true))
+        {
+            if (src == null) src = r.sharedMaterial;
+            r.enabled = false;
+        }
+        foreach (var lod in gi.GetComponentsInChildren<LODGroup>(true)) lod.enabled = false;
+        var mats = Res.GearDoorMaterials(src);
+        if (mats == null) return;
+        var go = new GameObject("HDT_DoorModel");
+        go.layer = gi.gameObject.layer;
+        go.transform.SetParent(gi.transform, false);
+        var b = mesh.bounds;
+        // 门板平躺:原本竖着的门绕 x 轴放倒,中心对准物品原点
+        go.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+        go.transform.localScale = Vector3.one * GroundScale;
+        go.transform.localPosition = -(go.transform.localRotation * (b.center * GroundScale)) + new Vector3(0f, b.extents.z * GroundScale, 0f);
+        go.AddComponent<MeshFilter>().sharedMesh = mesh;
+        go.AddComponent<MeshRenderer>().sharedMaterials = mats;
+        var box = gi.GetComponent<BoxCollider>() ?? gi.GetComponentInChildren<BoxCollider>(true);
+        if (box != null)
+        {
+            box.center = new Vector3(0f, b.extents.z * GroundScale, 0f);
+            box.size = new Vector3(b.size.x, b.size.z, b.size.y) * GroundScale;
+        }
     }
 
     internal static string DumpInventory()

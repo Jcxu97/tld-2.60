@@ -39,6 +39,19 @@ internal static class Res
 
     internal static Texture2D Metal => Tex(ref _metal, "GLB_MetalRusted_B_Flat.png");
     internal static Texture2D Wood => Tex(ref _wood, "STR_DoorWood_B.png");
+    private static Texture2D _doorIcon;
+    internal static Texture2D DoorIcon => Tex(ref _doorIcon, "ico_HutDoor.png");
+
+    private static Material[] _gearMats;
+    // 门放在地上时用的材质,照抄物品自己的材质换贴图
+    internal static Material[] GearDoorMaterials(Material src)
+    {
+        if (_gearMats != null && _gearMats[0] != null) return _gearMats;
+        if (src == null) return null;
+        _gearMats = new[] { Copy(src, Wood, "HDT_GearDoorWood"), Copy(src, Metal, "HDT_GearDoorMetal") };
+        foreach (var m in _gearMats) m.hideFlags = HideFlags.DontUnloadUnusedAsset;
+        return _gearMats;
+    }
 
     internal static Mesh DoorMesh()
     {

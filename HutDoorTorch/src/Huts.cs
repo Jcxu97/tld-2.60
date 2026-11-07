@@ -15,6 +15,7 @@ internal sealed class HutDoor
     internal Transform Hinge;
     internal GameObject DoorGo;
     internal DoorRecord Record;
+    internal GameObject Warmth;
     internal float Angle;
     internal float Target;
 
@@ -157,6 +158,7 @@ internal static class Huts
         Store.Data.doors.Remove(d.Record);
         Doors.Remove(d);
         if (d.Hinge != null) Object.Destroy(d.Hinge.gameObject);
+        if (d.Warmth != null) Object.Destroy(d.Warmth);
         Gear.GiveOne(Gear.Door);
         HUDMessage.AddMessage("拆下了钓鱼小屋门", false, false);
     }
@@ -193,10 +195,32 @@ internal static class Huts
         box.center = BoxCenter;
         box.size = BoxSize;
 
-        var d = new HutDoor { Hut = hut, Hinge = hinge, DoorGo = door, Record = rec };
+        var d = new HutDoor { Hut = hut, Hinge = hinge, DoorGo = door, Record = rec, Warmth = AddWarmth(hut) };
         d.Target = d.Angle = rec.open ? Sign() * OpenAngle : 0f;
         hinge.localRotation = Quaternion.Euler(0f, d.Angle, 0f);
         Doors.Add(d);
+    }
+
+    // 原版带门的钓鱼小屋在 Tech 下面有个升温区(+3°C),没门的没有。装上门就照原版补一个,位置大小照抄
+    private static GameObject AddWarmth(Transform hut)
+    {
+        try
+        {
+            var tech = hut.Find("Tech");
+            var go = new GameObject("HDT_TRIGGER_TemperatureIncrease");
+            go.layer = 25;
+            go.transform.SetParent(tech != null ? tech : hut, false);
+            float k = tech != null ? 1f : 0.79f;
+            go.transform.localPosition = new Vector3(-0.03f, 1.67f, 0.05f) * k;
+            go.transform.localRotation = Quaternion.identity;
+            go.transform.localScale = new Vector3(0.44f, 0.43f, 0.36f) * k;
+            var box = go.AddComponent<BoxCollider>();
+            box.isTrigger = true;
+            box.size = new Vector3(10f, 10f, 10f);
+            go.AddComponent<IncreaseTemperatureTrigger>().m_TempIncrease = 3f;
+            return go;
+        }
+        catch (Exception ex) { ModMain.Log.Warning("加升温区失败: " + ex.Message); return null; }
     }
 
     internal static void Tick(float dt)
