@@ -335,11 +335,29 @@ internal static class Patch_InventoryFilter
 [HarmonyPatch(typeof(Panel_Inventory), nameof(Panel_Inventory.UpdateFilteredInventoryList))]
 internal static class Patch_InventoryList
 {
-    private static float _next;
-    private static void Postfix()
+    private static readonly HashSet<string> Logged = new();
+
+    // 背包界面列物品时没把门列进来(门确实在背包里),这里在"全部"和"材料"两栏里把它补上
+    private static void Postfix(Panel_Inventory __instance)
     {
-        if (UnityEngine.Time.realtimeSinceStartup < _next) return;
-        _next = UnityEngine.Time.realtimeSinceStartup + 5f;
-        ModMain.Log.Msg("打开背包时:" + Gear.DumpInventory());
+        try
+        {
+            var list = __instance.m_FilteredInventoryList;
+            string filter = __instance.m_FilterName ?? "";
+            bool show = filter.IndexOf("All", StringComparison.OrdinalIgnoreCase) >= 0 || filter.IndexOf("Material", StringComparison.OrdinalIgnoreCase) >= 0;
+            int added = 0;
+            foreach (var w in GameManager.GetInventoryComponent().m_Items)
+            {
+                var gi = w?.m_GearItem;
+                if (gi == null || Gear.ByName(gi.name) == null) continue;
+                bool listed = false;
+                foreach (var e in list) if (e != null && e.m_GearItem == gi) { listed = true; break; }
+                if (listed || !show) continue;
+                list.Add(new InventoryGridDataItem { m_GearItem = gi });
+                added++;
+            }
+            if (Logged.Add(filter)) ModMain.Log.Msg($"背包分类 {filter} 共 {list.Count} 格,补进门 {added} 格");
+        }
+        catch (Exception ex) { ModMain.Log.Warning("背包补门失败: " + ex.Message); }
     }
 }
