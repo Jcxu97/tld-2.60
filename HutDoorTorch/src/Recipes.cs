@@ -181,3 +181,22 @@ internal static class Patch_InstantiateInInventory
         Gear.FixInventoryName(__result);
     }
 }
+
+[HarmonyPatch(typeof(Panel_Crafting), nameof(Panel_Crafting.CanCraftBlueprint))]
+internal static class Patch_CanCraft
+{
+    private static readonly Dictionary<string, bool> Last = new();
+    private static void Postfix(BlueprintData bpi, bool __result)
+    {
+        if (bpi == null || !bpi.name.StartsWith("BP_HDT_")) return;
+        if (Last.TryGetValue(bpi.name, out bool v) && v == __result) return;
+        Last[bpi.name] = __result;
+        ModMain.Log.Msg($"配方 {bpi.name} 能不能做 {__result}");
+    }
+}
+
+[HarmonyPatch(typeof(Panel_Crafting), nameof(Panel_Crafting.OnBeginCrafting))]
+internal static class Patch_BeginCraft
+{
+    private static void Prefix() => ModMain.Log.Msg("点了开始制作");
+}

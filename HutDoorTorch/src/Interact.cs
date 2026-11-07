@@ -44,8 +44,10 @@ internal static class Interact
 
         object target = (object)door ?? doorway;
         var pm = GameManager.GetPlayerManagerComponent();
-        bool pressed = InputManager.GetInteractPressed(pm);
-        bool released = InputManager.GetInteractReleased(pm);
+        bool pressed = InputManager.GetInteractPressed(pm) || Input.GetMouseButtonDown(0);
+        bool released = InputManager.GetInteractReleased(pm) || Input.GetMouseButtonUp(0);
+        if (pressed || released)
+            ModMain.Log.Msg($"交互键 {(pressed ? "按下" : "松开")} 准星 {(hit.collider != null ? hit.collider.name : "空")} 门 {(door != null)} 门框 {(doorway != null ? doorway.name : "无")} 背包门 {Gear.CountInInventory(Gear.Door)} 屋 {Huts.DoorlessCount}");
 
         if (pressed && target != null) { _pressTime = Time.time; _pressTarget = target; _holdDone = false; }
         bool holding = _pressTime >= 0f && _pressTarget == target && target != null;

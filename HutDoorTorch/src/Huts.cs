@@ -35,6 +35,7 @@ internal static class Huts
     private const float OpenAngle = 100f;
 
     internal static readonly List<Transform> Doorless = new();
+    internal static int DoorlessCount => Doorless.Count;
     internal static readonly List<HutDoor> Doors = new();
 
     internal static bool IsDoorlessHut(string n) =>
