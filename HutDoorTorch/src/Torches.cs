@@ -35,7 +35,7 @@ internal static class Torches
     private static readonly List<(Light light, float seed, float baseIntensity, float baseRange)> Lights = new();
     private static readonly HashSet<int> Known = new();
     private static float _fullIn = 5f, _fullOut = 1.6f, _rangeIn = 8f, _rangeOut = 10f;
-    private static float _nextScan, _nextLog, _lastSet = -1f;
+    private static float _nextScan;
 
     internal static void EnsureTemplate()
     {
@@ -237,7 +237,6 @@ internal static class Torches
             var shift = head - body.position;
             shift.y = head.y - core.position.y;
             fxGo.transform.position += shift;
-            ModMain.Log.Msg($"火焰对位 火心 {Fmt(core.position)} 火苗 {Fmt(body.position)} 火头 {Fmt(head)}");
         }
         foreach (var l in copy.GetComponentsInChildren<Light>(true))
         {
@@ -380,8 +379,6 @@ internal static class Torches
         return null;
     }
 
-    private static string Fmt(Vector3 v) => $"({v.x:F3},{v.y:F3},{v.z:F3})";
-
     private static void Register(Light l)
     {
         if (l == null || !Known.Add(l.GetInstanceID())) return;
@@ -437,14 +434,6 @@ internal static class Torches
         Scan();
         TickLights();
         if (Lights.Count == 0) return;
-        if (Time.realtimeSinceStartup >= _nextLog)
-        {
-            _nextLog = Time.realtimeSinceStartup + 10f;
-            int on = 0; string seen = "";
-            foreach (var (l0, _, _, _) in Lights)
-                if (l0 != null && l0.isActiveAndEnabled) { on++; seen = $"{l0.name} 亮度 {l0.intensity:F2} 范围 {l0.range:F1}"; }
-            ModMain.Log.Msg($"火光检查 登记 {Lights.Count} 盏 亮着 {on} 盏 {seen} 上帧设的亮度 {_lastSet:F2}");
-        }
         float time = Time.time;
         float want = ModMain.Settings != null ? ModMain.Settings.LightIntensity : 1f;
         float amp = ModMain.Settings != null ? ModMain.Settings.Flicker : 0.1f;
@@ -465,7 +454,6 @@ internal static class Torches
             }
             else v = b * want * (1f - amp * Mathf.PerlinNoise(seed, time * 3f));
             l.intensity = v;
-            if (l.isActiveAndEnabled) _lastSet = v;
             var lt = l.GetComponent<LightTracking>();
             if (lt != null) lt.SetLightIntensity(v);
         }
