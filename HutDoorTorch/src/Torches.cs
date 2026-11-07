@@ -392,11 +392,21 @@ internal static class Torches
         float time = Time.time;
         float want = ModMain.Settings != null ? ModMain.Settings.LightIntensity : 1f;
         float amp = ModMain.Settings != null ? ModMain.Settings.Flicker : 0.1f;
+        bool jump = ModMain.Settings != null && ModMain.Settings.VanillaFlicker;
+        int step = Mathf.FloorToInt(time / 0.2f);
         for (int i = Lights.Count - 1; i >= 0; i--)
         {
             var (l, seed, b) = Lights[i];
             if (l == null) { Lights.RemoveAt(i); continue; }
-            float v = b * want * (1f - amp * Mathf.PerlinNoise(seed, time * 3f));
+            float v;
+            if (jump)
+            {
+                // 原版最暗和最亮的比例:室内 3/5,室外 0.8/1.6
+                float low = l.gameObject.name == LightOutName ? 0.5f : 0.6f;
+                float k = Mathf.PerlinNoise(seed + step * 7.13f, 0.5f);
+                v = b * want * Mathf.Lerp(low, 1f, Mathf.Clamp01(k));
+            }
+            else v = b * want * (1f - amp * Mathf.PerlinNoise(seed, time * 3f));
             l.intensity = v;
             var lt = l.GetComponent<LightTracking>();
             if (lt != null) lt.SetLightIntensity(v);

@@ -18,9 +18,13 @@ internal class Settings : JsonModSettings
     public float LightIntensity = 1f;
 
     [Name("火光闪烁")]
-    [Description("火光明暗跳动的幅度,0 是不闪。")]
+    [Description("火光明暗跳动的幅度,0 是不闪。打开下面的原版跳动时不起作用。")]
     [Slider(0f, 0.5f, 11)]
     public float Flicker = 0.1f;
+
+    [Name("原版跳动")]
+    [Description("像手里的原版火把那样,每 0.2 秒在最暗和最亮之间随机跳一次(室内 3 到 5,室外 0.8 到 1.6)。关掉时一直按最亮的值,只做上面那种轻微闪烁。")]
+    public bool VanillaFlicker = false;
 
     [Section("钓鱼小屋门")]
 

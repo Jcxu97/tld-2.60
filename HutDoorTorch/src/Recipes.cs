@@ -202,6 +202,39 @@ internal static class Patch_InstantiateInInventory
     }
 }
 
+// 制造列表左边的小图标
+internal static class BlueprintIcons
+{
+    internal static Texture2D For(BlueprintData bp)
+    {
+        string n = bp != null ? bp.name : null;
+        if (n == null || !n.StartsWith("BP_HDT_")) return null;
+        try { return n.Contains("HutDoor") ? Res.BpDoor : Res.BpTorch; } catch { return null; }
+    }
+}
+
+[HarmonyPatch(typeof(BlueprintData), nameof(BlueprintData.GetCraftingIcon))]
+internal static class Patch_CraftingIcon
+{
+    private static void Postfix(BlueprintData __instance, ref Texture2D __result)
+    {
+        var t = BlueprintIcons.For(__instance);
+        if (t != null) __result = t;
+    }
+}
+
+[HarmonyPatch(typeof(BlueprintDisplayItem), nameof(BlueprintDisplayItem.Setup))]
+internal static class Patch_BlueprintItemIcon
+{
+    private static void Postfix(BlueprintDisplayItem __instance, BlueprintData bpi)
+    {
+        var t = BlueprintIcons.For(bpi);
+        if (t == null || __instance.m_Icon == null) return;
+        __instance.m_Icon.mainTexture = t;
+        __instance.m_Icon.enabled = true;
+    }
+}
+
 [HarmonyPatch(typeof(Panel_Crafting), nameof(Panel_Crafting.CanCraftBlueprint))]
 internal static class Patch_CanCraft
 {

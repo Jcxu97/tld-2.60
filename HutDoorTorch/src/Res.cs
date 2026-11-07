@@ -43,6 +43,9 @@ internal static class Res
     internal static Texture2D DoorIcon => Tex(ref _doorIcon, "ico_HutDoor.png");
     private static Texture2D _board;
     internal static Texture2D Board => Tex(ref _board, "TorchBoard.png");
+    private static Texture2D _bpDoor, _bpTorch;
+    internal static Texture2D BpDoor => Tex(ref _bpDoor, "bp_HutDoor.png");
+    internal static Texture2D BpTorch => Tex(ref _bpTorch, "bp_WallTorch.png");
 
     private static Material[] _gearMats;
     // 门放在地上时用的材质,照抄物品自己的材质换贴图
