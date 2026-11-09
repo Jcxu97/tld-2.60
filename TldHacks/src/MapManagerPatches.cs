@@ -382,6 +382,15 @@ internal static class Patch_MapM_BunkerDistribute
 
     private static void Postfix(BunkerDistributor __instance) => Fill(__instance);
 
+    // 换区域读档时原版新建配对,入口已在场景里就当场套上原内部;只改字段太晚,要重新挂一次让新内部生效
+    private static void Set(BunkerDistributor.BunkerLocationInteriorPair p, BunkerInteriorSpecification x)
+    {
+        if (p.m_ReplacementInterior == x) return;
+        p.m_ReplacementInterior = x;
+        try { p.Detach(); p.Attach(); }
+        catch (Exception ex) { ModMain.Log?.Warning($"[MapM] bunker reattach {ex.Message}"); }
+    }
+
     private static BunkerDistributor _last;
 
     // 关掉开关后:把地堡分配换回原版的那份,换完写存档的补丁才能卸
@@ -407,7 +416,7 @@ internal static class Patch_MapM_BunkerDistribute
                         if (all[k] != null && !IsClone(all[k]) && all[k].name == name) orig = all[k];
                 // 找不到原版的先跳过,别挡住后面的;返回 false 让存档补丁继续挂着改名
                 if (orig == null) { allOk = false; continue; }
-                p.m_ReplacementInterior = orig;
+                Set(p, orig);
                 n++;
             }
             if (n > 0) ModMain.Log?.Msg($"[MapM] {n} bunkers set back to the game's own interiors");
@@ -458,7 +467,7 @@ internal static class Patch_MapM_BunkerDistribute
                 }
                 var x = bag[bag.Count - 1];
                 bag.RemoveAt(bag.Count - 1);
-                t.p.m_ReplacementInterior = x;
+                Set(t.p, x);
                 picks.Add(x.name.Substring(ClonePrefix.Length));
             }
             if (!_logged)
@@ -519,13 +528,8 @@ internal static class Patch_MapM_InterloperHatch
     {
         try
         {
-            if (__instance == null || __instance.gameObject.name != "PrepperHatch") return;
-            if (__instance.m_NumObjectsToEnableInterloper < 1) __instance.m_NumObjectsToEnableInterloper = 1;
-            // 新版按难度档位查 m_NumObjectsToEnableByLevel,上面那个字段已作废,入侵者和厄难那档是 0
-            var lv = __instance.m_NumObjectsToEnableByLevel;
-            int n = 0;
-            for (int i = 0; lv != null && i < lv.Length; i++) if (lv[i] < 1) { lv[i] = 1; n++; }
-            ModMain.Log?.Msg($"[MapM] hatch {__instance.GetNumObjectsToEnableCurrentXPMode()} (levels {lv?.Length ?? 0}, raised {n})");
+            if (__instance != null && __instance.gameObject.name == "PrepperHatch" && __instance.m_NumObjectsToEnableInterloper < 1)
+                __instance.m_NumObjectsToEnableInterloper = 1;
         }
         catch { }
     }
@@ -575,7 +579,17 @@ internal static class MapMKeys
         var panel = InterfaceManager.GetPanel<Panel_Map>();
         if (panel == null) return;
         int found = 0, spawners = 0;
-        var all = UnityEngine.Object.FindObjectsOfType<RandomSpawnObject>();
+        // 2.60 起每个区域只有一个固定入口(Design/BunkerHatch 下挂 BunkerLocation),没有 PrepperHatch 了
+        var locs = UnityEngine.Object.FindObjectsOfType<BunkerLocation>();
+        for (int i = 0; locs != null && i < locs.Count; i++)
+        {
+            var bl = locs[i];
+            if (bl == null || !bl.gameObject.activeInHierarchy) continue;
+            spawners++;
+            panel.DoNearbyDetailsCheck(15f, true, true, bl.transform.position, false);
+            found++;
+        }
+        var all = spawners > 0 ? null : UnityEngine.Object.FindObjectsOfType<RandomSpawnObject>();
         for (int i = 0; all != null && i < all.Count; i++)
         {
             var rs = all[i];
