@@ -29,7 +29,7 @@ namespace TldHacks;
 public class ModMain : MelonMod
 {
     // 全 mod 唯一的版本号来源。MelonInfo / 程序集版本 / 菜单标题栏 / 启动日志都从这里取。
-    internal const string VERSION = "12.6";
+    internal const string VERSION = "12.7";
 
     public static MelonLogger.Instance Log;
     internal static TldHacksSettings Settings;
