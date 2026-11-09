@@ -580,11 +580,21 @@ internal static class MapMKeys
         if (panel == null) return;
         int found = 0, spawners = 0;
         // 2.60 起每个区域只有一个固定入口(Design/BunkerHatch 下挂 BunkerLocation),没有 PrepperHatch 了
-        var locs = UnityEngine.Object.FindObjectsOfType<BunkerLocation>();
+        var locs = Resources.FindObjectsOfTypeAll<BunkerLocation>();
         for (int i = 0; locs != null && i < locs.Count; i++)
         {
             var bl = locs[i];
-            if (bl == null || !bl.gameObject.activeInHierarchy) continue;
+            if (bl == null || !bl.gameObject.scene.IsValid()) continue;
+            if (!bl.gameObject.activeInHierarchy)
+            {
+                // 诊断荒凉水湾入口不见:找出是哪一层被关掉的
+                var t = bl.transform;
+                string off = "";
+                for (var p = t; p != null; p = p.parent) if (!p.gameObject.activeSelf) off = p.name;
+                ModMain.Log?.Msg($"[MapM] bunker entrance off: {bl.gameObject.scene.name} {t.position} inactive node {off} enabled {bl.enabled}");
+                continue;
+            }
+            ModMain.Log?.Msg($"[MapM] bunker entrance on: {bl.gameObject.scene.name} {bl.transform.position}");
             spawners++;
             panel.DoNearbyDetailsCheck(15f, true, true, bl.transform.position, false);
             found++;

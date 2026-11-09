@@ -431,7 +431,7 @@ internal static partial class MenuTweaks
         }
         y1 += SECTION_END_ADV;
 
-        // ——— Column 2: 物品 & 界面 + 交互速度 + 保温杯 & 衣物 ———
+        // ——— Column 2: 物品 & 界面 + 交互速度 + 保温杯 & 衣物 + 蒸汽火车 ———
 
         y2 = SectionCol(R, c2, y2, COL_W3, I18n.T("物品 & 界面", "Items & UI"));
         bool pauseJ = Ui.Toggle("PauseInJournal", R(c2,    y2, subTogW, ROW_H), s.PauseInJournal, I18n.T(" 日志暂停", " Pause Journal"), ToggleStyle ?? GUI.skin.toggle);
@@ -546,7 +546,7 @@ internal static partial class MenuTweaks
         y3 = CardTorch(R, s, c3, y3, ref changed);
         y3 = CardLamp(R, s, c3, y3, ref changed);
 #if !EP5_EDITION && !STORY_EDITION
-        y3 = CardSteamTrain(R, s, c3, y3, ref changed);
+        y2 = CardSteamTrain(R, s, c2, y2, ref changed);
 #endif
 
         if (changed) s.RequestSave();
