@@ -99,7 +99,6 @@ internal static class DamageFilter
         //   之前 GodMode 只在 TickStatus 里每帧刷满 HP,但冻伤每帧又扣 → HUD 闪烁
         //   现在直接在 AddHealth Prefix 拦截,HP 永远不掉,TickStatus 只做兜底
         if (CheatState.GodMode) return true;
-        if (CheatState.TrueInvisible) return true;  // 真隐身 = 绝对无敌
 #if !STORY_EDITION
         if (CeX.InStruggle()) return true;
 #endif
@@ -116,7 +115,8 @@ internal static class DamageFilter
 
         if (CheatState.NoFallDamage && cause == DamageSource.Falling) return true;
         if (CheatState.NoSuffocating && cause == DamageSource.Suffocating) return true;
-        if (CheatState.ImmuneAnimalDamage)
+        // 完全隐形只挡动物伤害,冻僵饥饿这些照常扣;要全免伤开无敌模式
+        if (CheatState.ImmuneAnimalDamage || CheatState.TrueInvisible)
         {
 #if STORY_EDITION
             // 2.24 无美洲狮(DamageSource.Cougar 是 2.55 才加的)
