@@ -187,6 +187,7 @@ TldHacks 是内置修改器，三个沙盒包都带，用在沙盒模式。剧�
 | CozyBlankets | 毯子，能做、能披、能铺 |
 | CozyCushions | 坐垫和椅子能坐下。鼠标中键对着坐垫或椅子坐下 |
 | DoubleBarrel | 双管霰弹枪 |
+| DoubleBarrelLoadFix | 修双管霰弹枪进沿海公路、荒凉水湾时卡在读条 |
 | Episode5ShotgunPrototype | 剧情第五章的霰弹枪放进沙盒模式，商人能换、弹药工作台能做子弹、海边能捡到 |
 | Episode5SurvivalItems | 剧情第五章的三样东西放进沙盒模式，手摇灯、军用兴奋剂、自制汤，找商人换 |
 | ExtremeTempDrop | 天数越往后气温降得越多，降多少、从第几天开始都能调 |
