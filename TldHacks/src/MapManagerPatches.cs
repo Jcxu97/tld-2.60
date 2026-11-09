@@ -542,7 +542,7 @@ internal static class MapMKeys
     {
         ("MarshRegion", new Vector3(592.06f, -84.87f, -106.82f)),
         ("BlackrockRegion", new Vector3(706.7f, 373.11f, 816.39f)),
-        ("CanneryRegion", new Vector3(328.35f, 343.25f, 835.17f)),
+        ("CanneryRegion", new Vector3(-980.19f, 216.07f, 550.70f)),
         ("AshCanyon", new Vector3(-42.28f, 171.5f, -794.88f)),
         ("RiverValleyRegion", new Vector3(362.06f, 237.53f, 376.08f)),
         ("TimberwolfMountain", new Vector3(1673.5f, 205.75f, 967.92f)),

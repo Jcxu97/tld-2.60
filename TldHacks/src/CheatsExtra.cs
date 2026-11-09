@@ -41,7 +41,7 @@ internal static class Teleport
         // B —— BlackrockRegion(黑岩监狱)
         new Waypoint("黑岩监狱·地堡",      "BlackrockRegion",          705.04f, 373.98f,  816.38f, "Blackrock · Bunker"),
         // C —— CanneryRegion(荒凉水湾)
-        new Waypoint("荒凉水湾·地堡",      "CanneryRegion",            328.37f, 344.50f,  833.16f, "Bleak Inlet · Bunker"),
+        new Waypoint("荒凉水湾·地堡",      "CanneryRegion",            -980.19f, 217.10f,  550.70f, "Bleak Inlet · Bunker"),
         new Waypoint("荒凉水湾·应急舱",    "CanneryRegion",            -39.50f, 103.38f,  501.57f, "Bleak Inlet · Pod"),
         // C —— CoastalRegion(沿海公路)
         new Waypoint("沿海公路·加油站",    "CoastalRegion",            760.51f,  24.00f,  645.93f, "Coastal Hwy · Gas Station"),
