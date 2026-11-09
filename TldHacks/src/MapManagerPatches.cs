@@ -519,8 +519,13 @@ internal static class Patch_MapM_InterloperHatch
     {
         try
         {
-            if (__instance != null && __instance.gameObject.name == "PrepperHatch" && __instance.m_NumObjectsToEnableInterloper < 1)
-                __instance.m_NumObjectsToEnableInterloper = 1;
+            if (__instance == null || __instance.gameObject.name != "PrepperHatch") return;
+            if (__instance.m_NumObjectsToEnableInterloper < 1) __instance.m_NumObjectsToEnableInterloper = 1;
+            // 新版按难度档位查 m_NumObjectsToEnableByLevel,上面那个字段已作废,入侵者和厄难那档是 0
+            var lv = __instance.m_NumObjectsToEnableByLevel;
+            int n = 0;
+            for (int i = 0; lv != null && i < lv.Length; i++) if (lv[i] < 1) { lv[i] = 1; n++; }
+            ModMain.Log?.Msg($"[MapM] hatch {__instance.GetNumObjectsToEnableCurrentXPMode()} (levels {lv?.Length ?? 0}, raised {n})");
         }
         catch { }
     }
