@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Il2Cpp;
 using RarityRework.Enums;
 using RarityRework.Managers;
+using RarityRework.Properties;
 using UnityEngine;
 
 namespace RarityRework.Affixes;
@@ -71,8 +72,41 @@ internal static class AffixCatalog
 		[GearKind.Medicine] = new[] { "heal", "quickuse", "weight" }
 	};
 
-	// Tier index 1..6 as in Rarities. Weights in tenths of a percent.
-	private static readonly int[] TierWeights = { 0, 450, 280, 150, 80, 35, 5 };
+	// Weights come from the settings, index 1..6 as in Rarities. All zero means the defaults.
+	private static readonly float[] DefaultWeights = { 0f, 45f, 28f, 15f, 8f, 3.5f, 0.5f };
+
+	private static int PickTier(double roll)
+	{
+		float[] w = Settings.Instance.TierWeights();
+		float sum = 0f;
+		for (int i = 1; i <= 6; i++)
+		{
+			w[i] = System.Math.Max(0f, w[i]);
+			sum += w[i];
+		}
+		if (sum <= 0f)
+		{
+			w = DefaultWeights;
+			sum = 100f;
+		}
+		double pick = roll * sum;
+		double acc = 0;
+		int last = 1;
+		for (int i = 1; i <= 6; i++)
+		{
+			if (w[i] <= 0f)
+			{
+				continue;
+			}
+			last = i;
+			acc += w[i];
+			if (pick < acc)
+			{
+				return i;
+			}
+		}
+		return last;
+	}
 
 	private static readonly string[] MetalNames = { "", "锈铁", "熟铁", "精钢", "淬火钢", "黑钢", "陨铁" };
 	private static readonly string[] WoodNames = { "", "白桦", "枫木", "橡木", "白蜡木", "紫杉", "乌木" };
@@ -215,16 +249,7 @@ internal static class AffixCatalog
 	internal static ItemRoll Roll(GearItem gi, GearKind kind, uint seed)
 	{
 		System.Random rng = new System.Random((int)seed);
-		int pick = rng.Next(1000);
-		int tier = 1;
-		for (int acc = 0; tier < 6; tier++)
-		{
-			acc += TierWeights[tier];
-			if (pick < acc)
-			{
-				break;
-			}
-		}
+		int tier = PickTier(rng.NextDouble());
 		if (RarityManager.GetRarity(gi.name) >= Rarities.Epic && tier < (int)Rarities.Rare)
 		{
 			tier = (int)Rarities.Rare;

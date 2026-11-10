@@ -10,6 +10,37 @@ internal class Settings : JsonModSettings
 	[Description("开启后衣物、武器和工具逐件随机档位、材质和词条；关闭时按固定分档表显示。游戏内切换后需重新读档才完全生效，已掷出的词条不会丢失")]
 	public bool randomAffixes;
 
+	[Section("随机档位概率")]
+	[Name("普通")]
+	[Description("新掷出的物品落到这一档的权重。拉到 0 就不出这一档，六档按比例分摊，加起来不用等于 100。已经掷过的物品不变")]
+	[Slider(0f, 100f, 201)]
+	public float weightCommon = 45f;
+
+	[Name("优秀")]
+	[Description("同上，拉到 0 就不出这一档")]
+	[Slider(0f, 100f, 201)]
+	public float weightUncommon = 28f;
+
+	[Name("精良")]
+	[Description("同上，拉到 0 就不出这一档。原本就是史诗以上的物品最低给精良，这条不受影响")]
+	[Slider(0f, 100f, 201)]
+	public float weightRare = 15f;
+
+	[Name("史诗")]
+	[Description("同上，拉到 0 就不出这一档")]
+	[Slider(0f, 100f, 201)]
+	public float weightEpic = 8f;
+
+	[Name("传说")]
+	[Description("同上，拉到 0 就不出这一档")]
+	[Slider(0f, 100f, 201)]
+	public float weightLegendary = 3.5f;
+
+	[Name("神话")]
+	[Description("同上，拉到 0 就不出这一档")]
+	[Slider(0f, 100f, 201)]
+	public float weightMythic = 0.5f;
+
 	[Name("自定义颜色")]
 	[Description("开启后可以自定义每个档位的颜色")]
 	public bool customColours;
@@ -83,7 +114,7 @@ internal class Settings : JsonModSettings
 
 	internal static void OnLoad()
 	{
-		Instance.AddToModSettings("物品稀有度重制 v1.0.0");
+		Instance.AddToModSettings("物品稀有度重制 v1.1.0");
 		Instance.RefreshFields();
 		Instance.RefreshGUI();
 	}
@@ -91,6 +122,18 @@ internal class Settings : JsonModSettings
 	private void RefreshFields()
 	{
 		SettingsUtilities.UpdateFieldVisibilities(customColours);
+		foreach (string f in WeightFields)
+		{
+			SetFieldVisible(f, randomAffixes);
+		}
+	}
+
+	private static readonly string[] WeightFields = { "weightCommon", "weightUncommon", "weightRare", "weightEpic", "weightLegendary", "weightMythic" };
+
+	// Index 1..6 matches Rarities.
+	internal float[] TierWeights()
+	{
+		return new[] { 0f, weightCommon, weightUncommon, weightRare, weightEpic, weightLegendary, weightMythic };
 	}
 
 	static Settings()
