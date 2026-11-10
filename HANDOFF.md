@@ -1,6 +1,6 @@
 # HANDOFF — tld--2.55
 
-> Last updated: 2026-11-08 01:30
+> Last updated: 2026-11-10 22:15
 
 ## 当前目标
 
@@ -18,6 +18,7 @@ TldHacks V12.6 已发到夸克和百度,等群友反馈。
 
 - 有人开制造界面后看 Latest.log 有没有 `补图标` 行,确认 BlueprintIconFix 生效
 - 咖啡罐堆叠改动没测过,群里报堆叠问题先看 Stacking.cs 的 Dedupe 和 LabelFix.RestoreUnits
+- 11-10 未发版:植物再生后补刷地图图标(IntegratedPatches8.cs 的 RefreshMapIcons)。原版 Harvest() 采完一片就撤图标,只在采集事件和 OnEnable 时重算。已编译部署到本机 Mods,没进游戏测;测法是再生天数调 1、采一片、睡过 24 小时、等 30 秒开地图,Latest.log 应有 `[RespawnPlants] regrew`
 
 ## 未决问题
 

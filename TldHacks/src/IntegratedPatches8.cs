@@ -714,18 +714,64 @@ internal static class RespawnablePlantsState
             float now = tod.GetHoursPlayedNotPaused();
             float hours = s.TT_PlantRespawnDays * 24f;
             var toRemove = new List<string>();
+            var regrown = new HashSet<IntPtr>();
             foreach (var entry in HarvestedPlants[scene])
             {
                 if (entry.Value + hours < now)
                 {
                     var h = HarvestableManager.FindHarvestableByGuid(entry.Key);
-                    if (h != null) { h.gameObject.SetActive(true); h.m_Harvested = false; }
+                    if (h != null)
+                    {
+                        h.gameObject.SetActive(true);
+                        h.m_Harvested = false;
+                        // 原版读档时按 m_Harvested 切换植株和采后残株,这里照做
+                        if (h.m_ActivateObjectPostHarvest != null) h.m_ActivateObjectPostHarvest.SetActive(false);
+                        regrown.Add(h.Pointer);
+                    }
                     toRemove.Add(entry.Key);
                 }
             }
             foreach (var k in toRemove) HarvestedPlants[scene].Remove(k);
+#if !STORY_EDITION
+            if (regrown.Count > 0) RefreshMapIcons(regrown);
+#endif
         }
     }
+
+#if !STORY_EDITION
+    // 原版采完一片时撤掉地图图标,之后只在采集事件和场景加载时刷新。长回来的植物要手动让图标组重新判断一次
+    private static void RefreshMapIcons(HashSet<IntPtr> regrown)
+    {
+        try
+        {
+            var all = MapDetailManager.s_MapDetails;
+            if (all == null) return;
+            int n = 0;
+            for (int i = 0; i < all.Count; i++)
+            {
+                var md = all[i];
+                if (md == null || !Contains(md, regrown)) continue;
+                md.UpdateMapVisibility();
+                n++;
+            }
+            ModMain.Log?.Msg($"[RespawnPlants] regrew {regrown.Count} plants, refreshed {n} map icons");
+        }
+        catch (Exception ex) { ModMain.Log?.Warning($"[RespawnPlants] map icon refresh {ex.Message}"); }
+    }
+
+    private static bool Contains(MapDetail md, HashSet<IntPtr> set)
+    {
+        var arr = md.m_HarvestablesForMapVisibility;
+        if (arr != null)
+            for (int i = 0; i < arr.Length; i++)
+                if (arr[i] != null && set.Contains(arr[i].Pointer)) return true;
+        var list = md.m_HarvestablesSharingIcon;
+        if (list != null)
+            for (int i = 0; i < list.Count; i++)
+                if (list[i] != null && set.Contains(list[i].Pointer)) return true;
+        return false;
+    }
+#endif
 
     public static void AddRetroactive()
     {
