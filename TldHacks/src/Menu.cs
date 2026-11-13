@@ -1195,6 +1195,11 @@ internal static class Menu
         bool qcl   = Ui.Toggle("QuickClimb", R(c3,            y3, TOG_W, ROW_H), s.QuickClimb,     I18n.T(" 快速爬绳", " Fast Climb"));
         // 原名"操作自动加速":管采集植物 / 割肉切块 / 修理 / 长按类交互的进度,开着就立刻完成
         bool qa    = Ui.Toggle("QuickAction", R(c3 + TOG2_OFF, y3, TOG_W, ROW_H), s.QuickAction,    I18n.T(" 操作加速", " Auto Speed-up"));
+#if !STORY_EDITION
+        y3 += ROW_ADV;
+        bool dcook = Ui.Toggle("DropCook", R(c3,            y3, TOG_W, ROW_H), s.DropCook,       I18n.T(" 丢地烹饪", " Drop to Cook"));
+        if (dcook != s.DropCook) { s.DropCook = dcook; s.RequestSave(); }
+#endif
         y3 += ROW_ADV + SECTION_END_ADV;
         if (qcook != s.QuickCook || nbrn != s.NoBurn || qsrch != s.QuickSearch || qhv != s.QuickHarvest
             || qbd != s.QuickBreakDown || qev != s.QuickEvolve || qcl != s.QuickClimb

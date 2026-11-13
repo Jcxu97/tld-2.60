@@ -1004,6 +1004,7 @@ public class ModMain : MelonMod
 #if !STORY_EDITION
             MapMKeys.Tick();
             CeX.Tick();
+            DropCook.Tick();
 #endif
 #if !STORY_EDITION && !EP5_EDITION
             CollMap.Tick();

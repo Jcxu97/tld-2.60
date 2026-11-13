@@ -314,6 +314,7 @@ internal static class Cheats
             s.QuickAction = false;
             s.QuickCook = false;
             s.NoBurn = false;
+            s.DropCook = false;
             s.QuickSearch = false;
             s.QuickHarvest = false;
             s.QuickBreakDown = false;

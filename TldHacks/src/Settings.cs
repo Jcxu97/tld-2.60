@@ -296,6 +296,10 @@ internal class TldHacksSettings : JsonModSettings
     [Description("做好的食物不会烤焦,但不会马上做好")]
     public bool NoBurn = false;
 
+    [Name("丢地烹饪")]
+    [Description("生肉生鱼丢在点着的火堆或炉子旁边 2 米内,按原版烹饪时间等够了就自己变成热的熟肉,不会烤焦。捡起来或火灭了就重新计时")]
+    public bool DropCook = false;
+
     [Name("快速搜刮")]
     [Description("搜容器和尸体不用等进度条")]
     public bool QuickSearch = false;

@@ -58,6 +58,7 @@ internal static class ModSettingsEnData
         "GrabAllNotify", "Grab All confirm each item",   // 一键搜刮-弹拾取提示 / Grab All notify
         "QuickCook", "Instant Cooking (cooking pot, never burns)",   // 秒烤肉(CookingPot 瞬完成,自带防烤焦)
         "NoBurn", "No Burning (food stays at Ready, no instant cook)",   // 防烤焦(只锁 Ready,不秒熟)
+        "DropCook", "Cook on the ground near a fire",   // 丢地烹饪
         "QuickSearch", "Instant Search (containers / bodies)",   // 秒搜索(容器/尸体搜刮 NOP TimedHold)
         "QuickHarvest", "Instant Harvest (Panel_BodyHarvest)",   // 秒割肉(Panel_BodyHarvest)
         "QuickBreakDown", "Instant Break Down (Panel_BreakDown)",   // 秒打碎(Panel_BreakDown)
@@ -534,6 +535,7 @@ internal static class ModSettingsEnData
         "Stealth", "Animals run away when they see you.",   // 动物见到你就跑
         "QuickCook", "Food in the pot is ready at once. Food does not burn.",   // 锅里的东西马上做好,自带防止烤焦
         "NoBurn", "Cooked food does not burn. Food is not ready at once.",   // 做好的食物不会烤焦,但不会马上做好
+        "DropCook", "Drop raw meat or fish within 2 m of a burning fire or stove. It becomes hot cooked food after the normal cooking time and does not burn. The timer restarts if you pick it up or the fire goes out.",   // 丢地烹饪
         "QuickSearch", "Search containers and bodies without the progress bar.",   // 搜容器和尸体不用等进度条
         "QuickHarvest", "The harvest screen finishes at once.",   // 割肉界面直接完成
         "QuickBreakDown", "The break-down screen finishes at once.",   // 拆解界面直接完成
