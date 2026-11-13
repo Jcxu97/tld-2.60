@@ -18,7 +18,7 @@
 ## 未决问题
 1. 丢地烹饪没验证存档重进后熟肉是否保留,发版前用户若没测过要提一句
 2. 启动偶发闪退(coreclr 0xc0000005,HarmonyInit 读补丁类特性,在 TldHacks 之后的 mod),继续观察
-3. 工作区里未提交的改动:MoreBunkers(10-31)、`MenuTweaks.cs` / `MenuTweaks.Cards.cs` 鲸油取暖器卡片挪第三列(11-09)、PerfProbe。发版前问用户这些要不要进
+3. 用户 11-13 定了 MoreBunkers(10-31)和鲸油取暖器卡片挪第三列(11-09)都进 V12.8,打包前提交。PerfProbe 是自用测帧工具,不进任何包
 4. 剧情版编译报错在 `src/ItemPreview.cs`(Il2CppTLD.Gear 命名空间不存在),不是丢地烹饪引起的
 
 ## 关键文件
