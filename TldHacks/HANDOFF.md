@@ -10,10 +10,10 @@ V12.8 已发版,等用户实测和群友反馈。
 2. 内容:丢地烹饪、植物长回来地图图标恢复、鲸油取暖器和油罐单独成块放第三列、RarityRework 1.2.0(词条加强,神话 x2,显示原值和新值)
 3. 腾讯文档整篇覆盖,读回 joined equal True;群知识库 00/01/06/07/10 和配置字段表已传 server,md5 一致;鲸鲸 rules.md 加第 15 条
 4. MoreBunkers 10-31 的改动 V12.7 就已带上,本轮只补提交源码
+5. Nexus mod 162 主文件换成 12.8(旧文件进 File archive),脚本 bili-game-pipeline/tools/nexus/update_file.py
 
 ## 下一步
-1. Nexus mod 162 换 V12.8 主文件(要先问用户)
-2. 用户实测 RarityRework 1.2.0:物品说明里的 → 箭头能不能显示,神话词条数值
+1. 用户实测 RarityRework 1.2.0:物品说明里的 → 箭头能不能显示,神话词条数值
 
 ## 未决问题
 1. 丢地烹饪没验证存档重进后熟肉是否保留
