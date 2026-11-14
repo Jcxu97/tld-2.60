@@ -311,7 +311,6 @@ internal static class Bunkers
         try
         {
             var og = go.GetComponent<ObjectGuid>() ?? go.AddComponent<ObjectGuid>();
-            og.m_Guid = guid;
             og.SetRuntimeCachedPdid(guid);
         }
         catch (Exception ex) { ModMain.Log?.Warning($"[MoreBunkers] door id {ex.Message}"); }

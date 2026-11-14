@@ -23,7 +23,7 @@ internal class Settings : JsonModSettings
 
     [Name("位置提示键")]
     [Description("按一下,屏幕上提示这个存档的三个新地堡分别在哪张图、哪个地点旁边。")]
-    public KeyCode InfoKey = KeyCode.F10;
+    public KeyCode InfoKey = KeyCode.Home;
 
     protected override void OnConfirm()
     {

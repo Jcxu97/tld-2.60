@@ -256,7 +256,14 @@ internal static partial class MenuTweaks
         y += ROW_ADV;
         bool fuel = Ui.Toggle("Train_FullFuel", R(x, y, COL_TOG_W3, ROW_H), s.Train_FullFuel, I18n.T(" 燃料和水一直满", " Full Fuel & Water"), ToggleStyle ?? GUI.skin.toggle);
         if (fuel != s.Train_FullFuel) { s.Train_FullFuel = fuel; changed = true; }
-        y += ROW_ADV;
+        y += ROW_ADV + SECTION_END_ADV;
+        return y;
+    }
+
+    internal static float CardHeaterOil(Func<float, float, float, float, Rect> R, TldHacksSettings s, float x, float y, ref bool changed)
+    {
+        float subTogW = HALF_W, xSub = x + HALF_OFF;
+        y = SectionCol(R, x, y, COL_W3, I18n.T("鲸油取暖器 & 油罐", "Heater & Oil Cans"));
         bool hnf = Ui.Toggle("Heater_NoFuel", R(x, y, COL_TOG_W3, ROW_H), s.Heater_NoFuel, I18n.T(" 鲸油取暖器不耗油", " Heater Uses No Oil"), ToggleStyle ?? GUI.skin.toggle);
         if (hnf != s.Heater_NoFuel) { s.Heater_NoFuel = hnf; changed = true; }
         y += ROW_ADV;

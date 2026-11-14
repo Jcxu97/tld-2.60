@@ -500,7 +500,7 @@ internal static partial class MenuTweaks
         if (wet != s.NoWetClothes) { s.NoWetClothes = wet; CheatState.NoWetClothes = wet; changed = true; }
         y2 += ROW_ADV + SECTION_END_ADV;
 
-        // ——— Column 3: 弓修理 + 火把 & 手电 + 煤油灯 ———
+        // ——— Column 3: 弓修理 + 火把 & 手电 + 煤油灯 + 鲸油取暖器 & 油罐 ———
         y3 = SectionCol(R, c3, y3, COL_W3, I18n.T("弓修理", "Bow Repair"), "World_BowRepair", ref s.World_BowRepair, ref changed);
         b = Ui.Toggle("World_BowRepairDLC", R(c3, y3, COL_TOG_W3, ROW_H), s.World_BowRepairDLC,
             I18n.T(" DLC弓启用", " DLC Bows"), ToggleStyle ?? GUI.skin.toggle);
@@ -547,6 +547,7 @@ internal static partial class MenuTweaks
         y3 = CardLamp(R, s, c3, y3, ref changed);
 #if !EP5_EDITION && !STORY_EDITION
         y2 = CardSteamTrain(R, s, c2, y2, ref changed);
+        y3 = CardHeaterOil(R, s, c3, y3, ref changed);
 #endif
 
         if (changed) s.RequestSave();
