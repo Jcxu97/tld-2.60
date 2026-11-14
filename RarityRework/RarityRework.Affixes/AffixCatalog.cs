@@ -38,20 +38,6 @@ internal sealed class AffixDef
 		Lower = lower;
 		Points = points;
 	}
-
-	internal string Format(float v)
-	{
-		if (Points)
-		{
-			return $"{Name} +{v:0.#}%";
-		}
-		return $"{Name} {Percent(v)}";
-	}
-
-	internal string Percent(float v)
-	{
-		return $"{(Lower ? "-" : "+")}{v * 100f:0}%";
-	}
 }
 
 internal static class AffixCatalog
@@ -107,6 +93,12 @@ internal static class AffixCatalog
 		}
 		return last;
 	}
+
+	// Index 1..6 as in Rarities. Mythic doubles the raw roll.
+	internal static readonly float[] Boost = { 1f, 1f, 1.3f, 1.4f, 1.5f, 1.6f, 2f };
+
+	// Reductions stop at 90% so wear, weight or time never reach zero.
+	internal const float LowerCap = 0.9f;
 
 	private static readonly string[] MetalNames = { "", "锈铁", "熟铁", "精钢", "淬火钢", "黑钢", "陨铁" };
 	private static readonly string[] WoodNames = { "", "白桦", "枫木", "橡木", "白蜡木", "紫杉", "乌木" };
@@ -238,10 +230,17 @@ internal static class AffixCatalog
 	{
 		FoodItem food = gi.m_FoodItem;
 		FirstAidItem aid = gi.m_FirstAidItem;
+		ClothingItem c = gi.m_ClothingItem;
 		return id switch
 		{
 			"heal" => aid != null && aid.m_HPIncrease > 0f,
 			"quickuse" => aid != null || food != null,
+			"warmth" => c.m_Warmth > 0f,
+			"wetwarmth" => c.m_WarmthWhenWet > 0f,
+			"windproof" => c.m_Windproof > 0f,
+			"waterproof" => c.m_Waterproofness > 0f && c.m_Waterproofness < 1f,
+			"tough" => c.m_Toughness > 0f,
+			"sprint" => c.m_SprintBarReductionPercent > 0f,
 			_ => true
 		};
 	}
@@ -280,8 +279,14 @@ internal sealed class ItemRoll
 
 	public Dictionary<string, float> a = new Dictionary<string, float>();
 
+	// Stored values are the raw roll. The tier boost is applied on read, so saved items follow boost changes.
 	internal float Get(string id)
 	{
-		return a.TryGetValue(id, out float v) ? v : 0f;
+		if (!a.TryGetValue(id, out float v))
+		{
+			return 0f;
+		}
+		v *= AffixCatalog.Boost[Mathf.Clamp(t, 0, 6)];
+		return AffixCatalog.Defs.TryGetValue(id, out AffixDef d) && d.Lower ? Mathf.Min(v, AffixCatalog.LowerCap) : v;
 	}
 }

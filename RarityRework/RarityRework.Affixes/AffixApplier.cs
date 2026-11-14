@@ -43,23 +43,30 @@ internal static class AffixApplier
 		["heat"] = ("heat0", "°C", false)
 	};
 
+	// With a known base value the line shows before and after, for example "温暖加成 1°C → 1.2°C（+20%）".
+	// Without one it says the change in words, for example "状态损耗 减少 43%".
 	internal static string Describe(GearItem gi, string id, float v)
 	{
 		if (!AffixCatalog.Defs.TryGetValue(id, out AffixDef def))
 		{
 			return null;
 		}
-		if (def.Points || !Shown.TryGetValue(id, out var shown) || !baseValues.TryGetValue(gi.name + "|" + shown.field, out float b) || b == 0f)
+		if (def.Points)
 		{
-			return def.Format(v);
+			return $"{def.Name} 提高 {v:0.#}%";
 		}
-		float delta = b * v;
+		if (!Shown.TryGetValue(id, out var shown) || !baseValues.TryGetValue(gi.name + "|" + shown.field, out float b) || b == 0f)
+		{
+			return $"{def.Name} {(def.Lower ? "减少" : "提高")} {v * 100f:0}%";
+		}
+		float after = b * (def.Lower ? 1f - v : 1f + v);
+		if (id == "waterproof")
+		{
+			after = Mathf.Min(1f, after);
+		}
 		// Fields stored as 0..1 are shown as percent like the vanilla clothing panel.
-		if (shown.fraction && Mathf.Abs(b) <= 1f)
-		{
-			delta *= 100f;
-		}
-		return $"{def.Name} {(def.Lower ? "-" : "+")}{Mathf.Abs(delta):0.#}{shown.unit}（{def.Percent(v)}）";
+		float scale = shown.fraction && Mathf.Abs(b) <= 1f ? 100f : 1f;
+		return $"{def.Name} {b * scale:0.#}{shown.unit} → {after * scale:0.#}{shown.unit}（{(def.Lower ? "-" : "+")}{v * 100f:0}%）";
 	}
 
 	private static float Up(GearItem gi, ItemRoll r, string id, string field, float current)

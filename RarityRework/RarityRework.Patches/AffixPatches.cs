@@ -237,9 +237,9 @@ internal static class AffixPatches
 			}
 			StringBuilder sb = new StringBuilder(__result);
 			sb.Append("\n");
-			foreach (KeyValuePair<string, float> kv in r.a)
+			foreach (string id in r.a.Keys)
 			{
-				string line = AffixApplier.Describe(__instance, kv.Key, kv.Value);
+				string line = AffixApplier.Describe(__instance, id, r.Get(id));
 				if (line != null)
 				{
 					sb.Append("\n").Append(line);
