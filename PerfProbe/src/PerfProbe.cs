@@ -99,6 +99,8 @@ public class Probe : MelonMod
         _recSum.Clear();
         var sw = Stopwatch.StartNew();
         int n = Instrument();
+        try { _log.Msg($"engine stage timers: {LoopTimer.Install()}"); }
+        catch (Exception e) { _log.Warning($"engine stage timers failed: {e}"); }
         StartRecorders();
         _gc0Managed = GC.CollectionCount(0);
         try { _gc0Il2 = Il2CppSystem.GC.CollectionCount(0); } catch { }
@@ -111,6 +113,7 @@ public class Probe : MelonMod
     {
         _running = false;
         _h.UnpatchSelf();
+        try { LoopTimer.Uninstall(); } catch (Exception e) { _log.Warning($"engine stage timers restore failed: {e}"); }
         foreach (var (_, rec) in _recs) try { rec.Dispose(); } catch { }
         string path = WriteReport();
         _recs.Clear();
@@ -360,6 +363,11 @@ public class Probe : MelonMod
         sb.AppendLine("quality now: " + QualityText());
         sb.AppendLine(SceneCounts());
         sb.AppendLine("game quality: " + GameQualityText());
+
+        var stages = LoopTimer.Stages.Where(s => s.Name != null && s.Calls > 0).ToList();
+        sb.AppendLine($"\nengine stages: {stages.Sum(s => s.Ticks) * tickMs / frames:0.000} ms/frame in total (ms/frame, runs/frame)");
+        foreach (var s in stages.OrderByDescending(s => s.Ticks).Take(30))
+            sb.AppendLine($"  {s.Ticks * tickMs / frames,8:0.000} {s.Calls / (double)frames,6:0.0}  {s.Name}");
 
         var stats = Stats.Values.Where(s => s.Calls > 0).ToList();
         var outer = stats.Where(s => !s.Inner).ToList();
