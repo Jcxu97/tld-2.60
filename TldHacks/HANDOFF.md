@@ -1,6 +1,6 @@
 # HANDOFF: TldHacks
 
-> Last updated: 2026-11-14 19:50
+> Last updated: 2026-11-16 18:10
 
 ## 当前目标
 V12.8 已发版,等用户实测和群友反馈。
@@ -14,6 +14,7 @@ V12.8 已发版,等用户实测和群友反馈。
 
 ## 下一步
 1. 用户实测 RarityRework 1.2.0:物品说明里的 → 箭头能不能显示,神话词条数值
+2. 11-16 未发版,已部署本机没进游戏测:快速制作补满工作台家具的分段工时(CheatsPatches.cs FillRemainingHours,Latest.log 有 `[QuickCraft] ... 工时` 行);无限耐久和一键恢复顺手清 m_WornOut(Cheats.cs RestoreDurability),修 0% 后拉回 100% 仍显示腐坏红叉
 
 ## 未决问题
 1. 丢地烹饪没验证存档重进后熟肉是否保留

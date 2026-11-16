@@ -674,9 +674,27 @@ internal static class Patch_CraftingOp_StartCrafting
         try
         {
             __instance.m_RealTimeDuration = 0.2f;
+            FillRemainingHours(__instance);
             FadeSuppressionWindow.Arm(3f);  // 一次性 arm 3 秒,覆盖整个 0.2s craft + 收尾
         }
         catch (Exception ex) { ModMain.Log?.Warning($"[QuickCraft] {ex.Message}"); }
+    }
+
+    // 工作台家具这类要选"干几小时"的配方,只按选的小时数涨进度,剩下的留成带百分比的半成品。
+    //   原版 ApplyCraftingProgress 按 hours*60 / GetModifiedCraftingDuration(round(时长×剩余比例)) 涨进度,
+    //   这里把本次工时补到剩余全部工时(多 0.01 分钟让进度钳到 100),材料和工具损耗仍由原版按工时扣
+    private static void FillRemainingHours(CraftingOperation op)
+    {
+        var wip = op.m_WorkInProgress;
+        var bp = op.Blueprint;
+        if (wip == null || bp == null || op.m_TargetQuantity > 1) return;
+        float remaining = 1f - Mathf.Clamp01(wip.m_PercentComplete / 100f);
+        if (remaining <= 0f) return;
+        int baseMinutes = (int)Math.Ceiling(bp.m_DurationMinutes * remaining);
+        float hours = (op.GetModifiedCraftingDuration(baseMinutes) + 0.01f) / 60f;
+        if (hours <= op.m_HoursToSpendCrafting) return;
+        ModMain.Log?.Msg($"[QuickCraft] {bp.name} {wip.m_PercentComplete:F0}% 工时 {op.m_HoursToSpendCrafting:F2}h -> {hours:F2}h");
+        op.m_HoursToSpendCrafting = hours;
     }
 }
 #endif

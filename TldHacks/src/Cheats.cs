@@ -1149,9 +1149,11 @@ internal static class Cheats
     internal static bool RestoreDurability(GearItem gear)
     {
         if (gear == null) return false;
+        // 掉到 0% 时游戏打上 m_WornOut(红叉),拉回满耐久不会自动清,不清的话食物 100% 仍显示已腐坏
         try
         {
             gear.SetNormalizedHP(1f, true);
+            if (gear.m_WornOut) gear.m_WornOut = false;
             return true;
         }
         catch { }
@@ -1166,6 +1168,7 @@ internal static class Cheats
             try { var d = gear.GearItemData; if (d != null) maxHp = d.MaxHP; } catch { }
 #endif
             gear.m_CurrentHP = maxHp;
+            gear.m_WornOut = false;
             return true;
         }
         catch { }
