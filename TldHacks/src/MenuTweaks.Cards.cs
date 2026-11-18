@@ -202,6 +202,9 @@ internal static partial class MenuTweaks
         bool flashInf = Ui.Toggle("UT_FlashInfiniteBattery", R(xSub, y, subTogW, ROW_H), s.UT_FlashInfiniteBattery, I18n.T(" 手电无限电", " Inf. Battery"), ToggleStyle ?? GUI.skin.toggle);
         if (dtlc != s.DisableTorchLeftClick) { s.DisableTorchLeftClick = dtlc; CheatState.DisableTorchLeftClick = dtlc; changed = true; }
         if (flashInf != s.UT_FlashInfiniteBattery) { s.UT_FlashInfiniteBattery = flashInf; changed = true; }
+        y += ROW_ADV;
+        bool swap = Ui.Toggle("Torch_AutoSwap", R(x, y, COL_TOG_W3, ROW_H), s.Torch_AutoSwap, I18n.T(" 火把烧完自动换新", " Auto Next Torch"), ToggleStyle ?? GUI.skin.toggle);
+        if (swap != s.Torch_AutoSwap) { s.Torch_AutoSwap = swap; changed = true; }
         y += ROW_ADV + SECTION_END_ADV;
         return y;
     }
@@ -264,8 +267,10 @@ internal static partial class MenuTweaks
     {
         float subTogW = HALF_W, xSub = x + HALF_OFF;
         y = SectionCol(R, x, y, COL_W3, I18n.T("鲸油取暖器 & 油罐", "Heater & Oil Cans"));
-        bool hnf = Ui.Toggle("Heater_NoFuel", R(x, y, COL_TOG_W3, ROW_H), s.Heater_NoFuel, I18n.T(" 鲸油取暖器不耗油", " Heater Uses No Oil"), ToggleStyle ?? GUI.skin.toggle);
+        bool hnf = Ui.Toggle("Heater_NoFuel", R(x, y, subTogW, ROW_H), s.Heater_NoFuel, I18n.T(" 鲸油取暖器不耗油", " Heater No Oil"), ToggleStyle ?? GUI.skin.toggle);
+        bool hrd = Ui.Toggle("Heater_Radial", R(xSub, y, subTogW, ROW_H), s.Heater_Radial, I18n.T(" 取暖器进轮盘", " Heater in Radial"), ToggleStyle ?? GUI.skin.toggle);
         if (hnf != s.Heater_NoFuel) { s.Heater_NoFuel = hnf; changed = true; }
+        if (hrd != s.Heater_Radial) { s.Heater_Radial = hrd; changed = true; }
         y += ROW_ADV;
         float hm = DrawSliderCol3(R, x, y, I18n.T("取暖器耗油", "Heater Oil"), s.Heater_FuelMult, 0.1f, 5f, "F1", key: "Heater_FuelMult");
         hm = Mathf.Round(hm * 10f) / 10f;

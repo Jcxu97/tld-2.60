@@ -75,6 +75,10 @@ internal static class ModSettingsEnData
         "FlaskNoHeatLoss", "Thermos never loses heat",   // 保温杯永不失温
         "FlaskInfiniteVol", "Thermos infinite capacity",   // 保温杯存放无限容量
         "FlaskAnyItem", "Thermos holds any liquid",   // 保温瓶装所有茶(任意液体)
+        "Flask_Radial", "Flask in drink radial",
+        "Flask_FireHeat", "Flask heats near fire",
+        "Torch_AutoSwap", "Auto light next torch",
+        "Heater_Radial", "Heater in camp radial",
         "QuickEvolve", "Instant processing (drying / curing)",   // 加工秒完成(风干/腌制)
         "InfiniteContainer", "Infinite container capacity",   // 容器无限容量
         "FireTemp300", "Campfire temperature 300°C",   // 篝火温度 300℃
@@ -506,6 +510,10 @@ internal static class ModSettingsEnData
         "Train_KeepHighGear", "Steam pressure stays full while the boiler is lit, so second gear always works at full speed.",   // 锅炉点着时蒸汽压力一直满,二档一直能用,不会掉速
         "Train_FullFuel", "The train whale oil and water tanks stay full.",   // 火车的鲸油和水一直是满的
         "Heater_NoFuel", "The whale oil heater does not use oil when it is on.",
+        "Heater_Radial", "A whale oil heater in your backpack shows in the camp radial. Click it to place the heater.",
+        "Flask_Radial", "A flask with drinks shows in the drink radial. Click it to drink one cup. Tea and low calorie drinks come first.",
+        "Flask_FireHeat", "Near a lit fire, the heat of a flask in your backpack goes back up to full.",
+        "Torch_AutoSwap", "When the torch in your hands burns out, the best torch in your backpack is lit and put in your hands.",
         "Heater_FuelMult", "Multiplies the oil that the whale oil heater uses. 1 is vanilla.",
         "Heater_TempBonus", "Adds this many degrees to each whale oil heater setting. 0 is vanilla.",
         "OilCan_WhaleMaxL", "The maximum litres in one whale oil can. 0 is the vanilla 5 L.",

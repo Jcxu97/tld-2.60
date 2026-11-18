@@ -323,6 +323,8 @@ internal static class Cheats
             s.FlaskNoHeatLoss = false;
             s.FlaskInfiniteVol = false;
             s.FlaskAnyItem = false;
+            s.Flask_Radial = false;
+            s.Flask_FireHeat = false;
             s.QuickEvolve = false;
             s.InfiniteContainer = false;
             s.FireTemp300 = false;
@@ -375,6 +377,7 @@ internal static class Cheats
             // ═══ Light Sources ═══
             s.LampMute = false;
             s.DisableTorchLeftClick = false;
+            s.Torch_AutoSwap = false;
             s.DisableLampLeftClick = false;
 
             // ═══ HouseLights ═══
@@ -426,6 +429,7 @@ internal static class Cheats
             s.Train_KeepHighGear = false;
             s.Train_FullFuel = false;
             s.Heater_NoFuel = false;
+            s.Heater_Radial = false;
             s.Heater_FuelMult = 1f;
             s.Heater_TempBonus = 0f;
             s.OilCan_WhaleMaxL = 0f;

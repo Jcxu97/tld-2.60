@@ -203,6 +203,12 @@ internal static class DynamicPatch
             null, "Postfix", () => CheatState.FlaskAnyItem, null, OneGearItem),
         Spec(typeof(Il2CppTLD.Gear.InsulatedFlask), "IsItemCompatibleWithFlask", typeof(Patch_Flask_ForceTrue),
             null, "Postfix", () => CheatState.FlaskAnyItem, null, OneGearItem),
+        Spec(typeof(Panel_ActionsRadial), "GetDrinkItemsInInventory", typeof(QuickFlask),
+            null, "DrinkListPostfix", QuickFlask.RadialWanted),
+        Spec(typeof(Panel_ActionsRadial), "ShowDrinkRadial", typeof(QuickFlask),
+            null, "ShowDrinkPostfix", QuickFlask.RadialWanted),
+        Spec(typeof(Il2CppTLD.Gear.InsulatedFlask), "ManualUpdate", typeof(QuickFlask),
+            null, "HeatPostfix", QuickFlask.HeatWanted),
 
         // v6.8.4 改 StartCrafting Postfix(原 Update Prefix 在 toggle OFF 中途切时
         // m_RealTimeDuration 残留 0.2f,导致 vanilla 单帧吞光材料 — 见 Patch_CraftingOp_StartCrafting 注释)
@@ -360,6 +366,8 @@ internal static class DynamicPatch
             "Prefix", null, () => ModMain.Settings != null && Mathf.Abs(ModMain.Settings.TorchBurnMinutes - 90f) > 0.1f),
         Spec(typeof(TorchItem), "Update", typeof(Patch_TorchFullValue),
             "Prefix", null, () => CheatState.TorchFullValue),
+        Spec(typeof(TorchItem), "Extinguish", typeof(TorchAutoSwap),
+            null, "Postfix", TorchAutoSwap.Wanted),
         Spec(typeof(WeatherTransition), "ChooseNextWeatherSet", typeof(Patch_WeatherLock),
             "Prefix", null, () => CheatState.WeatherLocked),
 
@@ -899,6 +907,8 @@ internal static class DynamicPatch
             "Prefix", null, Patch_WhaleOilHeater_ManualUpdate.Wanted, Patch_WhaleOilHeater_ManualUpdate.RestoreDone),
         Spec(typeof(LiquidItem), "Awake", typeof(Patch_LiquidItem_Awake),
             null, "Postfix", OilCans.Wanted, OilCans.RestoreDone),
+        Spec(typeof(Panel_ActionsRadial), "ShowPlaceItemRadial", typeof(QuickHeater),
+            null, "ShowPlacePostfix", QuickHeater.Wanted),
 #endif
         // 渲染路径: 每帧 × 每喷漆标记,不开功能时完全卸载
         Spec(typeof(DynamicDecalsManager), "RenderDynamicDecal", typeof(Patch_UT_GlowingDecals),

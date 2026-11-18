@@ -498,6 +498,11 @@ internal static partial class MenuTweaks
         bool wet = Ui.Toggle("NoWetClothes", R(c2Sub, y2, subTogW, ROW_H), s.NoWetClothes, I18n.T(" 衣物防潮", " Dry Clothes"), ToggleStyle ?? GUI.skin.toggle);
         if (flsk3 != s.FlaskAnyItem) { s.FlaskAnyItem = flsk3; CheatState.FlaskAnyItem = flsk3; changed = true; }
         if (wet != s.NoWetClothes) { s.NoWetClothes = wet; CheatState.NoWetClothes = wet; changed = true; }
+        y2 += ROW_ADV;
+        bool flsk4 = Ui.Toggle("Flask_Radial", R(c2, y2, subTogW, ROW_H), s.Flask_Radial, I18n.T(" 轮盘喝保温杯", " Flask in Radial"), ToggleStyle ?? GUI.skin.toggle);
+        bool flsk5 = Ui.Toggle("Flask_FireHeat", R(c2Sub, y2, subTogW, ROW_H), s.Flask_FireHeat, I18n.T(" 保温杯火边加热", " Flask Fire Heat"), ToggleStyle ?? GUI.skin.toggle);
+        if (flsk4 != s.Flask_Radial) { s.Flask_Radial = flsk4; changed = true; }
+        if (flsk5 != s.Flask_FireHeat) { s.Flask_FireHeat = flsk5; changed = true; }
         y2 += ROW_ADV + SECTION_END_ADV;
 
         // ——— Column 3: 弓修理 + 火把 & 手电 + 煤油灯 + 鲸油取暖器 & 油罐 ———

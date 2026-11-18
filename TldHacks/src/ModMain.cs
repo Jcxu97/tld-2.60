@@ -1031,6 +1031,7 @@ public class ModMain : MelonMod
             if (Patch_TraderManager_CloseTrade.Pending && (_frame % 30) == 7)
                 Patch_TraderManager_CloseTrade.Tick();
 #endif
+            if (TorchAutoSwap.Pending) TorchAutoSwap.Tick();
 
         }
         catch (Exception ex) { if (!advanced) _frame++; Log?.Error($"[OnUpdate] {ex}"); }

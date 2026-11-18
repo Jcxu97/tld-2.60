@@ -364,6 +364,14 @@ internal class TldHacksSettings : JsonModSettings
     [Name("保温杯装任意液体")]
     public bool FlaskAnyItem = false;
 
+    [Name("轮盘喝保温杯")]
+    [Description("保温杯进喝水轮盘,点了直接喝,茶优先,卡路里低的先喝")]
+    public bool Flask_Radial = false;
+
+    [Name("保温杯火边加热")]
+    [Description("带着保温杯靠近火,杯里的饮品慢慢回到满热度")]
+    public bool Flask_FireHeat = false;
+
     [Name("快速风干")]
     [Description("风干、腌制马上完成")]
     public bool QuickEvolve = false;
@@ -907,6 +915,10 @@ internal class TldHacksSettings : JsonModSettings
     [Description("防止鼠标左键误熄火把")]
     public bool DisableTorchLeftClick = true;
 
+    [Name("火把烧完自动换新")]
+    [Description("手上的火把烧完后自动换上背包里状态最好的火把并点着,烧完的放回背包")]
+    public bool Torch_AutoSwap = false;
+
     [Name("锁油灯键")]
     [Description("防止鼠标左键误熄油灯")]
     public bool DisableLampLeftClick = true;
@@ -1389,6 +1401,9 @@ internal class TldHacksSettings : JsonModSettings
     [Name("取暖器不耗油")]
     [Description("鲸油取暖器点着时不消耗鲸油")]
     public bool Heater_NoFuel = false;
+    [Name("取暖器进轮盘")]
+    [Description("背包里的鲸油取暖器出现在营地轮盘里,点了直接放置")]
+    public bool Heater_Radial = false;
     [Name("取暖器耗油倍率")]
     [Description("鲸油取暖器每小时耗油量的倍数,原版三档每小时 0.25、0.5、0.75 升,1 是原版")]
     [Slider(0.1f, 5f, 50)]
