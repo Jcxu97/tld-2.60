@@ -329,7 +329,7 @@ internal static class Ui
         ["QuickFire"] = new[] { "生火一定成功。", "Fire starting always succeeds." },
         ["QuickFishing"] = new[] { "钓鱼一定能钓到。", "Fishing always succeeds." },
         ["QuickCook"] = new[] { "烹饪立即完成,也不会烤焦。", "Cooking completes at once and food does not burn." },
-        ["DropCook"] = new[] { "生肉生鱼丢在点着的火堆或炉子旁边 2 米内,按原版烹饪时间等够了就自己变成热的熟肉,不会烤焦。捡起来或火灭了就重新计时。", "Drop raw meat or fish within 2 m of a burning fire or stove. It becomes hot cooked food after the normal cooking time and does not burn. The timer restarts if you pick it up or the fire goes out." },
+        ["DropCook"] = new[] { "生肉生鱼丢在点着的火堆或炉子旁边 2 米内,按原版烹饪时间等够了就自己变成热的熟肉。熟了还放在火边,超过原版锅里的焦糊等待时间就烤焦,耐久变 0。离开场景再回来不会重新计时,回来时火还燃着就把离开的时间也算上。火灭了暂停,捡起来重新计时。退出游戏再读档会重新计时。", "Drop raw meat or fish within 2 m of a burning fire or stove. It becomes hot cooked food after the normal cooking time. If the cooked food stays near the fire longer than the normal time before food burns in a pot, it burns and its condition goes to 0. The timer continues when you leave the area and come back. If the fire still burns when you come back, the time you were away also counts. The timer stops while the fire is out and restarts if you pick the food up. The timer also restarts when you quit and load the save." },
         ["NoBurn"] = new[] { "食物熟了以后不会烤焦,烹饪时间不变。", "Cooked food does not burn. Cooking time does not change." },
         ["QuickSearch"] = new[] { "搜刮容器和尸体不用等待。", "Searching containers and bodies has no wait." },
         ["QuickHarvest"] = new[] { "在猎物尸体上割肉、剥皮立即完成。", "Harvesting a carcass completes at once." },

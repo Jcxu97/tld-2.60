@@ -543,7 +543,7 @@ internal static class ModSettingsEnData
         "Stealth", "Animals run away when they see you.",   // 动物见到你就跑
         "QuickCook", "Food in the pot is ready at once. Food does not burn.",   // 锅里的东西马上做好,自带防止烤焦
         "NoBurn", "Cooked food does not burn. Food is not ready at once.",   // 做好的食物不会烤焦,但不会马上做好
-        "DropCook", "Drop raw meat or fish within 2 m of a burning fire or stove. It becomes hot cooked food after the normal cooking time and does not burn. The timer restarts if you pick it up or the fire goes out.",   // 丢地烹饪
+        "DropCook", "Drop raw meat or fish within 2 m of a burning fire or stove. It becomes hot cooked food after the normal cooking time. Cooked food left near the fire too long burns. The timer continues when you leave the area and come back.",   // 丢地烹饪
         "QuickSearch", "Search containers and bodies without the progress bar.",   // 搜容器和尸体不用等进度条
         "QuickHarvest", "The harvest screen finishes at once.",   // 割肉界面直接完成
         "QuickBreakDown", "The break-down screen finishes at once.",   // 拆解界面直接完成

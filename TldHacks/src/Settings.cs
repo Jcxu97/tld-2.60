@@ -297,7 +297,7 @@ internal class TldHacksSettings : JsonModSettings
     public bool NoBurn = false;
 
     [Name("丢地烹饪")]
-    [Description("生肉生鱼丢在点着的火堆或炉子旁边 2 米内,按原版烹饪时间等够了就自己变成热的熟肉,不会烤焦。捡起来或火灭了就重新计时")]
+    [Description("生肉生鱼丢在点着的火堆或炉子旁边 2 米内,按原版烹饪时间等够了就自己变成热的熟肉,熟了还放在火边太久会烤焦。离开场景再回来照样计时,火灭了暂停,捡起来重新计时")]
     public bool DropCook = false;
 
     [Name("快速搜刮")]
