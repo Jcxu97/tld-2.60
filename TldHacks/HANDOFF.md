@@ -13,7 +13,7 @@ V12.9 已发版,等用户实测和群友反馈。
 
 ## 下一步
 1. 用户实测 V12.9 新功能。取暖器加在营地轮盘最后一个空位,没空位时 Latest.log 有 `[QuickHeater] 营地轮盘没有空位`,那就改放工具轮盘
-2. Nexus mod 162 还是 12.8,换主文件要先问用户(脚本 bili-game-pipeline/tools/nexus/update_file.py)
+2. Nexus mod 162 主文件 11-19 已换成 12.9(12.8 进 File archive),发布时还在病毒扫描;页面上另有一个 V9.9 Main 文件不是我们这次传的,没动
 
 ## 未决问题
 1. 丢地烹饪计时只在内存,读档重来;烤焦时长用肉自带的 m_ReadyTimeMinutes,没乘锅的倍率和技能,快慢没验证
