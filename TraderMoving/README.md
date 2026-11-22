@@ -1,6 +1,6 @@
 # TraderMoving
 
-搬运商人的无线电和交易箱。The Long Dark 2.55 + MelonLoader,要有 Tales from the Far Territory DLC。
+搬运商人的无线电和交易箱。The Long Dark 2.60 + MelonLoader,要有 Tales from the Far Territory DLC。
 
 前置 mod 是 ModSettings 和 ModData。不需要 SafehouseCustomizationPlus,装了也不冲突。
 

@@ -1,6 +1,6 @@
-# tld 自用改造 2.55
+# tld 自用改造 2.60
 
-**The Long Dark 2.55** 个人定制层 —— 基于 117-mod 整合包之上的配置快照 + 自制 mod。
+**The Long Dark 2.60** 个人定制层 —— 基于 117-mod 整合包之上的配置快照 + 自制 mod。
 
 > ⚠️ **只含配置和我写的 mod,不含第三方 mod 本体。** 要用这个仓库,你得先装好你用的那个 117-mod 整合包,然后把这里的 `configs/Mods/*` 覆盖过去。第三方 mod 的版权属于各自作者。
 
@@ -124,21 +124,21 @@
 ```powershell
 # 1. 装好你的整合包到 <TLD>/Mods/
 # 2. clone 这个仓库
-git clone https://github.com/Jcxu97/tld-自用改造2.55.git
+git clone https://github.com/Jcxu97/tld-2.60.git
 
 # 3. 覆盖配置
-cp -r tld-自用改造2.55/configs/Mods/*       <TLD>/Mods/
-cp -r tld-自用改造2.55/configs/UserData/*   <TLD>/UserData/
-cp    tld-自用改造2.55/BunkerDefaults/BunkerDefaults.dll <TLD>/Mods/
-cp    tld-自用改造2.55/TldHacks/TldHacks.dll             <TLD>/Mods/
-cp    tld-自用改造2.55/ModSettingsQuickNav/ModSettingsQuickNav.dll <TLD>/Mods/
+cp -r tld-2.60/configs/Mods/*       <TLD>/Mods/
+cp -r tld-2.60/configs/UserData/*   <TLD>/UserData/
+cp    tld-2.60/BunkerDefaults/BunkerDefaults.dll <TLD>/Mods/
+cp    tld-2.60/TldHacks/TldHacks.dll             <TLD>/Mods/
+cp    tld-2.60/ModSettingsQuickNav/ModSettingsQuickNav.dll <TLD>/Mods/
 # 装了 TldHacks v2.7+ 就别装 FoodStackable,功能已内置
 ```
 
 ## 已知问题
 
 - **整合包切场景偶发闪退 + 重启卡启动**:117-mod 整合包通病。切场景前按 `F5` 快存,闪退后反复重启/重启电脑即可。详见 `CHANGELOG.md`。
-- **DarkerNights.dll (v1.3 by Xpazeman)**:对 TLD 2.55 已失效,加载会让启动死循环。**必须不装它**。该作者其他 mod(AmbientLights / PlacingAnywhere / HouseLights / GearDecayModifier)还能用。
+- **DarkerNights.dll (v1.3 by Xpazeman)**:对 TLD 2.55 及之后的版本已失效,加载会让启动死循环。**必须不装它**。该作者其他 mod(AmbientLights / PlacingAnywhere / HouseLights / GearDecayModifier)还能用。
 - **StackManager 的 `AddStackableComponent` 只影响新生成的物品**:已经在你背包里的 soda/jerky 还是不能叠,要去新容器捡。
 
 ## License
@@ -257,7 +257,7 @@ ExtraGraphicsSettings / UniversalTweaks / StackManager
 
 ## 安装步骤
 
-1. 装 MelonLoader (TLD 2.55+)
+1. 装 MelonLoader (TLD 2.60)
 2. 把本合集所有文件复制到 `<TLD>/Mods/`
 3. 双击 `disable_integrated_mods.bat` (一次性,把整合冗余 mod 改名 .disabled;若已不在你的 Mods 目录会显示"未找到")
 4. 启动游戏,Tab 键打开 TldHacks 菜单
@@ -269,13 +269,13 @@ ExtraGraphicsSettings / UniversalTweaks / StackManager
 
 
 基准:`【2026-4-21】V2.54MOD整合包 / 【V2.54整合包】/【第二步】/Mods`
-当前:`D:\Steam\steamapps\common\TheLongDark\Mods`(TLD 2.55)
+当前:`D:\Steam\steamapps\common\TheLongDark\Mods`(TLD 2.60)
 
 ## 从整合包删除的 mod(6 个)
 
 | DLL | 备注 |
 |---|---|
-| `DarkerNights.dll` | ⚠️ **必须删** —— 最后更新 2023-01-24,对应 TLD 2.06;在 2.55 启动时死循环卡住 mod 初始化。详见 `README.md` 已知问题段 |
+| `DarkerNights.dll` | ⚠️ **必须删** —— 最后更新 2023-01-24,对应 TLD 2.06;在 2.55 及之后的版本启动时死循环卡住 mod 初始化。详见 `README.md` 已知问题段 |
 | `CatchColdMod.dll` | 未装 |
 | `OxygenLevels.dll` | 未装 |
 | `PhotoOfALovedOne.dll` | 未装 |

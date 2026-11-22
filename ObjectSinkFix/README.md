@@ -17,7 +17,7 @@ It works automatically. There is one optional setting, described below.
 
 ## Requirements
 
-- *The Long Dark* 2.55
+- *The Long Dark* 2.60
 - [MelonLoader](https://github.com/LavaGang/MelonLoader) 0.7.2
 - [ModSettings](https://github.com/DigitalzombieTLD/ModSettings), optional, only needed for the setting below
 
