@@ -1,6 +1,6 @@
-# tld personal mods 2.55
+# tld personal mods 2.60
 
-**The Long Dark 2.55** personal customization layer — config snapshot + self-made mods on top of a 117-mod community pack.
+**The Long Dark 2.60** personal customization layer — config snapshot + self-made mods on top of a 117-mod community pack.
 
 > ⚠️ **Configs and my own mods only — does NOT include third-party mod binaries.** To use this repo, install the 117-mod pack first, then overlay `configs/Mods/`* on top. Third-party mod copyrights belong to their respective authors.
 
@@ -145,21 +145,21 @@ Works in main menu and in-game pause menu. Doesn't touch TldHacks, runs independ
 ```powershell
 # 1. Install your modpack into <TLD>/Mods/
 # 2. Clone this repo
-git clone https://github.com/Jcxu97/tld--2.55.git
+git clone https://github.com/Jcxu97/tld-2.60.git
 
 # 3. Overlay configs
-cp -r tld--2.55/configs/Mods/*       <TLD>/Mods/
-cp -r tld--2.55/configs/UserData/*   <TLD>/UserData/
-cp    tld--2.55/BunkerDefaults/BunkerDefaults.dll       <TLD>/Mods/
-cp    tld--2.55/TldHacks/TldHacks.dll                   <TLD>/Mods/
-cp    tld--2.55/ModSettingsQuickNav/ModSettingsQuickNav.dll <TLD>/Mods/
+cp -r tld-2.60/configs/Mods/*       <TLD>/Mods/
+cp -r tld-2.60/configs/UserData/*   <TLD>/UserData/
+cp    tld-2.60/BunkerDefaults/BunkerDefaults.dll       <TLD>/Mods/
+cp    tld-2.60/TldHacks/TldHacks.dll                   <TLD>/Mods/
+cp    tld-2.60/ModSettingsQuickNav/ModSettingsQuickNav.dll <TLD>/Mods/
 # With TldHacks v2.7.0+ skip FoodStackable — functionality is built in
 ```
 
 ## Known issues
 
 - **Modpack scene-change occasional crash + boot hang on restart**: a known issue with the 117-mod pack. Press `F5` (SaveManager) to quicksave before scene transitions; on hang, retry restart / reboot the PC. See `CHANGELOG.md`.
-- **DarkerNights.dll (v1.3 by Xpazeman)**: broken on TLD 2.55, loading it causes an init deadlock. **Do NOT install it.** The author's other mods (AmbientLights / PlacingAnywhere / HouseLights / GearDecayModifier) still work.
+- **DarkerNights.dll (v1.3 by Xpazeman)**: broken on TLD 2.55 and later, loading it causes an init deadlock. **Do NOT install it.** The author's other mods (AmbientLights / PlacingAnywhere / HouseLights / GearDecayModifier) still work.
 - **StackManager's `AddStackableComponent` only affects newly-spawned items**: existing soda/jerky in your inventory still won't stack, you'd need to re-pick them up from a fresh container.
 
 ## License
@@ -292,7 +292,7 @@ ExtraGraphicsSettings / UniversalTweaks / StackManager
 
 ## Installation
 
-1. Install MelonLoader (TLD 2.55+)
+1. Install MelonLoader (TLD 2.60)
 2. Copy all files in this set to `<TLD>/Mods/`
 3. Double-click `disable_integrated_mods.bat` (one-time, renames integrated redundancies to `.disabled`; will say "not found" if those mods aren't in your `Mods/` directory)
 4. Launch the game, press `Tab` to open the TldHacks menu
@@ -302,14 +302,14 @@ ExtraGraphicsSettings / UniversalTweaks / StackManager
 # Modpack diff log
 
 Baseline: `[2026-04-21] V2.54 modpack / [V2.54-modpack] / [Step 2] / Mods`
-Current: `D:\Steam\steamapps\common\TheLongDark\Mods` (TLD 2.55)
+Current: `D:\Steam\steamapps\common\TheLongDark\Mods` (TLD 2.60)
 
 ## Removed from upstream pack (6)
 
 
 | DLL                    | Note                                                                                                      |
 | ---------------------- | --------------------------------------------------------------------------------------------------------- |
-| `DarkerNights.dll`     | ⚠️ **Must remove** — last updated 2023-01-24 (TLD 2.06), causes init deadlock on 2.55. See "Known issues" |
+| `DarkerNights.dll`     | ⚠️ **Must remove** — last updated 2023-01-24 (TLD 2.06), causes init deadlock on 2.55 and later. See "Known issues" |
 | `CatchColdMod.dll`     | not installed                                                                                             |
 | `OxygenLevels.dll`     | not installed                                                                                             |
 | `PhotoOfALovedOne.dll` | not installed                                                                                             |
