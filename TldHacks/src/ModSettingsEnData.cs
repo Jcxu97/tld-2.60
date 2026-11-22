@@ -12,13 +12,16 @@ internal static class ModSettingsEnData
     internal static readonly string[] Names =
     {
         "LanguageMode", "Language",   // Language / 语言
+        "StackingEnabled", "UI stacking",   // UI 堆叠
         "FlyHotkey", "Fly toggle hotkey",   // Fly toggle hotkey(飞行)
+        "MenuPauseGame", "Pause game when menu opens",   // Pause game when menu opens(开修改器时自动暂停)
         "MenuScale", "Menu UI Scale (2-3 for 4K)",   // Menu UI Scale(菜单缩放,4K 可设 2-3)
         "MenuAutoScaled", "Menu auto-scaled once",   // Menu auto-scaled once(已按屏幕自动定过缩放)
         "MenuWidth", "Menu Width (drag right edge)",   // Menu Width(菜单宽度,拖拽右边缘调整)
         "MenuHeight", "Menu Height (drag bottom edge)",   // Menu Height(菜单高度,拖拽下边缘调整)
         "MenuX", "Menu X Position (auto-saved on drag)",   // Menu X Position(窗口 X,拖动自动存)
         "MenuY", "Menu Y Position (auto-saved on drag)",   // Menu Y Position(窗口 Y,拖动自动存)
+        "SpawnerTeleportH", "Teleport List Height (drag the splitter)",   // Teleport List Height(快速传送列表高度,拖分割栏调整)
         "GodMode", "God Mode",   // God Mode(无敌模式)
         "NoFallDamage", "No Fall Damage",   // No Fall Damage(无坠落伤害)
         "AlwaysWarm", "Always Warm",   // Always Warm(始终温暖)
@@ -43,7 +46,7 @@ internal static class ModSettingsEnData
         "NoRecoil", "No Recoil",   // No Recoil(无后坐力)
         "NoAimSway", "Steady Aim (no sway / jitter / breathing)",   // Steady Aim(稳定瞄准,关闭晃动+抖动+呼吸)
         "NoAimStamina", "No Aim Stamina",   // No Aim Stamina(瞄准不耗体力)
-        "SuperAccuracy", "Super Accuracy (deprecated, kept for compatibility)",   // Super Accuracy(已弃用,保留兼容)
+        "SuperAccuracy", "Super Accuracy",   // Super Accuracy(超级精准)
         "NoSprainRisk", "No Sprain Risk",   // No Sprain Risk(免扭伤风险)
         "ImmuneAnimalDamage", "Immune Animal Damage",   // Immune Animal Damage(免疫狼/熊/美洲狮伤害)
         "NoSuffocating", "No Suffocating",   // No Suffocating(不会窒息)
@@ -55,6 +58,7 @@ internal static class ModSettingsEnData
         "GrabAllNotify", "Grab All confirm each item",   // 一键搜刮-弹拾取提示 / Grab All notify
         "QuickCook", "Instant Cooking (cooking pot, never burns)",   // 秒烤肉(CookingPot 瞬完成,自带防烤焦)
         "NoBurn", "No Burning (food stays at Ready, no instant cook)",   // 防烤焦(只锁 Ready,不秒熟)
+        "DropCook", "Cook on the ground near a fire",   // 丢地烹饪
         "QuickSearch", "Instant Search (containers / bodies)",   // 秒搜索(容器/尸体搜刮 NOP TimedHold)
         "QuickHarvest", "Instant Harvest (Panel_BodyHarvest)",   // 秒割肉(Panel_BodyHarvest)
         "QuickBreakDown", "Instant Break Down (Panel_BreakDown)",   // 秒打碎(Panel_BreakDown)
@@ -71,6 +75,10 @@ internal static class ModSettingsEnData
         "FlaskNoHeatLoss", "Thermos never loses heat",   // 保温杯永不失温
         "FlaskInfiniteVol", "Thermos infinite capacity",   // 保温杯存放无限容量
         "FlaskAnyItem", "Thermos holds any liquid",   // 保温瓶装所有茶(任意液体)
+        "Flask_Radial", "Flask in drink radial",
+        "Flask_FireHeat", "Flask heats near fire",
+        "Torch_AutoSwap", "Auto light next torch",
+        "Heater_Radial", "Heater in camp radial",
         "QuickEvolve", "Instant processing (drying / curing)",   // 加工秒完成(风干/腌制)
         "InfiniteContainer", "Infinite container capacity",   // 容器无限容量
         "FireTemp300", "Campfire temperature 300°C",   // 篝火温度 300℃
@@ -86,12 +94,14 @@ internal static class ModSettingsEnData
         "FreeFireFuel", "Free fire fuel",   // 生火材料不减
         "TechBackpack", "Custom carry weight limit",   // 自定义背包负重
         "TechBackpackKg", "Carry weight limit (kg)",   // 背包负重上限(kg)
+        "InfiniteCarry", "Infinite carry weight",   // 无限负重
         "TorchFullValue", "Full-value torches",   // 火把满值
         "FreeSprint", "Free Sprint (incl. travois)",   // 无条件冲刺(含拉雪橇)
         "InfiniteStamina", "Infinite Stamina",   // 无限体力
         "MapClickTP", "Map double-click teleport",   // 地图双击传送
         "TraderUnlimitedList", "Unlimited trade list (cap -> 64)",   // 交易清单不限制(上限 → 64)
         "TraderMaxTrust", "Max trader trust",   // 信任值最大化
+        "TraderUnlockModeItems", "Remove vanilla difficulty limits",
         "TraderInstantExchange", "Instant trader exchange",   // 商人交易秒完成
         "TraderAlwaysAvailable", "Trader always reachable (radio)",   // 随时可联系商人(无线电)
         "CougarInstantActivate", "Activate cougar immediately on new save",   // 新档首次立即激活美洲狮
@@ -205,6 +215,7 @@ internal static class ModSettingsEnData
         "CrosshairStone", "Stone crosshair",   // 石块准星
         "CrosshairRifle", "Rifle crosshair",   // 步枪准星
         "CrosshairBow", "Bow crosshair",   // 弓箭准星
+        "CrosshairAlways", "Permanent crosshair",   // 永久准星
         "QoL_Enabled", "QoL master switch",   // QoL 总开关
         "QoL_NoSaveOnSprain", "No autosave on sprain",   // 扭伤不自动存档
         "QoL_NoSaveOnSprainFalls", "No autosave on fall sprains",   // 坠落扭伤也不存档
@@ -234,6 +245,25 @@ internal static class ModSettingsEnData
         "QoL_AutoSurveyRange", "Survey range multiplier",   // 绘制范围倍率
         "QoL_AutoSurveyUnlock", "Ignore weather restrictions",   // 解除天气限制
         "QoL_AutoOpenMapOnExit", "Auto-open minimap when going outside (MotionTrackerLite)",   // 出门自动开小地图(MotionTrackerLite)
+        "MapM_Enabled", "Enable Map Manager",
+        "MapM_PlayerArrow", "Red player arrow",
+        "MapM_CenterOnPlayer", "Center the map on the player",
+        "MapM_SurveyRange", "Charcoal mapping range multiplier",
+        "MapM_SurveyTime", "Charcoal mapping time multiplier",
+        "MapM_UnlockSurvey", "Map at any time",
+        "MapM_RevealVista", "Show vista points",
+        "MapM_VistaNoPolaroid", "Vista points without polaroids",
+        "MapM_CorpseOnMap", "Show animal corpses on the map",
+        "MapM_HideHarvested", "Hide icons of harvested plants",
+        "MapM_FillEmptyBunkers", "Make all bunkers full (random type)",
+        "MapM_InterloperBunker", "Bunkers on Interloper and Misery",
+        "MapM_BunkerKey", "Show bunkers hotkey",
+        "MapM_RevealKey", "Reveal region hotkey",
+        "Coll_Enabled", "Show collectibles on the map",
+        "Coll_Cairn", "Cairns",
+        "Coll_Note", "Notes and logs",
+        "Coll_Polaroid", "Polaroids",
+        "Coll_ShowCollected", "Also show collected ones",
         "Craft_Anywhere", "Enable Craft Anywhere",   // 启用随意制作
         "Craft_DefaultLocation", "Default location (new blueprints)",   // 默认位置(新蓝图)
         "Craft_MoreCookingSlots", "Enable extra cooking slots",   // 启用额外烹饪位
@@ -292,6 +322,14 @@ internal static class ModSettingsEnData
         "UT_TravoisOverrideMovement", "Remove movement zone restrictions",   // 解除移动区域限制
         "UT_TravoisOverrideInteraction", "Remove interaction restrictions",   // 解除互动限制
         "UT_FlashInfiniteBattery", "Infinite battery",   // 无限电量
+        "Train_NoBreak", "Train never breaks",   // 火车不会坏
+        "Train_KeepHighGear", "Keep second gear",   // 保持二档
+        "Train_FullFuel", "Fuel and water always full",   // 燃料和水一直满
+        "Heater_NoFuel", "Heater uses no oil",
+        "Heater_FuelMult", "Heater oil use multiplier",
+        "Heater_TempBonus", "Heater temperature bonus",
+        "OilCan_WhaleMaxL", "Whale oil can limit (L)",
+        "OilCan_KeroseneMaxL", "Jerrycan limit (L)",
         "Stack_AddComponent", "Add stackable component",   // 启用堆叠组件添加
         "Stack_UseMaxHP", "Merge using best condition",   // 使用最大状态合并
         "World_BowRepair", "Allow bow repair",   // 允许修复弓
@@ -336,6 +374,21 @@ internal static class ModSettingsEnData
         "TT_RespawnPlants", "Enable plant respawn",   // 启用植物重生
         "TT_ShowTraderTrust", "Show trader trust",   // 显示商人信任度
         "TraderArrivalDays", "Trader arrival day",   // 商人到来天数
+        "CE_SnareSure", "Sure Snares",
+        "CE_SnareInstant", "Catch at once",
+        "CE_LootNoEmpty", "No empty containers",
+        "CE_LootLowerTier", "Loot one level easier",
+        "CE_AuroraRefill", "Aurora refills containers",
+        "CE_IceHoleNoFreeze", "Ice holes stay open",
+        "CE_NoMisery", "No Misery afflictions",
+        "CE_NoDeath", "No death",
+        "CE_StruggleWin", "Win struggles",
+        "CE_NoStun", "No daze after struggles",
+        "CE_NoSlide", "No slope slide",
+        "CE_TraderCheap", "Trader discount",
+        "CE_AuroraLightSteady", "Steady aurora lights",
+        "CE_AuroraMute", "Mute aurora sound",
+        "Feat_AllAtNewGame", "Fill all feat slots in a new game",
     };
 
     // ─── Description(悬停说明)。翻译 agent 从 _tools/missing_en.tsv 的 DESC 行填这里 ───
@@ -343,12 +396,13 @@ internal static class ModSettingsEnData
     {
         "DiagPauseRuntime", "Diagnostic. When on, ModMain stops running any per-frame tick, Stacking OnLateUpdate or Menu UI. Harmony patches stay applied (static patching is not affected by this toggle). If the stutter is still there with this on, it comes from the patches themselves.",   // 诊断用。开了 ModMain 不再跑任何 per-frame tick / Stacking OnLateUpdate / Menu UI。Harmony patch 仍挂着(静态挂载不受此开关影响)。若开了仍卡 → 卡在 patch 本身
         "DiagUnpatchAll", "Runs UnpatchAll at startup and skips Reconcile, so none of the TldHacks [HarmonyPatch] classes are applied. Requires a game restart. Still stuttering with this on means TldHacks is definitely not the cause; no stutter means the total patch count is the problem, and the next step is moving everything to DynamicPatch.",   // 启动时立即 UnpatchAll + skip Reconcile,TldHacks 的所有 [HarmonyPatch] 零挂载。需重启游戏生效。开了仍卡 = 100% 不是 TldHacks;开了不卡 = 是 patch 总数问题,下一步全迁 DynamicPatch
-        "LanguageMode", "Auto follows the system language (English on any non-Chinese system); Chinese forces Chinese; English forces English. Press the menu hotkey to close and reopen the menu for the change to take effect.",   // Auto = 按系统语言(非中文系统 → English);Chinese = 强制中文;English = 强制英文。改完需按菜单热键重开菜单生效。
+        "LanguageMode", "Auto follows the game language (English when the game is not in Chinese); Chinese forces Chinese; English forces English. Press the menu hotkey to close and reopen the TldHacks menu for the change to take effect. Restart the game to change the language of this Mod Settings page.",   // Auto = 跟随游戏的语言设置(游戏不是中文 → English);Chinese = 强制中文;English = 强制英文。改完需按菜单热键重开菜单生效。
         "MenuHotkey", "Press this key to open or close the TldHacks menu. The default Tab clashes with the in-game journal key, so F1 or \\ is a better choice.",   // 按此键呼出/关闭 TldHacks 菜单。默认 Tab 会和游戏日志键冲突,建议改成 F1 / \ 等。
+        "MenuPauseGame", "When you open the TldHacks menu with the hotkey, the game opens its ESC pause menu for you. When you close TldHacks, the pause menu closes and the game continues. If you pressed ESC yourself first, TldHacks does not change it.",   // 开修改器时先打开 ESC 暂停菜单,关修改器时一起关掉
         "FlyHotkey", "Press this key to toggle the uConsole fly command. Requires DeveloperConsole.dll to be enabled.",   // 按此键切换 uConsole fly 命令。需要 DeveloperConsole.dll 启用。
         "TrueInvisible", "Animals behave as if they cannot see you and keep wandering, feeding or sleeping; they neither attack nor flee.",   // 动物像看不见你一样,正常闲逛/觅食/睡觉,不扑也不逃
         "NoAimSway", "Combines aim sway, jitter and breathing sway into one toggle. The crosshair holds still, the weapon does not drift and the aiming view does not shake.",   // 合并瞄准晃动/抖动/呼吸晃动。开枪准星不动、武器不晃、瞄准画面不抖
-        "SuperAccuracy", "Deprecated. Kept only so older JSON configs still load: turning it on is the same as Steady Aim plus No Recoil.",   // 已弃用。保留此开关是为了旧 JSON 兼容:开启时等效于 稳定瞄准+无后坐力。
+        "SuperAccuracy", "Bullets have no spread and aim sway is off, so every shot leaves along the crosshair. Recoil is set by No Recoil.",   // 子弹散布归零并关闭瞄准晃动,子弹沿准星射出。后坐力另由 无后坐力 控制
         "QuickAction", "Harvesting a carcass, repairing a tool and breaking down an item finish at once. You do not have to hold the button. Repairs always succeed.",   // 采集尸骸、修理工具、拆解物品时直接完成,不用按住按钮。修理必定成功。
         "GrabAllKey", "Press this key to move every item on the ground or in the scene within range straight into your backpack (range is set by the slider below). The default is a mouse side button, which the game does not use, so it works without any setup. Set a keyboard key here to change it. Set None to disable the hotkey. Items you dropped yourself are skipped by default. See Skip own drops below.",   // 按此键把玩家半径内地上/场景里的全部物品直接收进背包(搜刮距离见下方滑块)。默认 G。设 None 关闭热键。
         "GrabAllRadius", "Radius used by Grab All, default 15 m. A larger radius makes each scan take longer.",   // 一键搜刮的作用半径,默认 15 米。半径越大单次扫描越久。
@@ -370,11 +424,12 @@ internal static class ModSettingsEnData
         "FreeFireFuel", "Adding fuel to a fire does not consume the item.",   // 添加柴火时不消耗物品
         "TechBackpack", "Overrides the vanilla 30 kg carry weight limit with a value of your own.",   // 覆盖原版 30kg 背包上限为自定义值
         "TechBackpackKg", "The value that replaces the vanilla 30 kg limit; 30 is vanilla (default).",   // 替换原版 30kg 上限的目标值, 默认 30=原版
+        "InfiniteCarry", "No carry weight limit. You are never overloaded.",   // 背包负重不设上限,背多少都不超重
         "TorchFullValue", "Torches taken from a campfire come out with full burn time.",   // 从篝火取出的火把燃烧值为最大
         "FreeSprint", "Sprinting costs no stamina, and you can sprint without limit while pulling a travois.",   // 冲刺不消耗体力,拉雪橇也能无限冲刺
         "InfiniteStamina", "The stamina bar stays full; fatigue is not affected.",   // 体力条永远满,不影响疲劳值
         "MapClickTP", "Double-click an icon on the in-game map to teleport there (same region only; press M to open the map).",   // 双击游戏地图图标传送到该位置(同区内,按M打开地图)
-        "BlockAutoPickupOwnDrops", "On by default. Items you drop or place to sort your supplies stay on the floor. Walking past does not suck them back in, and Grab All leaves them alone. This covers both paths: ItemPicker auto-pickup on W, and Grab All. Only items dropped since you entered the region are remembered. After a region change or a restart they become collectable again. Turn this off to let Grab All take your own drops too.",   // 按 W 触发 ItemPicker 自动拾取时,忽略本会话内玩家 drop 的 GearItem,避免刚丢就又捡回来
+        "BlockAutoPickupOwnDrops", "On by default. Items you drop or place to sort your supplies stay on the floor. Walking past does not suck them back in, and Grab All leaves them alone. This covers both paths: ItemPicker auto-pickup on W, and Grab All. The list is kept in your save, so it stays after a region change or a restart. An item that you pick up again is removed from the list. Turn this off to let Grab All take your own drops too.",   // 按 W 触发 ItemPicker 自动拾取时,忽略本会话内玩家 drop 的 GearItem,避免刚丢就又捡回来
         "MagicBullet", "Firing applies damage directly to the nearest animal in front of the crosshair, ignoring ballistics and impact point; combine it with Instant Kill for a one-shot kill.",   // 开枪即对准星前方最近动物直接施加伤害,无视弹道与落点;配合「一击必杀」一枪毙命
         "SpeedTweaksEnabled", "Master switch: with this off none of the speed and stamina sliders below apply, and movement stays at vanilla speed.",   // 总开关:关闭后下面所有速度/体力滑条不生效,等于原版速度
         "StaminaRecoveryDelay", "Multiplier on the delay before stamina starts recovering after you stop sprinting. 0 = recovers at once, 1 = vanilla, 2 = twice the wait.",   // 停止冲刺后多久开始恢复体力的倍率,0=立即恢复,1=原版,2=双倍等待
@@ -431,6 +486,7 @@ internal static class ModSettingsEnData
         "RememberBreakdownTool", "The break-down panel preselects the tool you used last time.",   // 拆解面板自动选中上次使用的工具
         "VehicleFreeLook", "Widens how far you can turn the camera while inside a vehicle.",   // 扩大车内视角旋转范围
         "CrosshairEnabled", "Shows an extra crosshair while aiming (stone, rifle, bow).",   // 瞄准时显示额外准星(石头/步枪/弓)
+        "CrosshairAlways", "Shows the crosshair at all times, also when you do not aim.",   // 不瞄准也一直显示准星
         "QoL_NoSaveOnSprainFalls", "Sprains caused by falls also skip the autosave.",   // 坠落引起的扭伤同样不触发自动存档
         "QoL_WakeUpCall", "Adds a wake-up option to the pause menu while you sleep.",   // 暂停菜单里可以选择醒来
         "QoL_BuryCorpses", "Press Alt plus fire on a human body or an animal carcass to bury it.",   // 对人类/动物尸体按 Alt+Fire 埋葬
@@ -450,6 +506,18 @@ internal static class ModSettingsEnData
         "UT_RemoveHeadacheDebuff", "CookedPiePeach, RoseHip, PorridgeFruit and PancakePeach no longer cause a headache.",   // CookedPiePeach/RoseHip/PorridgeFruit/PancakePeach 不再头疼
         "UT_StewFatigueLoss", "Effect value used by CookedStewMeat and CookedStewVegetables.",   // CookedStewMeat/Vegetables 的 Effect 值
         "UT_FlashInfiniteBattery", "The flashlight never runs out of battery.",   // 手电筒永不耗电
+        "Train_NoBreak", "Train parts do not lose condition. The boiler does not explode.",   // 火车各部件不掉状态,锅炉不会爆炸
+        "Train_KeepHighGear", "Steam pressure stays full while the boiler is lit, so second gear always works at full speed.",   // 锅炉点着时蒸汽压力一直满,二档一直能用,不会掉速
+        "Train_FullFuel", "The train whale oil and water tanks stay full.",   // 火车的鲸油和水一直是满的
+        "Heater_NoFuel", "The whale oil heater does not use oil when it is on.",
+        "Heater_Radial", "A whale oil heater in your backpack shows in the camp radial. Click it to place the heater.",
+        "Flask_Radial", "A flask with drinks shows in the drink radial. Click it to drink one cup. Tea and low calorie drinks come first.",
+        "Flask_FireHeat", "Near a lit fire, the heat of a flask in your backpack goes back up to full.",
+        "Torch_AutoSwap", "When the torch in your hands burns out, the best torch in your backpack is lit and put in your hands.",
+        "Heater_FuelMult", "Multiplies the oil that the whale oil heater uses. 1 is vanilla.",
+        "Heater_TempBonus", "Adds this many degrees to each whale oil heater setting. 0 is vanilla.",
+        "OilCan_WhaleMaxL", "The maximum litres in one whale oil can. 0 is the vanilla 5 L.",
+        "OilCan_KeroseneMaxL", "The maximum litres in one kerosene jerrycan. 0 is vanilla (4 L for the rusty jerrycan).",
         "Stack_AddComponent", "Adds a stackable component to selected items such as coffee, tea, carrots and potatoes.",   // 给 Coffee/茶/胡萝卜/土豆等指定物品添加可堆叠
         "Stack_UseMaxHP", "Merged stacks take the higher Condition (eight deer hides all use the best one).",   // 堆叠时按更高 HP 计算(8 张鹿皮按最佳那张)
         "World_BowRepair", "Adds repair options for bows, by hand or at the milling machine.",   // 给弓类武器添加修理/磨坊选项
@@ -475,6 +543,7 @@ internal static class ModSettingsEnData
         "Stealth", "Animals run away when they see you.",   // 动物见到你就跑
         "QuickCook", "Food in the pot is ready at once. Food does not burn.",   // 锅里的东西马上做好,自带防止烤焦
         "NoBurn", "Cooked food does not burn. Food is not ready at once.",   // 做好的食物不会烤焦,但不会马上做好
+        "DropCook", "Drop raw meat or fish within 2 m of a burning fire or stove. It becomes hot cooked food after the normal cooking time. Cooked food left near the fire too long burns. The timer continues when you leave the area and come back.",   // 丢地烹饪
         "QuickSearch", "Search containers and bodies without the progress bar.",   // 搜容器和尸体不用等进度条
         "QuickHarvest", "The harvest screen finishes at once.",   // 割肉界面直接完成
         "QuickBreakDown", "The break-down screen finishes at once.",   // 拆解界面直接完成
@@ -487,11 +556,27 @@ internal static class ModSettingsEnData
         "QoL_NoPitchBlack", "The screen does not go fully black during sleep.",   // 睡觉时画面不全黑
         "TraderUnlimitedList", "Select up to 64 items in one trade.",   // 一次交易最多能选 64 样
         "TraderMaxTrust", "Set trust to the maximum. Items, discounts and conversations unlock by the vanilla rules. The first time trust is full, the DLC achievement unlocks.",   // 信任值加满,按原版规则解锁商品、降价和对话,第一次满格会解锁 DLC 成就
+        "TraderUnlockModeItems", "The trader does not filter items by difficulty. On Interloper and Misery, items such as hatchets, rifles and manufactured arrows also appear.",
         "TraderInstantExchange", "You do not have to give items. Close the exchange box to complete the trade.",   // 不用交货,关上交换箱就完成交易
         "TraderAlwaysAvailable", "Contact the trader by radio at any time. You do not have to wait after a trade.",   // 随时能用无线电联系商人,交易完成后也不用等
         "CougarInstantActivate", "Activate the cougar at once on a new save.",   // 新档第一次就立即激活美洲狮
         "UT_TravoisOverrideMovement", "Remove the travois movement zone limits.",   // 解除雪橇的移动区域限制
         "UT_TravoisOverrideInteraction", "Remove the travois interaction limits.",   // 解除雪橇的互动限制
+        "CE_SnareSure", "Each snare check catches a rabbit. The snare does not break.",
+        "CE_SnareInstant", "The snare checks once right after you set it. If it catches nothing, it waits the normal time. Turn on Sure Snares first.",
+        "CE_LootNoEmpty", "Containers always get at least one item. This works only on containers that you have not opened.",
+        "CE_LootLowerTier", "Containers get loot from the next easier level. For example, Interloper uses Stalker loot. This works only on containers that you have not opened.",
+        "CE_AuroraRefill", "During an aurora, an empty container gets new loot when you close it. Each container refills one time for each aurora. Bodies and mission containers do not refill.",
+        "CE_IceHoleNoFreeze", "Fishing holes do not freeze again. A frozen hole opens when you use it.",
+        "CE_NoMisery", "Misery afflictions do not start. To remove the ones you have, use Clear All Afflictions.",
+        "CE_NoDeath", "When your condition is about to reach zero, you survive. Condition goes back to 30%. Afflictions clear. Hunger, thirst and cold go to a safe level. The save is kept.",
+        "CE_StruggleWin", "When a wolf or cougar attacks, the struggle bar stays full and you get free at once. You take no damage during a struggle. Bear and moose attacks leave no afflictions.",
+        "CE_NoStun", "After a struggle, you do not lie on the ground, get dazed or drop items.",
+        "CE_NoSlide", "You can walk up steep slopes. You do not slide down or slow down on slopes.",
+        "CE_TraderCheap", "The trader always uses the low prices. Normally you need high trust for them.",
+        "CE_AuroraLightSteady", "During an aurora, powered lights stay fully on and do not flicker.",
+        "CE_AuroraMute", "The aurora hum does not play.",
+        "Feat_AllAtNewGame", "When you start a new game, you can fill all feat slots. The vanilla game sets the limit by difficulty.",
     };
 
     // ─── Section(分组标题) ───
@@ -522,6 +607,8 @@ internal static class ModSettingsEnData
         "QoL_NoSaveOnSprain", "QoL: TinyTweaks",   // QoL: TinyTweaks / 小改动
         "QoL_SleepAnywhere", "QoL: Sleep Anywhere",   // QoL: Sleep Anywhere / 随地睡
         "QoL_AutoSurvey", "QoL: AutoSurvey",   // QoL: AutoSurvey / 自动绘图
+        "MapM_Enabled", "Map Manager",   // 地图管理
+        "Coll_Enabled", "Collectibles Map",   // 收藏品地图
         "Craft_Anywhere", "Craft Anywhere",   // Craft Anywhere / 随意制作
         "Craft_MoreCookingSlots", "More Cooking Slots",   // More Cooking Slots / 更多烹饪位
         "World_Sprainkle", "Sprainkle (Sprain System)",   // Sprainkle / 扭伤系统
@@ -532,11 +619,14 @@ internal static class ModSettingsEnData
         "UT_DecalOverlap", "UniversalTweaks / Decals",   // UT / 喷漆
         "UT_TravoisDecayBlizzard", "UniversalTweaks / Travois",   // UT / 雪橇
         "UT_FlashInfiniteBattery", "UniversalTweaks / Flashlight",   // UT / 手电筒
+        "Train_NoBreak", "Iron Road DLC / Steam Train",   // 铁路 DLC / 蒸汽火车
         "Stack_AddComponent", "StackManager v1.0.6",   // StackManager / 堆叠管理 v1.0.6
         "World_BowRepair", "Bow Repair",   // Bow Repair / 弓修复
         "World_CaffeinatedSodas", "Caffeinated Sodas",   // Caffeinated Sodas / 苏打提神
         "World_CarcassMoving", "Carcass Moving & Aurora Torch",   // RnStripped / 尸骸搬运&极光点火
         "TT_CapFeelsHigh", "TinyTweaks",   // TinyTweaks / 微调合集
+        "CE_SnareSure", "Outdoors & Survival",
+        "Feat_AllAtNewGame", "Feats",
     };
 
     // ─── Choice(下拉项,'|' 分隔,段数必须与原数组一致) ───

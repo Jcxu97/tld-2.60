@@ -1,5 +1,8 @@
+using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
+using MelonLoader;
 using UnityEngine;
 
 namespace NorthernLightsBroadcast;
@@ -20,17 +23,39 @@ public static class FileStuff
 
 	public static void OpenFrameFile()
 	{
-		if (!File.Exists(settingsFile))
+		// v2.1.1: 这个方法在 OnInitializeMelon 里跑,以前任何一行坏数据都会抛,
+		// 抛了整个 mod 起不来(一台电视都没有)。三个坑:
+		//   1) Split 完直接取 [1],没有 | 的行下标越界
+		//   2) float.Parse 跟系统区域走,德语/法语系统上小数点是逗号,解析失败
+		//   3) 同一个路径出现两次,Dictionary.Add 抛重复键
+		// 现在逐行 try,坏行跳过。
+		try
 		{
-			frameFile = File.Create(settingsFile);
-			frameFile.Close();
+			if (!File.Exists(settingsFile))
+			{
+				frameFile = File.Create(settingsFile);
+				frameFile.Close();
+			}
+			string[] array = File.ReadAllLines(settingsFile);
+			foreach (string obj in array)
+			{
+				try
+				{
+					if (string.IsNullOrWhiteSpace(obj)) continue;
+					int cut = obj.LastIndexOf('|');
+					if (cut <= 0 || cut == obj.Length - 1) continue;
+					string key = obj.Substring(0, cut);
+					if (!float.TryParse(obj.Substring(cut + 1), NumberStyles.Float, CultureInfo.InvariantCulture, out float seconds))
+						continue;
+					if (seconds < 0f) seconds = 0f;
+					clipFrames[key] = (long)seconds;
+				}
+				catch { }
+			}
 		}
-		string[] array = File.ReadAllLines(settingsFile);
-		foreach (string obj in array)
+		catch (Exception ex)
 		{
-			string[] array2 = new string[2];
-			array2 = obj.Split("|");
-			clipFrames.Add(array2[0], (long)float.Parse(array2[1]));
+			MelonLogger.Warning("[NLB] 读取播放进度文件失败,从空进度开始: " + ex.Message);
 		}
 	}
 
@@ -63,17 +88,25 @@ public static class FileStuff
 
 	public static void SaveFrameFile()
 	{
-		using StreamWriter streamWriter = new StreamWriter(settingsFile);
-		foreach (KeyValuePair<string, double> clipFrame in clipFrames)
+		// v2.1.1: 数字按固定区域写,否则德语系统写出 "12,5" 而读的时候按小数点解析,进度全丢
+		try
 		{
-			double num = clipFrame.Value;
-			if (num < 0.0)
+			using StreamWriter streamWriter = new StreamWriter(settingsFile);
+			foreach (KeyValuePair<string, double> clipFrame in clipFrames)
 			{
-				num = 0.0;
+				double num = clipFrame.Value;
+				if (num < 0.0)
+				{
+					num = 0.0;
+				}
+				streamWriter.WriteLine(clipFrame.Key + "|" + num.ToString(CultureInfo.InvariantCulture));
 			}
-			streamWriter.WriteLine(clipFrame.Key + "|" + num);
+			streamWriter.Close();
 		}
-		streamWriter.Close();
+		catch (Exception ex)
+		{
+			MelonLogger.Warning("[NLB] 保存播放进度失败: " + ex.Message);
+		}
 	}
 
 	public static string[] GetFilesInPath(string path)

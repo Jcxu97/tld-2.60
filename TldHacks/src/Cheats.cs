@@ -43,10 +43,10 @@ internal static class CheatState
     public static bool InfiniteAmmo;
     public static bool NoJam;
     public static bool NoRecoil;
-    // Aiming (v2.7.84 合并:NoAimSway = 晃动+抖动+呼吸,SuperAccuracy = 精准+零散布)
+    // Aiming (v2.7.84 合并:NoAimSway = 晃动+抖动+呼吸,SuperAccuracy = 零散布+关晃动)
     public static bool NoAimSway;      // 稳定瞄准(合并 sway+shake+breath)
     public static bool NoAimStamina;
-    public static bool SuperAccuracy;  // 超级精准(散布归零 + 后坐归零)
+    public static bool SuperAccuracy;  // 超级精准(散布归零 + 关晃动)
     // Environment / body
     public static bool NoSprainRisk;
     public static bool ImmuneAnimalDamage; // Wolf/Bear/Cougar 攻击不扣血
@@ -83,12 +83,14 @@ internal static class CheatState
     public static bool FreeFireFuel;       // 生火材料不减
     public static bool TechBackpack;       // 自定义背包负重(覆盖原版 30kg 上限)
     public static float TechBackpackKg = 30f;
+    public static bool InfiniteCarry;      // 无限负重
     public static bool TorchFullValue;     // 火把满值
     // FreeSprint 已由 InfiniteStamina 覆盖,字段保留仅为 JSON 兼容
     public static bool InfiniteStamina;    // 无限体力
     // v2.7.55 商人 + 美洲狮
     public static bool TraderUnlimitedList;   // 交易清单上限 → 64
     public static bool TraderMaxTrust;        // 信任拉满
+    public static bool TraderUnlockModeItems; // 解锁原版难度限制的商品
     public static bool TraderInstantExchange; // 交易秒完成
     public static bool TraderAlwaysAvailable; // 随时可联系商人
     public static bool CougarInstantActivate; // 新档首次立即激活美洲狮
@@ -312,6 +314,7 @@ internal static class Cheats
             s.QuickAction = false;
             s.QuickCook = false;
             s.NoBurn = false;
+            s.DropCook = false;
             s.QuickSearch = false;
             s.QuickHarvest = false;
             s.QuickBreakDown = false;
@@ -320,6 +323,8 @@ internal static class Cheats
             s.FlaskNoHeatLoss = false;
             s.FlaskInfiniteVol = false;
             s.FlaskAnyItem = false;
+            s.Flask_Radial = false;
+            s.Flask_FireHeat = false;
             s.QuickEvolve = false;
             s.InfiniteContainer = false;
             s.FireTemp300 = false;
@@ -333,15 +338,31 @@ internal static class Cheats
             s.FireAnywhere = false;
             s.FreeFireFuel = false;
             s.TechBackpack = false;
+            s.InfiniteCarry = false;
             s.TorchFullValue = false;
             s.FreeSprint = false;
             s.InfiniteStamina = false;
             s.TraderUnlimitedList = false;
             s.TraderMaxTrust = false;
+            s.TraderUnlockModeItems = false;
             s.TraderInstantExchange = false;
             s.TraderAlwaysAvailable = false;
             s.CougarInstantActivate = false;
             s.BlockAutoPickupOwnDrops = false;
+            s.CE_SnareSure = false;
+            s.CE_SnareInstant = false;
+            s.CE_LootNoEmpty = false;
+            s.CE_LootLowerTier = false;
+            s.CE_AuroraRefill = false;
+            s.CE_IceHoleNoFreeze = false;
+            s.CE_NoMisery = false;
+            s.CE_NoDeath = false;
+            s.CE_StruggleWin = false;
+            s.CE_NoStun = false;
+            s.CE_NoSlide = false;
+            s.CE_TraderCheap = false;
+            s.CE_AuroraLightSteady = false;
+            s.CE_AuroraMute = false;
 
 
             // ═══ Movement Detail ═══
@@ -356,6 +377,7 @@ internal static class Cheats
             // ═══ Light Sources ═══
             s.LampMute = false;
             s.DisableTorchLeftClick = false;
+            s.Torch_AutoSwap = false;
             s.DisableLampLeftClick = false;
 
             // ═══ HouseLights ═══
@@ -401,6 +423,17 @@ internal static class Cheats
 
             // ═══ UT 手电筒 ═══
             s.UT_FlashInfiniteBattery = false;
+
+            // ═══ 铁路 DLC 蒸汽火车 ═══
+            s.Train_NoBreak = false;
+            s.Train_KeepHighGear = false;
+            s.Train_FullFuel = false;
+            s.Heater_NoFuel = false;
+            s.Heater_Radial = false;
+            s.Heater_FuelMult = 1f;
+            s.Heater_TempBonus = 0f;
+            s.OilCan_WhaleMaxL = 0f;
+            s.OilCan_KeroseneMaxL = 0f;
 
             // ═══ StackManager ═══
             // Stack_AddComponent 不关(见 OneClickSkip):关了读档后已经堆起来的那几样会塌成 1 个
@@ -503,11 +536,13 @@ internal static class Cheats
         CheatState.FireAnywhere = s.FireAnywhere;
         CheatState.FreeFireFuel = s.FreeFireFuel;
         CheatState.TechBackpack = s.TechBackpack;
+        CheatState.InfiniteCarry = s.InfiniteCarry;
         CheatState.TorchFullValue = s.TorchFullValue;
         CheatState.InfiniteStamina = s.InfiniteStamina;
         CheatState.MapClickTP = s.MapClickTP;
         CheatState.TraderUnlimitedList = s.TraderUnlimitedList;
         CheatState.TraderMaxTrust = s.TraderMaxTrust;
+        CheatState.TraderUnlockModeItems = s.TraderUnlockModeItems;
         CheatState.TraderInstantExchange = s.TraderInstantExchange;
         CheatState.TraderAlwaysAvailable = s.TraderAlwaysAvailable;
         CheatState.CougarInstantActivate = s.CougarInstantActivate;
@@ -625,7 +660,7 @@ internal static class Cheats
             if (pm == null) { ModMain.Log?.Warning("[Spawn] PlayerManager not ready"); return; }
 
             GearItem prefab = null;
-            try { prefab = GearItem.LoadGearItemPrefab(prefabName); } catch { }
+            try { prefab = GearPrefab.Load(prefabName); } catch { }
 
             if (prefab == null)
             {
@@ -772,6 +807,24 @@ internal static class Cheats
             if (had) { cleared++; log.Append(I18n.T("扭踝; ", "Sprained Ankle; ")); }
         }} catch (Exception ex) { log.Append(I18n.T($"扭踝-err:{ex.Message}; ", $"Ankle-err:{ex.Message}; ")); }
 
+#if !STORY_EDITION
+        // —— SevereLacerations (严重撕裂伤,美洲虎扑击) —— v9.6 新增;放在出血前,Cure 后残留伤口由下面出血清理兜底
+        // 伤口(ApplyWound / ApplyChestWound)可能单独挂着,HasAffliction 看不到,两样都查
+        try { var c = GameManager.GetSevereLacerations(); if (c != null) {
+            bool had = c.HasAffliction() || c.HaveAnyActiveWounds();
+            if (had) {
+                try { c.Cure((AfflictionOptions)0); } catch { }
+                cleared++; log.Append(I18n.T("严重撕裂伤; ", "Severe Lacerations; "));
+            }
+        }} catch (Exception ex) { log.Append(I18n.T($"严重撕裂伤-err:{ex.Message}; ", $"Lacerations-err:{ex.Message}; ")); }
+
+        // —— 欺骗死亡(自定义难度死后复活留下的负面)——
+        try { var c = GameManager.GetCheatDeathAffliction(); if (c != null && c.HasAffliction) {
+            try { c.Cure((AfflictionOptions)0); } catch { }
+            cleared++; log.Append(I18n.T("欺骗死亡; ", "Cheat Death; "));
+        }} catch (Exception ex) { log.Append(I18n.T($"欺骗死亡-err:{ex.Message}; ", $"CheatDeath-err:{ex.Message}; ")); }
+#endif
+
         // —— BloodLoss ——
         try { var c = GameManager.GetBloodLossComponent(); if (c != null) {
             bool had = c.HasBloodLoss();
@@ -834,6 +887,71 @@ internal static class Cheats
             if (had) { cleared++; log.Append(I18n.T("坏血病; ", "Scurvy; ")); }
         }} catch (Exception ex) { log.Append(I18n.T($"坏血病-err:{ex.Message}; ", $"Scurvy-err:{ex.Message}; ")); }
 #endif
+
+        // v9.6 新增:以下几项之前清单里没有。毒雾/窒息/恐惧这类环境触发的,人还在原地会被游戏重新挂上,ReSweep 窗口内会再清
+        try { var c = GameManager.GetBurnsElectricComponent(); if (c != null && c.HasBurnsElectric()) {
+#if STORY_EDITION
+            try { c.BurnsElectricEnd(); } catch { }
+#else
+            try { c.BurnsElectricEnd(true); } catch { }
+#endif
+            cleared++; log.Append(I18n.T("电击烧伤; ", "Electric Burns; "));
+        }} catch (Exception ex) { log.Append(I18n.T($"电击烧伤-err:{ex.Message}; ", $"BurnsElectric-err:{ex.Message}; ")); }
+
+#if !STORY_EDITION
+        // 2.24 没有化学中毒和失眠
+        try { var c = GameManager.GetChemicalPoisoningComponent(); if (c != null) {
+            bool had = false;
+            try { had = c.HasAffliction() || c.HasRisk(); } catch { }
+            if (had) {
+                try { c.CureAll(); } catch { }
+                cleared++; log.Append(I18n.T("化学中毒; ", "Chemical Poisoning; "));
+            }
+        }} catch (Exception ex) { log.Append(I18n.T($"化学中毒-err:{ex.Message}; ", $"ChemPoison-err:{ex.Message}; ")); }
+
+        try { var c = GameManager.GetInsomniaComponent(); if (c != null) {
+            bool had = false;
+            try { had = c.HasInsomniaAffliction() || c.HasInsomniaRisk(); } catch { }
+            if (had) {
+                try { c.RemoveInsomniaAll(); } catch { }
+                cleared++; log.Append(I18n.T("失眠; ", "Insomnia; "));
+            }
+        }} catch (Exception ex) { log.Append(I18n.T($"失眠-err:{ex.Message}; ", $"Insomnia-err:{ex.Message}; ")); }
+#endif
+
+#if !STORY_EDITION
+        CeX.CureMisery(log, ref cleared);
+#endif
+
+        try { var c = GameManager.GetThirstComponent(); if (c != null && c.IsDehydrated()) {
+            try { c.m_CurrentThirst = 0f; } catch { }
+            cleared++; log.Append(I18n.T("脱水; ", "Dehydration; "));
+        }} catch (Exception ex) { log.Append(I18n.T($"脱水-err:{ex.Message}; ", $"Dehydration-err:{ex.Message}; ")); }
+
+        try { var c = GameManager.GetAnxietyComponent(); if (c != null && c.HasAffliction()) {
+            try { c.StopAffliction(true); } catch { }
+            cleared++; log.Append(I18n.T("焦虑; ", "Anxiety; "));
+        }} catch (Exception ex) { log.Append(I18n.T($"焦虑-err:{ex.Message}; ", $"Anxiety-err:{ex.Message}; ")); }
+
+        try { var c = GameManager.GetFearComponent(); if (c != null && c.HasAffliction()) {
+            try { c.StopAffliction(true); } catch { }
+            cleared++; log.Append(I18n.T("恐惧; ", "Fear; "));
+        }} catch (Exception ex) { log.Append(I18n.T($"恐惧-err:{ex.Message}; ", $"Fear-err:{ex.Message}; ")); }
+
+        try { var c = GameManager.GetToxicFogComponent(); if (c != null && c.HasAffliction()) {
+            try { c.StopAffliction(); } catch { }
+            cleared++; log.Append(I18n.T("毒雾; ", "Toxic Fog; "));
+        }} catch (Exception ex) { log.Append(I18n.T($"毒雾-err:{ex.Message}; ", $"ToxicFog-err:{ex.Message}; ")); }
+
+        try { var c = GameManager.GetSuffocatingComponent(); if (c != null && c.IsSuffocating()) {
+            try { c.ForceStopSuffocating(true); } catch { }
+            cleared++; log.Append(I18n.T("窒息; ", "Suffocating; "));
+        }} catch (Exception ex) { log.Append(I18n.T($"窒息-err:{ex.Message}; ", $"Suffocating-err:{ex.Message}; ")); }
+
+        try { var c = GameManager.GetInfectionRiskComponent(); if (c != null && c.HasInfectionRisk()) {
+            try { c.Cure(); } catch { }
+            cleared++; log.Append(I18n.T("感染风险; ", "Infection Risk; "));
+        }} catch (Exception ex) { log.Append(I18n.T($"感染风险-err:{ex.Message}; ", $"InfectionRisk-err:{ex.Message}; ")); }
 
         // —— 第三方 mod 通过 AfflictionComponent 框架追加的 CustomAffliction —— v6.9.1 新增
         // 用户报告:OxygenLevels(高原反应)、Minor Miseries、TLDev(肺炎)等用 AfflictionComponent 框架挂在
@@ -1035,9 +1153,11 @@ internal static class Cheats
     internal static bool RestoreDurability(GearItem gear)
     {
         if (gear == null) return false;
+        // 掉到 0% 时游戏打上 m_WornOut(红叉),拉回满耐久不会自动清,不清的话食物 100% 仍显示已腐坏
         try
         {
             gear.SetNormalizedHP(1f, true);
+            if (gear.m_WornOut) gear.m_WornOut = false;
             return true;
         }
         catch { }
@@ -1052,6 +1172,7 @@ internal static class Cheats
             try { var d = gear.GearItemData; if (d != null) maxHp = d.MaxHP; } catch { }
 #endif
             gear.m_CurrentHP = maxHp;
+            gear.m_WornOut = false;
             return true;
         }
         catch { }
@@ -1131,6 +1252,34 @@ internal static class Cheats
         CheatState.LastActionLog = I18n.IsEnglish ? "Map revealed" : "地图已全开";
     }
 
+#if !STORY_EDITION
+    // 死后余生的"火堆"= TotalLives(m_Tunables.m_AvailableLives) - LivesUsed;
+    // LivesUsed 只有 getter,实际读 m_LifeAfterDeathState.m_LivesUsed,随存档序列化
+    public static void RestoreLives()
+    {
+        try
+        {
+            var mgr = GameManager.m_LifeAfterDeathManager;
+            var state = mgr?.m_LifeAfterDeathState;
+            if (mgr == null || state == null || !mgr.IsSystemEnabled)
+            {
+                CheatState.LastActionLog = I18n.T("当前模式没有火堆(死后余生)机制", "This mode has no campfire lives");
+                return;
+            }
+            int total = mgr.TotalLives;
+            int before = total - state.m_LivesUsed;
+            state.m_LivesUsed = 0;
+            CheatState.LastActionLog = I18n.T($"火堆已恢复 {before}/{total} → {total}/{total}",
+                $"Campfires restored {before}/{total} → {total}/{total}");
+        }
+        catch (Exception ex)
+        {
+            CheatState.LastActionLog = I18n.T("恢复火堆失败(见日志)", "Restore campfires failed (see log)");
+            ModMain.Log?.Warning($"[RestoreLives] {ex}");
+        }
+    }
+#endif
+
     public static void ClearWellFedBuff()
     {
         try
@@ -1206,12 +1355,12 @@ internal static class Patch_PM_FlushDamage
 [HarmonyPatch(typeof(Hypothermia), "HypothermiaStart")]
 internal static class Patch_Hypothermia_Start
 {
-    private static bool Prefix() => !CheatState.GodMode;
+    private static bool Prefix() => !(CheatState.GodMode || CheatState.AlwaysWarm);
 
     // v6.9.1 IL2CPP double-insurance
     private static void Postfix(Hypothermia __instance)
     {
-        if (!CheatState.GodMode) return;
+        if (!(CheatState.GodMode || CheatState.AlwaysWarm)) return;
         try
         {
             if (__instance.HasHypothermia())

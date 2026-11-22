@@ -49,6 +49,9 @@ public class TVUI : MonoBehaviour
 
 	public bool fileBrowserOpen;
 
+	// v2.1.1: 字体是否已经修好。Awake 时字体可能还没加载完,没修成就在打开菜单时再试。
+	public bool fontFixed;
+
 
 	public Slider audioSlider;
 
@@ -337,6 +340,8 @@ public class TVUI : MonoBehaviour
 				driveButtonObjects[i].SetActive(false);
 			}
 		}
+		// v2.1.1: 修字体。整棵 NLB_TV 都要扫 —— 除了 OSD,报错画面和载入画面里也有文字。
+		fontFixed = FontFix.Apply(((Component)((Component)this).transform.Find("NLB_TV")).gameObject);
 		isSetup = true;
 	}
 
@@ -434,6 +439,11 @@ public class TVUI : MonoBehaviour
 	{
 		if (value)
 		{
+			// v2.1.1: Awake 时字体可能还没加载完,玩家打开菜单时一定好了,补一次
+			if (!fontFixed)
+			{
+				fontFixed = FontFix.Apply(((Component)((Component)this).transform.Find("NLB_TV")).gameObject);
+			}
 			OSDOpen = true;
 			osdAudio.SetActive(true);
 			osdButtons.SetActive(true);
@@ -568,7 +578,19 @@ public class TVUI : MonoBehaviour
 		}
 		else if (Settings.options.loopFolder)
 		{
-			currentClipIndex = 0;
+			// v2.1.1: 原先直接跳 0 号,而 PopulateFiles 是先塞文件夹再塞文件,0 号往往是文件夹
+			// → 把文件夹路径当视频喂给播放器 → 报错画面。改成找第一个真正的文件。
+			int first = -1;
+			for (int i = 0; i < folderContents.Count; i++)
+			{
+				if (!folderContents.ElementAt(i).Value) { first = i; break; }
+			}
+			if (first < 0)
+			{
+				manager.SwitchState(TVManager.TVState.Static);
+				return;
+			}
+			currentClipIndex = first;
 			currentClip = folderContents.ElementAt(currentClipIndex).Key;
 			manager.redbutton.tvClickShot.PlayOneshot(NorthernLightsBroadcastMain.tvAudioManager.GetClip("click"));
 			Prepare();
@@ -582,6 +604,9 @@ public class TVUI : MonoBehaviour
 	[HideFromIl2Cpp]
 	public void PrevClip()
 	{
+		// v2.1.1: 原先播放中按「上一个」会走两遍 —— 上面的分支退一集并 Prepare 了,
+		// 下面那个 if 无条件又退一集又 Prepare 一次,结果一下退两集;
+		// 播过 5 秒的情况下是「重播当前」加「又跳上一集」。处理完就 return。
 		if (manager.currentState == TVManager.TVState.Playing)
 		{
 			if (manager.videoPlayer.time > 5.0)
@@ -589,13 +614,8 @@ public class TVUI : MonoBehaviour
 				manager.videoPlayer.time = 0.0;
 				manager.saveTime = 0.0;
 				manager.SavePlaytime();
-			}
-			else if (currentClipIndex > 0 && !folderContents.ElementAt(currentClipIndex - 1).Value)
-			{
-				currentClipIndex--;
-				currentClip = folderContents.ElementAt(currentClipIndex).Key;
-				manager.redbutton.tvClickShot.PlayOneshot(NorthernLightsBroadcastMain.tvAudioManager.GetClip("click"));
-				Prepare();
+				manager.wasapiPlayer.Seek(0.0);
+				return;
 			}
 		}
 		if (currentClipIndex > 0 && !folderContents.ElementAt(currentClipIndex - 1).Value)

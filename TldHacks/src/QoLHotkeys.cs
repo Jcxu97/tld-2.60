@@ -117,6 +117,21 @@ internal static class Patch_QoL_Inventory_DropKey
             if (gear == null || gear.m_CantDropItem) return;
             var page = __instance.m_ItemDescriptionPage;
             if (page == null || !page.CanDrop(gear)) return;
+
+            // vanilla OnDrop 只在堆叠 >4 时弹数量面板(整堆由 PickUnits 那边的 Shift 处理),
+            //   2~4 个直接丢 1 个不弹面板 → 按住整堆键时这里按个数补调,vanilla 会把连丢的并成地上一堆。
+            int units = gear.m_StackableItem != null ? gear.m_StackableItem.m_Units : 1;
+            if (QoLHotkeys.BulkHeld() && units > 1 && units <= 4)
+            {
+                for (int i = 0; i < units; i++)
+                {
+                    var cur = __instance.GetCurrentlySelectedItem();
+                    if (cur == null || cur.m_GearItem == null || cur.m_GearItem.Pointer != gear.Pointer) break;
+                    if (__instance.m_PickUnits.IsEnabled()) break;
+                    __instance.OnDrop();
+                }
+                return;
+            }
 #endif
 
             // 只走 vanilla OnDrop 主路径(原 QoL 的 modifierKey 分支跳过)

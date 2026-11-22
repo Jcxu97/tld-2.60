@@ -23,7 +23,7 @@ internal class Waypoint
 
 internal static class Teleport
 {
-    // 已知可用坐标(BunkerDefaults 搬来的 5 个地堡) + 全部 15 个 region 的场景名。
+    // 已知可用坐标(BunkerDefaults 搬来的 5 个地堡) + 各 region 和 v9.7 补的中转通道、蜿蜒河流。
     // v2.7.55 按用户实测打印的坐标更新 —— 修了 8 个原 Pos=0 的地图掉入地底问题
     //   区域中文名按 2.55 官方本地化:林狼雪岭/宜人山谷/孤寂沼地/荒芜据点/断开的铁路/破碎山道
     //   Pos == Vector3.zero 才走"只 LoadScene,不 TeleportPlayer"路径
@@ -35,27 +35,34 @@ internal static class Teleport
         // A —— AirfieldRegion(废弃机场)
         new Waypoint("废弃机场·控制塔",    "AirfieldRegion",            81.90f, 160.30f, -455.30f, "Forsaken Airfield · Tower"),
         new Waypoint("废弃机场·应急舱",    "AirfieldRegion",          1209.80f, 304.71f, -726.11f, "Forsaken Airfield · Pod"),
+        new Waypoint("废弃机场·雇佣兵地堡", "AirfieldRegion",           76.34f, 182.02f, -818.52f, "Forsaken Airfield · Merc Bunker"),
         // A —— AshCanyonRegion(灰烬峡谷)
         new Waypoint("灰烬峡谷·地堡",      "AshCanyonRegion",          -42.12f, 172.95f, -796.68f, "Ash Canyon · Bunker"),
         // B —— BlackrockRegion(黑岩监狱)
         new Waypoint("黑岩监狱·地堡",      "BlackrockRegion",          705.04f, 373.98f,  816.38f, "Blackrock · Bunker"),
         // C —— CanneryRegion(荒凉水湾)
-        new Waypoint("荒凉水湾·地堡",      "CanneryRegion",            328.37f, 344.50f,  833.16f, "Bleak Inlet · Bunker"),
+        new Waypoint("荒凉水湾·地堡",      "CanneryRegion",            -980.19f, 217.10f,  550.70f, "Bleak Inlet · Bunker"),
         new Waypoint("荒凉水湾·应急舱",    "CanneryRegion",            -39.50f, 103.38f,  501.57f, "Bleak Inlet · Pod"),
         // C —— CoastalRegion(沿海公路)
         new Waypoint("沿海公路·加油站",    "CoastalRegion",            760.51f,  24.00f,  645.93f, "Coastal Hwy · Gas Station"),
         new Waypoint("沿海公路·交易地点",  "CoastalRegion",            325.76f,  26.22f,  118.83f, "Coastal Hwy · Trader Spot"),
+        new Waypoint("沿海公路·囤货地堡",  "CoastalRegion",            883.94f, 152.39f,  968.58f, "Coastal Hwy · Stock Bunker"),
         // C —— CrashMountainRegion(林狼雪岭)
         new Waypoint("林狼雪岭·机舱",      "CrashMountainRegion",      934.50f, 470.10f, 1174.40f, "Timberwolf Mtn · Plane"),
         new Waypoint("林狼雪岭·地堡",      "CrashMountainRegion",     1675.41f, 207.32f,  968.21f, "Timberwolf Mtn · Bunker"),
+        // D —— DamRiverTransitionZoneB(蜿蜒河流)
+        // v9.7 这条和下面中转通道的坐标取自游戏场景资源里的 DefaultSpawnPoint(游戏默认出生点),不是实测
+        new Waypoint("蜿蜒河流·卡特大坝",  "DamRiverTransitionZoneB",  774.76f,  15.40f,  663.91f, "Winding River · Carter Dam"),
+        // H —— HubRegion(中转通道)
+        new Waypoint("中转通道",           "HubRegion",                175.20f, 250.08f, -392.18f, "Transfer Pass"),
         // L —— LakeRegion(神秘湖)
         new Waypoint("神秘湖·营地办公室",  "LakeRegion",              1015.87f,  25.91f,  450.86f, "Mystery Lake · Camp Office"),
         new Waypoint("神秘湖·地堡",        "LakeRegion",              1029.06f,  91.99f,  -52.52f, "Mystery Lake · Bunker"),
+        new Waypoint("神秘湖·工匠地堡",    "LakeRegion",               722.67f,  92.27f,  489.79f, "Mystery Lake · Craft Bunker"),
         // M —— MarshRegion(孤寂沼地)
-        new Waypoint("孤寂沼地",           "MarshRegion",             1116.10f,-130.60f,  969.10f, "Forlorn Muskeg"),
         new Waypoint("孤寂沼地·地堡",      "MarshRegion",              593.07f, -83.38f, -104.89f, "Forlorn Muskeg · Bunker"),
         // M —— MiningRegion(污染区)
-        new Waypoint("污染区·井架",        "MiningRegion",            -169.20f, 201.80f,  231.70f, "Blackrock Mine · Rig"),
+        new Waypoint("污染区·井架",        "MiningRegion",            -169.20f, 201.80f,  231.70f, "Zone of Contamination · Rig"),
         // M —— MountainPassRegion(破碎山道)
         new Waypoint("破碎山道·气象站",    "MountainPassRegion",       532.10f, 592.10f, -601.20f, "Mountain Pass · Weather"),
         // M —— MountainTownRegion(山间小镇)
@@ -71,6 +78,18 @@ internal static class Teleport
         new Waypoint("断开的铁路·维修站",  "TracksRegion",             588.20f, 199.00f,  565.50f, "Broken Railroad · Maint."),
         // W —— WhalingStationRegion(荒芜据点)
         new Waypoint("荒芜据点·孤寂灯塔",  "WhalingStationRegion",     728.00f,  46.80f,  766.60f, "Desolation Point · Lighthouse"),
+        // 2026-10 铁路 DLC(用户实测),DLC 的点一律排在原版后面
+        // I —— IslandATrackSection1 到 6(安娜岛轨道段)
+        new Waypoint("安娜岛第一轨道段·铁路站场", "IslandATrackSection1", -1434.77f, 120.10f,  517.89f, "Anna Island Track 1 · Rail Yard"),
+        new Waypoint("安娜岛第二轨道段·补给站",   "IslandATrackSection2", -1210.57f, 126.35f,  690.39f, "Anna Island Track 2 · Supply Depot"),
+        new Waypoint("安娜岛第二轨道段·交错路段", "IslandATrackSection2",   611.74f, 114.28f,  569.40f, "Anna Island Track 2 · Crossing"),
+        new Waypoint("安娜岛第三轨道段·补给站",   "IslandATrackSection3",   616.40f, 123.31f,  680.68f, "Anna Island Track 3 · Supply Depot"),
+        new Waypoint("安娜岛第四轨道段·铁路站场", "IslandATrackSection4",  -214.98f, 109.46f,  538.14f, "Anna Island Track 4 · Rail Yard"),
+        new Waypoint("安娜岛第五轨道段·铁路站场", "IslandATrackSection5", -1064.65f, 114.05f,  511.35f, "Anna Island Track 5 · Rail Yard"),
+        new Waypoint("安娜岛第六轨道段·火车候车亭", "IslandATrackSection6",   474.62f, 114.73f,  285.85f, "Anna Island Track 6 · Train Shelter"),
+        // P —— PortRemnantRegion(遗迹港)
+        new Waypoint("遗迹港·灯塔",        "PortRemnantRegion",        250.75f,  29.91f,  673.68f, "Port Remnant · Lighthouse"),
+        new Waypoint("遗迹港·小屋",        "PortRemnantRegion",         85.85f,  12.73f, -301.38f, "Port Remnant · Cabin"),
     };
 
     // 正解:PlayerManager.TeleportPlayer(Vector3, Quaternion) 是公开方法。
@@ -91,11 +110,55 @@ internal static class Teleport
             }
             catch { }
 
-            pm.TeleportPlayer(pos, rot);
+            var target = SnapToGround(pos);
+            pm.TeleportPlayer(target, rot);
             TeleportFallGuard.Arm();
-            Log($"[TP] TeleportPlayer({pos})");
+            Log($"[TP] TeleportPlayer({target})" + (target.y != pos.y ? $" 原 y={pos.y:F2}" : ""));
         }
         catch (Exception ex) { Log($"[TP] {ex.Message}"); }
+    }
+
+    // 传送点的 y 是手记的,有的比地面高出一截,落下来就摔伤摔死。从目标点上方一点往下打射线,
+    //   取第一块实体表面(楼里就是脚下这层楼板,不会打到屋顶),按玩家脚底相对 transform 的偏移放上去。
+    //   打不到东西(地形还没加载、点在世界外)就原样用。
+    internal static Vector3 SnapToGround(Vector3 pos)
+    {
+        try
+        {
+            const float Above = 1.2f, Depth = 200f;
+            var origin = pos + Vector3.up * Above;
+            var hits = Physics.RaycastAll(origin, Vector3.down, Above + Depth, ~0, QueryTriggerInteraction.Ignore);
+            if (hits == null || hits.Length == 0) return pos;
+
+            var playerT = GameManager.GetPlayerTransform();
+            float best = float.MinValue;
+            for (int i = 0; i < hits.Length; i++)
+            {
+                var col = hits[i].collider;
+                if (col == null) continue;
+                if (playerT != null && col.transform.IsChildOf(playerT)) continue;
+                if (col.TryCast<CharacterController>() != null) continue;
+                if (hits[i].point.y > best) best = hits[i].point.y;
+            }
+            if (best == float.MinValue) return pos;
+            return new Vector3(pos.x, best + FeetOffset() + 0.1f, pos.z);
+        }
+        catch { return pos; }
+    }
+
+    // transform 原点到脚底的距离(原点在脚底时为 0)。取不到就按 0。
+    private static float FeetOffset()
+    {
+        try
+        {
+            var playerT = GameManager.GetPlayerTransform();
+            var cc = GameManager.GetVpFPSPlayer()?.Controller?.m_Controller;
+            if (playerT == null || cc == null) return 0f;
+            float feetY = cc.transform.TransformPoint(cc.center).y - cc.height * 0.5f * cc.transform.lossyScale.y;
+            float off = playerT.position.y - feetY;
+            return off >= 0f && off < 3f ? off : 0f;
+        }
+        catch { return 0f; }
     }
 
     // 跨场景传送 pending state —— OnSceneWasInitialized 触发后等几帧传送
@@ -103,9 +166,9 @@ internal static class Teleport
     private static int _pendingFrames = 0;
 
     // 正式的跨场景传送 —— 参考 FastTravel.dll 流程:
-    //   1) SaveGameSystem.SaveGame() 保存当前 state
-    //   2) 构造 SceneTransitionData 填 from/to scene 名
-    //   3) GameManager.LoadScene(sceneName, saveName) 触发场景切换
+    //   1) 构造 SceneTransitionData 填 from/to 场景存档名
+    //   2) 原版 LoadScene 不肯存档时(AllowedToSave 不过)自己存档 + ConfigureRestoreFromSlot
+    //   3) GameManager.LoadScene(sceneName, 当前场景存档名) 触发场景切换
     //   4) OnSceneWasInitialized 后再等 60 帧调 TeleportPlayer 到精确坐标
     public static void TravelTo(Waypoint w)
     {
@@ -138,36 +201,28 @@ internal static class Teleport
                 ? $"[TP] Cross-scene → {w.LabelEn} ({w.Scene}), saving + loading..."
                 : $"[TP] 跨场景 → {w.Label} ({w.Scene}),开始保存 + 加载...");
 
-            // 1) 存当前档 —— FastTravel 用的是 SaveGameSystem.SaveGame("autosave", currentSceneName) 有参版本
-            //    反射先试 (string, string) 再 fallback 无参
-            try
+            // 场景存档名;带编号的内部(比如 MoreBunkers 的地堡)和场景名不一样,同一内部场景的几个地堡也各不相同
+            string curSave = null;
+            try { curSave = GameManager.m_SceneTransitionData?.m_SceneSaveFilenameCurrent; } catch { }
+            if (string.IsNullOrEmpty(curSave))
             {
-                var sgt = typeof(SaveGameSystem);
-                var saveTwoArg = sgt.GetMethod("SaveGame", BindingFlags.Static | BindingFlags.Public,
-                    null, new[] { typeof(string), typeof(string) }, null);
-                if (saveTwoArg != null)
+                try
                 {
-                    saveTwoArg.Invoke(null, new object[] { "autosave", activeScene.name });
+                    var snapFrom = TransitionRecorder.Lookup(activeScene.name);
+                    if (snapFrom != null && !string.IsNullOrEmpty(snapFrom.ToSaveId)) curSave = snapFrom.ToSaveId;
                 }
-                else
-                {
-                    var saveNoArg = sgt.GetMethod("SaveGame", BindingFlags.Static | BindingFlags.Public, null, System.Type.EmptyTypes, null)
-                                 ?? sgt.GetMethod("ForceSaveGame", BindingFlags.Static | BindingFlags.Public, null, System.Type.EmptyTypes, null);
-                    saveNoArg?.Invoke(null, null);
-                }
+                catch { }
             }
-            catch (Exception ex) { Log($"[TP.Save] {ex.Message}"); }
+            if (string.IsNullOrEmpty(curSave)) curSave = activeScene.name;
 
-            // 2) 构造 SceneTransitionData —— 优先用 TransitionRecorder 记录的真实 save slot id
+            // 1) 构造 SceneTransitionData —— 优先用 TransitionRecorder 记录的真实 save slot id
             //    DLC Tale scene 的 save slot id ≠ Unity scene 名,硬猜会让游戏把玩家 re-init 丢物品
             try
             {
                 var snapTo   = TransitionRecorder.Lookup(w.Scene);         // 目标
-                var snapFrom = TransitionRecorder.Lookup(activeScene.name); // 当前
 
                 var std = new SceneTransitionData();
-                std.m_SceneSaveFilenameCurrent  = (snapFrom != null && !string.IsNullOrEmpty(snapFrom.ToSaveId))
-                                                      ? snapFrom.ToSaveId : activeScene.name;
+                std.m_SceneSaveFilenameCurrent  = curSave;
                 std.m_SceneSaveFilenameNextLoad = (snapTo != null && !string.IsNullOrEmpty(snapTo.ToSaveId))
                                                       ? snapTo.ToSaveId : w.Scene;
                 std.m_TeleportPlayerSaveGamePosition = true;
@@ -199,14 +254,33 @@ internal static class Teleport
             }
             catch (Exception ex) { Log($"[TP.Std] {ex.Message}"); }
 
+            // 2) 存档 + 指定加载后恢复槽。
+            //    原版 LoadScene 里只有 AllowedToSave(InMemory) 通过才会 SaveGame("autosave", 场景存档名)
+            //    + ConfigureRestoreFromSlot("autosave");不通过(玩家还在下落/移动、控制模式不对等)就两件都不做,
+            //    新场景加载完不 RestoreGame,玩家/全局状态停在旧数据 → 看起来回档。v9.7 只改了手动存档的场景名,没修到这里。
+            //    所以:原版会自己存就交给它(免得存两遍);不会存的时候我们自己补齐这一对。
+            bool vanillaWillSave = AllowedToSaveForTransition();
+            if (!vanillaWillSave)
+            {
+                try
+                {
+                    SaveForTransition(curSave);
+                    ConfigureRestoreFromAutosave();
+                    Log(I18n.IsEnglish
+                        ? "[TP.Save] Game refused the transition save; saved + set restore slot manually"
+                        : "[TP.Save] 游戏这次不让切场景存档,已手动存档并指定恢复槽");
+                }
+                catch (Exception ex) { Log($"[TP.Save] {ex.Message}"); }
+            }
+
             // 3) 标记 pending,让 OnSceneWasInitialized 在加载完后精确定位
             _pendingWaypoint = w;
 
-            // 4) LoadScene
+            // 4) LoadScene —— 第二个参数是"当前场景的存档名",原版 Action_LoadScene 传的就是 m_SceneSaveFilenameCurrent。
+            //    以前传 GetCurrentSaveName()(存档槽名,比如 sandbox4),场景数据被存到错的 key 下。
             try
             {
-                string saveName = GetCurrentSaveName();
-                GameManager.LoadScene(w.Scene, saveName);
+                GameManager.LoadScene(w.Scene, curSave);
             }
             catch (Exception ex)
             {
@@ -217,15 +291,53 @@ internal static class Teleport
         catch (Exception ex) { Log($"[TP] {ex.Message}"); }
     }
 
-    private static string GetCurrentSaveName()
+    // 下面几个用反射:剧情版(2.24)的 interop 不一定有同名/同签名的成员,直接调用会编不过
+    private static bool AllowedToSaveForTransition()
     {
         try
         {
-            var m = typeof(SaveGameSystem).GetMethod("GetCurrentSaveName", BindingFlags.Static | BindingFlags.Public);
-            if (m != null) { var r = m.Invoke(null, null); if (r is string s) return s; }
+            var m = typeof(GameManager).GetMethod("AllowedToSave", BindingFlags.Static | BindingFlags.Public);
+            if (m == null) return false;
+            var pt = m.GetParameters();
+            if (pt.Length != 1 || !pt[0].ParameterType.IsEnum) return false;
+            var names = System.Enum.GetNames(pt[0].ParameterType);
+            if (System.Array.IndexOf(names, "InMemory") < 0) return false;
+            var state = System.Enum.Parse(pt[0].ParameterType, "InMemory");
+            return m.Invoke(null, new[] { state }) is bool b && b;
+        }
+        catch { return false; }
+    }
+
+    private static void SaveForTransition(string sceneSave)
+    {
+        var sgt = typeof(SaveGameSystem);
+        var two = sgt.GetMethod("SaveGame", BindingFlags.Static | BindingFlags.Public,
+            null, new[] { typeof(string), typeof(string) }, null);
+        if (two != null) { two.Invoke(null, new object[] { AutosaveSlotName(), sceneSave }); return; }
+        var none = sgt.GetMethod("SaveGame", BindingFlags.Static | BindingFlags.Public, null, System.Type.EmptyTypes, null)
+                ?? sgt.GetMethod("ForceSaveGame", BindingFlags.Static | BindingFlags.Public, null, System.Type.EmptyTypes, null);
+        none?.Invoke(null, null);
+    }
+
+    private static string AutosaveSlotName()
+    {
+        try
+        {
+            var f = typeof(SaveGameSlots).GetProperty("AUTOSAVE_SLOT_NAME", BindingFlags.Static | BindingFlags.Public);
+            if (f?.GetValue(null) is string s && !string.IsNullOrEmpty(s)) return s;
+            var fi = typeof(SaveGameSlots).GetField("AUTOSAVE_SLOT_NAME", BindingFlags.Static | BindingFlags.Public);
+            if (fi?.GetValue(null) is string s2 && !string.IsNullOrEmpty(s2)) return s2;
         }
         catch { }
         return "autosave";
+    }
+
+    private static void ConfigureRestoreFromAutosave()
+    {
+        var m = typeof(SaveGameSystem).GetMethod("ConfigureRestoreFromSlot", BindingFlags.Static | BindingFlags.Public,
+            null, new[] { typeof(string) }, null);
+        if (m == null) throw new MissingMethodException("SaveGameSystem.ConfigureRestoreFromSlot");
+        m.Invoke(null, new object[] { AutosaveSlotName() });
     }
 
     // ModMain.OnSceneWasInitialized 会调这个
@@ -276,34 +388,66 @@ internal static class Skills
         ("步枪",     "Rifle",              SkillType.Rifle),
         ("弓术",     "Archery",            SkillType.Archery),
         ("修补",     "Clothing Repair",    SkillType.ClothingRepair),
+#if STORY_EDITION
         ("工具修理", "Tool Repair",        SkillType.ToolRepair),
+#endif
         ("左轮手枪", "Revolver",           SkillType.Revolver),
         ("制枪术",   "Gunsmithing",        SkillType.Gunsmithing),
+        // 2.59 的 SkillsManager 没有工具修理的实例(enum 还留着,GetSkill 取不到)。
+        //   Shotgun 的 enum、类、prefab 字段都有,但游戏没实例化,GetSkill 同样取不到(10-31 实测日志),不列
     };
+
+    // 别的 mod 经 FiligranisSkills 加的技能(双管霰弹枪的 Shotgun 等)挂在 m_Skills 末尾,m_SkillType 填 -1,
+    //   GetSkill 取不到,只能按 "Skill_<名字>" 对象名认。没装就是空表,技能页不多出栏。
+    //   FiligranisSkills 存档时读的就是这个对象的点数,直接改它就能存进档
+    public static readonly List<(string Label, string LabelEn, Skill Skill)> Custom = new();
+    static IntPtr _customFor;
+
+    // 每次进场景 GameManager 重建,SkillsManager 指针变了才重扫
+    public static void RefreshCustom()
+    {
+        try
+        {
+            var sm = GameManager.GetSkillsManager();
+            IntPtr p = sm == null ? IntPtr.Zero : sm.Pointer;
+            if (p == _customFor) return;
+            _customFor = p;
+            Custom.Clear();
+            if (sm == null) return;
+            for (int i = 0; i < sm.m_Skills.Count; i++)
+            {
+                var sk = sm.m_Skills[i];
+                if (sk == null || (int)sk.m_SkillType != -1) continue;
+                string id = sk.name.StartsWith("Skill_") ? sk.name.Substring(6) : sk.name;
+                Custom.Add(id == "Shotgun" ? ("霰弹枪", "Shotgun", sk) : (id, id, sk));
+            }
+        }
+        catch { Custom.Clear(); }
+    }
+
+    static Skill Get(SkillType t)
+    {
+        try { return GameManager.GetSkillsManager()?.GetSkill(t); } catch { return null; }
+    }
 
     // 玩家可见等级(1-5)。GetCurrentTierNumber() 返回的是 SkillTiers enum 索引 0-4
     //   (Beginner=0 … Master=4),即满级返回 4 → 显示给玩家须 +1 变成 1-5。
-    public static int GetTierNumber(SkillType t)
+    public static int GetTierNumber(SkillType t) => GetTierNumber(Get(t));
+
+    public static int GetTierNumber(Skill skill)
     {
-        try
-        {
-            var sm = GameManager.GetSkillsManager();
-            var skill = sm?.GetSkill(t);
-            if (skill == null) return 1;
-            return skill.GetCurrentTierNumber() + 1;
-        }
+        try { return skill == null ? 1 : skill.GetCurrentTierNumber() + 1; }
         catch { return 1; }
     }
 
+    public static void StepTier(SkillType t, int delta) => StepTier(Get(t), delta, t.ToString());
+
     // 逐级 +/-。内部全程用 tier 索引(0-4),与 SetTier/GetCurrentTierNumber 同体系;
     //   显示层 GetTierNumber 再 +1。clamp 0..4 → 可降到 Beginner、升到 Master 满级。
-    public static void StepTier(SkillType t, int delta)
+    public static void StepTier(Skill skill, int delta, string t)
     {
         try
         {
-            var sm = GameManager.GetSkillsManager();
-            if (sm == null) { Log("[Skills] no SkillsManager"); return; }
-            var skill = sm.GetSkill(t);
             if (skill == null) { Log($"[Skills] skill {t} not found"); return; }
             int next = skill.GetCurrentTierNumber() + delta;
             if (next < 0) next = 0;
@@ -321,13 +465,12 @@ internal static class Skills
         catch (Exception ex) { Log($"[Skills] {ex.Message}"); }
     }
 
-    public static void SetMax(SkillType t)
+    public static void SetMax(SkillType t) => SetMax(Get(t), t.ToString());
+
+    public static void SetMax(Skill skill, string t)
     {
         try
         {
-            var sm = GameManager.GetSkillsManager();
-            if (sm == null) { Log("[Skills] no SkillsManager"); return; }
-            var skill = sm.GetSkill(t);
             if (skill == null) { Log($"[Skills] skill {t} not found"); return; }
             int max = skill.GetMaxPoints();
             // PointAssignmentMode:0 = None, 1 = Normal, 2 = ... 反射枚举值,直接传 1 比较稳
@@ -346,6 +489,8 @@ internal static class Skills
     public static void SetAllMax()
     {
         foreach (var (_, _, t) in All) SetMax(t);
+        RefreshCustom();
+        foreach (var (_, en, sk) in Custom) SetMax(sk, en);
         Log(I18n.IsEnglish ? "[Skills] All skills maxed" : "[Skills] 所有技能满级");
     }
 

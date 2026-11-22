@@ -1,4 +1,5 @@
-using ModSettings;
+﻿using ModSettings;
+using TLD.TinyJSON;
 using UnityEngine;
 
 namespace TldHacks;
@@ -55,16 +56,21 @@ internal class TldHacksSettings : JsonModSettings
 
     // v2.7.75 / v2.7.79 诊断应急开关 —— v8.1 起从界面摘掉(玩家误开只会以为 mod 坏了)。
     //   字段保留成 internal:手工把 Mods/TldHacks.json 里对应项改成 true 仍然生效,排查卡顿用。
-    //   ModSettingsBase 只枚举 public 字段来建界面,而 TinyJSON 的 Encoder 带 NonPublic,
-    //   所以 internal 的效果正好是"界面上没有、JSON 里照旧"。
-    internal bool DiagPauseRuntime = false;   // 开了 OnUpdate/OnLateUpdate/OnGUI 全 skip,保留 Harmony patch
-    internal bool DiagUnpatchAll = false;     // 启动时 UnpatchAll + skip Reconcile,需重启游戏生效
+    //   ModSettingsBase 只枚举 public 字段来建界面;TinyJSON 只读写 public 或带 [Include] 的字段,
+    //   所以 internal + [Include] 的效果正好是"界面上没有、JSON 里照旧"。
+    [Include] internal bool DiagPauseRuntime = false;   // 开了 OnUpdate/OnLateUpdate/OnGUI 全 skip,保留 Harmony patch
+    [Include] internal bool DiagUnpatchAll = false;     // 启动时 UnpatchAll + skip Reconcile,需重启游戏生效
 
-    // 已弃用、只是说明用的三项不在 Mod Settings 里露面(游戏内菜单也没有)。字段留着,老 JSON 照旧能读
+    // 已弃用、只是说明用的两项不在 Mod Settings 里露面(游戏内菜单也没有)。字段留着,老 JSON 照旧能读
     internal void HideRetiredFields()
     {
-        foreach (var n in new[] { nameof(SuperAccuracy), nameof(TimeScaleInfo), nameof(LampBurnMultiplier) })
+        foreach (var n in new[] { nameof(TimeScaleInfo), nameof(LampBurnMultiplier) })
             try { SetFieldVisible(n, false); } catch { }
+#if STORY_EDITION
+        // 剧情 1~4 章不编译 CeFeatures,这些开关点了没反应
+        foreach (var f in GetType().GetFields())
+            if (f.Name.StartsWith("CE_")) try { SetFieldVisible(f.Name, false); } catch { }
+#endif
     }
 
     protected override void OnConfirm()
@@ -78,13 +84,17 @@ internal class TldHacksSettings : JsonModSettings
     // ——— Menu ———
     [Section("Menu")]
     [Name("Language / 语言")]
-    [Description("Auto = 按系统语言(非中文系统 → English);Chinese = 强制中文;English = 强制英文。改完需按菜单热键重开菜单生效。")]
+    [Description("Auto = 跟随游戏的语言设置(游戏不是中文 → English);Chinese = 强制中文;English = 强制英文。改完按菜单热键重开 TldHacks 菜单生效;这一页 Mod Settings 要重启游戏才换语言。")]
     [Choice("Auto", "中文 / Chinese", "English")]
     public int LanguageMode = 0;
 
     [Name("Toggle menu hotkey")]
     [Description("按此键呼出/关闭 TldHacks 菜单。默认 Tab 会和游戏日志键冲突,建议改成 F1 / \\ 等。")]
     public KeyCode MenuHotkey = KeyCode.Tab;
+
+    [Name("Pause game when menu opens(开修改器时自动暂停)")]
+    [Description("按热键开 TldHacks 菜单时,先替你打开游戏的 ESC 暂停菜单;关修改器时一起关掉,游戏继续。你自己先按过 ESC 的话不会动它。")]
+    public bool MenuPauseGame = true;
 
     [Name("Fly toggle hotkey(飞行)")]
     [Description("按此键切换 uConsole fly 命令。需要 DeveloperConsole.dll 启用。")]
@@ -111,12 +121,19 @@ internal class TldHacksSettings : JsonModSettings
     [Name("Menu Height(菜单高度,拖拽下边缘调整)")]
     public float MenuHeight = 760f;
 
+    [Name("Spawner preview(物品生成器悬停显示图片)")]
+    public bool SpawnerPreview = true;
+
     // v2.7.83:窗口位置持久化(拖动自动保存,重启保留)
     [Name("Menu X Position(窗口 X,拖动自动存)")]
     public float MenuX = 30f;
 
     [Name("Menu Y Position(窗口 Y,拖动自动存)")]
     public float MenuY = 30f;
+
+    [Slider(30f, 600f, 19)]
+    [Name("Teleport List Height(快速传送列表高度,拖分割栏调整)")]
+    public float SpawnerTeleportH = 120f;
 
     // ——— Stacking ———
     [Section("Stacking")]
@@ -220,8 +237,8 @@ internal class TldHacksSettings : JsonModSettings
     [Name("No Aim Stamina(瞄准不耗体力)")]
     public bool NoAimStamina = false;
 
-    [Name("Super Accuracy(已弃用,保留兼容)")]
-    [Description("已弃用。保留此开关是为了旧 JSON 兼容:开启时等效于 稳定瞄准+无后坐力。")]
+    [Name("Super Accuracy(超级精准)")]
+    [Description("子弹散布归零,同时关闭瞄准晃动,子弹沿准星射出。后坐力另由 无后坐力 控制")]
     public bool SuperAccuracy = false;
 
 
@@ -278,6 +295,10 @@ internal class TldHacksSettings : JsonModSettings
     [Name("防止烤焦")]
     [Description("做好的食物不会烤焦,但不会马上做好")]
     public bool NoBurn = false;
+
+    [Name("丢地烹饪")]
+    [Description("生肉生鱼丢在点着的火堆或炉子旁边 2 米内,按原版烹饪时间等够了就自己变成热的熟肉,熟了还放在火边太久会烤焦。离开场景再回来照样计时,火灭了暂停,捡起来重新计时")]
+    public bool DropCook = false;
 
     [Name("快速搜刮")]
     [Description("搜容器和尸体不用等进度条")]
@@ -343,6 +364,14 @@ internal class TldHacksSettings : JsonModSettings
     [Name("保温杯装任意液体")]
     public bool FlaskAnyItem = false;
 
+    [Name("轮盘喝保温杯")]
+    [Description("保温杯进喝水轮盘,点了直接喝,茶优先,卡路里低的先喝")]
+    public bool Flask_Radial = false;
+
+    [Name("保温杯火边加热")]
+    [Description("带着保温杯靠近火,杯里的饮品慢慢回到满热度")]
+    public bool Flask_FireHeat = false;
+
     [Name("快速风干")]
     [Description("风干、腌制马上完成")]
     public bool QuickEvolve = false;
@@ -401,6 +430,10 @@ internal class TldHacksSettings : JsonModSettings
     [Description("替换原版 30kg 上限的目标值, 默认 30=原版")]
     public float TechBackpackKg = 30f;
 
+    [Name("无限负重")]
+    [Description("背包负重不设上限,背多少都不超重")]
+    public bool InfiniteCarry = false;
+
     [Name("火把满值")]
     [Description("从篝火取出的火把燃烧值为最大")]
     public bool TorchFullValue = false;
@@ -427,6 +460,10 @@ internal class TldHacksSettings : JsonModSettings
     [Description("信任值加满,按原版规则解锁商品、降价和对话,第一次满格会解锁 DLC 成就")]
     public bool TraderMaxTrust = false;
 
+    [Name("解锁原版限制")]
+    [Description("商人不再按难度过滤商品,入侵者和悲惨模式里原版不卖的斧子、步枪、精工箭等也会进清单")]
+    public bool TraderUnlockModeItems = false;
+
     [Name("即时交易")]
     [Description("不用交货,关上交换箱就完成交易")]
     public bool TraderInstantExchange = false;
@@ -440,9 +477,66 @@ internal class TldHacksSettings : JsonModSettings
     [Description("新档第一次就立即激活美洲狮")]
     public bool CougarInstantActivate = false;
 
+    [Section("野外 & 生存")]
+    [Name("陷阱必中")]
+    [Description("陷阱每次判定都抓到兔子,也不会坏")]
+    public bool CE_SnareSure = false;
+
+    [Name("放下就抓到")]
+    [Description("陷阱放下后马上判定一次,不用等几个小时。要先开陷阱必中")]
+    public bool CE_SnareInstant = false;
+
+    [Name("容器不开空")]
+    [Description("容器生成东西时不会是空的,至少一件。只对还没打开过的容器有效")]
+    public bool CE_LootNoEmpty = false;
+
+    [Name("按低一档难度出东西")]
+    [Description("容器里的东西按低一档难度的表生成,比如入侵者按潜行者。只对还没打开过的容器有效")]
+    public bool CE_LootLowerTier = false;
+
+    [Name("极光夜刷新空容器")]
+    [Description("极光夜关上一个搜空的容器,它会重新生成一次东西。每次极光每个容器只刷一次,尸体和任务容器不刷")]
+    public bool CE_AuroraRefill = false;
+
+    [Name("冰洞不冻上")]
+    [Description("钓鱼的冰洞不会重新结冰,已经冻上的打开就解冻")]
+    public bool CE_IceHoleNoFreeze = false;
+
+    [Name("厄难负面不再生成")]
+    [Description("厄难难度的体质衰弱、心神不宁、风湿关节、冰冷刺骨、胃酸过多、残破身躯不再挂上。已有的用清除所有负面清掉")]
+    public bool CE_NoMisery = false;
+
+    [Name("死亡不删档")]
+    [Description("血量快归零时救回来:血量回到三成,清掉负面,饿、渴、冷补到不再掉血。存档不删")]
+    public bool CE_NoDeath = false;
+
+    [Name("扑倒必胜")]
+    [Description("被狼或美洲狮扑倒时挣脱进度一直是满的,马上脱身;扑倒期间不掉血,熊和驼鹿的攻击也不留后续负面")]
+    public bool CE_StruggleWin = false;
+
+    [Name("扑倒后不眩晕")]
+    [Description("被扑倒以后不躺地、不头晕、不掉东西")]
+    public bool CE_NoStun = false;
+
+    [Name("坡上不打滑")]
+    [Description("陡坡也能直接走上去,不往下滑,坡上不减速")]
+    public bool CE_NoSlide = false;
+
+    [Name("商人打折")]
+    [Description("交易一直用便宜价的清单,原版要信任很高才有")]
+    public bool CE_TraderCheap = false;
+
+    [Name("极光夜电灯常亮")]
+    [Description("极光夜通电的灯稳定全亮,不忽明忽暗")]
+    public bool CE_AuroraLightSteady = false;
+
+    [Name("关掉极光音效")]
+    [Description("极光夜那阵嗡嗡的环境声不再播放")]
+    public bool CE_AuroraMute = false;
+
     [Section("与 ItemPicker mod 交互")]
     [Name("不捡丢物")]
-    [Description("默认开。在基地整理物资时把东西丢一地或右键摆好,走过去不会又被吸回背包,一键搜刮也不会把它们收走。管两条路:按 W 的 ItemPicker 自动拾取,和一键搜刮。只记本次进图之后丢的东西,换地图或重进游戏就不记得了,那时这些物品会重新变成可搜刮的。想让一键搜刮连自己丢的一起收,关掉这一项。")]
+    [Description("默认开。在基地整理物资时把东西丢一地或右键摆好,走过去不会又被吸回背包,一键搜刮也不会把它们收走。管两条路:按 W 的 ItemPicker 自动拾取,和一键搜刮。记录跟着存档走,换地图、重进游戏都还认得;自己再捡回背包的就不再算。想让一键搜刮连自己丢的一起收,关掉这一项。")]
     // v8.2 默认 false → true。丢一地整理物资是常见玩法,默认把它们再吸回来等于跟玩家对着干;
     //   这一项本来就是为这个场景加的,却默认关着,新装的人根本不知道有它。
     public bool BlockAutoPickupOwnDrops = true;
@@ -597,14 +691,14 @@ internal class TldHacksSettings : JsonModSettings
     [Description("按住热键1/2期间游戏加速到对应倍率,松开恢复正常速度")]
     public KeyCode TimeScaleKey1 = KeyCode.Keypad1;
 
-    [Slider(1f, 50f, 50)]
+    [Slider(0.1f, 50f, 500)]
     [Name("时间加速1 (热键倍率)")]
     public float TimeScale1 = 20f;
 
     [Name("时间加速 热键2")]
     public KeyCode TimeScaleKey2 = KeyCode.Keypad2;
 
-    [Slider(1f, 50f, 50)]
+    [Slider(0.1f, 50f, 500)]
     [Name("时间加速2 (热键倍率)")]
     public float TimeScale2 = 5f;
 
@@ -821,6 +915,10 @@ internal class TldHacksSettings : JsonModSettings
     [Description("防止鼠标左键误熄火把")]
     public bool DisableTorchLeftClick = true;
 
+    [Name("火把烧完自动换新")]
+    [Description("手上的火把烧完后自动换上背包里状态最好的火把并点着,烧完的放回背包")]
+    public bool Torch_AutoSwap = false;
+
     [Name("锁油灯键")]
     [Description("防止鼠标左键误熄油灯")]
     public bool DisableLampLeftClick = true;
@@ -936,6 +1034,10 @@ internal class TldHacksSettings : JsonModSettings
     [Name("弓箭瞄准准星")]
     public bool CrosshairBow = false;
 
+    [Name("永久准星")]
+    [Description("不瞄准也一直显示准星")]
+    public bool CrosshairAlways = false;
+
     // ═══════════════════════════════════════════════════════════════════════════
     // v2.8.0  Tab 6: QoL (移植自 QoL.dll + TinyTweaks + SleepWithoutABed + AutoSurvey)
     // ═══════════════════════════════════════════════════════════════════════════
@@ -1032,6 +1134,59 @@ internal class TldHacksSettings : JsonModSettings
     [Name("出门开小地图")]
     [Description("室内→室外场景切换后自动打开 MotionTrackerLite 小地图(需装 MotionTrackerLite mod)")]
     public bool QoL_AutoOpenMapOnExit = false;
+
+#if !STORY_EDITION
+    // v9.7 整合地图管理(MapManager 1.1.7)。默认只开箭头和居中、倍率为原版,热键避开 F9(TraderMoving 和 PrepperCache 在用)
+    [Section("地图管理")]
+    [Name("启用地图管理")]
+#if EP5_EDITION
+    public bool MapM_Enabled = false;
+#else
+    public bool MapM_Enabled = true;
+#endif
+    [Name("玩家红色箭头")]
+    public bool MapM_PlayerArrow = true;
+    [Name("打开地图时以玩家为中心")]
+    public bool MapM_CenterOnPlayer = true;
+    [Slider(1f, 25f, 49)]
+    [Name("木炭绘图范围倍率")]
+    public float MapM_SurveyRange = 1f;
+    [Slider(0.1f, 5f, 50)]
+    [Name("木炭绘图时间倍率")]
+    public float MapM_SurveyTime = 1f;
+    [Name("任何时候都能绘图")]
+    public bool MapM_UnlockSurvey = false;
+    [Name("显示远景点")]
+    public bool MapM_RevealVista = false;
+    [Name("远景点不用宝丽来")]
+    public bool MapM_VistaNoPolaroid = false;
+    [Name("动物尸体显示在地图上")]
+    public bool MapM_CorpseOnMap = false;
+    [Name("采完的植物图标自动消失")]
+    public bool MapM_HideHarvested = false;
+    [Name("地堡全换成完整版(随机类型)")]
+    public bool MapM_FillEmptyBunkers = false;
+    [Name("入侵者和厄难也刷地堡")]
+    public bool MapM_InterloperBunker = false;
+    [Name("显示地堡热键")]
+    public KeyCode MapM_BunkerKey = KeyCode.F8;
+    [Name("当前区域全开热键")]
+    // 全开撤销不了,默认不绑,免得误按
+    public KeyCode MapM_RevealKey = KeyCode.None;
+#endif
+#if !STORY_EDITION && !EP5_EDITION
+    [Section("收藏品地图")]
+    [Name("地图上标出收藏品")]
+    public bool Coll_Enabled = false;
+    [Name("石堆")]
+    public bool Coll_Cairn = true;
+    [Name("纸条和日志")]
+    public bool Coll_Note = true;
+    [Name("拍立得")]
+    public bool Coll_Polaroid = true;
+    [Name("收过的也标出来")]
+    public bool Coll_ShowCollected = false;
+#endif
 
     // ═══════════════════════════════════════════════════════════════════════════
     // v2.8.0  Tab 8: Crafting & Fire (CraftAnywhereRedux + MoreCookingSlots)
@@ -1233,6 +1388,39 @@ internal class TldHacksSettings : JsonModSettings
     [Description("手电筒永不耗电")]
     public bool UT_FlashInfiniteBattery = false;
 
+    [Section("铁路 DLC / 蒸汽火车")]
+    [Name("火车不会坏")]
+    [Description("火车各部件不掉状态,锅炉不会爆炸")]
+    public bool Train_NoBreak = false;
+    [Name("保持二档")]
+    [Description("锅炉点着时蒸汽压力一直满,二档一直能用,不会掉速")]
+    public bool Train_KeepHighGear = false;
+    [Name("燃料和水一直满")]
+    [Description("火车的鲸油和水一直是满的")]
+    public bool Train_FullFuel = false;
+    [Name("取暖器不耗油")]
+    [Description("鲸油取暖器点着时不消耗鲸油")]
+    public bool Heater_NoFuel = false;
+    [Name("取暖器进轮盘")]
+    [Description("背包里的鲸油取暖器出现在营地轮盘里,点了直接放置")]
+    public bool Heater_Radial = false;
+    [Name("取暖器耗油倍率")]
+    [Description("鲸油取暖器每小时耗油量的倍数,原版三档每小时 0.25、0.5、0.75 升,1 是原版")]
+    [Slider(0.1f, 5f, 50)]
+    public float Heater_FuelMult = 1f;
+    [Name("取暖器温度加成")]
+    [Description("鲸油取暖器每一档额外加的温度(摄氏度),原版三档是 10、20、30 度,0 是原版")]
+    [Slider(0f, 50f, 51)]
+    public float Heater_TempBonus = 0f;
+    [Name("鲸油罐上限(升)")]
+    [Description("一个鲸油罐最多装多少升,合并时也按这个上限分,0 是原版 5 升")]
+    [Slider(0f, 2000f, 401)]
+    public float OilCan_WhaleMaxL = 0f;
+    [Name("油桶上限(升)")]
+    [Description("一个装煤油的油桶最多装多少升,合并时也按这个上限分,0 是原版(生锈油桶 4 升)")]
+    [Slider(0f, 2000f, 401)]
+    public float OilCan_KeroseneMaxL = 0f;
+
     [Section("StackManager / 堆叠管理 v1.0.6")]
     [Name("更多可堆叠")]
     [Description("给 Coffee/茶/胡萝卜/土豆等指定物品添加可堆叠")]
@@ -1286,13 +1474,13 @@ internal class TldHacksSettings : JsonModSettings
     [Choice("5分钟", "10分钟", "15分钟", "30分钟")]
     [Name("橙味持续")]
     public int World_SodaOrangeDuration = 1;
-    [Name("Summit启用")]
+    [Name("尖峰苏打启用")]
     public bool World_SodaSummitEnabled = true;
     [Slider(1f, 15f, 14)]
-    [Name("Summit减疲劳%")]
+    [Name("尖峰苏打减疲劳%")]
     public float World_SodaSummitInitial = 3f;
     [Choice("5分钟", "10分钟", "15分钟", "30分钟")]
-    [Name("Summit持续")]
+    [Name("尖峰苏打持续")]
     public int World_SodaSummitDuration = 0;
     [Name("葡萄味启用")]
     public bool World_SodaGrapeEnabled = true;
@@ -1381,5 +1569,29 @@ internal class TldHacksSettings : JsonModSettings
     [Description("游戏内经过该天数后商人可用。原版天数随难度不同。设为30及以上=完全跟随原版进度(默认),拖低只会让商人提前来,不会推迟")]
     [Slider(1f, 40f, 40)]
     public float TraderArrivalDays = 30f;
+
+    [Section("Feats / 勋章")]
+    [Name("新档可选全部勋章")]
+    [Description("开新档选勋章时把槽位选满(原版按难度限制数量)")]
+    public bool Feat_AllAtNewGame = false;
+
+    // 勋章加成数值,-1 = 不改(用原版值)。只在游戏内菜单调,不进 Mod Settings
+    //   internal + [Include]:界面不显示,但 TinyJSON 照样读写(不带 [Include] 的非 public 字段不落盘,重开游戏就丢)
+    [Include] internal float FeatV_BookSmarts = -1f;
+    [Include] internal float FeatV_ColdFusion = -1f;
+    [Include] internal float FeatV_EfficientMachine = -1f;
+    [Include] internal float FeatV_FireMaster = -1f;
+    [Include] internal float FeatV_FreeRunner = -1f;
+    [Include] internal float FeatV_SnowWalker = -1f;
+    [Include] internal float FeatV_ExpertTrapper = -1f;
+    [Include] internal float FeatV_StraightToHeart = -1f;
+    [Include] internal float FeatV_BlizzardWalker = -1f;
+    [Include] internal float FeatV_NightWalkerDay = -1f;
+    [Include] internal float FeatV_NightWalkerNight = -1f;
+    [Include] internal float FeatV_MasterHunterSight = -1f;
+    [Include] internal float FeatV_MasterHunterSmell = -1f;
+    [Include] internal float FeatV_MasterHunterSound = -1f;
+    [Include] internal float FeatV_SettledMind = -1f;
+    [Include] internal float FeatV_CelestialNavigator = -1f;
 
 }

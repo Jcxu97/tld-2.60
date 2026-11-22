@@ -57,7 +57,7 @@ internal static class Stacking
 
                 // 快速过滤：count ≤ 1 的不需要显示堆叠标签,跳过 IL2Cpp 访问
                 if (!StackState.TryGetCount(cachedDi.Pointer, out int cachedCount) || cachedCount <= 1)
-                    continue;
+                { LabelFix.RestoreUnits(item); continue; }
 
                 Il2Cpp.GearItem curGi = null;
                 try { curGi = item.m_GearItem; } catch { _staleList.Add(kv.Key); continue; }
@@ -200,8 +200,10 @@ internal static class Dedupe
             // 已真合并的 stackable(m_Units>1)由原版/StackManager 显示 × N,我们让路。
             // 只挂组件但 m_Units=1 的(如整合包给 DryMilkPacket / MixedNuts 加的),
             // 实际没被合,我们仍做 UI 堆叠
+            // 咖啡罐、茶包这类一件就带好几份(m_DefaultUnitsInItem=5/3),m_Units>1 不代表合过堆,
+            //   只有超过单件份数才算真堆叠
             var stackable = gi.GetComponent<StackableItem>();
-            if (stackable != null && stackable.m_Units > 1) { keep.Add(di); continue; }
+            if (stackable != null && stackable.m_Units > System.Math.Max(1, stackable.m_DefaultUnitsInItem)) { keep.Add(di); continue; }
 
             // 必须用 GameObject.name(每个 prefab 独立),不能用 m_GearItemData.name —
             // 整合包里多个 mod 加的物品可能共用同一个 GearItemData asset,name 相同,
@@ -416,13 +418,32 @@ internal static class LabelFix
         catch { }
     }
 
+    // 格子会复用。上面藏掉的 x 图标游戏不会自己再打开,格子换成别的物品时数量就只剩一个数字(比如药瓶显示 5 而不是 x5)。
+    //   藏过的格子记下来,换成不是堆叠的物品时,图标跟着数字一起显示
+    private static readonly System.Collections.Generic.HashSet<System.IntPtr> _unitsHidden = new();
+
+    internal static void RestoreUnits(InventoryGridItem item)
+    {
+        try
+        {
+            if (item == null || !_unitsHidden.Contains(item.Pointer)) return;
+            var ul = item.m_UnitLabel;
+            var us = item.m_UnitSprite;
+            bool show = ul != null && ul.gameObject != null && ul.gameObject.activeSelf;
+            // 份数数字可能晚于这次刷新才亮,数字没亮时先别出名单,下一轮 OnLateUpdate 再补图标
+            if (!show) return;
+            _unitsHidden.Remove(item.Pointer);
+            if (us != null && us.gameObject != null && !us.gameObject.activeSelf) us.gameObject.SetActive(true);
+        }
+        catch { }
+    }
+
     public static void Reapply(InventoryGridItem item, InventoryGridDataItem di)
     {
         try
         {
             if (item == null || di == null) return;
-            if (!StackState.TryGetCount(di.Pointer, out int count)) return;
-            if (count <= 1) return;
+            if (!StackState.TryGetCount(di.Pointer, out int count) || count <= 1) { RestoreUnits(item); return; }
 
             // v2.7.35 t1 修:UnitLabel/UnitSprite 是"stackable m_Units 显示" ——
             //   hover 时游戏刷新这俩显示 m_Units=1(因为我们 Dedupe 的是 m_Units=1 的虚拟堆叠)
@@ -433,6 +454,7 @@ internal static class LabelFix
             var unitSprite = item.m_UnitSprite;
             if (unitSprite != null && unitSprite.gameObject != null && unitSprite.gameObject.activeSelf)
                 unitSprite.gameObject.SetActive(false);
+            _unitsHidden.Add(item.Pointer);
 
             // stack label —— 只在需要变化时写 text(避免每帧字符串分配)
             var label = item.m_StackLabel;
@@ -461,9 +483,8 @@ internal static class Patch_RefreshDataItem
     {
         try
         {
-            if (dataItem == null) return;
-            // 仅在背包/容器面板活跃时登记+写标签,避免漏到维护轮盘等复用 cell
-            if (!StackState.AnyTrackedPanelActive()) return;
+            // 别的界面(制作、烹饪、交易等)复用同一批格子:背包里藏掉的 x 图标要先还原,不然只剩一个数字
+            if (dataItem == null || !StackState.AnyTrackedPanelActive()) { LabelFix.RestoreUnits(__instance); return; }
 
             // 记录 (item, 此次绑的 dataItem, 此次的 gi.Pointer) 到 SeenItems。
             // OnLateUpdate 每帧 verify(靠 giPtr 对比当前绑定)+ reapply;复用后 gi 变,verify 会 skip。
@@ -569,10 +590,10 @@ internal static class Patch_InventoryGridItem_Refresh
     {
         try
         {
-            if (__instance == null || gi == null) return;
-            // 仅在背包/容器面板活跃时写标签,避免漏到维护轮盘/装备槽等复用 cell
-            if (!StackState.AnyTrackedPanelActive()) return;
-            if (!StackState.TryGetCountByGi(gi.Pointer, out int count) || count <= 1) return;
+            if (__instance == null) return;
+            // 仅在背包/容器面板活跃时写标签,避免漏到维护轮盘/装备槽等复用 cell;别的界面里先还原藏掉的 x 图标
+            if (gi == null || !StackState.AnyTrackedPanelActive()) { LabelFix.RestoreUnits(__instance); return; }
+            if (!StackState.TryGetCountByGi(gi.Pointer, out int count) || count <= 1) { LabelFix.RestoreUnits(__instance); return; }
 
             var label = __instance.m_StackLabel;
             if (label != null)

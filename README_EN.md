@@ -212,12 +212,11 @@ Without these TldHacks won't work or external mods fail to load.
 | **Architect.dll + Architect.modcomponent** | **Press Y to move stoves/furniture**, free-form construction |
 
 
-## 4. Map / navigation (3)
+## 4. Map / navigation (2. Map Manager is part of TldHacks from v9.7)
 
 
 | dll                     | Purpose                                                                                                                  |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| MapManager.dll          | Player arrow / centering / survey range / no-Polaroid / full-reveal / bunker hotkey (TldHacks no longer integrates this) |
 | MotionTrackerLite.dll   | Motion-tracker radar, alerts on nearby wildlife                                                                          |
 | ModSettingsQuickNav.dll | Quick-jump nav for ModSettings panel                                                                                     |
 
@@ -385,7 +384,6 @@ Full list in `configs/Mods/ItemPickerCustomList.txt`.
 
 - `Mods/AmbientLights.json` — ambient lighting defaults (auto-written by mod)
 - `Mods/UniversalTweaks.json` — UniversalTweaks tuning (auto-written by mod)
-- `Mods/MapManager.json` — map manager defaults
 - `Mods/ImprovedTrader.json` / `SilentWalker.json` / `PrepperCache.json` — mod defaults
 
 ### `Mods/ModData/*.moddata` (not in repo, per-save)

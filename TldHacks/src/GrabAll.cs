@@ -44,6 +44,10 @@ internal static class GrabAll
 
     internal static bool InGrab => _gate > 0;
 
+    // 一键清图分帧收,每帧进出一次闸门(见 MapClear.Tick)
+    internal static void PushGate() { GrabAllQuietPickup.EnsureAttached(); _gate++; }
+    internal static void PopGate() { _gate--; }
+
     // 闸门判定,由 GrabAllQuietPickup.Prefix 调,只读不写。
     internal static bool ShouldShowMessage() => _gate <= 0;
 
@@ -187,7 +191,7 @@ internal static class GrabAll
     private static Type _travoisType;
     private static bool _travoisResolved;
 
-    private static bool IsTravois(GameObject go)
+    internal static bool IsTravois(GameObject go)
     {
         try
         {
@@ -207,7 +211,7 @@ internal static class GrabAll
     //   一次全收那条路照旧全收。场景里的物体名会带 "(Clone)" 或 " (3)" 这类后缀,截掉再比。
     private static readonly char[] NameSuffixStart = { '(', ' ' };
 
-    private static bool IsStickOrStone(GearItem gi)
+    internal static bool IsStickOrStone(GearItem gi)
     {
         try
         {
@@ -244,7 +248,8 @@ internal static class GrabAll
                 if (go == null || !go.activeInHierarchy) continue;
 
                 // 尸骸上的可采集部件(生肉/皮毛)不是"地上物品",走拾取交互会出问题 → 跳过
-                if (gi.m_BodyHarvest != null || gi.m_BodyHarvestItem != null) continue;
+                // m_BodyHarvestItem 是刀斧锯的剥皮速度数据,不是尸体部件,不能按它跳过
+                if (gi.m_BodyHarvest != null) continue;
 
                 // 距离过滤(3D,含高度差)
                 if ((go.transform.position - origin).sqrMagnitude > r2) continue;
@@ -261,7 +266,7 @@ internal static class GrabAll
                 //   注意判据用玩家丢弃记录,不是 m_BeenInPlayerInventory,后者对"捡过又丢"
                 //   的东西永久为真,会让这些物资从此再也搜不起来。
                 if (CheatState.BlockAutoPickupOwnDrops
-                    && AutoPickupGuard.DroppedAt.ContainsKey(gi.Pointer)) { skippedDrops++; continue; }
+                    && AutoPickupGuard.IsOwnDrop(gi)) { skippedDrops++; continue; }
 
                 list.Add(gi);
             }

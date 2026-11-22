@@ -9,7 +9,7 @@
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Version>2.0.6.1</Version>
+    <Version>2.1.1</Version>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
 
     <TldRoot>D:\Steam\steamapps\common\TheLongDark</TldRoot>
@@ -17,6 +17,13 @@
     <TldInterop>$(TldRoot)\MelonLoader\Il2CppAssemblies</TldInterop>
     <TldModsDir>$(TldRoot)\Mods</TldModsDir>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- src/ 是同一批源码的旧副本(未进 git),通配符会把它一起收进来 → 351 个重复定义错误。
+         顶层是权威源码,src/ 只留在磁盘上做参考,不参与编译。 -->
+    <Compile Remove="src/**" />
+    <None Remove="src/**" />
+  </ItemGroup>
 
   <ItemGroup>
     <None Remove="NorthernLightsBroadcast.Resources.northernlightsbroadcastbundle" />

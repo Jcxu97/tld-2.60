@@ -1,137 +1,108 @@
 @echo off
-chcp 65001 >nul
-title TldHacks - 一键禁用冗余/冲突 MOD
-
-:: ===================================================================
-::   TldHacks 冗余/冲突 MOD 禁用脚本
-:: -------------------------------------------------------------------
-::   把本脚本复制到游戏 Mods 文件夹后双击运行,会把已被 TldHacks
-::   整合的独立 MOD 改名为 *.dll.disabled,游戏不再加载,功能仍由
-::   TldHacks 提供。已禁用的会跳过,未装的会显示"未找到"。
-::
-::   恢复方法: 把对应文件去掉 .disabled 后缀即可。
-:: ===================================================================
+setlocal
+title TldHacks - Disable Conflicting Mods
+rem Keep this file ASCII only. cmd can lose "call :label" targets in files with multibyte text.
+rem The file works in the Mods folder and in the game folder next to Mods.
 
 set "MODS=%~dp0"
-if "%MODS:~-1%"=="\" set "MODS=%MODS:~0,-1%"
-
-set /a disabled=0
-set /a already=0
-set /a notfound=0
-
-echo ================================================
-echo   TldHacks 一键禁用冗余/冲突 MOD
-echo ================================================
-echo.
-echo   [!] 请将此脚本放到游戏的 Mods 文件夹下再运行!
-echo       例如: ...\TheLongDark\Mods\disable_integrated_mods.bat
-echo.
-echo   当前目录: %MODS%
-echo ================================================
-echo.
-
-echo [整合冗余 - 移动 / 跳跃 / 视角]
-call :check "SonicMode.dll"
-call :check "Jump.dll"
-call :check "GunZoom.dll"
-call :check "VehicleFov.dll"
-:: TldHacks 已有跨场景传送(双击地图图标 + Quick Teleport 列表)
-call :check "FastTravel.dll"
-:: TldHacks 已整合 StretchArmstrong 交互距离倍率
-call :check "StretchArmstrong.dll"
-
-echo.
-echo [整合冗余 - 火光 / 油灯]
-call :check "TorchTweaker.dll"
-call :check "KeroseneLampTweaks.dll"
-call :check "AutoToggleLights.dll"
-
-echo.
-echo [整合冗余 - 衰减 / 衣物 / 装备]
-call :check "GearDecayModifier.dll"
-call :check "BowRepair.dll"
-call :check "DisableAutoEquipCharcoal.dll"
-call :check "RememberBreakDownItem.dll"
-call :check "DroppableUndroppables.dll"
-
-echo.
-echo [整合冗余 - 制作 / 烹饪 / 时间]
-call :check "CraftAnywhereRedux.dll"
-call :check "MoreCookingSlots.dll"
-call :check "TimeScaleHotkey.dll"
-call :check "FullSwing.dll"
-call :check "SilentWalker.dll"
-
-echo.
-echo [整合冗余 - QoL / TinyTweaks 系列 / 启动]
-call :check "QoL.dll"
-call :check "AutoSurvey.dll"
-call :check "TinyTweaks-MapTextOuline.dll"
-call :check "TinyTweaks-NoSaveOnSprain.dll"
-call :check "TinyTweaks-WakeUpCall.dll"
-call :check "TinyTweaks-BuryHumanCorpses.dll"
-call :check "TinyTweaks-RunWithLantern.dll"
-call :check "SleepWithoutABed.dll"
-call :check "SkipIntroRedux.dll"
-:: MapManager 不整合, 用户保留独立 mod
-:: PlaceFromInventory 已整合
-call :check "PlaceFromInventory.dll"
-
-echo.
-echo [整合冗余 - 食物 / 扭伤 / 搬运]
-call :check "CaffeinatedSodas.dll"
-call :check "Sprainkle.dll"
-call :check "RnStripped.dll"
-
-echo.
-echo [整合冗余 - 准星 / 图形]
-call :check "ExtraGraphicsSettings.dll"
-
-echo.
-echo [整合冗余 - v3.0.4 大型多功能 mod]
-:: TldHacks v3.0.4 整合 UT/StackManager 核心功能
-:: UT: 哈气/制噪器/滤罐/雪屋/左轮/岩石贮藏/喷漆/雪橇/手电筒/食物/马桶水
-:: StackManager: 物品堆叠组件 + 默认列表(咖啡/茶/胡萝卜/土豆等)
-call :check "UniversalTweaks.dll"
-call :check "StackManager.dll"
-
-echo.
-echo [整合冗余 - 植物再生 / EdiblePlants]
-:: TldHacks 已整合 RespawnablePlants (植物重生功能)
-call :check "EdiblePlants.dll"
-
-echo.
-echo [整合冗余 - 保温瓶增强]
-:: TldHacks v6.5 已整合 ImprovedFlasks (轮盘喝水/按钮文字/温度显示)
-call :check "ImprovedFlasks.dll"
-
-echo.
-echo [已知冲突 / 有害 MOD]
-:: GfxBoost / LightCull: v3.0.2 实测会破坏山洞/夜晚动态灯光,导致漆黑
-:: DarkerNights: 弃坑 3 年,在 TLD 2.55 上死循环,直接卡启动
-call :check "GfxBoost.dll"
-call :check "LightCull.dll"
-call :check "DarkerNights.dll"
-
-echo.
-echo ================================================
-echo   完成: %disabled% 个已禁用, %already% 个之前已禁用, %notfound% 个未找到
-echo ================================================
-echo.
-pause
-exit /b
-
-:check
-if exist "%MODS%\%~1" (
-    if not exist "%MODS%\_disabled" mkdir "%MODS%\_disabled"
-    move /y "%MODS%\%~1" "%MODS%\_disabled\%~1" >nul
-    echo [已禁用] %~1
-    set /a disabled+=1
-) else if exist "%MODS%\_disabled\%~1" (
-    echo [已禁用] %~1 (之前)
-    set /a already+=1
-) else (
-    echo [未找到] %~1
-    set /a notfound+=1
+if exist "%~dp0Mods\TldHacks.dll" set "MODS=%~dp0Mods\"
+if not exist "%MODS%TldHacks.dll" (
+    echo [ERROR] TldHacks.dll is not found.
+    echo Put this file in the game Mods folder, or in the game folder next to Mods.
+    pause
+    exit /b 1
 )
+"%SystemRoot%\System32\tasklist.exe" /FI "IMAGENAME eq tld.exe" 2>nul | "%SystemRoot%\System32\find.exe" /I "tld.exe" >nul
+if not errorlevel 1 (
+    echo [ERROR] The Long Dark is running. Close the game, then run this file again.
+    pause
+    exit /b 1
+)
+
+pushd "%MODS%"
+if not exist _disabled mkdir _disabled
+set /a N_NEW=0
+set /a N_OLD=0
+
+echo ================================================
+echo   TldHacks - Disable Conflicting Mods
+echo   Mods folder: %CD%
+echo ================================================
+echo.
+
+call :mv SonicMode
+call :mv Jump
+call :mv GunZoom
+call :mv VehicleFov
+call :mv FastTravel
+call :mv StretchArmstrong
+call :mv TorchTweaker
+call :mv KeroseneLampTweaks
+call :mv AutoToggleLights
+call :mv GearDecayModifier
+call :mv BowRepair
+call :mv DisableAutoEquipCharcoal
+call :mv RememberBreakDownItem
+call :mv DroppableUndroppables
+call :mv CraftAnywhereRedux
+call :mv MoreCookingSlots
+call :mv TimeScaleHotkey
+call :mv FullSwing
+call :mv SilentWalker
+call :mv QoL
+call :mv AutoSurvey
+call :mv MapManager
+call :mv TinyTweaks-MapTextOuline
+call :mv TinyTweaks-NoSaveOnSprain
+call :mv TinyTweaks-WakeUpCall
+call :mv TinyTweaks-BuryHumanCorpses
+call :mv TinyTweaks-RunWithLantern
+call :mv SleepWithoutABed
+call :mv SkipIntroRedux
+call :mv PlaceFromInventory
+call :mv CaffeinatedSodas
+call :mv Sprainkle
+call :mv RnStripped
+call :mv ImprovedFlasks
+call :mv ImprovedTrader
+call :mv HouseLights
+call :mv ShowTraderTrust
+call :mv ExtraGraphicsSettings
+call :mv UniversalTweaks
+call :mv StackManager
+call :mv GfxBoost
+call :mv LightCull
+call :mv DarkerNights
+call :mv FeatSettings
+call :mv ItemRarities
+
+echo.
+echo ================================================
+if %N_NEW%==0 (
+    echo   Done. Nothing new to disable.
+) else (
+    echo   Done. Disabled now: %N_NEW%
+)
+if not %N_OLD%==0 echo   Disabled before: %N_OLD%
+echo   These mods are part of TldHacks now.
+echo   The files are in Mods\_disabled.
+echo   To use one again, move its files back to Mods.
+echo ================================================
+popd
+pause
+exit /b 0
+
+:mv
+if not exist "%~1.dll" if not exist "%~1.dll.disabled" goto :notfound
+if exist "_disabled\%~1.dll" del /f /q "_disabled\%~1.dll" >nul 2>nul
+move /y "%~1.dll" _disabled\ >nul 2>nul
+move /y "%~1.dll.disabled" _disabled\ >nul 2>nul
+move /y "%~1.json" _disabled\ >nul 2>nul
+move /y "%~1.modcomponent" _disabled\ >nul 2>nul
+set /a N_NEW+=1
+echo [DISABLED] %~1
+exit /b
+:notfound
+if exist "_disabled\%~1.dll" set /a N_OLD+=1
+if exist "_disabled\%~1.dll.disabled" set /a N_OLD+=1
 exit /b

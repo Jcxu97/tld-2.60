@@ -107,7 +107,7 @@ internal static class ItemDiscovery
                 float weight = Num(ReWeight, body);
                 int calories = (int)Num(ReCalories, body);
                 string name = DisplayName(localization, ReLocId.Match(body).Groups[1].Value) ?? Pretty(prefab);
-                var entry = new ItemEntry(prefab, name + " [自动]", Category(ReCategory.Match(body).Groups[1].Value, comp),
+                var entry = new ItemEntry(prefab, name + " [自动]", Category(ReCategory.Match(body).Groups[1].Value, comp, prefab),
                     "", weight, calories, tag);
                 ItemDatabaseMod.All.Add(entry);
                 Added++;
@@ -144,8 +144,13 @@ internal static class ItemDiscovery
         return en.Success && en.Groups[1].Value.Length > 0 ? en.Groups[1].Value : null;
     }
 
-    private static string Category(string inventoryCategory, string comp)
+    // 枪和子弹在 ModComponent 里只能填 Tool(它没有武器分类),按组件和名字改回武器,和原版枪弹放一起
+    private static readonly Regex ReGunName = new Regex("(Rifle|Revolver|Shotgun|DoubleBarrel|FlareGun)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+    private static string Category(string inventoryCategory, string comp, string prefab)
     {
+        if (comp == "ModAmmoComponent" || prefab.IndexOf("Ammo", StringComparison.OrdinalIgnoreCase) >= 0
+            || ReGunName.IsMatch(prefab)) return "武器";
         switch (inventoryCategory)
         {
             case "Food": return "食物";

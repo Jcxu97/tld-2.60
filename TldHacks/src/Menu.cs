@@ -27,11 +27,15 @@ internal static class Menu
     private static float _measuredSpawnerH = 800f;
     private static float _measuredTweaksH = 400f;
     private static float _measuredRecipeH = 400f;
+    private static float _measuredSaveH = 800f;
     private static readonly Func<float, float, float, float, Rect> RFunc = R;
     // v8.0 ScrollView 视口高度,由 DrawContents 每帧算好(tab 一行/两行会改变它)。
     //   Spawner 的动态行数要按这个算,原先写死 H-130 在两行 tab 下会多算一行 → 最后一行被裁。
     private static float _viewH = 630f;
     private static Vector2 _mainScroll;
+    private static Vector2 _teleScroll;
+    private static bool _splitDragging;
+    private static float _splitStartMouseY, _splitStartH;
     private static Rect _window = new Rect(30f, 30f, W, H);
     private const int WindowId = 0x71D4_AC;
 
@@ -79,8 +83,6 @@ internal static class Menu
     //   玩家控制锁只拦得住游戏自己的输入,拦不住这些。
     internal static bool CapturingKeys => Open && _searchFocused;
 
-    // v2.7.72 技能详细列表默认折叠,只显示"全部满级"
-    private static bool _skillsExpanded = false;
     private static bool _worldSodaExpanded = false;   // v7.2 从 MenuTweaks 挪来:汽水参数折叠态(现属「食谱 & 食物」tab)
 #if !STORY_EDITION
     private static float _recipeRetryAt;
@@ -115,8 +117,8 @@ internal static class Menu
     private static int    _cachedFilteredCount = -1;
 
     // 标签页
-    private static readonly string[] TabsZh = { "主页", "物品 & 传送", "饮食 & 食谱", "人物 & 操作", "物资 & 世界", "灯火 & 视觉" };
-    private static readonly string[] TabsEn = { "Main", "Items & Teleport", "Food & Recipes", "Character & Controls", "Gear & World", "Light & Visual" };
+    private static readonly string[] TabsZh = { "主页", "存档修改", "物品 & 传送", "人物 & 操作", "装备 & 衰减", "世界 & 饮食", "地图 & 界面" };
+    private static readonly string[] TabsEn = { "Main", "Save Edits", "Items & Teleport", "Character & Controls", "Gear & Decay", "World & Food", "Map & UI" };
     private static string[] Tabs => I18n.IsEnglish ? TabsEn : TabsZh;
     private static int _activeTab = 0;
 
@@ -132,6 +134,8 @@ internal static class Menu
     private static readonly Color CursorPanelHi = new Color32(0x35, 0x37, 0x3C, 0xFF);
     private static readonly Color CursorAccent = new Color32(0x59, 0x9C, 0xFF, 0xFF);
     private static readonly Color CursorAccentDim = new Color(0.35f, 0.61f, 1f, 0.25f);
+    // 开着的开关字色。CursorAccent 在亮面板上只有 4.3:1,这个是 4.9:1
+    private static readonly Color CursorAccentText = new Color32(0x6A, 0xA8, 0xFF, 0xFF);
     private static readonly Color CursorText = new Color32(0xF2, 0xF3, 0xF5, 0xFF);
     private static readonly Color CursorTextMuted = new Color32(0x9B, 0xA1, 0xAB, 0xFF);
     private static readonly Color CursorDanger = new Color32(0xFA, 0x79, 0x70, 0xFF);
@@ -160,6 +164,7 @@ internal static class Menu
     private static Texture2D _cardTex;
     private static Texture2D _lineTex, _trackTex, _thumbTex, _thumbHotTex, _outlineTex, _outlineHotTex;
     private static Texture2D _scrollTrackTex, _scrollThumbTex, _scrollThumbHotTex, _winTex;
+    private static Texture2D _toggleOnTex;
     private static GUIStyle _tabStyle, _tabActiveStyle, _expanderStyle, _metaStyle;
     private static GUIStyle _sliderStyle, _thumbStyle, _vScrollStyle, _vScrollThumbStyle;
     private static float _titleW = 120f;
@@ -175,14 +180,12 @@ internal static class Menu
     private static GUIStyle _buttonStyle;
     private static GUIStyle _buttonActiveStyle;
     private static GUIStyle _buttonDangerStyle;
+    private static GUIStyle _buttonConfirmStyle;   // 点两次才执行的按钮在等第二下时用,红底深字
     private static GUIStyle _toggleStyle;
     private static GUIStyle _statusStyle;
     private static GUIStyle _rowLabelStyle;       // v4.0 物品生成器行 Label 垂直居中,与按钮基线对齐
     private static GUIStyle _searchFieldStyle, _searchFieldHotStyle;   // v9.0 物品搜索框(自己画的,聚焦换描边)
     private static GUIStyle _tipStyle;
-    private static string _hintText;
-    private static KeyCode _hintKey;
-    private static bool _hintEn;
 
     private static Texture2D Tex(Color color)
     {
@@ -227,6 +230,19 @@ internal static class Menu
                 float a = Mathf.Clamp01(r - Mathf.Sqrt(dx * dx + dy * dy));
                 tex.SetPixel(x, y, new Color(c.r, c.g, c.b, c.a * a));
             }
+        tex.Apply();
+        return tex;
+    }
+
+    // 开着的开关底图:左边 bar 列是强调色,最后一列是面板色。样式的 border.left = bar,
+    //   画的时候只拉伸最后一列,所以蓝条宽度不随按钮宽度变
+    private static Texture2D BarTex(int bar, Color edge, Color fill)
+    {
+        var tex = new Texture2D(bar + 1, 1, TextureFormat.RGBA32, false);
+        tex.hideFlags = HideFlags.HideAndDontSave;
+        tex.filterMode = FilterMode.Point;
+        tex.wrapMode = TextureWrapMode.Clamp;
+        for (int x = 0; x <= bar; x++) tex.SetPixel(x, 0, x < bar ? edge : fill);
         tex.Apply();
         return tex;
     }
@@ -280,6 +296,7 @@ internal static class Menu
             _buttonStyle = new GUIStyle(GUI.skin.button);
             _buttonActiveStyle = new GUIStyle(GUI.skin.button);
             _buttonDangerStyle = new GUIStyle(GUI.skin.button);
+            _buttonConfirmStyle = new GUIStyle(GUI.skin.button);
             _toggleStyle = new GUIStyle(GUI.skin.button);
             _statusStyle = new GUIStyle(GUI.skin.label);
             _rowLabelStyle = new GUIStyle(GUI.skin.label);
@@ -318,8 +335,11 @@ internal static class Menu
         _windowStyle.contentOffset = Vector2.zero;
         _windowStyle.fontSize = h1;
 
+        // 标签上下居中,和同一行的滑条、按钮、数值对齐
         ConfigureLabel(_labelStyle, body, CursorText);
+        _labelStyle.alignment = TextAnchor.MiddleLeft;
         ConfigureLabel(_mutedLabelStyle, body, CursorTextMuted);
+        _mutedLabelStyle.alignment = TextAnchor.MiddleLeft;
         ConfigureLabel(_valueLabelStyle, body, CursorTextMuted);
         _valueLabelStyle.alignment = TextAnchor.MiddleRight;
         ConfigureLabel(_titleStyle, h1, CursorText);
@@ -346,13 +366,24 @@ internal static class Menu
         ConfigureButton(_buttonStyle, _outlineTex, CursorText, body);
         _buttonStyle.hover = State(_outlineHotTex, CursorText);
         _buttonStyle.active = State(_accentDimTex, CursorText);
-        ConfigureButton(_buttonActiveStyle, _accentTex, CursorText, body);
+        // 选中档位和待确认按钮用深色字:白字在蓝底上只有 2.5:1、红底上 2.4:1,深色字是 6.0 和 6.3
+        ConfigureButton(_buttonActiveStyle, _accentTex, CursorBG, body);
         ConfigureButton(_buttonDangerStyle, _dangerTex, CursorText, body);
-        ConfigureButton(_toggleStyle, _panelHiTex, CursorText, body);
-        _toggleStyle.onNormal = State(_panelHiTex, CursorAccent);
-        _toggleStyle.onHover = State(_panelHiTex, CursorAccent);
+        ConfigureButton(_buttonConfirmStyle, _dangerTex, CursorBG, body);
+        // 开关:开着亮面板蓝字,左边再加一道蓝条,转成灰度也分得清开关;关着暗一档的底配灰字
+        ConfigureButton(_toggleStyle, _panelTex, CursorTextMuted, body);
+        int bar = Mathf.Max(2, Mathf.RoundToInt(3f * _scale));
+        if (_toggleOnTex == null || _toggleOnTex.width != bar + 1)
+        {
+            if (_toggleOnTex != null) UnityEngine.Object.Destroy(_toggleOnTex);
+            _toggleOnTex = BarTex(bar, CursorAccent, CursorPanelHi);
+        }
+        // 其他状态的底图都是 1x1 纯色,border 改大了照样铺满
+        _toggleStyle.border = new RectOffset(bar, 0, 0, 0);
+        _toggleStyle.onNormal = State(_toggleOnTex, CursorAccentText);
+        _toggleStyle.onHover = State(_toggleOnTex, CursorAccentText);
         _toggleStyle.onActive = State(_accentDimTex, CursorText);
-        _toggleStyle.onFocused = State(_panelHiTex, CursorAccent);
+        _toggleStyle.onFocused = State(_toggleOnTex, CursorAccentText);
 
         // 标签页:未选中只有灰字,悬停和选中垫一层面板色,选中项下方再画蓝色下划线(见 DrawContents)
         ConfigureButton(_tabStyle, null, CursorTextMuted, body);
@@ -490,8 +521,9 @@ internal static class Menu
     {
         style.fontSize = size;
         style.normal = State(bg, text);
-        style.hover = State(bg == _accentTex || bg == _dangerTex ? bg : _accentDimTex, CursorText);
-        style.active = State(bg == _accentTex || bg == _dangerTex ? bg : _accentDimTex, CursorText);
+        bool solid = bg == _accentTex || bg == _dangerTex;
+        style.hover = State(solid ? bg : _accentDimTex, solid ? text : CursorText);
+        style.active = State(solid ? bg : _accentDimTex, solid ? text : CursorText);
         style.focused = State(bg, text);
         style.padding = new RectOffset(8, 8, 0, 0);
         style.border = new RectOffset(1, 1, 1, 1);
@@ -530,6 +562,37 @@ internal static class Menu
             ClampWin();
         }
         Open = true;
+        _pausedByMenu = TryOpenPauseMenu();
+    }
+
+    // 不暂停的话鼠标被视角抢走,修改器点不了,玩家原先都是先按 ESC 再开。这里替他按。
+    private static bool _pausedByMenu;
+
+    private static bool TryOpenPauseMenu()
+    {
+#if !STORY_EDITION
+        if (ModMain.Settings == null || !ModMain.Settings.MenuPauseGame) return false;
+        try
+        {
+            if (GameManager.IsMainMenuActive() || GameManager.m_IsPaused || !InputManager.CanInvokePauseMenu()) return false;
+            var p = InterfaceManager.GetPanel<Panel_PauseMenu>();
+            if (p == null || p.isActiveAndEnabled) return false;
+            p.Enable(true);
+            return true;
+        }
+        catch (System.Exception ex) { ModMain.Log?.Warning($"[Menu] open pause menu: {ex.Message}"); }
+#endif
+        return false;
+    }
+
+    private static void ClosePauseMenu()
+    {
+        try
+        {
+            var p = InterfaceManager.GetPanel<Panel_PauseMenu>();
+            if (p != null && p.isActiveAndEnabled) p.OnDone();
+        }
+        catch (System.Exception ex) { ModMain.Log?.Warning($"[Menu] close pause menu: {ex.Message}"); }
     }
 
     // v8.0 把整个窗口按住在屏幕内。原先只夹 (0, Screen.w-120)/(0, Screen.h-60):那是"至少留 120x60
@@ -560,6 +623,7 @@ internal static class Menu
         _resizing = false;
         _searchFocused = false;   // 不清的话重开菜单马上又锁住玩家控制,WASD 还会打进框里
         Open = false;
+        if (_pausedByMenu) { _pausedByMenu = false; ClosePauseMenu(); }
         if (_cursorSaved)
         {
             Cursor.visible = _prevCursorVisible;
@@ -662,9 +726,11 @@ internal static class Menu
             }
         }
 
+        ItemPreview.BeginFrame();
         _window = GUI.Window(WindowId, _window, (GUI.WindowFunction)DrawContents, "");
+        ItemPreview.Draw(_activeTab == 2 && !_resizing && !_dragging && ModMain.Settings?.SpawnerPreview != false, _scale);
 
-        SyncSearchInputLock(_activeTab == 1 && _searchFocused);
+        SyncSearchInputLock(_activeTab == 2 && _searchFocused);
 
         // v2.7.83:检测拖动 → 延迟保存(位置稳定 30 帧后才写磁盘)
         if (s != null)
@@ -721,14 +787,8 @@ internal static class Menu
         GUI.Box(R(0f, 0f, W, H), "", _windowStyle);
         GUI.Label(R(16f, 8f, _titleW, 24f), TitleMain, _titleStyle);
         GUI.Label(R(16f + _titleW + 4f, 8f, Mathf.Max(0f, W - 172f - _titleW), 24f), I18n.T(MetaZh, MetaEn), _metaStyle);
-        if (_hintText == null || _hintKey != s.MenuHotkey || _hintEn != I18n.IsEnglish)
-        {
-            _hintKey = s.MenuHotkey;
-            _hintEn = I18n.IsEnglish;
-            _hintText = I18n.T($"鼠标停在选项上可查看说明,按 {_hintKey} 关闭菜单",
-                               $"Hold the mouse on an option to see its description. Press {_hintKey} to close the menu.");
-        }
-        GUI.Label(R(16f, 30f, W - 170f, 18f), _hintText, _mutedLabelStyle);
+        GUI.Label(R(16f, 30f, W - 170f, 18f),
+            I18n.T("鼠标停在选项上可查看说明", "Hold the mouse on an option to see its description."), _mutedLabelStyle);
 
         // 标题栏右侧:scale - / x1.0 / + / Close (v2.7.83 统一间距 4px)
         // 先取 min(设置值, 生效值) 再减:屏幕装不下时 _scale 被 fitScale 压过,
@@ -753,7 +813,7 @@ internal static class Menu
         // 标签页
         // TAB_MIN = 放得下最长标签所需的按钮宽度。最长的是英文 "Character & Controls"(20 字符,
         //   13pt 下约 130px)+ 按钮左右 padding(12px)≈ 142px,取 146。
-        //   6 个 tab 在最小宽 1040 下每个约 161px,始终一行。
+        //   7 个 tab 在默认宽 1280 下每个约 173px 一行;拉到最窄 1040 时折成两行。
         const float TAB_MIN = 146f;
         // 判据必须和下面算 tabW 的式子一致(都要减掉 6px 间距),否则会挑 1 行却给出比
         //   TAB_MIN 还小的按钮,最长标签仍然被 IMGUI 截成 "Items & Telep..."。
@@ -786,8 +846,9 @@ internal static class Menu
         _viewH = viewH;
         Rect viewport = R(OUTER_PAD, tabBottom, W - OUTER_PAD * 2f, viewH);
         float measuredH = _activeTab == 0 ? _measuredMainH + 20f
-            : _activeTab == 1 ? _measuredSpawnerH + 20f
-            : _activeTab == 2 ? _measuredRecipeH + 20f
+            : _activeTab == 1 ? _measuredSaveH + 20f
+            : _activeTab == 2 ? _measuredSpawnerH + 20f
+            : _activeTab == 5 ? _measuredRecipeH + 20f
             : _measuredTweaksH + 20f;
         bool needScroll = measuredH > viewH + 4f;
         float ch = needScroll ? measuredH : viewH - 2f;
@@ -800,11 +861,12 @@ internal static class Menu
         switch (_activeTab)
         {
             case 0: _measuredMainH = DrawMainTab(s); break;
-            case 1: _measuredSpawnerH = DrawSpawnerTab(s); break;
-            case 2: _measuredRecipeH = DrawRecipeTab(s); break;
+            case 1: _measuredSaveH = DrawSaveTab(s); break;
+            case 2: _measuredSpawnerH = DrawSpawnerTab(s); break;
             case 3: _measuredTweaksH = MenuTweaks.DrawCharacterAndQoLTab(RFunc, s); break;
-            case 4: _measuredTweaksH = MenuTweaks.DrawGearAndWorldTab(RFunc, s); break;
-            case 5: _measuredTweaksH = MenuTweaks.DrawLightAndCraftTab(RFunc, s); break;
+            case 4: _measuredTweaksH = MenuTweaks.DrawGearTab(RFunc, s); break;
+            case 5: _measuredRecipeH = DrawWorldTab(s); break;
+            case 6: _measuredTweaksH = MenuTweaks.DrawMapUiTab(RFunc, s); break;
         }
         Ui.EndCards();
 
@@ -985,64 +1047,31 @@ internal static class Menu
             s.RequestSave();
         }
 
-        y1 = Section(c1, y1, I18n.T("技能", "Skills"));
-        // v2.7.72 默认折叠 —— v2.7.82 "全部满级" + "展开" 同行
-        if (GUI.Button(R(c1, y1, TOG_W, ROW_H), I18n.T("全部满级", "All Max")))
-            Skills.SetAllMax();
-        if (GUI.Button(R(c1 + TOG2_OFF, y1, TOG_W, ROW_H), _skillsExpanded ? I18n.T("▲ 收起", "▲ Hide") : I18n.T("▼ 逐项调整", "▼ Per Skill")))
-            _skillsExpanded = !_skillsExpanded;
-        y1 += ROW_ADV;
-        if (_skillsExpanded)
-        {
-            // 按钮组 144px 贴右边,标签占剩下的宽度
-            float sb = c1 + TOG_WIDE - 144f;
-            for (int i = 0; i < Skills.All.Length; i++)
-            {
-                var (lbl, lblEn, t) = Skills.All[i];
-                GUI.Label (R(c1 + 4f,     y1, sb - c1 - 8f, ROW_H), I18n.T(lbl, lblEn));
-                // v7.1 逐级 - / Lv N / + ,保留"满"
-                if (GUI.Button(R(sb,      y1, 26f,  ROW_H), "-")) Skills.StepTier(t, -1);
-                var _prevA = _mutedLabelStyle.alignment;
-                _mutedLabelStyle.alignment = UnityEngine.TextAnchor.MiddleCenter;
-                GUI.Label (R(sb + 28f,    y1, 40f,  ROW_H), "Lv " + Skills.GetTierNumber(t), _mutedLabelStyle);
-                _mutedLabelStyle.alignment = _prevA;
-                if (GUI.Button(R(sb + 70f,  y1, 26f, ROW_H), "+")) Skills.StepTier(t, +1);
-                if (GUI.Button(R(sb + 100f, y1, 44f, ROW_H), I18n.T("满", "Max"))) Skills.SetMax(t);
-                y1 += ROW_ADV;
-            }
-        }
-        y1 += SECTION_END_ADV;
+#if !STORY_EDITION
+        bool ceChanged = false;
+        y1 = MenuTweaks.CardDeathStruggle(RFunc, s, c1, y1, ref ceChanged);
+        if (ceChanged) s.RequestSave();
+#endif
 
-        // —— 物品 & 装备(v4.0r3 从 col 3 移来) ——
-        y1 = Section(c1, y1, I18n.T("物品 & 装备", "Items & Gear"));
-        bool stk   = Ui.Toggle("StackingEnabled", R(c1,            y1, TOG_W, ROW_H), s.StackingEnabled,    I18n.T(" UI 堆叠", " UI Stacking"));
-        bool dur   = Ui.Toggle("InfiniteDurability", R(c1 + TOG2_OFF, y1, TOG_W, ROW_H), s.InfiniteDurability, I18n.T(" 无限耐久", " No Degrade"));
+        // 一键搜刮放左列,三列高度接近
+        y1 = Section(c1, y1, I18n.T("一键搜刮", "Grab All Nearby"), I18n.T($"热键 {s.GrabAllKey}", $"Key {s.GrabAllKey}"));
+        float grabR = MenuTweaks.DrawSliderCol3(RFunc, c1, y1, I18n.T("半径(米)", "Radius (m)"), s.GrabAllRadius, 1f, 50f, "F0", key: "GrabAllRadius");
+        if (Mathf.Abs(grabR - s.GrabAllRadius) > 0.01f) { s.GrabAllRadius = grabR; s.RequestSave(); }
         y1 += ROW_ADV;
-        bool wet   = Ui.Toggle("NoWetClothes", R(c1,            y1, TOG_W, ROW_H), s.NoWetClothes,       I18n.T(" 衣物防潮", " Dry Clothes"));
-        bool lamp  = Ui.Toggle("LampFuelNoDrain", R(c1 + TOG2_OFF, y1, TOG_W, ROW_H), s.LampFuelNoDrain,    I18n.T(" 油灯不耗", " Lamp No Drain"));
+        bool grabNotify = Ui.Toggle("GrabAllNotify", R(c1, y1, TOG_W, ROW_H), s.GrabAllNotify,
+            I18n.T(" 逐件确认", " Confirm Each"));
+        if (grabNotify != s.GrabAllNotify) { s.GrabAllNotify = grabNotify; s.RequestSave(); }
+        if (Ui.Button("Act_GrabNow", R(c1 + TOG2_OFF, y1, TOG_W, ROW_H), I18n.T("立即搜刮", "Grab Now")))
+            GrabAll.Trigger(s.GrabAllRadius, s.GrabAllNotify);
+#if !STORY_EDITION && !EP5_EDITION
         y1 += ROW_ADV;
-        bool flsk1 = Ui.Toggle("FlaskNoHeatLoss", R(c1,            y1, TOG_W, ROW_H), s.FlaskNoHeatLoss,    I18n.T(" 保温杯不降温", " Flask Keep Hot"));
-        bool flsk2 = Ui.Toggle("FlaskInfiniteVol", R(c1 + TOG2_OFF, y1, TOG_W, ROW_H), s.FlaskInfiniteVol,   I18n.T(" 保温杯不耗量", " Flask No Drain"));
-        y1 += ROW_ADV;
-        bool flsk3 = Ui.Toggle("FlaskAnyItem", R(c1,            y1, TOG_W, ROW_H), s.FlaskAnyItem,            I18n.T(" 保温杯装任意液体", " Flask Any Liquid"));
-        bool bnop  = Ui.Toggle("BlockAutoPickupOwnDrops", R(c1 + TOG2_OFF, y1, TOG_W, ROW_H), s.BlockAutoPickupOwnDrops, I18n.T(" 不捡丢物", " Skip Own Drops"));
+        bool harvesting = MapHarvest.Active;
+        if (Ui.Button("Act_HarvestCarcasses", R(c1, y1, TOG_W, ROW_H), harvesting ? I18n.T("停止采集", "Stop") : I18n.T("采集全图尸体", "All Carcasses")))
+            MapHarvest.Trigger(false);
+        if (Ui.Button("Act_HarvestPlants", R(c1 + TOG2_OFF, y1, TOG_W, ROW_H), harvesting ? I18n.T("停止采集", "Stop") : I18n.T("采集全图植物", "All Plants")))
+            MapHarvest.Trigger(true);
+#endif
         y1 += ROW_ADV + SECTION_END_ADV;
-        if (stk != s.StackingEnabled || dur != s.InfiniteDurability || wet != s.NoWetClothes
-            || lamp != s.LampFuelNoDrain || flsk1 != s.FlaskNoHeatLoss
-            || flsk2 != s.FlaskInfiniteVol || flsk3 != s.FlaskAnyItem
-            || bnop != s.BlockAutoPickupOwnDrops)
-        {
-            s.StackingEnabled = stk; s.InfiniteDurability = dur; s.NoWetClothes = wet;
-            s.LampFuelNoDrain = lamp; s.FlaskNoHeatLoss = flsk1;
-            s.FlaskInfiniteVol = flsk2; s.FlaskAnyItem = flsk3;
-            s.BlockAutoPickupOwnDrops = bnop;
-            CheatState.InfiniteDurability = dur; CheatState.NoWetClothes = wet;
-            CheatState.LampFuelNoDrain = lamp; CheatState.FlaskNoHeatLoss = flsk1;
-            CheatState.FlaskInfiniteVol = flsk2; CheatState.FlaskAnyItem = flsk3;
-            CheatState.BlockAutoPickupOwnDrops = bnop;
-            s.RequestSave();
-        }
-
 
         // ═════════ 列 2:世界 & 环境 & 一次性 ═════════
         y2 = Section(c2, y2, I18n.T("动物", "Animals"));
@@ -1104,42 +1133,32 @@ internal static class Menu
 
         // 世界时钟 — 地图 + 天气(3行) + 时间(1行)合并一块
         y2 = Section(c2, y2, I18n.T("地图 / 天气 / 时间", "Map / Weather / Time"));
-        if (GUI.Button(R(c2, y2, TOG_W, ROW_H), I18n.T("全开地图", "Reveal Map"))) Cheats.RevealFullMap();
 #if STORY_GUARD
         // 剧情版:地图双击传送同样属"传送",按用户决策禁用(全开地图保留)。
-        bool _mtpBlocked = StoryGuard.InStory;
-        if (_mtpBlocked) GUI.enabled = false;
-#endif
-        bool mtp = Ui.Toggle("MapClickTP", R(c2 + TOG2_OFF, y2, TOG_W, ROW_H), s.MapClickTP, I18n.T(" 地图双击传送", " Map Click TP"));
-        // v7.7 补 RequestSave:这个开关原先改了不落盘,重启游戏后被 JSON 里的旧值覆盖
-        if (mtp != s.MapClickTP) { s.MapClickTP = mtp; CheatState.MapClickTP = mtp; s.RequestSave(); }
-#if STORY_GUARD
-        if (_mtpBlocked) GUI.enabled = true;
-#endif
-        y2 += ROW_ADV + 2f;
-#if STORY_GUARD
-        // 剧情版:天气分级 / 锁天气 / 时间跳跃都是"脚本化时间天气",可跳过或卡死任务触发,
+        // 天气分级 / 锁天气 / 时间跳跃都是"脚本化时间天气",可跳过或卡死任务触发,
         // 且这几个是一次性按钮(非 CheatState 门控),只能靠灰显拦住点击。全开地图保留(830 行)。
         bool _clockBlocked = StoryGuard.InStory;
         if (_clockBlocked) GUI.enabled = false;
 #endif
-        // 天气 — 每行 5 个 + 最后一行剩余
-        int wPer = TOG_WIDE < 360f ? 4 : 5;
-        float wW = (TOG_WIDE - 4f * (wPer - 1)) / wPer;
+        bool mtp = Ui.Toggle("MapClickTP", R(c2, y2, TOG_W, ROW_H), s.MapClickTP, I18n.T(" 地图双击传送", " Map Click TP"));
+        // v7.7 补 RequestSave:这个开关原先改了不落盘,重启游戏后被 JSON 里的旧值覆盖
+        if (mtp != s.MapClickTP) { s.MapClickTP = mtp; CheatState.MapClickTP = mtp; s.RequestSave(); }
+        bool wLock = Ui.Toggle("WeatherLock", R(c2 + TOG2_OFF, y2, TOG_W, ROW_H), CheatState.WeatherLocked,
+            I18n.T(" 锁定天气", " Lock Weather"), MenuTweaks.ToggleStyle ?? GUI.skin.toggle);
+        if (wLock != CheatState.WeatherLocked) CheatState.WeatherLocked = wLock;
+        y2 += ROW_ADV + 6f;
+        // 天气 / 时间 / 游戏速度三块都是左侧行标签 + 4 列,列上下对齐
+        const float rowLblW = 64f;
+        float rowBtnX = c2 + rowLblW, rowBtnW = TOG_WIDE - rowLblW;
+        const int wPer = 4;
+        float wW = (rowBtnW - 4f * (wPer - 1)) / wPer;
+        CLabel(c2, y2, rowLblW, ROW_H, I18n.T("天气", "Weather"), true);
         for (int i = 0; i < WeatherStages.Length; i++)
         {
             if (i > 0 && i % wPer == 0) y2 += ROW_ADV;
-            if (GUI.Button(R(c2 + (i % wPer) * (wW + 4f), y2, wW, ROW_H), WeatherLabels[i])) Cheats.SetWeatherStage(WeatherStages[i]);
+            if (GUI.Button(R(rowBtnX + (i % wPer) * (wW + 4f), y2, wW, ROW_H), WeatherLabels[i])) Cheats.SetWeatherStage(WeatherStages[i]);
         }
-        int wSlot = WeatherStages.Length % wPer;
-        if (wSlot == 0) y2 += ROW_ADV;
-        bool wLock = Ui.Toggle("WeatherLock", R(c2 + wSlot * (wW + 4f), y2, wW, ROW_H), CheatState.WeatherLocked,
-            I18n.T(" 锁定", " Lock"), MenuTweaks.ToggleStyle ?? GUI.skin.toggle);
-        if (wLock != CheatState.WeatherLocked) CheatState.WeatherLocked = wLock;
-        y2 += ROW_ADV + 2f;
-        // 时间 — 4 个小时 preset,左侧行标签
-        const float rowLblW = 64f;
-        float rowBtnX = c2 + rowLblW, rowBtnW = TOG_WIDE - rowLblW;
+        y2 += ROW_ADV + 6f;
         CLabel(c2, y2, rowLblW, ROW_H, I18n.T("时间", "Time"), true);
         float hW = (rowBtnW - 4f * (HourPresets.Length - 1)) / HourPresets.Length;
         for (int i = 0; i < HourPresets.Length; i++)
@@ -1162,20 +1181,6 @@ internal static class Menu
         }
         y2 += ROW_ADV + SECTION_END_ADV;
 
-        // v8.0 「一键搜刮」原先独占一个 tab,里面只有 1 个滑条 + 1 个开关 + 1 个按钮。
-        //   8 个 tab 在 1040 宽下一行排不开要折成两行,挤掉一行内容高度;并到主页第 2 列
-        //   (三列里最矮的一列)后 tab 降到 7 个,任何宽度都是一行。
-        y2 = Section(c2, y2, I18n.T("一键搜刮", "Grab All Nearby"), I18n.T($"热键 {s.GrabAllKey}", $"Key {s.GrabAllKey}"));
-        float grabR = MenuTweaks.DrawSliderCol3(RFunc, c2, y2, I18n.T("半径(米)", "Radius (m)"), s.GrabAllRadius, 1f, 50f, "F0", key: "GrabAllRadius");
-        if (Mathf.Abs(grabR - s.GrabAllRadius) > 0.01f) { s.GrabAllRadius = grabR; s.RequestSave(); }
-        y2 += ROW_ADV;
-        bool grabNotify = Ui.Toggle("GrabAllNotify", R(c2, y2, TOG_W, ROW_H), s.GrabAllNotify,
-            I18n.T(" 逐件确认", " Confirm Each"));
-        if (grabNotify != s.GrabAllNotify) { s.GrabAllNotify = grabNotify; s.RequestSave(); }
-        if (Ui.Button("Act_GrabNow", R(c2 + TOG2_OFF, y2, TOG_W, ROW_H), I18n.T("立即搜刮", "Grab Now")))
-            GrabAll.Trigger(s.GrabAllRadius, s.GrabAllNotify);
-        y2 += ROW_ADV + SECTION_END_ADV;
-
         // ═════════ 列 3:物品 & 武器 ═════════
         y3 = Section(c3, y3, I18n.T("快速操作", "Quick Actions"));
         bool qcook = Ui.Toggle("QuickCook", R(c3,            y3, TOG_W, ROW_H), s.QuickCook,      I18n.T(" 快速烹饪", " Instant Cook"));
@@ -1190,6 +1195,11 @@ internal static class Menu
         bool qcl   = Ui.Toggle("QuickClimb", R(c3,            y3, TOG_W, ROW_H), s.QuickClimb,     I18n.T(" 快速爬绳", " Fast Climb"));
         // 原名"操作自动加速":管采集植物 / 割肉切块 / 修理 / 长按类交互的进度,开着就立刻完成
         bool qa    = Ui.Toggle("QuickAction", R(c3 + TOG2_OFF, y3, TOG_W, ROW_H), s.QuickAction,    I18n.T(" 操作加速", " Auto Speed-up"));
+#if !STORY_EDITION
+        y3 += ROW_ADV;
+        bool dcook = Ui.Toggle("DropCook", R(c3,            y3, TOG_W, ROW_H), s.DropCook,       I18n.T(" 丢地烹饪", " Drop to Cook"));
+        if (dcook != s.DropCook) { s.DropCook = dcook; s.RequestSave(); }
+#endif
         y3 += ROW_ADV + SECTION_END_ADV;
         if (qcook != s.QuickCook || nbrn != s.NoBurn || qsrch != s.QuickSearch || qhv != s.QuickHarvest
             || qbd != s.QuickBreakDown || qev != s.QuickEvolve || qcl != s.QuickClimb
@@ -1237,16 +1247,19 @@ internal static class Menu
             y3 += ROW_ADV;
         }
         bool infCon = Ui.Toggle("InfiniteContainer", R(c3, y3, TOG_W, ROW_H), s.InfiniteContainer, I18n.T(" 容器无限", " Inf. Container"));
+        bool infCarry = Ui.Toggle("InfiniteCarry", R(c3 + TOG2_OFF, y3, TOG_W, ROW_H), s.InfiniteCarry, I18n.T(" 无限负重", " Infinite Carry"));
         y3 += ROW_ADV + SECTION_END_ADV;
         if (lok != s.IgnoreLock || qc != s.QuickOpenContainer || usaf != s.UnlockSafes
-            || tbag != s.TechBackpack || infCon != s.InfiniteContainer || tbagKg != s.TechBackpackKg)
+            || tbag != s.TechBackpack || infCon != s.InfiniteContainer || tbagKg != s.TechBackpackKg
+            || infCarry != s.InfiniteCarry)
         {
-            bool wasOn = s.TechBackpack;
+            bool wasOn = s.TechBackpack || s.InfiniteCarry;
             s.IgnoreLock = lok; s.QuickOpenContainer = qc; s.UnlockSafes = usaf;
-            s.TechBackpack = tbag; s.InfiniteContainer = infCon; s.TechBackpackKg = tbagKg;
+            s.TechBackpack = tbag; s.InfiniteContainer = infCon; s.TechBackpackKg = tbagKg; s.InfiniteCarry = infCarry;
             CheatState.IgnoreLock = lok; CheatState.QuickOpenContainer = qc; CheatState.UnlockSafes = usaf;
             CheatState.TechBackpack = tbag; CheatState.InfiniteContainer = infCon; CheatState.TechBackpackKg = tbagKg;
-            if (wasOn && !tbag) EncumberVanilla.Reset();
+            CheatState.InfiniteCarry = infCarry;
+            if (wasOn && !tbag && !infCarry) EncumberVanilla.Reset();
             s.RequestSave();
         }
 
@@ -1260,139 +1273,105 @@ internal static class Menu
         y3 += ROW_ADV;
         bool sway = Ui.Toggle("NoAimSway", R(c3,            y3, TOG_W, ROW_H), s.NoAimSway,      I18n.T(" 稳定瞄准", " Steady Aim"));
         bool magic= Ui.Toggle("MagicBullet", R(c3 + TOG2_OFF, y3, TOG_W, ROW_H), s.MagicBullet,    I18n.T(" 魔法子弹", " Magic Bullet"));
+        y3 += ROW_ADV;
+        bool sacc = Ui.Toggle("SuperAccuracy", R(c3, y3, TOG_W, ROW_H), s.SuperAccuracy, I18n.T(" 超级精准", " Super Accuracy"));
         y3 += ROW_ADV + SECTION_END_ADV;
-        if (amm != s.InfiniteAmmo || jam != s.NoJam || rec != s.NoRecoil
+        if (amm != s.InfiniteAmmo || jam != s.NoJam || rec != s.NoRecoil || sacc != s.SuperAccuracy
             || sway != s.NoAimSway || nstam != s.NoAimStamina || magic != s.MagicBullet)
         {
-            s.InfiniteAmmo = amm; s.NoJam = jam; s.NoRecoil = rec;
+            s.InfiniteAmmo = amm; s.NoJam = jam; s.NoRecoil = rec; s.SuperAccuracy = sacc;
             s.NoAimSway = sway; s.NoAimStamina = nstam; s.MagicBullet = magic;
-            CheatState.InfiniteAmmo = amm; CheatState.NoJam = jam; CheatState.NoRecoil = rec;
+            CheatState.InfiniteAmmo = amm; CheatState.NoJam = jam; CheatState.NoRecoil = rec; CheatState.SuperAccuracy = sacc;
             CheatState.NoAimSway = sway; CheatState.NoAimStamina = nstam;
             CheatStateESP.MagicBullet = magic;
             s.RequestSave();
         }
 
-        // —— 一次性操作 ——
-        y3 = Section(c3, y3, I18n.T("一次性操作", "One-shot Actions"));
-        if (Ui.Button("Act_ClearAfflictions", R(c3,            y3, TOG_W, ROW_H), I18n.T("清除所有负面", "Clear Afflictions"))) Cheats.ClearAllAfflictions();
-        if (Ui.Button("Act_RepairHeld",       R(c3 + TOG2_OFF, y3, TOG_W, ROW_H), I18n.T("修复手持", "Repair Held")))            Cheats.RepairItemInHands();
-        y3 += ROW_ADV;
-        if (Ui.Button("Act_RepairBag",        R(c3,            y3, TOG_W, ROW_H), I18n.T("修复背包", "Repair Inventory")))       QuickActions.RepairAllInventory();
-        if (Ui.Button("Act_RestoreAll",       R(c3 + TOG2_OFF, y3, TOG_W, ROW_H), I18n.T("恢复全部耐久", "Restore Durability"))) Cheats.RestoreAllSceneGear();
-        y3 += ROW_ADV;
-        if (Ui.Button("Act_UnlockFeats",      R(c3,            y3, TOG_W, ROW_H), I18n.T("一键解锁勋章", "Unlock Feats")))       Feats.UnlockAllFeats();
-        y3 += ROW_ADV + SECTION_END_ADV;
-
         return Mathf.Max(y1, Mathf.Max(y2, y3));
     }
 
-    // ————————————— Tab:饮食 & 食谱 —————————————
-    // c1 汽水/出肉量/烹饪位 | c2 衰减·食物 | c3 食谱列表(RecipeBook.AllRecipes,逐个解锁写存档,靠外层 ScrollView 滚动)
-    private static float DrawRecipeTab(TldHacksSettings s)
+    // ————————————— Tab:存档修改 —————————————
+    // 点一次就完事的操作和存档数据都在这页,主页只留常开常关的开关。
+    // c1 技能 / 一次性操作 / 清图 & 任务 | c2+c3 食谱、勋章(都横跨两列)
+    private static float DrawSaveTab(TldHacksSettings s)
     {
         float c1 = MenuTweaks.ColX(0), c2 = MenuTweaks.ColX(1), c3 = MenuTweaks.ColX(2);
-        float y = 6f, y2 = 6f, y3 = 6f;
+        float y1 = 6f, y3 = 6f;
         bool changed = false;
-        bool b;
-        float v;
 
-        // ═══ 含咖啡因汽水(原在装备&世界,v7.2 挪到本页) ═══
-        y = MenuTweaks.SectionCol(RFunc, c1, y, MenuTweaks.COL_W3, I18n.T("含咖啡因汽水", "Caffeinated Sodas"),
-            "World_CaffeinatedSodas", ref s.World_CaffeinatedSodas, ref changed);
-        _worldSodaExpanded = MenuTweaks.Expander(RFunc, c1, y, _worldSodaExpanded, "汽水参数", "Soda Params");
-        y += ROW_ADV;
-        if (_worldSodaExpanded)
+        y1 = Section(c1, y1, I18n.T("技能", "Skills"));
+        if (GUI.Button(R(c1, y1, TOG_WIDE, ROW_H), I18n.T("全部满级", "All Max")))
+            Skills.SetAllMax();
+        y1 += ROW_ADV;
+        // 按钮组 144px 贴右边,标签占剩下的宽度
+        float sb = c1 + TOG_WIDE - 144f;
+        void SkillRow(string label, Skill sk, string id)
         {
-            y = SodaRows(c1, y, I18n.T(" 橙味", " Orange"), ref s.World_SodaOrangeEnabled,
-                         ref s.World_SodaOrangeInitial, ref s.World_SodaOrangeDuration, ref changed);
-            y = SodaRows(c1, y, " Summit", ref s.World_SodaSummitEnabled,
-                         ref s.World_SodaSummitInitial, ref s.World_SodaSummitDuration, ref changed);
-            y = SodaRows(c1, y, I18n.T(" 葡萄味", " Grape"), ref s.World_SodaGrapeEnabled,
-                         ref s.World_SodaGrapeInitial, ref s.World_SodaGrapeDuration, ref changed);
+            GUI.Label (R(c1 + 4f,     y1, sb - c1 - 8f, ROW_H), label);
+            // v7.1 逐级 - / Lv N / + ,保留"满"
+            if (GUI.Button(R(sb,      y1, 26f,  ROW_H), "-")) Skills.StepTier(sk, -1, id);
+            var _prevA = _mutedLabelStyle.alignment;
+            _mutedLabelStyle.alignment = UnityEngine.TextAnchor.MiddleCenter;
+            GUI.Label (R(sb + 28f,    y1, 40f,  ROW_H), "Lv " + Skills.GetTierNumber(sk), _mutedLabelStyle);
+            _mutedLabelStyle.alignment = _prevA;
+            if (GUI.Button(R(sb + 70f,  y1, 26f, ROW_H), "+")) Skills.StepTier(sk, +1, id);
+            if (GUI.Button(R(sb + 100f, y1, 44f, ROW_H), I18n.T("满", "Max"))) Skills.SetMax(sk, id);
+            y1 += ROW_ADV;
         }
-        y += SECTION_END_ADV;
-
-        // ═══ 狩猎·出肉量(原在装备&世界 c3,v7.5 挪到本页) ═══
-        y = MenuTweaks.SectionCol(RFunc, c1, y, MenuTweaks.COL_W3, I18n.T("鹿肉出肉量", "Deer Meat Yield"));
-        v = MenuTweaks.DrawSliderCol3(RFunc, c1, y, I18n.T("倍率下限", "Mult Min"), s.DeerMeatMultMin, 0f, 5f, "F2", key: "DeerMeatMultMin");
-        if (v != s.DeerMeatMultMin) { s.DeerMeatMultMin = v; MeatState.DeerMin = v; changed = true; }
-        y += ROW_ADV;
-        v = MenuTweaks.DrawSliderCol3(RFunc, c1, y, I18n.T("倍率上限", "Mult Max"), s.DeerMeatMultMax, 0f, 5f, "F2", key: "DeerMeatMultMax");
-        if (v != s.DeerMeatMultMax) { s.DeerMeatMultMax = v; MeatState.DeerMax = v; changed = true; }
-        y += ROW_ADV + SECTION_END_ADV;
-
-        y = MenuTweaks.SectionCol(RFunc, c1, y, MenuTweaks.COL_W3, I18n.T("烹饪位扩展", "Cooking Slots"),
-            "Craft_MoreCookingSlots", ref s.Craft_MoreCookingSlots, ref changed);
-        float tw = MenuTweaks.THIRD_W, to = MenuTweaks.THIRD_OFF;
-        b = Ui.Toggle("Craft_MoreSlots_Fireplace", R(c1, y, tw, ROW_H), s.Craft_MoreSlots_Fireplace,
-            I18n.T(" 壁炉", " Fireplace"), MenuTweaks.ToggleStyle ?? GUI.skin.toggle);
-        if (b != s.Craft_MoreSlots_Fireplace) { s.Craft_MoreSlots_Fireplace = b; changed = true; }
-        b = Ui.Toggle("Craft_MoreSlots_Barrel", R(c1 + to, y, tw, ROW_H), s.Craft_MoreSlots_Barrel,
-            I18n.T(" 油桶", " Barrel"), MenuTweaks.ToggleStyle ?? GUI.skin.toggle);
-        if (b != s.Craft_MoreSlots_Barrel) { s.Craft_MoreSlots_Barrel = b; changed = true; }
-        b = Ui.Toggle("Craft_MoreSlots_Grill", R(c1 + 2f * to, y, tw, ROW_H), s.Craft_MoreSlots_Grill,
-            I18n.T(" 烤架", " Grill"), MenuTweaks.ToggleStyle ?? GUI.skin.toggle);
-        if (b != s.Craft_MoreSlots_Grill) { s.Craft_MoreSlots_Grill = b; changed = true; }
-        y += ROW_ADV + SECTION_END_ADV;
-
-        y2 = MenuTweaks.SectionCol(RFunc, c2, y2, MenuTweaks.COL_W3, I18n.T("衰减·食物", "Decay·Food"));
-        v = MenuTweaks.DrawSliderCol3(RFunc, c2, y2, I18n.T("食物(总)", "Food Total"), s.FoodDecay, 0f, 2f, "F2", key: "FoodDecay");
-        if (v != s.FoodDecay) { s.FoodDecay = v; changed = true; }
-        y2 += ROW_ADV;
-        v = MenuTweaks.DrawSliderCol3(RFunc, c2, y2, I18n.T("生肉", "Raw Meat"), s.RawMeatDecay, 0f, 2f, "F2", key: "RawMeatDecay");
-        if (v != s.RawMeatDecay) { s.RawMeatDecay = v; changed = true; }
-        y2 += ROW_ADV;
-        v = MenuTweaks.DrawSliderCol3(RFunc, c2, y2, I18n.T("熟肉", "Cooked Meat"), s.CookedMeatDecay, 0f, 2f, "F2", key: "CookedMeatDecay");
-        if (v != s.CookedMeatDecay) { s.CookedMeatDecay = v; changed = true; }
-        y2 += ROW_ADV;
-        v = MenuTweaks.DrawSliderCol3(RFunc, c2, y2, I18n.T("饮品", "Drinks"), s.DrinksDecay, 0f, 2f, "F2", key: "DrinksDecay");
-        if (v != s.DrinksDecay) { s.DrinksDecay = v; changed = true; }
-        y2 += ROW_ADV;
-        MenuTweaks._foodDetailExpanded = MenuTweaks.Expander(RFunc, c2, y2, MenuTweaks._foodDetailExpanded, "食物细分", "Food Detail");
-        y2 += ROW_ADV;
-        if (MenuTweaks._foodDetailExpanded)
+        var sm = GameManager.GetSkillsManager();
+        for (int i = 0; i < Skills.All.Length; i++)
         {
-            v = MenuTweaks.DrawSliderCol3(RFunc, c2, y2, I18n.T("腌肉", "Cured Meat"), s.CuredMeatDecay, 0f, 2f, "F2", key: "CuredMeatDecay");
-            if (v != s.CuredMeatDecay) { s.CuredMeatDecay = v; changed = true; }
-            y2 += ROW_ADV;
-            v = MenuTweaks.DrawSliderCol3(RFunc, c2, y2, I18n.T("生鱼", "Raw Fish"), s.RawFishDecay, 0f, 2f, "F2", key: "RawFishDecay");
-            if (v != s.RawFishDecay) { s.RawFishDecay = v; changed = true; }
-            y2 += ROW_ADV;
-            v = MenuTweaks.DrawSliderCol3(RFunc, c2, y2, I18n.T("熟鱼", "Cooked Fish"), s.CookedFishDecay, 0f, 2f, "F2", key: "CookedFishDecay");
-            if (v != s.CookedFishDecay) { s.CookedFishDecay = v; changed = true; }
-            y2 += ROW_ADV;
-            v = MenuTweaks.DrawSliderCol3(RFunc, c2, y2, I18n.T("罐头", "Canned"), s.CannedFoodDecay, 0f, 2f, "F2", key: "CannedFoodDecay");
-            if (v != s.CannedFoodDecay) { s.CannedFoodDecay = v; changed = true; }
-            y2 += ROW_ADV;
-            v = MenuTweaks.DrawSliderCol3(RFunc, c2, y2, I18n.T("咖啡/茶", "Coffee/Tea"), s.CoffeeTeaDecay, 0f, 2f, "F2", key: "CoffeeTeaDecay");
-            if (v != s.CoffeeTeaDecay) { s.CoffeeTeaDecay = v; changed = true; }
-            y2 += ROW_ADV;
-            v = MenuTweaks.DrawSliderCol3(RFunc, c2, y2, I18n.T("包装食品", "Packaged"), s.PackagedFoodDecay, 0f, 2f, "F2", key: "PackagedFoodDecay");
-            if (v != s.PackagedFoodDecay) { s.PackagedFoodDecay = v; changed = true; }
-            y2 += ROW_ADV;
-            v = MenuTweaks.DrawSliderCol3(RFunc, c2, y2, I18n.T("油脂", "Fat"), s.FatDecay, 0f, 2f, "F2", key: "FatDecay");
-            if (v != s.FatDecay) { s.FatDecay = v; changed = true; }
-            y2 += ROW_ADV;
-            v = MenuTweaks.DrawSliderCol3(RFunc, c2, y2, I18n.T("腌鱼", "Cured Fish"), s.CuredFishDecay, 0f, 2f, "F2", key: "CuredFishDecay");
-            if (v != s.CuredFishDecay) { s.CuredFishDecay = v; changed = true; }
-            y2 += ROW_ADV;
-            v = MenuTweaks.DrawSliderCol3(RFunc, c2, y2, I18n.T("食材", "Ingredients"), s.IngredientsDecay, 0f, 2f, "F2", key: "IngredientsDecay");
-            if (v != s.IngredientsDecay) { s.IngredientsDecay = v; changed = true; }
-            y2 += ROW_ADV;
-            v = MenuTweaks.DrawSliderCol3(RFunc, c2, y2, I18n.T("其他食品", "Other Food"), s.OtherFoodDecay, 0f, 2f, "F2", key: "OtherFoodDecay");
-            if (v != s.OtherFoodDecay) { s.OtherFoodDecay = v; changed = true; }
-            y2 += ROW_ADV;
+            var (lbl, lblEn, t) = Skills.All[i];
+            Skill sk = null;
+            try { sk = sm?.GetSkill(t); } catch { }
+            SkillRow(I18n.T(lbl, lblEn), sk, t.ToString());
         }
-        y2 += SECTION_END_ADV;
+        Skills.RefreshCustom();
+        foreach (var (lbl, lblEn, sk) in Skills.Custom) SkillRow(I18n.T(lbl, lblEn), sk, lblEn);
+        y1 += SECTION_END_ADV;
 
-        if (changed) s.RequestSave();
+        y1 = Section(c1, y1, I18n.T("一次性操作", "One-shot Actions"));
+        if (Ui.Button("Act_ClearAfflictions", R(c1,            y1, TOG_W, ROW_H), I18n.T("清除所有负面", "Clear Afflictions"))) Cheats.ClearAllAfflictions();
+        if (Ui.Button("Act_RepairHeld",       R(c1 + TOG2_OFF, y1, TOG_W, ROW_H), I18n.T("修复手持", "Repair Held")))            Cheats.RepairItemInHands();
+        y1 += ROW_ADV;
+        if (Ui.Button("Act_RepairBag",        R(c1,            y1, TOG_W, ROW_H), I18n.T("修复背包", "Repair Inventory")))       QuickActions.RepairAllInventory();
+        if (Ui.Button("Act_RestoreAll",       R(c1 + TOG2_OFF, y1, TOG_W, ROW_H), I18n.T("恢复全部耐久", "Restore Durability"))) Cheats.RestoreAllSceneGear();
+        y1 += ROW_ADV;
+        if (Ui.Button("Act_UnlockFeats",      R(c1,            y1, TOG_W, ROW_H), I18n.T("一键解锁勋章", "Unlock Feats")))       Feats.UnlockAllFeats();
+        if (Ui.Button("Act_RevealMap",        R(c1 + TOG2_OFF, y1, TOG_W, ROW_H), I18n.T("全开地图", "Reveal Map")))           Cheats.RevealFullMap();
+#if !STORY_EDITION
+        y1 += ROW_ADV;
+        if (Ui.Button("Act_RestoreLives",     R(c1,            y1, TOG_W, ROW_H), I18n.T("恢复火堆", "Restore Campfires")))  Cheats.RestoreLives();
+#endif
+        y1 += ROW_ADV + SECTION_END_ADV;
+
+#if !STORY_EDITION
+        y1 = Section(c1, y1, I18n.T("清图 & 任务", "Map Clear & Tales"));
+        // 点两次才执行的按钮:等第二下的 4 秒里按钮变红、换成确认字样
+        string confirm = I18n.T("再点一次确认", "Click to confirm");
+        bool armMap = MapClear.IsArmed(false), armMis = MapClear.IsArmed(true);
+        if (Ui.Button("Act_ClearMap", R(c1, y1, TOG_W, ROW_H), armMap ? confirm : I18n.T("一键清图", "Clear Map"),
+                armMap ? _buttonConfirmStyle : null))
+            MapClear.Trigger(false);
+        if (Ui.Button("Act_ClearMapMission", R(c1 + TOG2_OFF, y1, TOG_W, ROW_H), armMis ? confirm : I18n.T("清任务物品", "Mission Items"),
+                armMis ? _buttonConfirmStyle : null))
+            MapClear.Trigger(true);
+        y1 += ROW_ADV;
+        bool armTales = TalesComplete.IsArmed();
+        if (Ui.Button("Act_TalesFinish", R(c1, y1, TOG_W, ROW_H), armTales ? confirm : I18n.T("完成DLC任务", "Finish DLC Tales"),
+                armTales ? _buttonConfirmStyle : null))
+            TalesComplete.Trigger();
+        if (Ui.Button("Act_TalesRewards", R(c1 + TOG2_OFF, y1, TOG_W, ROW_H), I18n.T("任务奖励", "Tale Rewards")))
+            TalesComplete.GiveRewards();
+        y1 += ROW_ADV + SECTION_END_ADV;
+#endif
 
 #if !STORY_EDITION
         // 2.24 无 Il2CppTLD.Cooking,整个食谱系统(Recipes/RecipeNameZh)已排除
-        y3 = MenuTweaks.SectionCol(RFunc, c3, y3, MenuTweaks.COL_W3, I18n.T("食谱 (含 DLC)", "Recipes (incl. DLC)"));
-        if (GUI.Button(R(c3, y3, MenuTweaks.HALF_W, ROW_H), I18n.T("全部解锁", "Unlock All")))
+        y3 = MenuTweaks.SectionCol(RFunc, c2, y3, c3 - c2 + MenuTweaks.COL_W3, I18n.T("食谱 (含 DLC)", "Recipes (incl. DLC)"));
+        if (GUI.Button(R(c2, y3, MenuTweaks.HALF_W, ROW_H), I18n.T("全部解锁", "Unlock All")))
             Recipes.UnlockAll();
-        if (GUI.Button(R(c3 + MenuTweaks.HALF_OFF, y3, MenuTweaks.HALF_W, ROW_H), I18n.T("刷新列表", "Refresh")))
+        if (GUI.Button(R(c2 + MenuTweaks.HALF_OFF, y3, MenuTweaks.HALF_W, ROW_H), I18n.T("刷新列表", "Refresh")))
             Recipes.Refresh();
         y3 += ROW_ADV;
 
@@ -1412,7 +1391,7 @@ internal static class Menu
         }
         if (rs.Count == 0)
         {
-            GUI.Label(R(c3, y3, MenuTweaks.COL_W3, ROW_H),
+            GUI.Label(R(c2, y3, MenuTweaks.COL_W3, ROW_H),
                 I18n.T("进入存档后才能看到食谱", "Load a save to see the recipes"), _mutedLabelStyle);
             y3 += ROW_ADV;
         }
@@ -1420,22 +1399,169 @@ internal static class Menu
         {
             const float btnW = 80f;
             float nameW = MenuTweaks.COL_W3 - btnW - 6f;
-            float bx = c3 + MenuTweaks.COL_W3 - btnW;
+            int rows = (rs.Count + 1) / 2;
             for (int i = 0; i < rs.Count; i++)
             {
                 var rd = rs[i];
-                GUI.Label(R(c3, y3, nameW, ROW_H), Recipes.NameAt(i));
+                float cx = i < rows ? c2 : c3;
+                float ry = y3 + (i % rows) * ROW_ADV;
+                float bx = cx + MenuTweaks.COL_W3 - btnW;
+                GUI.Label(R(cx, ry, nameW, ROW_H), Recipes.NameAt(i), _rowLabelStyle);
                 if (Recipes.IsUnlocked(rd))
-                    GUI.Label(R(bx, y3, btnW, ROW_H), I18n.T("已解锁", "Unlocked"), _mutedLabelStyle);
-                else if (GUI.Button(R(bx, y3, btnW, ROW_H), I18n.T("解锁", "Unlock")))
+                {
+                    var prevA = _mutedLabelStyle.alignment;
+                    _mutedLabelStyle.alignment = TextAnchor.MiddleCenter;
+                    GUI.Label(R(bx, ry, btnW, ROW_H), I18n.T("已解锁", "Unlocked"), _mutedLabelStyle);
+                    _mutedLabelStyle.alignment = prevA;
+                }
+                else if (GUI.Button(R(bx, ry, btnW, ROW_H), I18n.T("解锁", "Unlock")))
                     Recipes.Unlock(rd);
-                y3 += ROW_ADV;
             }
+            y3 += rows * ROW_ADV;
         }
         y3 += SECTION_END_ADV;
 #endif
+
+#if !STORY_EDITION && !EP5_EDITION
+        y3 = DrawFeats(s, c2, c3, y3, ref changed);
+#endif
+        if (changed) s.RequestSave();
+        return Mathf.Max(y1, y3);
+    }
+
+    // ————————————— Tab:世界 & 饮食 —————————————
+    // c1 汽水/鹿肉出肉量/野外 | c2 商人&美洲狮/容器&极光 | c3 高级微调/烹饪位
+    private static float DrawWorldTab(TldHacksSettings s)
+    {
+        float c1 = MenuTweaks.ColX(0), c2 = MenuTweaks.ColX(1), c3 = MenuTweaks.ColX(2);
+        float y = 6f, y2 = 6f, y3 = 6f;
+        bool changed = false;
+        bool b;
+        float v;
+
+        // ═══ 含咖啡因汽水(原在装备&世界,v7.2 挪到本页) ═══
+        y = MenuTweaks.SectionCol(RFunc, c1, y, MenuTweaks.COL_W3, I18n.T("含咖啡因汽水", "Caffeinated Sodas"),
+            "World_CaffeinatedSodas", ref s.World_CaffeinatedSodas, ref changed);
+        _worldSodaExpanded = MenuTweaks.Expander(RFunc, c1, y, _worldSodaExpanded, "汽水参数", "Soda Params");
+        y += ROW_ADV;
+        if (_worldSodaExpanded)
+        {
+            y = SodaRows(c1, y, I18n.T(" 橙味", " Orange"), ref s.World_SodaOrangeEnabled,
+                         ref s.World_SodaOrangeInitial, ref s.World_SodaOrangeDuration, ref changed);
+            y = SodaRows(c1, y, I18n.T(" 尖峰苏打", " Summit"), ref s.World_SodaSummitEnabled,
+                         ref s.World_SodaSummitInitial, ref s.World_SodaSummitDuration, ref changed);
+            y = SodaRows(c1, y, I18n.T(" 葡萄味", " Grape"), ref s.World_SodaGrapeEnabled,
+                         ref s.World_SodaGrapeInitial, ref s.World_SodaGrapeDuration, ref changed);
+        }
+        y += SECTION_END_ADV;
+
+        // ═══ 狩猎·出肉量(原在装备&世界 c3,v7.5 挪到本页) ═══
+        y = MenuTweaks.SectionCol(RFunc, c1, y, MenuTweaks.COL_W3, I18n.T("鹿肉出肉量", "Deer Meat Yield"));
+        v = MenuTweaks.DrawSliderCol3(RFunc, c1, y, I18n.T("倍率下限", "Mult Min"), s.DeerMeatMultMin, 0f, 5f, "F2", key: "DeerMeatMultMin");
+        if (v != s.DeerMeatMultMin) { s.DeerMeatMultMin = v; MeatState.DeerMin = v; changed = true; }
+        y += ROW_ADV;
+        v = MenuTweaks.DrawSliderCol3(RFunc, c1, y, I18n.T("倍率上限", "Mult Max"), s.DeerMeatMultMax, 0f, 5f, "F2", key: "DeerMeatMultMax");
+        if (v != s.DeerMeatMultMax) { s.DeerMeatMultMax = v; MeatState.DeerMax = v; changed = true; }
+        y += ROW_ADV + SECTION_END_ADV;
+
+#if !STORY_EDITION
+        y = MenuTweaks.CardOutdoors(RFunc, s, c1, y, ref changed);
+#endif
+        y2 = MenuTweaks.CardTrader(RFunc, s, c2, y2, ref changed);
+#if !STORY_EDITION
+        y2 = MenuTweaks.CardContainersAurora(RFunc, s, c2, y2, ref changed);
+#endif
+        y3 = MenuTweaks.CardAdvanced(RFunc, s, c3, y3, ref changed);
+
+        y3 = MenuTweaks.SectionCol(RFunc, c3, y3, MenuTweaks.COL_W3, I18n.T("烹饪位扩展", "Cooking Slots"),
+            "Craft_MoreCookingSlots", ref s.Craft_MoreCookingSlots, ref changed);
+        float tw = MenuTweaks.THIRD_W, to = MenuTweaks.THIRD_OFF;
+        b = Ui.Toggle("Craft_MoreSlots_Fireplace", R(c3, y3, tw, ROW_H), s.Craft_MoreSlots_Fireplace,
+            I18n.T(" 壁炉", " Fireplace"), MenuTweaks.ToggleStyle ?? GUI.skin.toggle);
+        if (b != s.Craft_MoreSlots_Fireplace) { s.Craft_MoreSlots_Fireplace = b; changed = true; }
+        b = Ui.Toggle("Craft_MoreSlots_Barrel", R(c3 + to, y3, tw, ROW_H), s.Craft_MoreSlots_Barrel,
+            I18n.T(" 油桶", " Barrel"), MenuTweaks.ToggleStyle ?? GUI.skin.toggle);
+        if (b != s.Craft_MoreSlots_Barrel) { s.Craft_MoreSlots_Barrel = b; changed = true; }
+        b = Ui.Toggle("Craft_MoreSlots_Grill", R(c3 + 2f * to, y3, tw, ROW_H), s.Craft_MoreSlots_Grill,
+            I18n.T(" 烤架", " Grill"), MenuTweaks.ToggleStyle ?? GUI.skin.toggle);
+        if (b != s.Craft_MoreSlots_Grill) { s.Craft_MoreSlots_Grill = b; changed = true; }
+        y3 += ROW_ADV + SECTION_END_ADV;
+
+        if (changed) s.RequestSave();
         return Mathf.Max(y, Mathf.Max(y2, y3));
     }
+
+#if !STORY_EDITION && !EP5_EDITION
+    private static bool _featBonusExpanded;
+
+    // 勋章:当前存档逐个启用 + 加成数值。启用状态直接读存档里的列表,不进 TldHacks.json
+    // 紧跟在食谱下面,同样横跨第 2、3 列
+    private static float DrawFeats(TldHacksSettings s, float xa, float xb, float y, ref bool changed)
+    {
+        float hw = MenuTweaks.HALF_W, ho = MenuTweaks.HALF_OFF, cw = MenuTweaks.COL_W3;
+        y = MenuTweaks.SectionCol(RFunc, xa, y, xb - xa + cw, I18n.T("勋章 (当前存档)", "Feats (This Save)"));
+        bool all = Ui.Toggle("Feat_AllAtNewGame", R(xa, y, cw, ROW_H), s.Feat_AllAtNewGame,
+            I18n.T(" 新档勋章槽位选满", " Fill All Feat Slots in New Game"));
+        if (all != s.Feat_AllAtNewGame) { s.Feat_AllAtNewGame = all; changed = true; }
+
+        if (!FeatsSandbox.Ready())
+        {
+            GUI.Label(R(xb, y, cw, ROW_H),
+                I18n.T("进入存档后才能开关勋章", "Load a save to set the feats"), _mutedLabelStyle);
+            return y + ROW_ADV + SECTION_END_ADV;
+        }
+
+        if (Ui.Button("Feat_EnableAll", R(xb, y, hw, ROW_H), I18n.T("全部启用", "Enable All"))) FeatsSandbox.SetAll(true);
+        if (Ui.Button("Feat_DisableAll", R(xb + ho, y, hw, ROW_H), I18n.T("全部取消", "Disable All"))) FeatsSandbox.SetAll(false);
+        y += ROW_ADV;
+
+        // 一行四个:第 2 列两个、第 3 列两个
+        var types = FeatsSandbox.Types;
+        float[] xs = { xa, xa + ho, xb, xb + ho };
+        for (int i = 0; i < types.Length; i++)
+        {
+            bool on = FeatsSandbox.IsEnabled(types[i]);
+            bool nv = Ui.Toggle("Feat_Enable", R(xs[i % 4], y, hw, ROW_H), on, " " + FeatsSandbox.NameAt(i));
+            if (nv != on) FeatsSandbox.SetEnabled(types[i], nv);
+            if (i % 4 == 3 || i == types.Length - 1) y += ROW_ADV;
+        }
+
+        _featBonusExpanded = MenuTweaks.Expander(RFunc, xa, y, _featBonusExpanded, "加成数值", "Bonus Values");
+        if (_featBonusExpanded &&
+            Ui.Button("Feat_BonusReset", R(xb, y, cw, ROW_H), I18n.T("恢复原版数值", "Restore Vanilla Values")))
+        {
+            FeatsSandbox.ResetAll(s);
+            changed = true;
+        }
+        y += ROW_ADV;
+        if (_featBonusExpanded)
+        {
+            // 同一个勋章的滑条排在一起,整组放进当前较矮的那一列
+            var ps = FeatsSandbox.Params;
+            float ya = y, yb = y;
+            for (int i = 0; i < ps.Length; )
+            {
+                int ti = Array.IndexOf(types, ps[i].Type);
+                bool left = ya <= yb;
+                float x = left ? xa : xb, yy = left ? ya : yb;
+                GUI.Label(R(x, yy, cw, ROW_H), FeatsSandbox.NameAt(ti), _rowLabelStyle);
+                yy += ROW_ADV;
+                for (; i < ps.Length && ps[i].Type == types[ti]; i++)
+                {
+                    var p = ps[i];
+                    float cur = FeatsSandbox.Shown(p, s);
+                    float v = MenuTweaks.DrawSliderCol3(RFunc, x, yy, I18n.T(p.Zh, p.En), cur, p.Min, p.Max, p.Fmt, key: "Feat_Bonus");
+                    if (p.IsInt) v = Mathf.Round(v);
+                    if (v != cur) { FeatsSandbox.PutSetting(p, s, v); FeatsSandbox.ApplyOne(p, s); changed = true; }
+                    yy += ROW_ADV;
+                }
+                if (left) ya = yy; else yb = yy;
+            }
+            y = Mathf.Max(ya, yb);
+        }
+        return y + SECTION_END_ADV;
+    }
+#endif
 
     // ————————————— Tab 2:物品刷出 + 传送 —————————————
     // v2.7.28 重排:15 个传送目的地改 5 列 × 3 行;Item Spawner 2 列 × 3 行(6/页)→ 3 列 × 6 行(18/页)
@@ -1456,17 +1582,26 @@ internal static class Menu
         bool _tpBlocked = StoryGuard.InStory;
         if (_tpBlocked) GUI.enabled = false;
 #endif
+        // 目的地放进内层滚动区,滚轮翻;可见高度由下面的分割栏拖动决定
         int teleCols = aw >= 950f ? 5 : aw >= 640f ? 3 : 2;
-        float teleW = aw / teleCols;
+        float fullH = ROW_ADV * ((Teleport.Destinations.Count + teleCols - 1) / teleCols);
+        float teleH = Mathf.Clamp(s.SpawnerTeleportH, ROW_ADV, Mathf.Max(ROW_ADV, fullH));
+        bool teleBar = fullH > teleH + 1f;
+        float teleCW = aw - (teleBar ? 16f : 0f);
+        float teleW = teleCW / teleCols;
+        _teleScroll = GUI.BeginScrollView(R(10f, y, aw, teleH), _teleScroll,
+            new Rect(0f, 0f, teleCW * _scale, fullH * _scale), false, teleBar);
         for (int i = 0; i < Teleport.Destinations.Count; i++)
         {
             var d = Teleport.Destinations[i];
-            float tx = 10f + (i % teleCols) * teleW;
-            float ty = y + (i / teleCols) * ROW_ADV;
-            if (GUI.Button(R(tx, ty, teleW - 4f, ROW_H), $"→ {d.DisplayLabel}"))
+            float tx = (i % teleCols) * teleW;
+            float ty = (i / teleCols) * ROW_ADV;
+            // 内层坐标不走 R():R 会按外层坐标去撑卡片高度
+            if (GUI.Button(new Rect(tx * _scale, ty * _scale, (teleW - 4f) * _scale, ROW_H * _scale), $"→ {d.DisplayLabel}"))
                 Teleport.TravelTo(d);
         }
-        y += ROW_ADV * ((Teleport.Destinations.Count + teleCols - 1) / teleCols) + SECTION_END_ADV;
+        GUI.EndScrollView();
+        y += teleH + SECTION_END_ADV;
 #if STORY_GUARD
         if (_tpBlocked) GUI.enabled = true;   // 位置控制按钮(打印坐标等)不受影响
 #endif
@@ -1480,12 +1615,13 @@ internal static class Menu
                 ? $"Current: {(string.IsNullOrEmpty(CheatState.PositionText) ? "(none)" : CheatState.PositionText)}"
                 : $"当前:{(string.IsNullOrEmpty(CheatState.PositionText) ? "(未获取)" : CheatState.PositionText)}",
             _rowLabelStyle);
+        DrawTeleportSplitter(s, y + ROW_H + Ui.CARD_PAD, y + ROW_ADV + SECTION_END_ADV, fullH);
         y += ROW_ADV + SECTION_END_ADV;
 
         float headY = y;   // 搜索框画在这张卡片的标题栏右端,不占内容行
         y = SectionWide(y, I18n.IsEnglish
-            ? $"Item Spawner ({ItemDatabase.All.Count + ItemDatabaseMod.All.Count} items)"
-            : $"物品生成器 ({ItemDatabase.All.Count + ItemDatabaseMod.All.Count} 条)");
+            ? $"Item Spawner ({ItemDatabase.All.Count + ItemDatabaseMod.All.Count + Furniture.Count} items)"
+            : $"物品生成器 ({ItemDatabase.All.Count + ItemDatabaseMod.All.Count + Furniture.Count} 条)");
         DrawItemSearchBox(headY);
 
         // 类别 tabs (全 9 个平铺)
@@ -1544,8 +1680,14 @@ internal static class Menu
             float x = 10f + col * colW;
             float yy = y + row * ROW_ADV;
             var e = _filtered[idx];
+            // 说明按 prefab 名查 MenuUi 的补充表,没写说明的物品不弹提示
+            Ui.Hover(e.PrefabName, R(x, yy, colW - 8f, ROW_H));
+            ItemPreview.Mark(e, R(x, yy, btnW, ROW_H));
             if (GUI.Button(R(x, yy, btnW, ROW_H), spawnBtnLabel))
-                Cheats.SpawnItem(e.PrefabName, _quantity);
+            {
+                if (e.Category == "家具") Furniture.Spawn(e, _quantity);
+                else Cheats.SpawnItem(e.PrefabName, _quantity);
+            }
             // v6.6 GC: 利用 ItemEntry 上预缓存的显示名+卡路里标签(见 RebuildFilter)
             GUI.Label(R(x + btnW + 6f, yy, colW - btnW - 14f, ROW_H),
                 I18n.IsEnglish ? (e.DisplayLabelEn ?? e.NameEn ?? e.Name) : (e.DisplayLabelZh ?? e.NameZh ?? e.Name),
@@ -1570,6 +1712,35 @@ internal static class Menu
         if (GUI.Button(R(pw - 170f, y, 80f, ROW_H), I18n.T("⏮ 首页", "⏮ First")))   { _page = 0; _cachedPageNum = -1; }
         if (GUI.Button(R(pw - 80f, y, 80f, ROW_H), I18n.T("末页 ⏭", "Last ⏭")))    { _page = totalPages - 1; _cachedPageNum = -1; }
         return y + ROW_ADV + SECTION_END_ADV;
+    }
+
+    // 两张卡片之间那道缝就是分割栏。拖动按屏幕坐标算,鼠标拖出窗口也跟得上。
+    private static void DrawTeleportSplitter(TldHacksSettings s, float top, float bottom, float fullH)
+    {
+        var hit = new Rect(0f, (top - 2f) * _scale, ContentW * _scale, (bottom - top + 4f) * _scale);
+        var e = Event.current;
+        float screenY = Screen.height - Input.mousePosition.y;
+        if (!_splitDragging && e.type == EventType.MouseDown && e.button == 0 && hit.Contains(e.mousePosition))
+        {
+            _splitDragging = true;
+            _splitStartMouseY = screenY;
+            _splitStartH = Mathf.Clamp(s.SpawnerTeleportH, ROW_ADV, Mathf.Max(ROW_ADV, fullH));
+            e.Use();
+        }
+        if (_splitDragging)
+        {
+            if (!Input.GetMouseButton(0)) { _splitDragging = false; s.RequestSave(); }
+            else s.SpawnerTeleportH = Mathf.Clamp(_splitStartH + (screenY - _splitStartMouseY) / _scale, ROW_ADV, Mathf.Max(ROW_ADV, fullH));
+        }
+        Ui.Hover("Spawner_Splitter", hit);
+
+        bool hot = _splitDragging || hit.Contains(e.mousePosition);
+        float mid = (top + bottom) * 0.5f;
+        if (!hot) GUI.color = new Color(1f, 1f, 1f, 0.35f);
+        float gx = ContentW * 0.5f - 24f;
+        for (int i = 0; i < 2; i++)
+            GUI.DrawTexture(new Rect(gx * _scale, (mid - 3f + i * 4f) * _scale, 48f * _scale, 2f * _scale), hot ? _accentTex : Texture2D.whiteTexture);
+        GUI.color = Color.white;
     }
 
     // 搜索框 + 清空按钮,贴在"物品生成器"卡片标题栏的右端。
@@ -1616,6 +1787,14 @@ internal static class Menu
             }
 
             if (CBtn(cx, ty, clearW, th, "×") && _search.Length > 0) { _search = ""; _page = 0; }
+
+            var st = ModMain.Settings;
+            if (st != null)
+            {
+                const float togW = 110f;
+                bool pv = Ui.Toggle("SpawnerPreview", R(bx - 8f - togW, ty, togW, th), st.SpawnerPreview, I18n.T(" 显示图片", " Show image"));
+                if (pv != st.SpawnerPreview) { st.SpawnerPreview = pv; st.RequestSave(); }
+            }
         }
         catch (Exception ex)
         {
@@ -1746,14 +1925,18 @@ internal static class Menu
                         // 2.24 的 StoryShim 会真的实例化物品,拿来取显示名会往场景里塞上千件。剧情版只用清单里的名字。
                         if (isMod) { e.NameZh += " (mod)"; e.NameEn += " (mod)"; }
 #else
-                        var gi = GearItem.LoadGearItemPrefab(e.PrefabName);
+                        var gi = GearPrefab.Load(e.PrefabName);
                         if (gi == null) { e.IsValid = false; continue; }
                         string dn = gi.GetDisplayNameWithoutConditionForInventoryInterfaces();
+                        // 游戏数据里香蒲植株套用了高科技背包的名字 key,取到的是"高科技背包",保留清单里的名字
+                        if (e.PrefabName == "GEAR_CattailPlant") dn = null;
                         if (!string.IsNullOrEmpty(dn) && dn != e.PrefabName)
                         {
                             if (HasChineseChar(dn)) e.NameZh = dn;
                             else e.NameEn = dn;
                         }
+                        // 原版没用上的物品,名字借的是 GEAR_Line,做不了钓鱼用具
+                        if (e.PrefabName == "GEAR_FishingLine") { e.NameZh += "（游戏废案）"; e.NameEn += " (cut content)"; }
                         if (isMod) { e.NameZh += " (mod)"; e.NameEn += " (mod)"; }
 #endif
                     }
@@ -1764,11 +1947,14 @@ internal static class Menu
             ItemDiscovery.Run();
             Resolve(ItemDatabase.All, false);
             Resolve(ItemDatabaseMod.All, true);
+            Furniture.ResolveNames();
             // 清单里 prefab 名写错的条目会在这里变成 IsValid=false 后静默消失,界面上看不出来,
             // 所以把两份清单各有几条没解析出来记到日志,改完清单一条 grep 就能核对。
             int badV = 0, badM = 0;
             var badNames = new System.Text.StringBuilder();
-            for (int i = 0; i < ItemDatabase.All.Count; i++) if (!ItemDatabase.All[i].IsValid) badV++;
+            var badVNames = new System.Text.StringBuilder();
+            for (int i = 0; i < ItemDatabase.All.Count; i++)
+                if (!ItemDatabase.All[i].IsValid) { badV++; badVNames.Append(ItemDatabase.All[i].PrefabName).Append(' '); }
             for (int i = 0; i < ItemDatabaseMod.All.Count; i++)
             {
                 if (ItemDatabaseMod.All[i].IsValid) continue;
@@ -1777,6 +1963,7 @@ internal static class Menu
             }
             ModMain.Log?.Msg($"[Spawner] 名称解析完成:原版 {ItemDatabase.All.Count - badV}/{ItemDatabase.All.Count} 可用,"
                 + $"mod {ItemDatabaseMod.All.Count - badM}/{ItemDatabaseMod.All.Count} 可用(失效 {badV + badM} 条)");
+            if (badV > 0) ModMain.Log?.Msg($"[Spawner] 原版清单里加载不到的 prefab:{badVNames}");
             if (badM > 0) ModMain.Log?.Msg($"[Spawner] mod 清单里加载不到的 prefab:{badNames}");
         }
         catch (System.Exception ex) { ModMain.Log?.Warning($"[ResolveNames] {ex.Message}"); }
@@ -1809,6 +1996,17 @@ internal static class Menu
             BuildDisplayLabels(e);
             _filtered.Add(e);
         }
+#if !STORY_EDITION && !EP5_EDITION
+        // 家具七百多条,"全部"栏只在搜索时带上,免得把普通物品挤到后面几十页
+        if (cat == "家具" || (_selectedCategory == 0 && q.Length > 0))
+            foreach (var list in new[] { FurnitureDatabase.Carryables, FurnitureDatabase.Native })
+                foreach (var e in list)
+                {
+                    if (q.Length > 0 && !PinyinSearch.Match(e, q, qc)) continue;
+                    BuildDisplayLabels(e);
+                    _filtered.Add(e);
+                }
+#endif
         // 分页缓存失效
         _cachedPageNum = -1;
     }

@@ -1,32 +1,27 @@
 # HANDOFF: TldHacks
 
-> Last updated: 2026-10-01 00:20
+> Last updated: 2026-11-19 01:30
 
 ## 当前目标
-v9.5 / 剧情 V1.3 已发版。规矩是每次改完都部署到游戏,再重打桌面 `TLD\` 的最小包(中英两个 zip)、完整版分卷和 `游戏材质包_backup.bin`,改到剧情版就连剧情包一起打。
+V12.9 已发版,等用户实测和群友反馈。
 
 ## 已完成(本轮)
-- 商人:信任满值和滑条走原版 `AddTrust`(第一次满格解锁 DLC 成就),`TraderTrust.HealOnce` 补旧存档;即时交易 `Patch_TraderManager_CloseTrade` 关箱后补调 `CompleteTrade` 并清冷却;商人常驻 `Patch_TraderRadio_IsTraderAvailable`。室内灯光按状态缓存(`HLSource`)。QoL 总开关接上。版本 9.5。
-- 物品生成器加 `GEAR_CougarWrap`(美洲狮皮护套),美洲狮几样的重量按资源实测改过。
-- 逐件确认跳过 `GEAR_Stick` / `GEAR_Stone`(`GrabAll.IsStickOrStone`),一次全收不变。
-- Mod Settings:删掉 `OneClickDisableAll`(pre-flight 把它列进 `RetiredSettingKeys`,老 json 里这行静默去掉、不留 broken 备份);111 个 `[Name]` 改成和游戏内菜单一样,新写的 26 条说明补了英文;`SuperAccuracy` / `TimeScaleInfo` / `LampBurnMultiplier` 用 `SetFieldVisible` 隐藏,字段保留。菜单上两个写错的标签改了(恢复延迟倍率、绘制间隔)。
-- 部署:沙盒 d258d36f,剧情 bb3ae457。回退用 `Mods\TldHacks.dll.backup-v95-2300`、`tld_dlc\wintermute\Mods\TldHacksStory.dll.backup-v13-2300`;v9.0 原版在桌面 `TLD\OLD\` 的 zip 里(之前的 `backup-20260930` 已经不在了)。
+1. V12.9 打包:最小包、完整版 4 卷、终极版 182 卷(终极版换了 TldHacks.dll、HomeMadeBrewery.modcomponent、Forager.s.Delight.dll、TldHacks_Transitions.txt),夸克和百度都核过(1 / 4 / 183 个,无重复)。V12.8 旧件挪进两边 OLD。夸克终极版第一次只传上 176 个,用 ul_fill.py 补齐
+2. 内容:火把烧完自动换新、轮盘喝保温杯、保温杯火边加热、取暖器进轮盘(`src/QuickRadial.cs`,都默认关);丢地烹饪跨场景计时和烤焦(`src/DropCook.cs`);快速制作补满家具分段工时;一键恢复清 m_WornOut;终极版酿酒原料按个数、配饰负重上限 30 公斤
+3. 腾讯文档整篇覆盖,读回 joined equal True(第一次读回链接为空,再读一致),剪贴板已还原
+4. 群知识库 00/01/02/06/08/10、两个 28 和配置字段表已传 server,md5 一致;鲸鲸 rules.md 加第 17 条(V12.9)和第 18 条(没加载弹窗先查 version.dll 位置,优先改名 winhttp.dll),08 故障排查同样改成先改名
 
 ## 下一步
-- 用户进游戏确认 Mod Settings 名字和逐件确认。
+1. 用户实测 V12.9 新功能。取暖器加在营地轮盘最后一个空位,没空位时 Latest.log 有 `[QuickHeater] 营地轮盘没有空位`,那就改放工具轮盘
+2. Nexus mod 162 主文件 11-19 已换成 12.9(12.8 进 File archive),发布时还在病毒扫描;页面上另有一个 V9.9 Main 文件不是我们这次传的,没动
 
 ## 未决问题
-- ItemPicker 查过没坏:每次按 W 都在扫,扫到 0 是 25 米内没东西(同时刻一键搜刮 50 米内只有 0 到 11 件,09-27 的 v9.0 日志也一样)。它只在按下 W 的那一下捡一次,按住不连续捡。
-- 两个诊断开关是 internal,pre-flight 只认 public 字段,所以手写进 json 也会被当孤儿清掉,等于用不了。没修。
-- 英文 Mod Settings 的名字没对齐菜单(菜单英文是缩写,Mod Settings 是全称)。
-- 关掉商人常驻或到来天数后,电台记下的(商人可用)要等挂断或换场景才重算,没修。
-- `知识库/data/配置字段默认值_TldHacks.json.csv` 是老 json 生成的,没重做。
+1. 丢地烹饪计时只在内存,读档重来;烤焦时长用肉自带的 m_ReadyTimeMinutes,没乘锅的倍率和技能,快慢没验证
+2. 启动偶发闪退(coreclr 0xc0000005,HarmonyInit 读补丁类特性,在 TldHacks 之后的 mod),继续观察
+3. 剧情版编译报错在 `src/ItemPreview.cs`(Il2CppTLD.Gear 命名空间不存在),剧情包本轮没打
+4. MoreBunkers 零散选装 zip 还是 v1.4 旧 dll(位置提示键 F10),没重打
 
 ## 关键文件
-- `src/Settings.cs`:Mod Settings 字段、名字、`HideRetiredFields`。
-- `src/ModMain.cs`:pre-flight `RetiredSettingKeys`、即时交易定时检查。
-- `src/GrabAll.cs`:一键搜刮、逐件确认。
-- `src/CheatsPatches.cs`:商人补丁、`TraderTrust`。
-- `src/IntegratedPatches9.cs`:室内灯光 `HLSource`。
-- `src/ModSettingsEnData.cs`:英文名字和说明。
-- `src/DynamicPatch.cs`:补丁挂载与收尾。
+1. `src/QuickRadial.cs`、`src/DropCook.cs`
+2. `../_tools/release/bump129.py`、`ult129_pack.py`、`kb129.py`、`bd_prep129.py`、`bd_check129.py`、`bd_up128.py`(不带版本号,直接复用)、`ul_fill.py`(补传缺的终极版分卷)
+3. `../_work/release/tencent_doc/bump129_doc.py`、`doc.txt`

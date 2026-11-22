@@ -57,6 +57,7 @@ internal static class PlaceFromInvUI
 internal static class Patch_PlaceFromInv_GridClick
 {
     static int _lastFrameCancelled;
+    internal static GearItem _splitItem;
     public static void NotifyCancelled() => _lastFrameCancelled = Time.frameCount;
     static bool ShouldSkipClick => Time.frameCount - _lastFrameCancelled < 10;
 
@@ -72,7 +73,18 @@ internal static class Patch_PlaceFromInv_GridClick
             if (inv == null) return;
             if (!inv.m_ItemDescriptionPage.CanDrop(__instance.m_GearItem)) return;
             if (__instance.m_GearItem.m_WaterSupply != null) return;
-            PlaceFromInvUI.StartPlaceObject(((UnityEngine.Component)__instance.m_GearItem).gameObject, (PlaceMeshFlags)2);
+            var gi = __instance.m_GearItem;
+            // 助燃剂是一个 GearItem 带数量,整个拿去放会一次放掉整堆;先拆一个出来只放它。
+            // 子弹、布条等别的可堆叠物品照旧整堆放(用户定的)
+            if (gi.m_StackableItem != null && gi.m_StackableItem.m_Units > 1 && gi.name.Contains("GEAR_Accelerant"))
+            {
+                var one = gi.Drop(1, false, true, false);
+                if (one == null) return;
+                _splitItem = one;
+                PlaceFromInvUI.StartPlaceObject(((UnityEngine.Component)one).gameObject, (PlaceMeshFlags)0);
+                return;
+            }
+            PlaceFromInvUI.StartPlaceObject(((UnityEngine.Component)gi).gameObject, (PlaceMeshFlags)2);
         }
         catch { }
     }
@@ -125,6 +137,10 @@ internal static class Patch_PlaceFromInv_ExitMesh
         {
             if (ModMain.Settings == null || !ModMain.Settings.PlaceFromInv_Enabled) return;
             if (!__instance.m_SkipCancel) Patch_PlaceFromInv_GridClick.NotifyCancelled();
+            var split = Patch_PlaceFromInv_GridClick._splitItem;
+            Patch_PlaceFromInv_GridClick._splitItem = null;
+            if (split != null && !__instance.m_SkipCancel && !split.m_InPlayerInventory)
+                try { __instance.AddItemToPlayerInventory(split, false, false); } catch { }
             PlaceFromInvUI.RestorePreviousPanel();
         }
         catch { }

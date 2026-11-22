@@ -55,7 +55,7 @@ internal static class TweaksRuntime
             _torchPrefabSet = true;
             _torchPrefabMinutes = s.TorchBurnMinutes;
 #else
-            var prefab = GearItem.LoadGearItemPrefab("GEAR_Torch");
+            var prefab = GearPrefab.Load("GEAR_Torch");
             if (prefab == null) return;
             var torch = prefab.GetComponent<TorchItem>();
             if (torch != null)

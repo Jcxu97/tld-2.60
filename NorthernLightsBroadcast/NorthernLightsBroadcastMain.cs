@@ -59,12 +59,14 @@ public class NorthernLightsBroadcastMain : MelonMod
 	public override void OnSceneWasLoaded(int buildIndex, string sceneName)
 	{
 		TweenFactory.SceneManagerSceneLoaded();
+		FontFix.Invalidate(); // 新场景的字体对象是新的,缓存作废
 		if (!sceneName.Contains("Empty") && !sceneName.Contains("Boot") && !sceneName.Contains("MainMenu") && eventSystem == null)
 		{
 			eventCam = GameManager.GetMainCamera();
 			if (eventCam != null)
 			{
-				eventSystemObject = new GameObject("EventSystem");
+				// v2.1.1: 原先这里 new GameObject("EventSystem") 建完没人用(组件全加在相机上),
+				// 每次进场景漏一个空对象。删掉。
 				eventSystem = eventCam.gameObject.AddComponent<EventSystem>();
 				standaloneInputModule = eventCam.gameObject.AddComponent<StandaloneInputModule>();
 			}

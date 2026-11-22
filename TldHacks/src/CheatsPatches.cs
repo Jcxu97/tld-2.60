@@ -64,6 +64,19 @@ internal static class WeaponCache
 internal static class Patch_Gun_RemoveNextFromClip
 {
     internal static bool Prefix() => !CheatState.InfiniteAmmo;
+
+    // 双管霰弹枪在这里每打一发记一个空弹壳,原方法跳过了弹仓不减,弹壳会越记越多,装弹时退出一大把。
+    //   弹仓里的空弹壳不可能比空位多,按空位压回去
+    internal static void Postfix(GunItem __instance)
+    {
+        if (!CheatState.InfiniteAmmo || __instance == null) return;
+        try
+        {
+            int free = __instance.m_ClipSize - __instance.m_Clip.Count;
+            if (__instance.m_SpentCasingsInClip > free) __instance.m_SpentCasingsInClip = System.Math.Max(0, free);
+        }
+        catch { }
+    }
 }
 
 // v2.7.75 删 5 个 GunItem getter "belt-n-suspenders" patch —— TickCamera 的
@@ -86,7 +99,9 @@ internal static class DamageFilter
         //   之前 GodMode 只在 TickStatus 里每帧刷满 HP,但冻伤每帧又扣 → HUD 闪烁
         //   现在直接在 AddHealth Prefix 拦截,HP 永远不掉,TickStatus 只做兜底
         if (CheatState.GodMode) return true;
-        if (CheatState.TrueInvisible) return true;  // 真隐身 = 绝对无敌
+#if !STORY_EDITION
+        if (CeX.InStruggle()) return true;
+#endif
 
         // v2.7.85:各状态 toggle 独立拦截对应伤害源 —— 修复"GodMode OFF + AlwaysWarm ON 时 HP 条闪烁"
         //   之前只在 GodMode 时拦全部,Now 每个 toggle 拦自己的源,减少 TickStatus "先掉再补"的 HUD 闪烁
@@ -100,7 +115,8 @@ internal static class DamageFilter
 
         if (CheatState.NoFallDamage && cause == DamageSource.Falling) return true;
         if (CheatState.NoSuffocating && cause == DamageSource.Suffocating) return true;
-        if (CheatState.ImmuneAnimalDamage)
+        // 完全隐形只挡动物伤害,冻僵饥饿这些照常扣;要全免伤开无敌模式
+        if (CheatState.ImmuneAnimalDamage || CheatState.TrueInvisible)
         {
 #if STORY_EDITION
             // 2.24 无美洲狮(DamageSource.Cougar 是 2.55 才加的)
@@ -110,6 +126,9 @@ internal static class DamageFilter
 #endif
                 return true;
         }
+#if !STORY_EDITION
+        if (CeX.WouldDie(hp)) { CeX.Rescue(); return true; }
+#endif
         return false;
     }
 }
@@ -546,6 +565,12 @@ internal static class Patch_RecipeBook_IsRecipeUnlocked
         if (CheatState.FreeCraft) __result = true;
     }
 }
+
+[HarmonyPatch(typeof(Il2CppTLD.Gear.CausesHeadacheDebuff), "Apply")]
+internal static class Patch_UT_RemoveHeadacheDebuff
+{
+    private static bool Prefix() => !(ModMain.Settings != null && ModMain.Settings.UT_RemoveHeadacheDebuff);
+}
 #endif
 
 // ——— 免费制作扩展:Panel_Crafting 内部材料检查(mod 物品路径) ———
@@ -649,9 +674,27 @@ internal static class Patch_CraftingOp_StartCrafting
         try
         {
             __instance.m_RealTimeDuration = 0.2f;
+            FillRemainingHours(__instance);
             FadeSuppressionWindow.Arm(3f);  // 一次性 arm 3 秒,覆盖整个 0.2s craft + 收尾
         }
         catch (Exception ex) { ModMain.Log?.Warning($"[QuickCraft] {ex.Message}"); }
+    }
+
+    // 工作台家具这类要选"干几小时"的配方,只按选的小时数涨进度,剩下的留成带百分比的半成品。
+    //   原版 ApplyCraftingProgress 按 hours*60 / GetModifiedCraftingDuration(round(时长×剩余比例)) 涨进度,
+    //   这里把本次工时补到剩余全部工时(多 0.01 分钟让进度钳到 100),材料和工具损耗仍由原版按工时扣
+    private static void FillRemainingHours(CraftingOperation op)
+    {
+        var wip = op.m_WorkInProgress;
+        var bp = op.Blueprint;
+        if (wip == null || bp == null || op.m_TargetQuantity > 1) return;
+        float remaining = 1f - Mathf.Clamp01(wip.m_PercentComplete / 100f);
+        if (remaining <= 0f) return;
+        int baseMinutes = (int)Math.Ceiling(bp.m_DurationMinutes * remaining);
+        float hours = (op.GetModifiedCraftingDuration(baseMinutes) + 0.01f) / 60f;
+        if (hours <= op.m_HoursToSpendCrafting) return;
+        ModMain.Log?.Msg($"[QuickCraft] {bp.name} {wip.m_PercentComplete:F0}% 工时 {op.m_HoursToSpendCrafting:F2}h -> {hours:F2}h");
+        op.m_HoursToSpendCrafting = hours;
     }
 }
 #endif
@@ -972,16 +1015,16 @@ internal static class Patch_FPSWeapon_PlayFireAnimation
 
     internal static bool Prefix(vp_FPSWeapon __instance)
     {
-        bool fullSuppress = CheatState.NoRecoil || CheatState.SuperAccuracy;
+        // 超级精准不管后坐力,它的悬停说明写的就是后坐力另由无后坐力控制
+        bool fullSuppress = CheatState.NoRecoil;
         bool partialSuppress = CheatStateESP.RecoilScale < 0.99f;
         if (!fullSuppress && !partialSuppress) return true;
-        Patch_FPSCamera_LateUpdate.LastFireTime = Time.time;
+        Patch_CameraAnim_NoRecoil.OnFire();
         _gun = null;
         try
         {
-            var pm = GameManager.GetPlayerManagerComponent();
-            var gi = pm?.m_ItemInHands;
-            var gun = gi?.GetComponent<GunItem>();
+            // 反编译确认:PlayFireAnimation 读的就是 vp_FPSWeapon.m_GunItem(+0x210)的后坐字段
+            var gun = __instance.m_GunItem;
             if (gun != null)
             {
                 _gun = gun;
@@ -1018,79 +1061,199 @@ internal static class Patch_FPSWeapon_PlayFireAnimation
     }
 }
 
+// 双管霰弹枪(DoubleBarrel)不走 GunItem 的后坐字段,开枪时自己起协程往上抬镜头(Shotgun.Actions.ApplyShotgunRecoil,
+//   抬多少读它设置里的 RecoilMaxPitchKick / RecoilMaxYawKick)。无后坐力直接跳过它,后坐力比例按比例缩这两个值,调用完还原。
+internal static class DoubleBarrelRecoilCompat
+{
+    private static System.Reflection.FieldInfo _instance, _pitch, _yaw;
+    private static object _settings;
+    private static float _savedPitch, _savedYaw;
+
+    internal static void Install(HarmonyLib.Harmony harmony)
+    {
+        try
+        {
+            var actions = HarmonyLib.AccessTools.TypeByName("Shotgun.Actions");
+            var target = actions != null ? HarmonyLib.AccessTools.Method(actions, "ApplyShotgunRecoil") : null;
+            if (target == null) return;
+            var settings = HarmonyLib.AccessTools.TypeByName("Shotgun.Settings");
+            _instance = settings != null ? HarmonyLib.AccessTools.Field(settings, "Instance") : null;
+            _pitch = settings != null ? HarmonyLib.AccessTools.Field(settings, "RecoilMaxPitchKick") : null;
+            _yaw = settings != null ? HarmonyLib.AccessTools.Field(settings, "RecoilMaxYawKick") : null;
+            harmony.Patch(target,
+                prefix: new HarmonyLib.HarmonyMethod(typeof(DoubleBarrelRecoilCompat), nameof(Prefix)),
+                postfix: new HarmonyLib.HarmonyMethod(typeof(DoubleBarrelRecoilCompat), nameof(Postfix)));
+            ModMain.Log?.Msg("[Compat] DoubleBarrel recoil hooked");
+        }
+        catch (Exception ex) { ModMain.Log?.Warning($"[Compat] DoubleBarrel recoil hook: {ex.Message}"); }
+    }
+
+    private static bool Prefix()
+    {
+        _settings = null;
+        if (CheatState.NoRecoil) return false;
+        float scale = CheatStateESP.RecoilScale;
+        if (scale >= 0.99f || _instance == null || _pitch == null || _yaw == null) return true;
+        try
+        {
+            var s = _instance.GetValue(null);
+            if (s == null) return true;
+            _savedPitch = (float)_pitch.GetValue(s);
+            _savedYaw = (float)_yaw.GetValue(s);
+            _pitch.SetValue(s, _savedPitch * scale);
+            _yaw.SetValue(s, _savedYaw * scale);
+            _settings = s;
+        }
+        catch { }
+        return true;
+    }
+
+    private static void Postfix()
+    {
+        if (_settings == null) return;
+        try { _pitch.SetValue(_settings, _savedPitch); _yaw.SetValue(_settings, _savedYaw); } catch { }
+        _settings = null;
+    }
+}
+
+// AfflictionComponent 只在场景名不含 "empty" 时才建 AfflictionManager,本意是跳过加载用的 Empty 场景,
+//   结果存档读进 PrepperCacheAEmpty 这类空地堡时管理器一直是 null,它挂的 StatusBar.IsBuffActive 每帧每条状态栏抛一次空引用
+//   (10-31 实测 5 分钟 17 万次,日志 76MB),要等走出地堡才停。只把这类地堡名里的 Empty 去掉再交给它判断。
+internal static class AfflictionComponentCompat
+{
+    internal static void Install(HarmonyLib.Harmony harmony)
+    {
+        try
+        {
+            var mod = HarmonyLib.AccessTools.TypeByName("AfflictionComponent.Mod");
+            var target = mod != null ? HarmonyLib.AccessTools.Method(mod, "OnSceneWasInitialized") : null;
+            if (target == null) return;
+            harmony.Patch(target, prefix: new HarmonyLib.HarmonyMethod(typeof(AfflictionComponentCompat), nameof(Prefix)));
+        }
+        catch (Exception ex) { ModMain.Log?.Warning($"[Compat] AfflictionComponent: {ex.Message}"); }
+    }
+
+    private static void Prefix(ref string sceneName)
+    {
+        if (sceneName != null && sceneName.StartsWith("PrepperCache", StringComparison.OrdinalIgnoreCase))
+            sceneName = sceneName.Replace("Empty", "");
+    }
+}
+
+// 开枪时镜头上跳主要不是后坐弹簧:开枪动画把镜头骨骼往上甩约 11 度再回来,
+//   PlayerCameraAnim.UpdateMainCamera 每帧把骨骼的位移和转角加到镜头上(下一帧开头再把位移减回去)。
+//   开枪后在它读骨骼前,把骨骼偏离开枪前姿势的部分按后坐力强度缩小,读完还原,游戏自己记的偏移就对得上。
+//   开枪 0.25 秒后骨骼回到开枪前姿势并稳住 0.1 秒就放手;最长管 2 秒,到点 0.2 秒渐变放手,镜头不会一下跳回去。
+internal static class Patch_CameraAnim_NoRecoil
+{
+    private const float HoldMax = 2f, FadeTime = 0.2f;
+    internal static int Phase;   // 0 不管,1 压住,2 渐变放手
+    private static float _fireTime, _stableSince, _fadeStart;
+    private static Vector3 _restE, _restP, _realPos;
+    private static Quaternion _realRot;
+    private static Transform _bone;
+
+    internal static void OnFire()
+    {
+        try
+        {
+            if (Phase == 0)
+            {
+                var go = GameManager.GetNewPlayerCameraAnim()?.m_CameraBone;
+                if (go == null) return;
+                _restE = go.transform.localEulerAngles;
+                _restP = go.transform.localPosition;
+            }
+            Phase = 1;
+            _fireTime = Time.time;
+            _stableSince = -1f;
+        }
+        catch { Phase = 0; }
+    }
+
+    internal static void Prefix(PlayerCameraAnim __instance)
+    {
+        _bone = null;
+        if (Phase == 0) return;
+        try
+        {
+            var go = __instance.m_CameraBone;
+            if (go == null) { Phase = 0; return; }
+            var t = go.transform;
+            Vector3 e = t.localEulerAngles, p = t.localPosition;
+            var d = new Vector3(Mathf.DeltaAngle(_restE.x, e.x), Mathf.DeltaAngle(_restE.y, e.y), Mathf.DeltaAngle(_restE.z, e.z));
+            var dp = p - _restP;
+            float now = Time.time;
+            if (Phase == 1)
+            {
+                if (d.sqrMagnitude < 0.01f && dp.sqrMagnitude < 1e-5f)
+                {
+                    if (_stableSince < 0f) _stableSince = now;
+                    else if (now - _stableSince >= 0.1f && now - _fireTime >= 0.25f) { Phase = 0; return; }
+                }
+                else _stableSince = -1f;
+                if (now - _fireTime > HoldMax) { Phase = 2; _fadeStart = _fireTime + HoldMax; }
+            }
+            float w = Phase == 1 ? 1f : 1f - (now - _fadeStart) / FadeTime;
+            if (w <= 0f) { Phase = 0; return; }
+            float keep = 1f - (CheatState.NoRecoil ? 1f : 1f - CheatStateESP.RecoilScale) * w;
+            _realRot = t.localRotation;
+            _realPos = p;
+            _bone = t;
+            t.localRotation = Quaternion.Euler(_restE + d * keep);
+            t.localPosition = _restP + dp * keep;
+        }
+        catch { Phase = 0; _bone = null; }
+    }
+
+    internal static void Postfix()
+    {
+        if (_bone == null) return;
+        try
+        {
+            _bone.localRotation = _realRot;
+            _bone.localPosition = _realPos;
+        }
+        catch { }
+        _bone = null;
+    }
+}
+
 // v7.7 删掉 Patch_FPSWeapon_AddForce2 / Patch_FPSCamera_AddForce2 —— 两个类既没有
 //   [HarmonyPatch] attribute 也没有 DynamicPatch Spec,从来没挂载过;而且它们唯一的
 //   守卫条件读的是 InFireAnimation,那个字段全工程无人赋值(编译器 CS0649),恒为 false
 //   → 即便挂上也永远直接 return true。无后坐力实际由 PlayFireAnimation 前后零化/还原
 //   GunItem 的 recoil 字段实现(见上),与这两个类无关。
 
-// v2.7.89 Camera.Update: Prefix 仍尝试归零弹簧参数(阻止弹簧物理运动)
-// 如果归零无效(IL2Cpp struct 限制),LateUpdate Postfix 的 transform 补偿兜底
+// 相机只处理晃动。后坐力在源头(PlayFireAnimation 前后零化 GunItem 后坐字段)就没有了,
+//   游戏里没有第二个后坐入口(反编译确认 SetTarget 只被 PlayFireAnimation 调用),这里不再碰弹簧。
 internal static class Patch_FPSCamera_ClearRecoil
 {
     private static bool _logged;
-    // 帧级缓存：Prefix 计算一次，Postfix 直接复用，避免重复 CheatState 读取
-    private static bool _recoilOn;
     private static bool _swayOn;
     private static bool _gunHeld;
 
     internal static void Prefix(vp_FPSCamera __instance)
     {
-        _recoilOn = CheatState.NoRecoil || CheatState.SuperAccuracy || CheatStateESP.RecoilScale < 0.99f;
-        _swayOn = CheatState.NoAimSway;
-        bool recoilOn = _recoilOn;
-        bool swayOn = _swayOn;
-        if (!recoilOn && !swayOn) { _gunHeld = false; return; }
+        _swayOn = CheatState.NoAimSway || CheatState.SuperAccuracy;
+        if (!_swayOn) { _gunHeld = false; return; }
         _gunHeld = WeaponCache.IsHoldingGun();
         if (!_gunHeld) return;
 
-        if (recoilOn)
-        {
-            try
-            {
-                var spring = __instance.m_RecoilSpring;
-                spring.m_Current = UnityEngine.Vector2.zero;
-                spring.m_Target = UnityEngine.Vector2.zero;
-                spring.m_Velocity = UnityEngine.Vector2.zero;
-                __instance.m_RecoilSpring = spring;
-            }
-            catch { }
-            try { __instance.RecoilPitchStiffness = 0f; } catch { }
-            try { __instance.RecoilYawStiffness = 0f; } catch { }
-            try { __instance.RecoilPitchDamping = 1f; } catch { }
-            try { __instance.RecoilYawDamping = 1f; } catch { }
-        }
-
-        if (swayOn)
-        {
-            try { __instance.m_MaxAmbientSwayAngleDegreesA = 0f; } catch { }
-            try { __instance.m_MaxAmbientAimingSwayAngleDegreesA = 0f; } catch { }
-            try { __instance.m_AmbientSwaySpeedA = 0f; } catch { }
-            try { __instance.m_AmbientAimingSwaySpeedA = 0f; } catch { }
-            try { __instance.m_CurrentMaxAmbientSwayAngle = 0f; } catch { }
-            try { __instance.m_CurrentAmbientSwaySpeed = 0f; } catch { }
-            try { __instance.ShakeAmplitude = UnityEngine.Vector3.zero; } catch { }
-            try { __instance.ShakeSpeed = 0f; } catch { }
-            try { __instance.BobAmplitude = UnityEngine.Vector4.zero; } catch { }
-        }
+        try { __instance.m_MaxAmbientSwayAngleDegreesA = 0f; } catch { }
+        try { __instance.m_MaxAmbientAimingSwayAngleDegreesA = 0f; } catch { }
+        try { __instance.m_AmbientSwaySpeedA = 0f; } catch { }
+        try { __instance.m_AmbientAimingSwaySpeedA = 0f; } catch { }
+        try { __instance.m_CurrentMaxAmbientSwayAngle = 0f; } catch { }
+        try { __instance.m_CurrentAmbientSwaySpeed = 0f; } catch { }
+        try { __instance.ShakeAmplitude = UnityEngine.Vector3.zero; } catch { }
+        try { __instance.ShakeSpeed = 0f; } catch { }
+        try { __instance.BobAmplitude = UnityEngine.Vector4.zero; } catch { }
     }
 
     internal static void Postfix(vp_FPSCamera __instance)
     {
-        // 直接复用 Prefix 缓存的结果，不重复读取 CheatState / WeaponCache
-        if (_recoilOn && _gunHeld)
-        {
-            try
-            {
-                var spring = __instance.m_RecoilSpring;
-                __instance.m_Pitch -= spring.m_Current.x;
-                __instance.m_Yaw -= spring.m_Current.y;
-                __instance.ShakeAmplitude = UnityEngine.Vector3.zero;
-                __instance.ShakeSpeed = 0f;
-            }
-            catch { }
-        }
-        if ((_swayOn || CheatState.SuperAccuracy) && _gunHeld)
+        if (_swayOn && _gunHeld)
         {
             try
             {
@@ -1113,55 +1276,21 @@ internal static class Patch_FPSCamera_ClearRecoil
             }
             catch { }
         }
-        if (!_logged && (CheatState.NoRecoil || CheatState.NoAimSway))
+        if (!_logged && _swayOn)
         {
             _logged = true;
-            try { ModMain.Log?.Msg($"[Aim] Camera Update Postfix active (recoil={CheatState.NoRecoil} sway={CheatState.NoAimSway})"); } catch { }
+            try { ModMain.Log?.Msg("[Aim] Camera Update Postfix active (steady aim)"); } catch { }
         }
     }
 }
 
-// v2.7.90 无后坐力核心:只在开枪后短时间窗口内覆盖 transform,防止全局鼠标反转
-// 方案:Prefix 记录 transform + m_Pitch/m_Yaw,Postfix 仅保留鼠标 delta、剥离弹簧贡献
+// LateUpdate 只剩晃动清零和 GunZoom。原先开枪后 0.5 秒把相机旋转锁回上一帧的补偿已删除
+//   (它丢掉当帧鼠标位移,开枪后视角会卡住再跳一下)。
 internal static class Patch_FPSCamera_LateUpdate
 {
-    internal static float LastFireTime;
-    private const float RecoilWindow = 0.5f;
-    private static Quaternion _preRot;
-    private static float _prePitch, _preYaw;
-    // 帧级缓存：Prefix 判断一次，Postfix 复用，避免重复读 CheatState
-    private static bool _activeThisFrame;
-
-    private static bool ShouldActivate()
-    {
-        return CheatState.NoRecoil || CheatState.SuperAccuracy || CheatStateESP.RecoilScale < 0.99f;
-    }
-
-    internal static void Prefix(vp_FPSCamera __instance)
-    {
-        bool inWindow = ShouldActivate() && Time.time - LastFireTime <= RecoilWindow;
-        _activeThisFrame = inWindow;
-        if (!inWindow) return;
-        _preRot = __instance.transform.rotation;
-        _prePitch = __instance.m_Pitch;
-        _preYaw = __instance.m_Yaw;
-    }
-
     internal static void Postfix(vp_FPSCamera __instance)
     {
-        if (_activeThisFrame)
-        {
-            try
-            {
-                float dPitch = __instance.m_Pitch - _prePitch;
-                float dYaw = __instance.m_Yaw - _preYaw;
-                var noRecoilRot = _preRot * Quaternion.Euler(dPitch, dYaw, 0f);
-                __instance.transform.rotation = Quaternion.Slerp(
-                    __instance.transform.rotation, noRecoilRot, 1f);
-            }
-            catch { }
-        }
-        if (CheatState.NoAimSway && WeaponCache.IsHoldingGun())
+        if ((CheatState.NoAimSway || CheatState.SuperAccuracy) && WeaponCache.IsHoldingGun())
         {
             try
             {
@@ -1175,6 +1304,40 @@ internal static class Patch_FPSCamera_LateUpdate
         }
         // GunZoom:瞄准时滚轮缩放 FOV
         GunZoomState.ApplyZoom(__instance);
+    }
+}
+
+// —— 超级精准:子弹在 vp_FPSShooter.Fire 里以相机朝向生成,再随机偏转 ProjectileSpread 度。
+//   开枪前把散布置 0,子弹就沿准星射出;开枪后还原。 ——
+internal static class Patch_FPSShooter_Fire
+{
+    private static vp_FPSShooter _shooter;
+    private static float _spread;
+    private static bool _logged;
+
+    internal static void Prefix(vp_FPSShooter __instance)
+    {
+        _shooter = null;
+        if (!CheatState.SuperAccuracy) return;
+        try
+        {
+            _spread = __instance.ProjectileSpread;
+            __instance.ProjectileSpread = 0f;
+            _shooter = __instance;
+            if (!_logged)
+            {
+                _logged = true;
+                ModMain.Log?.Msg($"[Aim] SuperAccuracy: spread {_spread} -> 0");
+            }
+        }
+        catch { }
+    }
+
+    internal static void Postfix()
+    {
+        if (_shooter == null) return;
+        try { _shooter.ProjectileSpread = _spread; } catch { }
+        _shooter = null;
     }
 }
 
@@ -1708,8 +1871,8 @@ internal static class Patch_TechBackpack
     {
         try
         {
-            if (__instance == null || !CheatState.TechBackpack) return;
-            float kg = CheatState.TechBackpackKg;
+            if (__instance == null || !(CheatState.TechBackpack || CheatState.InfiniteCarry)) return;
+            float kg = CheatState.InfiniteCarry ? 99999f : CheatState.TechBackpackKg;
 #if STORY_EDITION
             // 2.24 这 7 个字段名都带 KG 后缀且是裸 float(2.55 才改成 ItemWeight 并去掉后缀)
             if (kg == _lastKg && __instance.m_MaxCarryCapacityKG == kg) return;
@@ -1807,7 +1970,7 @@ internal static class CheatsTick
     // v2.7.92 性能:InfiniteAmmo/NoJam 需扫全场景;其余只需手持武器,避免 FindObjectsOfType
     public static void TickGuns()
     {
-        if (!CheatState.InfiniteAmmo && !CheatState.NoJam && !CheatState.NoRecoil && !CheatState.SuperAccuracy && !CheatState.NoAimSway) return;
+        if (!CheatState.InfiniteAmmo && !CheatState.NoJam && !CheatState.SuperAccuracy && !CheatState.NoAimSway) return;
         try
         {
             if (CheatState.NoJam)
@@ -1833,27 +1996,14 @@ internal static class CheatsTick
                 }
             }
 
-            if (CheatState.NoRecoil || CheatState.SuperAccuracy || CheatState.NoAimSway)
+            if (CheatState.SuperAccuracy || CheatState.NoAimSway)
             {
                 var pm = GameManager.GetPlayerManagerComponent();
                 var gi = pm?.m_ItemInHands;
                 var g = gi != null ? gi.GetComponent<GunItem>() : null;
                 if (g != null)
                 {
-                    if (CheatState.NoRecoil || CheatState.SuperAccuracy)
-                    {
-                        try { g.m_PitchRecoilMin = 0f; } catch { }
-                        try { g.m_PitchRecoilMax = 0f; } catch { }
-                        try { g.m_YawRecoilMin = 0f; } catch { }
-                        try { g.m_YawRecoilMax = 0f; } catch { }
-                        try { g.m_SwayValueZeroFatigue = 0f; } catch { }
-                        try { g.m_SwayValueMaxFatigue = 0f; } catch { }
-                    }
-                    if (CheatState.SuperAccuracy)
-                    {
-                        try { g.m_SwayValue = 0f; } catch { }
-                    }
-                    if (CheatState.NoAimSway)
+                    if (CheatState.NoAimSway || CheatState.SuperAccuracy)
                     {
                         try { g.m_SwayValueZeroFatigue = 0f; } catch { }
                         try { g.m_SwayValueMaxFatigue = 0f; } catch { }
@@ -2037,7 +2187,7 @@ internal static class CheatsTick
     //   不再需要实例反射。camera float 字段直接写实例属性。只剩 m_RecoilSpring(struct) 需要 FieldInfo。
     public static void TickCamera()
     {
-        bool anyOn = CheatState.NoAimSway || CheatState.NoAimStamina || CheatState.NoRecoil || CheatState.SuperAccuracy;
+        bool anyOn = CheatState.NoAimSway || CheatState.NoAimStamina || CheatState.SuperAccuracy;
         // 全关 AND 上次也全关 → 零开销早退
         if (!anyOn && !_lastAnyAimToggle) return;
         if (GameManager.IsMainMenuActive()) return;
@@ -2144,11 +2294,11 @@ internal static class CheatsTick
             // 反编译确认:vp_FPSWeapon.m_DisableAimSway 等是 static bool,Set* 是 static 方法
             // 空 weapon 不影响 —— static 字段全局生效,不依赖实例
             // v2.7.84:NoAimSway 合并了 sway+shake+breath 三个 toggle
-            try { vp_FPSWeapon.m_DisableAimSway      = CheatState.NoAimSway;    } catch (Exception ex) { ModMain.Log?.Warning($"[Aim] SetAimSway: {ex.Message}"); }
-            try { vp_FPSWeapon.m_DisableAimShake     = CheatState.NoAimSway;    } catch (Exception ex) { ModMain.Log?.Warning($"[Aim] SetAimShake: {ex.Message}"); }
-            try { vp_FPSWeapon.m_DisableAimBreathing  = CheatState.NoAimSway;    } catch (Exception ex) { ModMain.Log?.Warning($"[Aim] SetAimBreath: {ex.Message}"); }
+            try { vp_FPSWeapon.m_DisableAimSway      = CheatState.NoAimSway || CheatState.SuperAccuracy;    } catch (Exception ex) { ModMain.Log?.Warning($"[Aim] SetAimSway: {ex.Message}"); }
+            try { vp_FPSWeapon.m_DisableAimShake     = CheatState.NoAimSway || CheatState.SuperAccuracy;    } catch (Exception ex) { ModMain.Log?.Warning($"[Aim] SetAimShake: {ex.Message}"); }
+            try { vp_FPSWeapon.m_DisableAimBreathing  = CheatState.NoAimSway || CheatState.SuperAccuracy;    } catch (Exception ex) { ModMain.Log?.Warning($"[Aim] SetAimBreath: {ex.Message}"); }
             try { vp_FPSWeapon.m_DisableAimStamina   = CheatState.NoAimStamina; } catch (Exception ex) { ModMain.Log?.Warning($"[Aim] SetAimStamina: {ex.Message}"); }
-            try { vp_FPSCamera.m_DisableAmbientSway   = CheatState.NoAimSway;    } catch (Exception ex) { ModMain.Log?.Warning($"[Aim] m_DisableAmbientSway: {ex.Message}"); }
+            try { vp_FPSCamera.m_DisableAmbientSway   = CheatState.NoAimSway || CheatState.SuperAccuracy;    } catch (Exception ex) { ModMain.Log?.Warning($"[Aim] m_DisableAmbientSway: {ex.Message}"); }
 
             // v2.7.92 性能:camera sway + recoil spring 清零已由 DynamicPatch 每帧 Prefix 覆盖,
             //   此处只保留 weapon 实例反射(DynamicPatch 的 SteadyAim 也做,但这里是兜底)
@@ -2158,7 +2308,7 @@ internal static class CheatsTick
                 return;
             }
 
-            if (CheatState.NoAimSway && weapon != null)
+            if ((CheatState.NoAimSway || CheatState.SuperAccuracy) && weapon != null)
             {
                 // v8.0.1: 原先 wType.GetField("BobAmplitude"/"ShakeAmplitude"/"ShakeSpeed"),
                 //   三个在 interop 上都是 property → FieldInfo 恒 null,`?.SetValue` 静默跳过,
@@ -2621,11 +2771,56 @@ internal static class CheatsTick
     // IL2CPP 下 Prefix return false 不可靠,Postfix 也可能在特殊时序下漏网
     // 每 60 帧(~1s)检查一次:当前 toggle 说不应有的 affliction 如果存在就清掉
     // 防止游戏内部状态因"半启动"的 affliction 而损坏(导致后续所有 affliction auto-resolve 的连锁 bug)
+    private static bool _lacerLogged;
+
     public static void TickAfflictionGuard()
     {
         bool guardBlood = CheatState.GodMode || CheatState.ImmuneAnimalDamage;
         bool guardGeneral = CheatState.GodMode;
-        if (!guardBlood && !guardGeneral) return;
+        bool guardSuffocate = CheatState.GodMode || CheatState.NoSuffocating;
+        if (!guardBlood && !guardGeneral && !guardSuffocate) return;
+
+        // v9.6 新伤病兜底:都先判断有没有再清,避免每秒空调 End 触发第三方 mod 的治愈后并发症
+        if (guardSuffocate)
+        {
+            try { var c = GameManager.GetSuffocatingComponent(); if (c != null && c.IsSuffocating()) c.ForceStopSuffocating(true); } catch { }
+        }
+#if !STORY_EDITION
+        if (guardBlood)
+        {
+            try
+            {
+                var c = GameManager.GetSevereLacerations();
+                if (c != null && (c.HasAffliction() || c.HaveAnyActiveWounds()))
+                {
+                    c.Cure((AfflictionOptions)0);
+                    // Cure 清不掉时每秒都会进来,日志只打一次
+                    if (!_lacerLogged) { _lacerLogged = true; ModMain.Log?.Msg("[AfflictionGuard] Tick cleared SevereLacerations"); }
+                }
+                else _lacerLogged = false;
+            }
+            catch { }
+        }
+#endif
+        if (guardGeneral)
+        {
+            try { var c = GameManager.GetBurnsComponent(); if (c != null && c.HasBurns()) c.BurnsEnd(true); } catch { }
+#if STORY_EDITION
+            try { var c = GameManager.GetBurnsElectricComponent(); if (c != null && c.HasBurnsElectric()) c.BurnsElectricEnd(); } catch { }
+#else
+            try { var c = GameManager.GetBurnsElectricComponent(); if (c != null && c.HasBurnsElectric()) c.BurnsElectricEnd(true); } catch { }
+            try { var c = GameManager.GetChemicalPoisoningComponent(); if (c != null && (c.HasAffliction() || c.HasRisk())) c.CureAll(); } catch { }
+            try { var c = GameManager.GetInsomniaComponent(); if (c != null && (c.HasInsomniaAffliction() || c.HasInsomniaRisk())) c.RemoveInsomniaAll(); } catch { }
+#endif
+            try { var c = GameManager.GetBrokenRibComponent(); if (c != null && c.HasBrokenRib()) for (int i = 0; i < 6; i++) try { c.BrokenRibEnd(i, true); } catch { } } catch { }
+            try { var c = GameManager.GetFrostbiteComponent(); if (c != null && c.HasFrostbite()) c.FrostbiteEnd(); } catch { }
+            try { var c = GameManager.GetCabinFeverComponent(); if (c != null && c.HasCabinFever()) c.CabinFeverEnd(); } catch { }
+            try { var c = GameManager.GetIntestinalParasitesComponent(); if (c != null && c.HasIntestinalParasites()) c.IntestinalParasitesEnd(true); } catch { }
+            try { var c = GameManager.GetInfectionRiskComponent(); if (c != null && c.HasInfectionRisk()) c.Cure(); } catch { }
+            try { var c = GameManager.GetToxicFogComponent(); if (c != null && c.HasAffliction()) c.StopAffliction(); } catch { }
+            try { var c = GameManager.GetAnxietyComponent(); if (c != null && c.HasAffliction()) c.StopAffliction(true); } catch { }
+            try { var c = GameManager.GetFearComponent(); if (c != null && c.HasAffliction()) c.StopAffliction(true); } catch { }
+        }
 
         try
         {
@@ -2717,7 +2912,8 @@ internal static class Patch_CookingPot_Update
             if (state == CookingPotItem.CookingState.Cooking)
             {
                 // 只有 QuickCook 才推(防烤焦单开不秒熟,需要正常等熟)
-                if (CheatState.QuickCook)
+                // 原版放上去就是 Cooking 状态,火没点只是不涨进度,不查火就会冷灶秒熟
+                if (CheatState.QuickCook && __instance.AttachedFireIsBurning())
                 {
                     if (!_logged)
                     {
@@ -3522,34 +3718,45 @@ internal static class Patch_EvolveItem_Update
         "Skeleton",    // 预留:骨架态命名变体
     };
 
+    // 目标预制体指针 → 是否秒风干。每个风干物每帧都进这里,读 .name 每次都分配新字符串,所以按目标缓存
+    private static readonly System.Collections.Generic.Dictionary<System.IntPtr, bool> _verdict = new();
+
+    internal static void ClearCache() => _verdict.Clear();
+
+    private static bool IsCureTarget(string n)
+    {
+        if (string.IsNullOrEmpty(n)) return false;
+        // 黑名单优先 — 任何腐烂/啃残目标一律放行 vanilla
+        for (int i = 0; i < DecayTargetTokens.Length; i++)
+            if (n.IndexOf(DecayTargetTokens[i], System.StringComparison.OrdinalIgnoreCase) >= 0) return false;
+        // 白名单 — 必须是合法风干目标才秒(非白名单默认放行 vanilla,保守不秒,不主动伤未知 mod)
+        for (int i = 0; i < CureTargetTokens.Length; i++)
+            if (n.IndexOf(CureTargetTokens[i], System.StringComparison.OrdinalIgnoreCase) >= 0) return true;
+        return false;
+    }
+
     internal static void Prefix(EvolveItem __instance)
     {
         if (!CheatState.QuickEvolve) return;
         try
         {
+            // 采树苗时原版先在世界里生成一根放进检视,这根被秒干就会在原地掉出一根风干的。没进过背包的不秒
+            //   这道判断只读两个 bool,放在最前面,世界里没碰过的风干物就不用再读名字
+            var gi = __instance.m_GearItem;
+            if (gi == null || (!gi.m_InPlayerInventory && !gi.m_BeenInPlayerInventory)) return;
+
             // v6.8.7: 白名单 + 黑名单 双重决策 — 只有目标是合法风干物且非腐烂态才秒
             var become = __instance.m_GearItemToBecome;
             if (become == null) return;
-            var go = ((UnityEngine.Component)become).gameObject;
-            if (go == null) return;
-            string n = go.name;
-            if (string.IsNullOrEmpty(n)) return;
-
-            // 黑名单优先 — 任何腐烂/啃残目标一律放行 vanilla
-            for (int i = 0; i < DecayTargetTokens.Length; i++)
+            System.IntPtr key = become.Pointer;
+            if (!_verdict.TryGetValue(key, out bool ok))
             {
-                if (n.IndexOf(DecayTargetTokens[i], System.StringComparison.OrdinalIgnoreCase) >= 0)
-                    return;
+                var go = ((UnityEngine.Component)become).gameObject;
+                if (go == null) return;
+                ok = IsCureTarget(go.name);
+                _verdict[key] = ok;
             }
-
-            // 白名单 — 必须是合法风干目标才秒
-            bool isCureTarget = false;
-            for (int i = 0; i < CureTargetTokens.Length; i++)
-            {
-                if (n.IndexOf(CureTargetTokens[i], System.StringComparison.OrdinalIgnoreCase) >= 0)
-                { isCureTarget = true; break; }
-            }
-            if (!isCureTarget) return;  // 非白名单 — 默认放行 vanilla(保守不秒,不主动伤未知 mod)
+            if (!ok) return;
 
             __instance.m_TimeToEvolveGameDays = 0f;
             __instance.m_TimeSpentEvolvingGameHours = 1f;
@@ -3825,6 +4032,45 @@ internal static class Patch_TraderManager_GetAvailableTradeExchanges
     }
 }
 
+// 解锁原版限制:原版 TradeExchange.FilterExchangeData 调 IsGainedItemValidInCurrentGamemode,
+//   它拿换出物品的预制体问 ShouldDisableForCurrentMode(GameObject),入侵者和悲惨模式里斧子、步枪、精工箭的预制体
+//   挂着 DisableObjectForXPMode,整条交易被滤掉,信任满了也不进清单。只在这一次调用里让模式检查放行,
+//   同一函数后半段"已有同款就不卖"照原版。
+internal static class Patch_TradeExchangeData_GainedItemValid
+{
+    internal static bool Active;
+    internal static bool On => CheatState.TraderUnlockModeItems;
+    internal static void Prefix() { Active = On; }
+    internal static void Postfix() { Active = false; }
+}
+
+internal static class Patch_DisableForMode_GameObject
+{
+    internal static bool Prefix(ref bool __result)
+    {
+        if (!Patch_TradeExchangeData_GainedItemValid.Active) return true;
+        __result = false;
+        return false;
+    }
+}
+
+// 奖励用 GearItem.InstantiateGearItem 生成,不像控制台刷物品那样调 RemoveDisabler,
+//   放到地上一激活 DisableObjectForXPMode.Update 就把它关掉。在交换箱里就把禁用组件去掉。
+internal static class Patch_ExchangeBox_PrepareAndShowRewards
+{
+    internal static void Postfix(Il2CppTLD.Trader.ExchangeBox __instance)
+    {
+        if (!Patch_TradeExchangeData_GainedItemValid.On || __instance == null) return;
+        try
+        {
+            var items = __instance.GetComponentsInChildren<GearItem>(true);
+            for (int i = 0; i < items.Length; i++)
+                if (items[i] != null) DisableObjectForXPMode.RemoveDisabler(items[i].gameObject);
+        }
+        catch { }
+    }
+}
+
 // 信任满值和信任滑条走原版 AddTrust:历史最高升上去时它按阈值解锁交易和改进,每次都按当前信任
 //   解锁对话,信任第一次到满格时解锁 DLC 成就 DLC01_GoodAndServices(用户确认要这个成就)。
 internal static class TraderTrust
@@ -4048,8 +4294,27 @@ internal static class Patch_CougarManager_Update_ForceActivate
 // Harmony:Prefix return false = skip entire method
 internal static class Patch_Frostbite_DealDamage
 {
-    internal static bool Prefix() => !CheatState.NoFrostbiteRisk;
+    internal static bool Prefix() => !(CheatState.NoFrostbiteRisk || CheatState.GodMode);
 }
+
+// v9.6 无敌挡新伤病。同一个 Prefix 挂到多个 XxxStart 上(见 DynamicPatch),IL2CPP 下漏网的由 TickAfflictionGuard 每秒兜底
+internal static class Patch_GodMode_BlockAffliction
+{
+    internal static bool Prefix() => !CheatState.GodMode;
+}
+
+internal static class Patch_NoSuffocating_Start
+{
+    internal static bool Prefix() => !(CheatState.GodMode || CheatState.NoSuffocating);
+}
+
+#if !STORY_EDITION
+// 美洲狮扑击挂的严重撕裂伤,免动物伤害之前只挡了扣血和出血
+internal static class Patch_SevereLacerations_Apply
+{
+    internal static bool Prefix() => !(CheatState.GodMode || CheatState.ImmuneAnimalDamage);
+}
+#endif
 
 // —— 饱饱 buff:WellFed.Update Prefix 强制 m_Active=true ——
 // CT 做法:NOP WellFed.Update 前 2 字节(跳过退出条件),条件:饥饿不为0
@@ -4206,20 +4471,25 @@ internal static class Patch_ObjectAnim_Play
 //   整合 DisableAutoEquipCharcoal:取炭不自动装备
 // ═══════════════════════════════════════════════════════════════════
 
+// 原版取炭后是排队、下一帧才装上,取完再卸那时手上还不是木炭。改成取炭时开 2 秒窗口,窗口内装备木炭直接挡掉
 internal static class Patch_CharcoalHarvest_NoEquip
 {
-    internal static void Postfix()
+    internal static float BlockUntil = -1f;
+
+    internal static void Prefix()
     {
-        if (!CheatState.NoAutoEquipCharcoal) return;
-        try
-        {
-            var pm = GameManager.GetPlayerManagerComponent();
-            if (pm == null || pm.m_ItemInHands == null) return;
-            var name = ((UnityEngine.Object)pm.m_ItemInHands).name;
-            if (name != null && name.Contains("Charcoal"))
-                pm.UnequipItemInHands();
-        }
-        catch { }
+        BlockUntil = UnityEngine.Time.realtimeSinceStartup + 2f;
+    }
+}
+
+internal static class Patch_Charcoal_BlockEquip
+{
+    internal static bool Prefix(GearItem gi)
+    {
+        if (!CheatState.NoAutoEquipCharcoal || gi == null) return true;
+        if (UnityEngine.Time.realtimeSinceStartup > Patch_CharcoalHarvest_NoEquip.BlockUntil) return true;
+        try { return gi.m_CharcoalItem == null; }
+        catch { return true; }
     }
 }
 
@@ -4359,7 +4629,7 @@ internal static class Patch_GearItem_Awake_CaffeinatedSodas
                 buff.m_DurationHours = DurationHours(s.World_SodaGrapeDuration);
             }
             else if (objName.Contains("GEAR_Soda") && !objName.Contains("GEAR_SodaOrange")
-                     && !objName.Contains("GEAR_SodaGrape") && s.World_SodaSummitEnabled)
+                     && !objName.Contains("GEAR_SodaGrape") && !objName.Contains("GEAR_SodaEnergy") && s.World_SodaSummitEnabled)
             {
                 var buff = ((Component)__instance).gameObject.AddComponent<FatigueBuff>();
                 __instance.m_FatigueBuff = buff;
@@ -4444,10 +4714,12 @@ internal static class FallClothingGuard
 
 internal static class TeleportFallGuard
 {
-    public static bool Active;
-    private static int _frames;
-    public static void Arm() { Active = true; _frames = 180; }
-    public static void Tick() { if (Active && --_frames <= 0) Active = false; }
+    // 原先按 180 帧算,高帧率下才 1 秒多,从高处落下还没着地保护就过期了 → 摔伤摔死。改按真实时间。
+    private const float Seconds = 8f;
+    private static float _until;
+    public static bool Active => _until > 0f && Time.realtimeSinceStartup < _until;
+    public static void Arm() { _until = Time.realtimeSinceStartup + Seconds; }
+    public static void Tick() { if (_until > 0f && Time.realtimeSinceStartup >= _until) _until = 0f; }
 }
 
 // v7.7 删掉 Patch_Blueprint_NumSets —— 目标方法 NumSetsOfMaterialsAvailable 在 TLD 2.55

@@ -46,10 +46,10 @@ internal static class TrackerPatches
             if (decalMethod != null)
                 _harmony.Patch(decalMethod, postfix: new HarmonyMethod(self.GetMethod(nameof(Decal_TrySpawn_Post), post)));
 
-            var beachType = AccessTools.TypeByName("Il2Cpp.BeachcombingSpawner");
+            var beachType = AccessTools.TypeByName("Il2CppTLD.Gameplay.BeachcombingSpawner");
             if (beachType != null)
             {
-                var beachStart = AccessTools.Method(beachType, "Start");
+                var beachStart = AccessTools.Method(beachType, "Awake");
                 if (beachStart != null)
                     _harmony.Patch(beachStart, postfix: new HarmonyMethod(self.GetMethod(nameof(Beachcombing_Start_Post), post)));
             }
