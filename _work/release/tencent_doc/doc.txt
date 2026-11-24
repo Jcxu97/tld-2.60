@@ -1,4 +1,4 @@
-当前网盘上是 TldHacks V12.9，适配游戏 2.60 版（11 月 6 日的热补丁）。下载、安装、功能、按键都在这一份文档里。
+当前网盘上是 TldHacks V13.0，适配游戏 2.60 版（11 月 6 日的热补丁）。下载、安装、功能、按键都在这一份文档里。
 找某个 mod 或某个按键，按 Ctrl+F 搜名字最快。电脑上点页面左边的“大纲”，能直接跳到各章。
 ! 嫌麻烦、装不上、装完进不去游戏的，直接找群主远程安装，30 元一次，见第一章。
 
@@ -39,14 +39,14 @@
 剧情包和沙盒包各装各的，互不影响，可以都装。
 装 mod 之前，先装网盘根目录的 .NET 运行库（前置！必须下载安装！Downloading the. NETRuntime.exe），装过就跳过。
 | 包 | 里面有什么 | 适合谁 | 在网盘哪里 |
-| 最小包 | TldHacks 修改器、SCPlusFix++ 自定义安全屋，和它们要用的几个前置 | 只要修改器菜单，别的 mod 自己配 | 1_TldHacks-v12.9最小安装包_只有修改器 文件夹里的 TldHacks-v12.9-最小安装包_只带修改mod！解压到游戏根目录.zip |
-| 完整版 | TldHacks 加十几个常用 mod 和它们要用的前置，建造、摆放、存档、雷达、更多地堡这些（见第六章） | 想一次装好，开箱就能玩 | 1_TldHacks-v12.9完整版_带其他mods例如地图 文件夹，四个分卷 材质包备份.001 到 .004 |
-| 终极版 | 群主自己在玩的整套，游戏 Mods 文件夹里在用的 mod 全都在。食物、衣服、装饰、配方、材质（TheLongDevelopment）这些完整版没带的也有，别的 mod 的设置是群主调好的，TldHacks 修改器是默认设置 | 想要群主同款 | 2_TldHacks-v12.9终极版_更多MOD食物衣服_适配最新铁路DLC 文件夹，182 个分卷 终极版材质包备份.001 到 .182 |
+| 最小包 | TldHacks 修改器、SCPlusFix++ 自定义安全屋，和它们要用的几个前置 | 只要修改器菜单，别的 mod 自己配 | 1_TldHacks-v13.0最小安装包_只有修改器 文件夹里的 TldHacks-v13.0-最小安装包_只带修改mod！解压到游戏根目录.zip |
+| 完整版 | TldHacks 加十几个常用 mod 和它们要用的前置，建造、摆放、存档、雷达、更多地堡这些（见第六章） | 想一次装好，开箱就能玩 | 1_TldHacks-v13.0完整版_带其他mods例如地图 文件夹，四个分卷 材质包备份.001 到 .004 |
+| 终极版 | 群主自己在玩的整套，游戏 Mods 文件夹里在用的 mod 全都在。食物、衣服、装饰、配方、材质（TheLongDevelopment）这些完整版没带的也有，别的 mod 的设置是群主调好的，TldHacks 修改器是默认设置 | 想要群主同款 | 2_TldHacks-v13.0终极版_更多MOD食物衣服_适配最新铁路DLC 文件夹，182 个分卷 终极版材质包备份.001 到 .182 |
 | 剧情包 | 剧情模式专用的 TldHacks 和 mod 加载器，第 1 到 4 章一个包，第 5 章一个包 | 玩剧情模式 | 4_The Long dark 故事剧情模式_可能有bug没测试 文件夹 |
 | 选装 mod | 单个功能的 mod | 只想加某一个功能 | 3_功能mods 选装 文件夹 |
 ### 选装 mod
 | 网盘里的文件 | 是什么 | 怎么装 |
-| MoreBunkers-v1.4_更多地堡三个新地堡_适配2.59_解压到游戏根目录.zip | 每个沙盒存档多出三个布置好的地堡（神秘湖工匠地堡、沿海公路囤货地堡、废弃机场雇佣兵地堡），里面有床、炉子、工作台和大量囤货。按 Home 提示地堡在哪。完整版和终极版已经带了 | 解压到游戏根目录 |
+| MoreBunkers-v1.5_更多地堡三个新地堡_适配2.60_解压到游戏根目录.zip | 每个沙盒存档多出三个布置好的地堡（神秘湖工匠地堡、沿海公路囤货地堡、废弃机场雇佣兵地堡），里面有床、炉子、工作台和大量囤货。按 Home 提示地堡在哪。完整版和终极版已经带了 | 解压到游戏根目录 |
 | TraderMoving-v1.0.2_搬运商人无线电和交易箱_解压到游戏根目录.zip | 把远疆 DLC 商人的无线电和交易箱搬到你想要的地方，可以跨场景搬。要有远疆 DLC。不要和 ImprovedTrader 一起装。终极版已经带了 | 解压到游戏根目录 |
 | 可以看电视了！NorthernLightsBroadcast_v2.1.1_修好不显示文字_全部放入Mods文件夹.zip | 游戏里的电视能放自己电脑上的视频（mp4、mkv、avi、wmv 这些），修好了电视菜单不显示文字。终极版已经带了 | 8 个 dll 和 modcomponent 文件全部放进 Mods 文件夹，说明文件不用放 |
 | PastimeReading_DLL放Mods文件夹放根目录1.zip | 游戏里看书，能换成自己的小说。这一份修好了中文越往后方框越多的问题 | PastimeReading.dll 和 pastimeReading 整个文件夹都放进 Mods 文件夹 |
@@ -62,14 +62,14 @@
 游戏根目录就是有 tld.exe 的那个文件夹。在 Steam 库里右键 The Long Dark，管理，浏览本地文件，打开的就是。
 Steam 默认在 D:\Steam\steamapps\common\TheLongDark\（或 C 盘，看你 Steam 装在哪）。
 ### 最小包
-+ 解压 TldHacks-v12.9-最小安装包_只带修改mod！解压到游戏根目录.zip，里面是 version.dll、MelonLoader、Mods 三样。
++ 解压 TldHacks-v13.0-最小安装包_只带修改mod！解压到游戏根目录.zip，里面是 winhttp.dll、MelonLoader、Mods 三样。
 + 把这三样拖进游戏根目录，和 tld.exe 同一层，提示重名就选覆盖。
 + 以前单独装过被整合的 mod，或者装过别人整合包的，按第四章跑一次 bat。
 + 启动游戏，进存档后按 Tab 打开 TldHacks 菜单。
 ### 完整版
 + 下载完整版文件夹里的四个分卷 材质包备份.001、.002、.003、.004，放在同一个文件夹里。四个缺一个都会报“无法打开为压缩文件”。
 + 右键 材质包备份.001，用 7-Zip 打开，输入密码 tld2026。只点 .001 就行，它会自动把四个分卷合起来。
-+ 解压出来是一个长名字的文件夹。打开它，把里面的 version.dll、MelonLoader、Mods 三样拖进游戏根目录，选覆盖。拖的是里面的东西，不要把那个长名字文件夹本身拖进去。
++ 解压出来是一个长名字的文件夹。打开它，把里面的 winhttp.dll、MelonLoader、Mods 三样拖进游戏根目录，选覆盖。拖的是里面的东西，不要把那个长名字文件夹本身拖进去。
 + 进游戏根目录的 Mods 文件夹，双击 disable_integrated_mods.bat（见第四章）。
 + 启动游戏，进存档后按 Tab 打开 TldHacks 菜单。
 要改按键和其他设置，进游戏后在 Mod Settings 里改。包里带的是我自己的 mod 设置，大家按自己的习惯重新设一遍。
@@ -79,7 +79,7 @@ Steam 默认在 D:\Steam\steamapps\common\TheLongDark\（或 C 盘，看你 Stea
 + 把解压出来的 winhttp.dll、MelonLoader、Mods、UserData、UserLibs、Plugins 全部放进游戏根目录，直接和 tld.exe 同一层，不要多套一层文件夹。有重名就覆盖。
 + 启动游戏。第一次启动会多等一会儿，黑框里刷字是正常的。
 + 进存档后按 Tab 打开 TldHacks 菜单。修改器是默认设置，作弊开关全是关的，要用什么自己在菜单里开。别的 mod 的按键和完整版有些不一样，见第七章。
-旧完整版用的是 version.dll，终极版用的是 winhttp.dll，两个只留一个。
+V13.0 起三个包都用 winhttp.dll，以前的最小包和完整版用的是 version.dll。游戏根目录里两个只留一个，旧的 version.dll 删掉。
 ### 剧情包
 剧情包装在别的文件夹，不是游戏根目录，见第九章。
 
@@ -157,7 +157,7 @@ TldHacks 是内置修改器，三个沙盒包都带，用在沙盒模式。剧�
 | PerfectPlacement | 完美摆放（已汉化）。放下物品时自动贴齐旁边的物品、墙和墙角，摆正朝向。罐头能叠着放，木柴能码成一垛 |
 | SCPlusFix++ | 自定义安全屋，原来的 SafehouseCustomizationPlus 修好以后改的名，能搬、摆、复制家具。最小包也带了。Mods 里留着原版 SafehouseCustomizationPlus.dll 不用删，SCPlusFix++ 会顶替它，老存档照常读 |
 | ObjectSinkFix | 家具下沉修复。回到去过的地点时，家具不再沉进地板，保险箱、储物箱这类容器不再整个消失。已经沉下去的家具进地点时自动抬回原位 |
-| MoreBunkers | 更多地堡 v1.4。神秘湖工匠地堡、沿海公路囤货地堡、废弃机场雇佣兵地堡，入口是地上的旧舱口，按 Home 键看在哪 |
+| MoreBunkers | 更多地堡 v1.5。神秘湖工匠地堡、沿海公路囤货地堡、废弃机场雇佣兵地堡，入口是地上的旧舱口，按 Home 键看在哪 |
 | MotionTrackerLite | 动物雷达，屏幕上用图标提示附近动物的方位，按 U 开关 |
 | RarityRework | 物品稀有度。物品名字按档位上色，普通、优秀、精良、史诗、传说、神话六档。随机词条模式默认关，在 Mod Settings 里打开，六档各自的出现概率也在那里调。V12.8 起词条加强，神话档翻倍，物品说明里每条写原来的值和现在的值 |
 | SaveManager | 存档管理。F5 存档，F6 读档（F5 快速保存的注意事项见第十章） |
@@ -435,7 +435,7 @@ Architect、PlacingAnywhere、PerfectPlacement、BlueprintCleaner、MotionTracke
 ! 装不上或者嫌麻烦
 直接找群主远程安装，30 元一次，见第一章。
 ! 游戏能启动，但 mod 没加载
-游戏能启动但 mod 管理器没起来，把游戏根目录的 version.dll 改名成 winhttp.dll 试试。还不行就找群主远程安装。
+游戏能启动但 mod 管理器没起来，看游戏根目录是不是 version.dll 和 winhttp.dll 都在，删掉 version.dll 只留 winhttp.dll；只有 version.dll 的，把它改名成 winhttp.dll 试试。装了 Major Miseries 一启动就闪退的，换 V13.0，旧版 TldHacks 和它冲突。还不行就找群主远程安装。
 ! 启动报 Runtime config not found
 报 Runtime config not found 之类找不到 MelonLoader 文件的，多半是杀毒软件删了文件，或者解压时多套了一层文件夹。关掉杀毒软件（或者把游戏目录加白名单），重新解压覆盖一遍。还不行就找群主远程安装。
 ! 第一次启动很慢，黑框一直刷字

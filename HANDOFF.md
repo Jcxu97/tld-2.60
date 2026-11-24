@@ -1,37 +1,33 @@
 # HANDOFF — tld-2.60
-
-> Last updated: 2026-11-10 22:15
+> Last updated: 2026-11-25 01:00
 
 ## 当前目标
 
-TldHacks V12.6 已发到夸克和百度,等群友反馈。
+V13.0 已发版(按 N 网反馈修 bug 的修复版),等群友和 N 网反馈。
 
 ## 已完成(本轮)
 
-- 新 mod BlueprintIconFix:制造列表里配方没图标时,用结果物品的背包图标补上。进完整版和终极版,release.py EXTRAS 里叫 bif
-- TldHacks V12.6:物品生成器里 GEAR_FishingLine 名字后加(游戏废案);咖啡罐、茶包这类多份物品能堆叠(Stacking.cs,没进游戏测过)
-- 终极版加了 HutDoorTorch(dll 和用户调过的 json),完整版和最小包不带
-- 夸克根目录 OLD 换成新文件夹 fid 7c837ffc…,发版脚本都改了;夸克、百度三个包按文件夹核对一致;腾讯文档整篇覆盖并读回一致
-- 群机器人资料库 00 01 06 07 10 24 同步到 server,rules.md 加第 28 条
+- TldHacks 13.0:删掉 MaybeFlushPlayerDamage 补丁(2.60 空函数,和 Major Miseries 补的 Hypothermia.SetWarmingUp 共用原生地址,启动栈溢出),隔离实例 A/B 实测;再删 Lock.IsLocked(沙盒版)、Panel_BreakDown.ExitInterface 两个共用地址的动态补丁;剧情版编译修好。SCPlusFix++ 2.1.0、MoreBunkers 1.5.0、RarityRework 1.2.1 一起发。
+- 打包:最小包、完整版 4 卷、终极版 182 卷、剧情 1~4 章 2 卷、第五章 3 卷,全部解压比对通过;最小包和完整版的注入器改名 winhttp.dll。本地游戏已部署。
+- 网盘:夸克和百度三个主文件夹改名 v13.0 并核对(1 / 4 / 183,无重复),夸克剧情两个文件夹也换了;选装里 MoreBunkers v1.5,单独版里 RarityRework、SCPlusFix++ 换新(百度那边之前没有这两个)。旧件在两边 OLD。
+- N 网:162 / 164 / 168 换主文件(13.0 / 1.5.0 / 2.1.0),162 / 163 / 164 / 168 的 ModSettings 链接改成 DigitalzombieTLD,162 加了 SCPlusFix++;9 条评论回复已发并读回。
+- 资料库 00 01 02 06 07 08 10 同步到 server(容器 md5 一致),鲸鲸 rules.md 加第 20 条;腾讯文档整篇覆盖到 V13.0。
 
 ## 下一步
 
-- 有人开制造界面后看 Latest.log 有没有 `补图标` 行,确认 BlueprintIconFix 生效
-- 咖啡罐堆叠改动没测过,群里报堆叠问题先看 Stacking.cs 的 Dedupe 和 LabelFix.RestoreUnits
-- 11-10 未发版:RarityRework v1.1.0,随机词条六档概率做成设置项(Settings.cs 的 weightCommon 到 weightMythic,默认 45/28/15/8/3.5/0.5,拉到 0 不出这一档,AffixCatalog.PickTier 按比例分摊)。已部署本机 Mods,没进游戏测;发版时它也要重打
-- 11-10 未发版:植物再生后补刷地图图标(IntegratedPatches8.cs 的 RefreshMapIcons)。原版 Harvest() 采完一片就撤图标,只在采集事件和 OnEnable 时重算。已编译部署到本机 Mods,没进游戏测;测法是再生天数调 1、采一片、睡过 24 小时、等 30 秒开地图,Latest.log 应有 `[RespawnPlants] regrew`
+- 等 N 网 Sieben4life 发 TraderMoving 世界重置的 Latest.log,hyuni9937 反馈 MoreBunkers 1.5.0 进地堡还空不空。
+- 群里或 N 网有人报忽略上锁、快速拆解收尾不对,先看 DynamicPatch.cs 这两处改动。
 
 ## 未决问题
 
-- 用户 11-10 定:植物图标修复和剧情版编不过(ItemPreview.cs 第 6 行引用 2.24 没有的 Il2CppTLD.Gear)先放着,等下次有别的 bug 一起修、一起打包发
-- 百度的 OLD 文件夹还是旧名字,夸克那边用户换成了 `OLD`,要不要统一没问过
+- TraderMoving 世界重置没复现,本版不改代码。
+- MoreBunkers 空地堡是推断修复,没进游戏实测。
+- 测试编 TldHacks 加 `-p:NoDeploy=true`;不要无界面启动正式游戏(TldHacks 会当成崩溃,下次进安全模式重置开关)。
 
 ## 关键文件
 
-- BlueprintIconFix/src/BlueprintIconFix.cs — 补图标的 patch
-- TldHacks/src/Menu.cs — ResolveDisplayNames 里给废案鱼线加后缀
-- TldHacks/src/Stacking.cs — 多份物品的堆叠判断
-- _tools/release/release.py — pack 和 upload,EXTRAS、NET_OLD
-- _tools/release/ult126.py、ult126_pack.py、bd_prep126.py、bd_up126.py、kb126.py — 这一版的终极版、百度、资料库脚本
-- _work/release/tencent_doc/ — 腾讯文档源稿和粘贴、读回、比对脚本
-- TldHacks/HANDOFF.md — TldHacks 明细
+- `TldHacks/src/Cheats.cs`、`TldHacks/src/DynamicPatch.cs`
+- `SCPlusFix/SCPlus/SettingsEn.cs`、`MoreBunkers/src/Patches.cs`
+- `_tools/release/bump130.py`、`ult130_pack.py`、`kb130.py`、`bd_prep130.py`、`bd_check130.py`、`qcheck130.py`、`xz130_quark.py`、`bdxz130_prep.py`、`bdxz130_up.py`
+- `_work/release/tencent_doc/bump130_doc.py`、`doc.txt`
+- `D:/GameWork/tld/rarity-check-2.60/`(隔离实例和各次运行日志)
