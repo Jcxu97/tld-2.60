@@ -59,7 +59,7 @@ internal static class TorchAutoSwap
             var next = QuickInv.Best(gi =>
             {
                 var t = gi.m_TorchItem;
-                if (t == null || gi.Pointer == held.Pointer || t.IsBurnedOut() || t.m_State == TorchState.Wet || gi.CurrentHP <= 0f) return float.MinValue;
+                if (t == null || gi.Pointer == held.Pointer || t.IsBurnedOut() || t.m_State == TorchState.Wet || gi.GetNormalizedCondition() <= 0f) return float.MinValue;
                 return gi.GetNormalizedCondition();
             });
             if (next == null || next.m_TorchItem == null || next.m_TorchItem.IsBurnedOut()) return;

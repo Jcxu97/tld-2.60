@@ -278,7 +278,12 @@ internal static class Stock
     {
         float t = Time.realtimeSinceStartup + 2f;
         while (Time.realtimeSinceStartup < t) yield return null;
-        if (!StillIn(b)) yield break;
+        if (!StillIn(b))
+        {
+            var std = GameManager.m_SceneTransitionData;
+            ModMain.Log?.Warning($"[MoreBunkers] {b.Id} stock skipped | save now {std?.m_SceneSaveFilenameCurrent} | next {std?.m_SceneSaveFilenameNextLoad}");
+            yield break;
+        }
         if (!Layouts.All.TryGetValue(b.Id, out var L)) yield break;
         if (!SceneLoaded(L.Interior, out string scenes))
         {

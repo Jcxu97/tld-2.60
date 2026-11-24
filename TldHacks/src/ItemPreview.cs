@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Il2Cpp;
 using Il2CppInterop.Runtime;
+#if !STORY_EDITION   // 2.24 无此命名空间
 using Il2CppTLD.Gear;
+#endif
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
@@ -159,6 +161,7 @@ internal static class ItemPreview
         {
             LoadIcon("ico_GearItem__" + shortName, en);
 
+#if !STORY_EDITION   // ponytail: 2.24 没有 GearItemData 和 GearItem.DisplayName,剧情版预览只显示图标
             string dataKey = "GearItemData_" + shortName;
             if (Exists<GearItemData>(dataKey))
             {
@@ -190,6 +193,7 @@ internal static class ItemPreview
                 }
                 catch { }
             }
+#endif
         }
 
         else
@@ -204,6 +208,7 @@ internal static class ItemPreview
                 {
                     var h = Addressables.LoadAssetAsync<GameObject>((Il2CppSystem.Object)path);
                     var go = h.WaitForCompletion();
+#if !STORY_EDITION   // 2.24 没有 DecorationItem
                     var di = go != null ? go.GetComponent<DecorationItem>() : null;
                     if (di != null)
                     {
@@ -219,6 +224,7 @@ internal static class ItemPreview
                             catch { }
                         }
                     }
+#endif
                     if (en.Icon == null) LoadIcon(ScPlusIconKey(go_name(path)), en);
                     if (en.Icon == null && go != null)
                     {

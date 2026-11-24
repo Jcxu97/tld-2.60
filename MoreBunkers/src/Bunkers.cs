@@ -177,10 +177,11 @@ internal static class Bunkers
 
     private static GameObject Build(BunkerDef b, Spot spot)
     {
+        GameObject root = null;
         try
         {
             FindSpot(b, spot, out var pos, out float yaw);
-            var root = new GameObject("MoreBunkers_" + b.Id);
+            root = new GameObject("MoreBunkers_" + b.Id);
             root.transform.position = pos;
             root.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
 
@@ -213,7 +214,12 @@ internal static class Bunkers
             ModMain.Log?.Msg($"[MoreBunkers] {b.Id} placed in {spot.Region} at {pos} yaw {yaw:F0}");
             return root;
         }
-        catch (Exception ex) { ModMain.Log?.Warning($"[MoreBunkers] build {b.Id} {ex.Message}"); return null; }
+        catch (Exception ex)
+        {
+            if (root != null) UnityEngine.Object.Destroy(root);
+            ModMain.Log?.Warning($"[MoreBunkers] build {b.Id} {ex}");
+            return null;
+        }
     }
 
     // 复制场景里一扇现成的门,拿到完整的 LoadScene 设置,再改成通往新地堡
@@ -247,8 +253,10 @@ internal static class Bunkers
         if (go.GetComponent<BoxCollider>() == null) go.AddComponent<BoxCollider>();
 
         go.name = "InteriorLoadTrigger";
+        if (go.GetComponent<LoadScene>() == null) go.AddComponent<LoadScene>();
         foreach (var c in go.GetComponents<MonoBehaviour>())
         {
+            if (c == null) continue;
             var n = c.GetIl2CppType().Name;
             if (n != "LoadScene" && n != "ObjectGuid") UnityEngine.Object.DestroyImmediate(c);
         }

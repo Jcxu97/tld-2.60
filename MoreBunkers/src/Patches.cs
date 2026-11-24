@@ -47,6 +47,21 @@ internal static class Patch_LoadScene_Activate
     private static void Prefix(LoadScene __instance) => DoorHook.Before(__instance);
 }
 
+// 2.60 的 LoadScene.Start 会把门的编号换掉,建好门之后马上写回来,地堡内部才认得出是新地堡
+[HarmonyPatch(typeof(LoadScene), nameof(LoadScene.Start))]
+internal static class Patch_LoadScene_Start
+{
+    private static void Postfix(LoadScene __instance)
+    {
+        try
+        {
+            var b = Bunkers.ByDoor(__instance);
+            if (b != null) Bunkers.KeepGuid(__instance, b);
+        }
+        catch (System.Exception ex) { ModMain.Log?.Warning($"[MoreBunkers] door start {ex.Message}"); }
+    }
+}
+
 [HarmonyPatch(typeof(LoadScene), nameof(LoadScene.PerformSceneLoad))]
 internal static class Patch_LoadScene_PerformSceneLoad
 {

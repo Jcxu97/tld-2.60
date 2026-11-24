@@ -1346,11 +1346,9 @@ internal static class Cheats
 // v2.7.62 删除 Patch_Hunger_UpdateCalorieReserves 的 Prefix return false —— 会让整个 Hunger 循环
 //   跳过,吃东西的 AddCalorieReserve 累加、UI 显示都受影响。改走 TickStatus 压值方案(见 TickStatus)
 
-[HarmonyPatch(typeof(PlayerManager), "MaybeFlushPlayerDamage")]
-internal static class Patch_PM_FlushDamage
-{
-    private static bool Prefix() => !CheatState.GodMode;
-}
+// V13.0 删 PlayerManager.MaybeFlushPlayerDamage 的 Prefix:2.60 里它是空函数,和上千个空方法共用同一个原生地址,
+//   Major Miseries 补 Hypothermia.SetWarmingUp 时落在同一地址,两层 detour 互相调用,启动即栈溢出(0xc00000fd)。
+//   以后别给空方法挂补丁。
 
 [HarmonyPatch(typeof(Hypothermia), "HypothermiaStart")]
 internal static class Patch_Hypothermia_Start

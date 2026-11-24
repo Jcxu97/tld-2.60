@@ -161,9 +161,12 @@ internal static class DynamicPatch
         Spec(typeof(ClothingItem), "MaybeGetWetOnGround", typeof(Patch_Clothing_GetWetOnGround),
             "Prefix", null, () => CheatState.NoWetClothes, null, OneFloat),
 
+        // 2.60 里 Lock.IsLocked 和 Unity 的 PropertyPath.get_IsEmpty 共用一个原生地址,挂上会连带改掉后者;
+        //   沙盒版改靠下面 LockedInteraction.IsLocked 解锁,剧情版(2.24)没有 LockedInteraction,照旧挂
+#if STORY_EDITION
         Spec(typeof(Lock), "IsLocked", typeof(Patch_Lock_IsLocked),
             null, "Postfix", () => CheatState.IgnoreLock),
-#if !STORY_EDITION
+#else
         Spec(typeof(LockedInteraction), "IsLocked", typeof(Patch_LockedInteraction_IsLocked_Unlock),
             null, "Postfix", () => CheatState.UnlockSafes || CheatState.IgnoreLock),
 #endif
@@ -265,9 +268,7 @@ internal static class DynamicPatch
         Spec(typeof(Panel_BreakDown), "BreakDownFinished", typeof(Patch_BreakDown_Finished_Unfade),
             null, "Postfix", () => CheatState.QuickBreakDown || CheatState.QuickAction,
             () => !BreakDownCleanup.Armed),
-        Spec(typeof(Panel_BreakDown), "ExitInterface", typeof(Patch_BreakDown_ExitInterface_UnlockTOD),
-            null, "Postfix", () => CheatState.QuickBreakDown || CheatState.QuickAction,
-            () => !BreakDownCleanup.Armed),
+        // ExitInterface 不挂:2.60 里它和 Panel_Actions.OnBack 等 9 个方法共用一个原生地址,收尾交给下面的 Enable 补丁
         Spec(typeof(Panel_BreakDown), "OnCancel", typeof(Patch_BreakDown_OnCancel_UnlockTOD),
             null, "Postfix", () => CheatState.QuickBreakDown || CheatState.QuickAction,
             () => !BreakDownCleanup.Armed),

@@ -127,6 +127,11 @@ public class SCPMain : MelonMod
 			return;
 		}
 		Scene sceneByName = UnityEngine.SceneManagement.SceneManager.GetSceneByName(sceneName);
+		// MelonLoader 晚一帧才发这个回调,子场景可能已经卸载,GetRootGameObjects 会抛 "The scene is invalid"
+		if (!sceneByName.IsValid() || !sceneByName.isLoaded)
+		{
+			return;
+		}
 		if (sceneName.EndsWith("_SANDBOX"))
 		{
 			Stopwatch stopwatch = new Stopwatch();
