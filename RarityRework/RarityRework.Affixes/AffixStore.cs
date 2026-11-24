@@ -97,7 +97,8 @@ internal static class AffixStore
 		}
 		if (string.IsNullOrEmpty(guid))
 		{
-			guid = null;
+			// A gear item can be inspected before the game restores its guid during deserialization.
+			return null;
 		}
 		keyCache[gi.Pointer] = (id, guid);
 		return guid;
@@ -115,7 +116,21 @@ internal static class AffixStore
 			return null;
 		}
 		string key = KeyOf(gi, false);
-		return key != null && rolls.TryGetValue(key, out ItemRoll roll) ? roll : null;
+		return GetSaved(gi, key);
+	}
+
+	private static ItemRoll GetSaved(GearItem gi, string key)
+	{
+		if (key == null || !rolls.TryGetValue(key, out ItemRoll roll))
+		{
+			return null;
+		}
+		if (!roll.ApplicabilityChecked)
+		{
+			dirty |= AffixCatalog.RemoveInapplicable(gi, AffixCatalog.KindOf(gi), roll);
+			roll.ApplicabilityChecked = true;
+		}
+		return roll;
 	}
 
 	internal static ItemRoll GetOrRoll(GearItem gi)
@@ -131,7 +146,8 @@ internal static class AffixStore
 			return null;
 		}
 		string oldGuid = KeyOf(gi, false);
-		if (oldGuid != null && rolls.TryGetValue(oldGuid, out ItemRoll roll))
+		ItemRoll roll = GetSaved(gi, oldGuid);
+		if (roll != null)
 		{
 			return roll;
 		}

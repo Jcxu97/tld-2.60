@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Text;
 using HarmonyLib;
 using Il2Cpp;
@@ -10,13 +9,10 @@ namespace RarityRework.Patches;
 
 internal static class AffixPatches
 {
-	private static readonly Dictionary<IntPtr, float> breakDownBaseHours = new Dictionary<IntPtr, float>();
-
 	private static readonly Random misfireRng = new Random();
 
 	internal static void OnSceneInitialized()
 	{
-		breakDownBaseHours.Clear();
 		AffixStore.ClearKeyCache();
 		if (!AffixStore.Enabled || GameManager.IsMainMenuActive())
 		{
@@ -34,7 +30,7 @@ internal static class AffixPatches
 		}
 	}
 
-	private static float ToolFactor(GearItem tool, string id)
+	private static float DurationFactor(GearItem tool, string id)
 	{
 		ItemRoll r = AffixStore.Get(tool);
 		return r == null ? 1f : 1f - r.Get(id);
@@ -141,19 +137,73 @@ internal static class AffixPatches
 		}
 	}
 
-	[HarmonyPatch(typeof(GunItem), "RollForMisfire")]
+	// Fired receives each projectile after the shooter sets its base damage, before it resolves the hit.
+	[HarmonyPatch(typeof(GunItem), nameof(GunItem.Fired))]
+	private static class GunDamage
+	{
+		[HarmonyPriority(Priority.Last)]
+		private static void Postfix(GunItem __instance, UnityEngine.GameObject projectile)
+		{
+			float bonus = AffixStore.Get(__instance.m_GearItem)?.Get("damage") ?? 0f;
+			if (bonus > 0f && projectile != null)
+			{
+				vp_Bullet bullet = projectile.GetComponent<vp_Bullet>();
+				if (bullet != null)
+				{
+					bullet.Damage *= 1f + bonus;
+				}
+			}
+		}
+	}
+
+	// The shooter can inline RollForMisfire. The chance table is called in both paths.
+	[HarmonyPatch(typeof(MisfireTable), nameof(MisfireTable.DoesMisfire))]
 	private static class GunMisfire
 	{
-		private static void Postfix(GunItem __instance, ref bool __result)
+		private static void Postfix(MisfireTable __instance, ref bool __result)
 		{
-			if (!__result)
+			if (!__result || !AffixStore.Enabled)
 			{
 				return;
 			}
-			ItemRoll r = AffixStore.Get(__instance.m_GearItem);
-			if (r != null && misfireRng.NextDouble() < r.Get("reliable"))
+			GearItem gear = GameManager.GetPlayerManagerComponent()?.m_ItemInHands;
+			if (gear == null || gear.m_GunItem?.m_MisfireTable != __instance)
+			{
+				return;
+			}
+			float reduction = AffixStore.Get(gear)?.Get("reliable") ?? 0f;
+			if (reduction > 0f && misfireRng.NextDouble() < reduction)
 			{
 				__result = false;
+			}
+		}
+	}
+
+	[HarmonyPatch(typeof(PlayerAnimation), "UpdateAnimatorSpeed")]
+	private static class GunReloadSpeed
+	{
+		private static void Postfix(PlayerAnimation __instance)
+		{
+			if (!AffixStore.Enabled || __instance.m_State != PlayerAnimation.State.Reloading)
+			{
+				return;
+			}
+			float factor = DurationFactor(GameManager.GetPlayerManagerComponent()?.m_ItemInHands, "reload");
+			if (factor < 1f && __instance.m_Animator != null)
+			{
+				__instance.m_Animator.speed /= factor;
+			}
+		}
+	}
+
+	[HarmonyPatch(typeof(FireManager), nameof(FireManager.PlayerCalculateFireStartTime))]
+	private static class FireStartTime
+	{
+		private static void Postfix(FireStarterItem starter, ref float __result)
+		{
+			if (starter != null && __result > 0f)
+			{
+				__result *= DurationFactor(starter.GetComponent<GearItem>(), "firefast");
 			}
 		}
 	}
@@ -163,52 +213,37 @@ internal static class AffixPatches
 	{
 		private static void Postfix(Panel_BodyHarvest __instance, ref float __result)
 		{
-			__result *= ToolFactor(__instance.GetSelectedTool(), "harvest");
+			__result *= DurationFactor(__instance.GetSelectedTool(), "harvest");
 		}
 	}
 
-	[HarmonyPatch(typeof(Panel_BodyHarvest), "GetQuarterDurationMinutes")]
+	// Refresh reads the carcass field directly and caches the minutes used by both the panel and OnQuarter.
+	[HarmonyPatch(typeof(Panel_BodyHarvest), "Refresh")]
 	private static class QuarterDuration
 	{
-		private static void Postfix(Panel_BodyHarvest __instance, ref float __result)
+		private static void Prefix(Panel_BodyHarvest __instance, out (BodyHarvest Body, float Minutes) __state)
 		{
-			__result *= ToolFactor(__instance.GetSelectedTool(), "harvest");
+			__state = default;
+			if (!__instance.IsTabQuarterSelected() || __instance.m_BodyHarvest == null)
+			{
+				return;
+			}
+			float factor = DurationFactor(__instance.GetSelectedTool(), "harvest");
+			if (factor < 1f)
+			{
+				BodyHarvest body = __instance.m_BodyHarvest;
+				__state = (body, body.m_QuarterDurationMinutes);
+				body.m_QuarterDurationMinutes = __state.Minutes * factor;
+			}
 		}
-	}
 
-	// Breakdown time has no getter to patch. Scale the target's hours from its scene value each time the
-	// label or the action reads it, so switching tools never compounds.
-	[HarmonyPatch(typeof(Panel_BreakDown), "UpdateDurationLabel")]
-	private static class BreakDownLabel
-	{
-		private static void Prefix(Panel_BreakDown __instance)
+		private static void Finalizer((BodyHarvest Body, float Minutes) __state)
 		{
-			ScaleBreakDown(__instance);
+			if (__state.Body != null)
+			{
+				__state.Body.m_QuarterDurationMinutes = __state.Minutes;
+			}
 		}
-	}
-
-	[HarmonyPatch(typeof(Panel_BreakDown), "OnBreakDown")]
-	private static class BreakDownStart
-	{
-		private static void Prefix(Panel_BreakDown __instance)
-		{
-			ScaleBreakDown(__instance);
-		}
-	}
-
-	private static void ScaleBreakDown(Panel_BreakDown panel)
-	{
-		BreakDown bd = panel.m_BreakDown;
-		if (bd == null)
-		{
-			return;
-		}
-		if (!breakDownBaseHours.TryGetValue(bd.Pointer, out float hours))
-		{
-			hours = bd.m_TimeCostHours;
-			breakDownBaseHours[bd.Pointer] = hours;
-		}
-		bd.m_TimeCostHours = hours * ToolFactor(panel.GetSelectedTool(), "breakdown");
 	}
 
 	[HarmonyPatch(typeof(GearItem), "DisplayName", MethodType.Getter)]

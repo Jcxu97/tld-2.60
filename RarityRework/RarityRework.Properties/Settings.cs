@@ -114,7 +114,7 @@ internal class Settings : JsonModSettings
 
 	internal static void OnLoad()
 	{
-		Instance.AddToModSettings("物品稀有度重制 v1.2.0");
+		Instance.AddToModSettings($"物品稀有度重制 v{BuildInfo.Version}");
 		Instance.RefreshFields();
 		Instance.RefreshGUI();
 	}

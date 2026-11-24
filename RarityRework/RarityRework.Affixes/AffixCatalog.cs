@@ -42,8 +42,6 @@ internal sealed class AffixDef
 
 internal static class AffixCatalog
 {
-	private static readonly System.Text.RegularExpressions.Regex BladeName = new System.Text.RegularExpressions.Regex("Hatchet|Knife|Hacksaw|Prybar|Axe");
-
 	internal static readonly Dictionary<string, AffixDef> Defs = new Dictionary<string, AffixDef>();
 
 	private static readonly Dictionary<GearKind, string[]> Pools = new Dictionary<GearKind, string[]>
@@ -136,7 +134,7 @@ internal static class AffixCatalog
 		Add(new AffixDef("struggle", "打斗伤害", 0.10f, 0.40f));
 		Add(new AffixDef("flee", "打斗中野生动物逃离几率", 0.10f, 0.40f));
 		Add(new AffixDef("harvest", "采集尸骸时间", 0.10f, 0.40f, lower: true));
-		Add(new AffixDef("breakdown", "打碎时间", 0.10f, 0.40f, lower: true));
+		Add(new AffixDef("breakdown", "场景物件拆解时间", 0.10f, 0.40f, lower: true));
 		Add(new AffixDef("craft", "制造和修理时间", 0.10f, 0.30f, lower: true));
 		Add(new AffixDef("firechance", "生火成功几率", 5f, 25f, points: true));
 		Add(new AffixDef("firefast", "生火时间", 0.10f, 0.40f, lower: true));
@@ -200,8 +198,8 @@ internal static class AffixCatalog
 		{
 			return (fire.m_ConsumeOnUse || fire.m_IsAccelerant || gi.m_MatchesItem != null) ? GearKind.None : GearKind.FireStarter;
 		}
-		// ToolsItem alone also covers sewing kits, cleaning kits and fishing tackle, so only cutting and prying tools count.
-		if (gi.m_BearSpearItem != null || gi.GetComponent<StruggleBonus>() != null || BladeName.IsMatch(gi.name))
+		// ToolsItem alone also covers sewing kits, cleaning kits and fishing tackle.
+		if (gi.m_BearSpearItem != null || gi.m_StruggleBonus != null || gi.m_BodyHarvestItem != null || gi.m_BreakDownItem != null)
 		{
 			return GearKind.Blade;
 		}
@@ -225,24 +223,85 @@ internal static class AffixCatalog
 		return kind != GearKind.Clothing && kind != GearKind.Medicine;
 	}
 
-	// Drop affixes that would do nothing on this item, for example healing on antibiotics.
+	internal static bool RemoveInapplicable(GearItem gi, GearKind kind, ItemRoll roll)
+	{
+		if (roll.a.Count == 0)
+		{
+			return false;
+		}
+		bool removed = false;
+		foreach (string id in new List<string>(roll.a.Keys))
+		{
+			if (!Pools.TryGetValue(kind, out string[] pool) || System.Array.IndexOf(pool, id) < 0 || !Applies(gi, id))
+			{
+				removed |= roll.a.Remove(id);
+			}
+		}
+		return removed;
+	}
+
 	private static bool Applies(GearItem gi, string id)
 	{
-		FoodItem food = gi.m_FoodItem;
-		FirstAidItem aid = gi.m_FirstAidItem;
 		ClothingItem c = gi.m_ClothingItem;
+		GunItem g = gi.m_GunItem;
+		BowItem b = gi.m_BowItem;
 		return id switch
 		{
-			"heal" => aid != null && aid.m_HPIncrease > 0f,
-			"quickuse" => aid != null || food != null,
+			"heal" => gi.m_FirstAidItem?.m_HPIncrease > 0f,
+			"quickuse" => gi.m_FirstAidItem?.m_TimeToUseSeconds > 0f || gi.m_FoodItem?.m_TimeToEatSeconds > 0f ||
+				gi.m_FoodItem?.m_TimeToOpenAndEatSeconds > 0f,
 			"warmth" => c.m_Warmth > 0f,
 			"wetwarmth" => c.m_WarmthWhenWet > 0f,
 			"windproof" => c.m_Windproof > 0f,
 			"waterproof" => c.m_Waterproofness > 0f && c.m_Waterproofness < 1f,
 			"tough" => c.m_Toughness > 0f,
+			"dry" => c.m_DryPercentPerHour > 0f || c.m_DryPercentPerHourNoFire > 0f,
 			"sprint" => c.m_SprintBarReductionPercent > 0f,
-			_ => true
+			"damage" => (g.m_GunType is GunType.Rifle or GunType.Revolver or GunType.Shotgun) && g.m_DamageHP > 0f,
+			"bowdamage" => b.m_BowDamageMultiplier > 0f,
+			"steady" => g != null
+				? g.m_SwayValueZeroFatigue > 0f || g.m_SwayValueMaxFatigue > 0f || g.m_SwayIncreasePerSecond > 0f
+				: b.m_SwayValueZeroFatigue > 0f || b.m_SwayValueMaxFatigue > 0f || b.m_SwayIncreasePerSecond > 0f,
+			"recoil" => g.m_PitchRecoilMin != 0f || g.m_PitchRecoilMax != 0f ||
+				g.m_YawRecoilMin != 0f || g.m_YawRecoilMax != 0f,
+			"reload" => g.m_GunType != GunType.Camera,
+			"reliable" => g.m_MisfireTable != null,
+			"struggle" => gi.m_StruggleBonus?.m_DamageScalePercent > 0f,
+			"flee" => gi.m_StruggleBonus?.m_FleeChanceScale > 0f,
+			"harvest" => CanHarvest(gi.m_BodyHarvestItem),
+			"breakdown" => gi.m_BreakDownItem?.m_BreakDownTimeModifier > 0f,
+			"craft" => gi.m_ToolsItem?.m_CraftingAndRepairTimeModifier > 0f,
+			"battery" => gi.m_FlashlightItem.m_LowBeamDuration > 0f || gi.m_FlashlightItem.m_HighBeamDuration > 0f,
+			"recharge" => gi.m_FlashlightItem.m_RechargeTime > 0f,
+			"fuel" => HasHeaterSetting(gi.m_WhaleOilHeaterItem, fuel: true),
+			"heat" => HasHeaterSetting(gi.m_WhaleOilHeaterItem, fuel: false),
+			"durable" => gi.GearItemData?.DailyHPDecay > 0f || gi.m_DegradeOnUse?.m_DegradeHP > 0f ||
+				gi.m_StruggleBonus != null || gi.m_BodyHarvestItem?.m_HPDecreasePerHourUse > 0f ||
+				gi.m_ToolsItem?.m_DegradePerHourCrafting > 0f || gi.m_FireStarterItem?.m_ConditionDegradeOnUse > 0f,
+			"weight" => gi.WeightKG.m_Units > 0,
+			"wear" or "firechance" or "firefast" => true,
+			_ => false
 		};
+	}
+
+	private static bool CanHarvest(BodyHarvestItem tool)
+	{
+		return tool != null && (tool.m_HarvestMeatMinutesPerKG > 0f || tool.m_HarvestFrozenMeatMinutesPerKG > 0f ||
+			tool.m_HarvestHideMinutesPerUnit > 0f || tool.m_HarvestGutMinutesPerUnit > 0f);
+	}
+
+	private static bool HasHeaterSetting(WhaleOilHeaterItem heater, bool fuel)
+	{
+		var settings = heater.m_Settings;
+		for (int i = 0; settings != null && i < settings.Length; i++)
+		{
+			var setting = settings[i];
+			if (setting != null && (fuel ? setting.m_FuelUsedPerHour.m_Units > 0 : setting.m_Temperature > 0f))
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	internal static ItemRoll Roll(GearItem gi, GearKind kind, uint seed)
@@ -253,7 +312,7 @@ internal static class AffixCatalog
 		{
 			tier = (int)Rarities.Rare;
 		}
-		ItemRoll roll = new ItemRoll { t = tier, m = MaterialName(kind, tier) };
+		ItemRoll roll = new ItemRoll { t = tier, m = MaterialName(kind, tier), ApplicabilityChecked = true };
 		List<string> pool = new List<string>(Pools[kind]);
 		pool.RemoveAll(id => !Applies(gi, id));
 		int count = System.Math.Min(tier - 1, pool.Count);
@@ -278,6 +337,7 @@ internal sealed class ItemRoll
 	public string m;
 
 	public Dictionary<string, float> a = new Dictionary<string, float>();
+	internal bool ApplicabilityChecked;
 
 	// Stored values are the raw roll. The tier boost is applied on read, so saved items follow boost changes.
 	internal float Get(string id)

@@ -36,8 +36,7 @@ internal static class AffixApplier
 		["tough"] = ("tough", "%", true),
 		["dry"] = ("dry", "%/小时", false),
 		["sprint"] = ("sprint", "%", true),
-		["damage"] = ("damage", "", false),
-		["reload"] = ("reload", " 秒", false),
+		["bowdamage"] = ("bowdamage", " 倍", false),
 		["quickuse"] = ("use", " 秒", false),
 		["heal"] = ("heal", "%", true),
 		["heat"] = ("heat0", "°C", false)
@@ -53,7 +52,22 @@ internal static class AffixApplier
 		}
 		if (def.Points)
 		{
-			return $"{def.Name} 提高 {v:0.#}%";
+			return $"{def.Name} 提高 {v:0.#} 个百分点";
+		}
+		if (id == "damage" && gi.m_GunItem.m_GunType != GunType.Shotgun)
+		{
+			float damage = gi.m_GunItem.m_DamageHP;
+			return $"基础伤害 {damage:0.#} → {damage * (1f + v):0.#}（+{v * 100f:0}%）";
+		}
+		if (id == "craft")
+		{
+			string action = gi.m_ToolsItem.m_ToolType switch
+			{
+				ToolsItem.ToolType.CraftOnly => "制造时间",
+				ToolsItem.ToolType.RepairOnly => "修理时间",
+				_ => def.Name
+			};
+			return $"{action} 减少 {v * 100f:0}%";
 		}
 		if (!Shown.TryGetValue(id, out var shown) || !baseValues.TryGetValue(gi.name + "|" + shown.field, out float b) || b == 0f)
 		{
@@ -71,12 +85,14 @@ internal static class AffixApplier
 
 	private static float Up(GearItem gi, ItemRoll r, string id, string field, float current)
 	{
-		return Base(gi, field, current) * (1f + r.Get(id));
+		float bonus = r.Get(id);
+		return bonus > 0f ? Base(gi, field, current) * (1f + bonus) : current;
 	}
 
 	private static float Down(GearItem gi, ItemRoll r, string id, string field, float current)
 	{
-		return Base(gi, field, current) * (1f - r.Get(id));
+		float bonus = r.Get(id);
+		return bonus > 0f ? Base(gi, field, current) * (1f - bonus) : current;
 	}
 
 	internal static void Apply(GearItem gi, ItemRoll r)
@@ -91,7 +107,10 @@ internal static class AffixApplier
 			c.m_Warmth = Up(gi, r, "warmth", "warmth", c.m_Warmth);
 			c.m_WarmthWhenWet = Up(gi, r, "wetwarmth", "wetwarmth", c.m_WarmthWhenWet);
 			c.m_Windproof = Up(gi, r, "windproof", "windproof", c.m_Windproof);
-			c.m_Waterproofness = Mathf.Min(1f, Up(gi, r, "waterproof", "waterproof", c.m_Waterproofness));
+			if (r.Get("waterproof") > 0f)
+			{
+				c.m_Waterproofness = Mathf.Min(1f, Up(gi, r, "waterproof", "waterproof", c.m_Waterproofness));
+			}
 			c.m_Toughness = Up(gi, r, "tough", "tough", c.m_Toughness);
 			c.m_DryPercentPerHour = Up(gi, r, "dry", "dry", c.m_DryPercentPerHour);
 			c.m_DryPercentPerHourNoFire = Up(gi, r, "dry", "drynofire", c.m_DryPercentPerHourNoFire);
@@ -100,7 +119,6 @@ internal static class AffixApplier
 		GunItem g = gi.m_GunItem;
 		if (g != null)
 		{
-			g.m_DamageHP = Up(gi, r, "damage", "damage", g.m_DamageHP);
 			g.m_SwayValueZeroFatigue = Down(gi, r, "steady", "sway0", g.m_SwayValueZeroFatigue);
 			g.m_SwayValueMaxFatigue = Down(gi, r, "steady", "swaymax", g.m_SwayValueMaxFatigue);
 			g.m_SwayIncreasePerSecond = Down(gi, r, "steady", "swayinc", g.m_SwayIncreasePerSecond);
@@ -108,7 +126,6 @@ internal static class AffixApplier
 			g.m_PitchRecoilMax = Down(gi, r, "recoil", "pitchmax", g.m_PitchRecoilMax);
 			g.m_YawRecoilMin = Down(gi, r, "recoil", "yawmin", g.m_YawRecoilMin);
 			g.m_YawRecoilMax = Down(gi, r, "recoil", "yawmax", g.m_YawRecoilMax);
-			g.m_ReloadCoolDownSeconds = Down(gi, r, "reload", "reload", g.m_ReloadCoolDownSeconds);
 		}
 		BowItem b = gi.m_BowItem;
 		if (b != null)
@@ -118,7 +135,7 @@ internal static class AffixApplier
 			b.m_SwayValueMaxFatigue = Down(gi, r, "steady", "swaymax", b.m_SwayValueMaxFatigue);
 			b.m_SwayIncreasePerSecond = Down(gi, r, "steady", "swayinc", b.m_SwayIncreasePerSecond);
 		}
-		StruggleBonus s = gi.GetComponent<StruggleBonus>();
+		StruggleBonus s = gi.m_StruggleBonus;
 		if (s != null)
 		{
 			s.m_DamageScalePercent = Up(gi, r, "struggle", "struggle", s.m_DamageScalePercent);
@@ -129,11 +146,16 @@ internal static class AffixApplier
 		{
 			t.m_CraftingAndRepairTimeModifier = Down(gi, r, "craft", "craft", t.m_CraftingAndRepairTimeModifier);
 		}
-		FireStarterItem f = gi.m_FireStarterItem;
-		if (f != null)
+		BreakDownItem bd = gi.m_BreakDownItem;
+		if (bd != null)
 		{
-			f.m_FireStartSkillModifier = Base(gi, "firechance", f.m_FireStartSkillModifier) + r.Get("firechance");
-			f.m_FireStartDurationModifier = Down(gi, r, "firefast", "firefast", f.m_FireStartDurationModifier);
+			bd.m_BreakDownTimeModifier = Down(gi, r, "breakdown", "breakdown", bd.m_BreakDownTimeModifier);
+		}
+		FireStarterItem f = gi.m_FireStarterItem;
+		float fireChance = r.Get("firechance");
+		if (f != null && fireChance > 0f)
+		{
+			f.m_FireStartSkillModifier = Base(gi, "firechance", f.m_FireStartSkillModifier) + fireChance;
 		}
 		FlashlightItem l = gi.m_FlashlightItem;
 		if (l != null)
@@ -145,11 +167,20 @@ internal static class AffixApplier
 		WhaleOilHeaterItem h = gi.m_WhaleOilHeaterItem;
 		if (h != null)
 		{
-			for (int i = 0; h.m_Settings != null && i < h.m_Settings.Length; i++)
+			var settings = h.m_Settings;
+			float fuel = r.Get("fuel");
+			for (int i = 0; settings != null && i < settings.Length; i++)
 			{
-				WhaleOilHeaterItem.HeaterSetting hs = h.m_Settings[i];
+				WhaleOilHeaterItem.HeaterSetting hs = settings[i];
+				if (hs == null)
+				{
+					continue;
+				}
 				hs.m_Temperature = Up(gi, r, "heat", "heat" + i, hs.m_Temperature);
-				hs.m_FuelUsedPerHour = BaseVolume(gi, i, hs.m_FuelUsedPerHour) * (1f - r.Get("fuel"));
+				if (fuel > 0f)
+				{
+					hs.m_FuelUsedPerHour = BaseVolume(gi, i, hs.m_FuelUsedPerHour) * (1f - fuel);
+				}
 			}
 		}
 		// Pills made as food (FirstAid category) use quickuse for their eating time.
