@@ -40,6 +40,11 @@ MB = dict(csproj=r'MoreBunkers\src\MoreBunkers.csproj', out=r'MoreBunkers\src\bi
 BIF = dict(csproj=r'BlueprintIconFix\BlueprintIconFix.csproj', out=r'BlueprintIconFix\bin\Release\net6.0\BlueprintIconFix.dll',
            game=r'Mods\BlueprintIconFix.dll', stage=[os.path.join(p, 'Mods', 'BlueprintIconFix.dll') for p in ('sb_full', 'ultimate')])
 EXTRAS = {'scp': SCP, 'mb': MB, 'bif': BIF}
+# ModComponent 7.0.0 maps Misery (mode 18) to Other and spawns scattered mod items at 1x there. mcmisery (2026-11-28)
+# patches the DLL in place: Misery gets its own slider, default 0.1. Exit code 1 means the DLL is already patched.
+MCM = os.path.join(REPO, r'_tools\mcmisery')
+MC_DLLS = [os.path.join(GAME, 'Mods', 'ModComponent.dll')] + \
+          [os.path.join(STAGE, p, 'Mods', 'ModComponent.dll') for p in ('sb_min', 'sb_full', 'ultimate')]
 
 
 def sb_names(v):
@@ -149,6 +154,19 @@ def init():
 def build(k):
     run(['dotnet', 'build', os.path.join(REPO, PKGS[k]['csproj']), '-c', 'Release', '-nologo', '-v', 'q'])
     return os.path.join(REPO, PKGS[k]['out'])
+
+
+def patch_modcomponent():
+    run(['dotnet', 'build', os.path.join(MCM, 'mcmisery.csproj'), '-c', 'Release', '-nologo', '-v', 'q'])
+    exe = os.path.join(MCM, r'bin\Release\net6.0\mcmisery.exe')
+    for p in MC_DLLS:
+        tmp = p + '.mcmisery'
+        r = subprocess.run([exe, p, tmp], capture_output=True, text=True, creationflags=NO_WINDOW)
+        if r.returncode == 0:
+            os.replace(tmp, p)
+            print('ModComponent Misery patch:', p)
+        elif r.returncode != 1:
+            sys.exit(f'mcmisery failed on {p}\n{r.stdout[-2000:]}\n{r.stderr[-2000:]}')
 
 
 def deploy(k, dll, spec=None):
@@ -279,6 +297,7 @@ def pack(keys):
                 for s in EXTRAS[e]['stage']:
                     shutil.copy2(d, os.path.join(STAGE, s))
                 man[e] = md5(d)
+            patch_modcomponent()
         for s in stage_dll(k):
             shutil.copy2(dll, s)
         pack_sb(dll) if k == 'sb' else pack_story(k)

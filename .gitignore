@@ -66,4 +66,6 @@ DoubleBarrelLoadFix/bin/
 DoubleBarrelLoadFix/obj/
 _tools/ilfix/bin/
 _tools/ilfix/obj/
+_tools/mcmisery/bin/
+_tools/mcmisery/obj/
 _tools/unpack/__pycache__/
