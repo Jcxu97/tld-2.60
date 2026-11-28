@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <TldRoot>D:\Steam\steamapps\common\TheLongDark</TldRoot>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="$(TldRoot)\MelonLoader\net6\AsmResolver.dll;$(TldRoot)\MelonLoader\net6\AsmResolver.PE.File.dll;$(TldRoot)\MelonLoader\net6\AsmResolver.PE.dll;$(TldRoot)\MelonLoader\net6\AsmResolver.DotNet.dll" />
+  </ItemGroup>
+</Project>
